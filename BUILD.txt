@@ -1,0 +1,434 @@
+V0.9.4.60 SECURE STORE + PER-USER MORE
+- Allows Approved Users to connect while official Inventory stays Viewer-only.
+- Provisions each exact Google email as Writer only on its own Users/<name> workspace.
+- Adds a per-user, per-vehicle More workspace with Client Media and Pending/Approved/Rejected request folders.
+- Adds View Your More Media Folder to every Vehicle Profile.
+- Keeps all contributed photos, videos and documents under Administration approval, including Trusted-user media.
+- Lets genuine profile creators update their own information/media without receiving Drive Editor access to Inventory.
+- Lets Trusted users automatically correct vehicle details, price and Pending Deal through the Admin Level 2 Store Processor.
+- Prevents duplicate profile claims by checking VIN first and Stock Number second.
+- Limits direct Vehicle Profile deletion to Administration.
+- Adds Approved Users.json, a viewer-readable Store Access record and a root Inventory Index.
+- Adds Store access repair that downgrades old non-admin Editor permissions, revokes disabled accounts, and attempts limited access on the Store root, Inventory, Administration and user workspaces.
+- Bundles processor/Code.gs, processor/appsscript.json and PROCESSOR-SETUP.md for the management approval worker.
+- Bumps every live deployment fingerprint to build 09460 and cache lotkeys-app-v09460-least-privilege-more.
+
+V0.9.4.59 DEPLOYMENT + CACHE POLISH
+- Starts the service-worker update check before normal LotKeys startup work.
+- Requests the exact current worker build from both index.html and install.html without reusing its HTTP-cached script.
+- Normalizes build-query URLs to stable cache keys for current offline assets and navigation.
+- Removes only previous LotKeys cache generations, preserving unrelated origin caches.
+- Adds version.json as an independently checkable deployment fingerprint.
+- Clarifies that temporary Store Editor sharing is only for Administrator or Trusted test accounts; regular users await the Management approval path.
+
+V0.9.4.58 GITHUB ROOT + STORE CODE CONNECTION CORRECTION
+- Requests fresh Google Drive write authorization for Store Code connections to existing Store folders.
+- Retires the previous cached authorization session so the corrected permission prompt can run once after updating.
+- Checks whether the signed-in Google account can add content to the Store folder and distinguishes OAuth Test User access from Drive Editor access.
+- Restores the previous local Store settings when a connection attempt fails.
+- Limits New Store Setup to the registered LotKeys Creator.
+- Renames the Inventory Pending ribbon to Deal / Pending and widens it for the full label.
+
+V0.9.4.56 STABLE RELEASE FILENAMES
+- Uses permanent root filenames for Awards, Chat, checksums and the team-test checklist.
+- Keeps release identification inside each file and in the downloadable LotKeys ZIP.
+- Uses build query parameters plus a new service-worker cache name to force current browser assets.
+- Keeps extension/latest.json as the permanent pointer to one exact versioned Post Buddy ZIP.
+- Allows future GitHub updates to be simple file replacement without accumulating prior app modules or documents.
+
+V0.9.4.55 PENDING RIBBON POLISH RELEASE
+- Moves the Accent Color slash on the Inventory Pending ribbon 4 px to the right.
+- Closes the slash cleanly into the Pending box so the white triangular notch no longer appears.
+- Keeps the V0.9.4.54 Dev Tool Kit and Post Buddy corrections unchanged.
+
+V0.9.4.54 DEV TOOL KIT + POST BUDDY MOBILE FIXED RELEASE
+- Corrects All users in Store so the sender stays unchecked until selected manually.
+- Preview Celebration now shows the composed headline, message and optional Award without sending anything.
+- Removes the duplicate Special Award Builder and stand-alone preview buttons; both remaining Dev tools include their own editor and preview.
+- Removes the redundant Open LotKeys Website action from phones.
+- Clarifies that the PC action downloads the Post Buddy ZIP for manual installation in desktop Chrome.
+- Removes the obsolete Public LotKeys website URL field from the Post Buddy release settings.
+- Keeps V0.9.4.53 transparent Award artwork, counters, Pending ribbon and all earlier fixes.
+
+V0.9.4.53 TRANSPARENT AWARDS + PENDING RIBBON FIXED RELEASE
+- Replaces all 31 catalogued Award images with the supplied real RGBA transparent PNG files.
+- Repositions repeatable Award counters to the upper-right edge and reduces their obstruction of small artwork.
+- Adds the user Accent Color Pending ribbon to Inventory cards after Pending Deal is directly applied or approved.
+- Renames the closed Account disclosure action to Edit Account while preserving the gray Expanded state.
+- Retains the V0.9.4.52 Post Buddy pointer behavior and single versioned extension archive.
+
+V0.9.4.52 POST BUDDY POINTER RELEASE
+- Uses extension/latest.json as the single trusted pointer for the current Post Buddy download.
+- Downloads the versioned Post Buddy ZIP named by the pointer instead of a duplicate Latest ZIP.
+- Keeps legacy direct trusted ZIP URLs readable while new Admin Level 2 settings store the pointer URL.
+- Packages the GitHub extension/latest and extension/releases structure with only the current versioned archive.
+
+V0.9.4.51 FIXED TEAM TEST RELEASE
+- Corrects and expands the LotKeys Award catalog, artwork and descriptions through 1,000 verified Facebook Marketplace sales.
+- Requires the Listing owner, a valid unique Facebook Marketplace item URL and the I Sold This Vehicle action before a sale counts.
+- Adds Creator-bound Developer tools for audited one-off badge drops and selected/Store-wide celebrations.
+- Adds direct-versus-requested Pending Deal handling based on Vehicle owner, Trusted User and Administrator permissions.
+- Adds the simplified name/phone Google sign-in surface, first-account Store/Profile guidance, replayable Help walkthroughs and Sign Out.
+- Saves Lock Screen hash/salt and idle settings to the user’s private Account.json.
+- Hides Store Code from connected regular users while retaining it for Admin Level 1 and 2.
+- Adds compact creator rows, static Profile photo review, neutral secondary link actions and corrected Listing button emphasis.
+- Organizes Garage settings into Vehicle Profiles • Inventory and Google Test Credentials disclosures.
+- Clears stale Vehicle synchronization visuals immediately after startup jobs settle.
+
+V0.9.4.50 TEAM TEST RELEASE
+- Account sign-in is now strictly read-first: an existing Account.json is restored before any save, and an unreadable existing account blocks without overwriting Drive data.
+- Chat opens immediately from its local archive, stays isolated from Home/Inventory, and refreshes messages in the background while LotKeys is open.
+- Corrected bottom Chat Call / + placement, active-tab behavior, and Add Contact email-or-phone lookup.
+- Adds Google first-run Account bootstrap, Store Code lookup directory and clearer test-user sign-in errors.
+- Adds Lot-Keys.ca custom-domain files, Privacy/Terms pages and a dedicated install.html PWA link.
+- Connects Post Buddy V0.1.13 with current LotKeys branding, Lot-Keys.ca support, its built-in release check and the repository's always-current download path.
+- Expands and connects the Awards system, including sales, monthly medals, new-account, hidden-time, inactivity and Creator-only recognition.
+- Primary Award changes redraw immediately; its artwork appears before the user name. All five display badges are draggable from the full tile on touch/mouse.
+- Strengthens the local Lock Screen with salted PBKDF2 hashing and repeated-attempt delay.
+- Moves and highlights Garage administration/location/analytics controls, builds descriptions immediately, and compacts existing Vehicle Profile photo review.
+- Includes DNS setup and a public-launch security gate. V0.9.4.50 is for controlled team testing; public Chat/admin security still requires the planned authenticated backend.
+
+V0.9.4.49
+- Immediate Primary Award refresh and artwork-before-name identity display.
+- Whole-badge mouse/touch reordering for five displayed Awards; long-hold context menus suppressed.
+- Local Lock Screen with manual and per-device idle settings.
+- First-run Google/Drive/Store guidance plus PWA install entry point.
+- Personal and Store posting-location separation; Garage section reorganization.
+- FaceBook Post Buddy desktop/mobile CTA with Admin Level 2 release-link fields.
+- One-press Description Builder, expandable editable source details, compact Vehicle Profile photo review.
+- Iced Iced Baby corrected to 30 inactive days and five active-day recovery.
+
+LotKeys V0.9.4.49 FULL RELEASE
+New canonical LotKeys icon
+
+- Replaces all default LotKeys application icon sizes with the supplied black-and-blue key/tag artwork.
+- Covers the in-app default, Chat fallback, loading view, Android/PWA install icon, Apple touch icon, favicon and offline cache.
+- Keeps custom Store-uploaded logos as Store-specific overrides.
+- Bumps the release, feature modules, service worker and manifest to V0.9.4.49 / 09449.
+- Includes all V0.9.4.47 functionality unchanged for the next test round.
+
+LotKeys V0.9.4.47 FULL RELEASE
+Chat isolation + registered contact lookup + Lot-Lvl/Awards test update
+
+- Fixes Chat background bleed by hiding the live Home/Inventory route and sizing Chat to the measured bottom-navigation height.
+- Removes the redundant Chat Exit box. The six-tab bottom navigation stays visible and Chat remains highlighted until another tab is selected.
+- Adds a LotKeys-branded Chat header with search and live time/date, plus All, Unread, Groups and Contacts/Favorites filters.
+- Adds bottom-corner Call and ＋ actions. ＋ opens Add Contact, Create Group Chat and Create Group Call, followed by users from the current LotKeys Store.
+- Rebuilds the Add Contact person/plus artwork so it stays aligned, and accepts either an exact registered email address or registered phone number.
+- Adds saved Contacts/Favorites and preserves existing conversations when someone is no longer in the current Store. Cross-Store conversations remain visible; delivery waits for the future LotKeys account directory when the contact is outside the active Store.
+- Adds temporary and Permanent Group Call creation. Temporary calls are not kept in Chat history; Permanent Group Calls stay available.
+- Adds Store-managed groups for administrators plus creator/admin member controls, personal mute and block controls, and creator-assigned Group admins.
+- Adds an optional phone-number field to Account settings and the Call using LotKeys / Call using Phone chooser. The phone option only appears when that user saved a number.
+- Replaces the compact Voice Beta strip with a full LotKeys call screen containing Speaker, Screen Share, Mute, Send File, Video Call and End Call controls.
+- Send File securely carries device files up to 4 MB inside the encrypted Chat envelope and keeps the existing LotKeys Vehicle/Listing share cards.
+- Adds the first Awards/Lot-Lvl test system: 14 confirmed badge artworks, one Primary plus five displayed Awards, full gallery/details, repeat counters and public Profile display.
+- Adds account-carried Lot-Lvl 1–100 progress using a test progression curve that reaches Level 100 at 1,000 confirmed Facebook vehicle posts.
+- Adds user requests, Admin Level 1 nominations, Admin Level 2 review/direct grants, and verified automatic correction/Facebook/Monthly Wrap-Up/check-in milestones.
+- Keeps the repaired Android 💭 hold shortcut and all established Inventory, Listings, Garage, Account and Drive behavior.
+
+LotKeys V0.9.4.44 FULL RELEASE
+Main Chat tab
+
+- Moves Messaging out of Account and gives it its own 💬 Chat tab in the main bottom navigation.
+- Chat carries its own ❕ unread badge, matching Listings attention behavior.
+- Tap Chat to open Messages; press and hold the Chat tab for the existing 💭 Bubble Mode / last conversation interaction.
+- Removes the duplicate Account Messages card so Messaging has one obvious home.
+- Keeps V0.9.4.43 Messaging bridge, direct chats, Parties, personal Drive archives, share cards, transient bubbles and Voice Beta unchanged.
+
+LotKeys V0.9.4.43 FULL RELEASE
+Messaging visibility + core bridge repair
+
+- Messages is now rendered as its own visible 💭 section directly on Account, with its own unread ❕ badge.
+- Fixes Messaging V1 access to core LotKeys DB / Drive / Store-user APIs through a supported Messaging bridge.
+- Account Messages entry remains visible even if Messaging setup is incomplete; opening it shows Account Storage setup guidance instead of disappearing.
+- Tap Messages to open; hold for the existing 💭 Bubble Mode interaction.
+- Keeps V0.9.4.42 direct chats, named Parties, personal Drive archives, share cards, transient bubbles and Voice Beta behavior.
+
+LotKeys V0.9.4.42 FULL RELEASE
+Messaging V1 + Parties + Bubble Mode + LotKeys sharing + Voice Beta
+
+- Adds Account → Messages with direct chats and named Parties.
+- Message identity is derived from the signed-in Google account email while the visible name remains the user's LotKeys display name.
+- Durable chat history lives in each participant's personal LotKeys / Messages Google Drive area. The Store holds only short-lived encrypted delivery envelopes plus Party membership metadata.
+- New incoming messages raise the familiar red ❕ attention indicator and a five-second message preview bubble.
+- Press and hold Messages for one second to see the 💭 cue; continue holding for another second to open Bubble Mode with the most recent conversation and reply without leaving the current screen.
+- Direct chats can be deleted from the current user's personal Drive without removing the other participant's copy. Leaving a Party removes the current user's Party archive while remaining members keep theirs.
+- Adds LotKeys share cards for Vehicle Profiles, Marketplace Listings and the current user's More Photos / More Videos / More Documents contribution folders.
+- Incoming chat bubbles show the other user's LotKeys avatar, accent ring and current monthly-winner crown where applicable. Outgoing bubbles use the current user's Accent Color.
+- Adds WebRTC Voice Beta for direct chats and Party rooms. Google Drive is used only for encrypted signalling; call audio travels peer-to-peer. TURN fallback is not yet included, so some restrictive networks may not connect.
+- Keeps V0.9.4.41 dark-theme readability, V0.9.4.40 neutral sync loading, and the V0.9.4.38 regression-restored Listing feature set.
+
+LotKeys V0.9.4.41 FULL RELEASE
+Dark-theme readability polish
+
+- Physical Month-End podium blocks now keep dark rank/contribution text in dark theme so gold/silver/bronze results remain readable.
+- CARFAX mini-brand in dark theme is inverted to white tiles with black lettering while preserving the red sparkle.
+- CARFAX findings/badges and all reveal/CARFAX data logic remain unchanged.
+- Keeps V0.9.4.40 neutral sync-loading treatment and all V0.9.4.38 regression-restoration behavior.
+
+LotKeys V0.9.4.40 FULL RELEASE
+Neutral gray synchronizing cards
+
+- Replaces orange/accent sync-pending card coloring with a neutral gray loading state.
+- Adds denser animated diagonal gray bars for clearer processing visibility.
+- Light mode uses a pale-gray base with darker gray bars; dark mode uses a lighter charcoal base with near-white bars.
+- Vehicle thumbnails are gently desaturated during the pending/synchronizing state.
+- Media-upload progress remains separate and does not trigger this effect by itself.
+- Keeps V0.9.4.39 functional behavior unchanged.
+
+LotKeys V0.9.4.39 FULL RELEASE
+High-visibility sync-state treatment
+
+- Adds neutral animated diagonal stripes to Vehicle/Listing cards while their normal sync state is pending/synchronizing, so the state remains obvious even when the user's Accent Color is red/orange.
+- The stripe treatment does not represent photo/video upload progress; media upload status remains separate.
+- Dark mode uses a lighter neutral stripe; reduced-motion devices keep the visual state without animation.
+- Keeps the V0.9.4.38 Listing regression restoration and all current search/sort/sync/import/recovery behavior unchanged.
+
+LotKeys V0.9.4.38 FULL RELEASE
+Regression audit against V0.9.4.31 / V0.9.4.32
+
+- Restores Listing analytics/history helpers accidentally removed in V0.9.4.33.
+- Restores Listing Delete / Sold flow, Drive cleanup, celebration audio/confetti and related helper functions.
+- Restores Top Contributors reveal formatting/audio helpers that were removed in the same regression.
+- Restores Facebook Marketplace Edmonton location preset constant used by Listing creation/editing.
+- Keeps V0.9.4.37 local-first Listing opening, fast Inventory/Listings search, Most Recent sorting, corrected icon assets and current layout/header positions.
+- Phone Sync text and readiness light remain aligned at the same lowered position.
+
+LotKeys V0.9.4.37 FULL RELEASE
+Local-first Marketplace Listing opening repair + final header alignment
+
+- Posting Assistant opens from cached/local Listing data before any Drive/media hydration begins.
+- Drive Vehicle/Listing photo enrichment runs only after the Listing dialog is already visible.
+- Photo-preview/media errors cannot silently prevent a Listing from opening.
+- Listing card errors now surface an explicit message for diagnosis instead of only clearing the spinner.
+- Keeps Most Recent sorting by created date for Inventory and Listings.
+- Moves phone Sync text down 2px to match the readiness light at the same 5px offset.
+- Preserves V0.9.4.36 icon, search, sync, recovery, import and photo-order behavior.
+
+LotKeys V0.9.4.36 FULL RELEASE
+Listing workspace opening repair + Most Recent sort + readiness alignment
+
+- Fixes Marketplace Listing cards that could remain stuck on the opening spinner while full Vehicle/Profile media hydrated from Drive.
+- Posting Assistant and Edit Listing use a bounded media hydration window and open from cached data instead of waiting indefinitely.
+- Adds Most Recent sort for Inventory and Listings using each record's createdAt date; undated legacy records sort after dated records.
+- Phone Sync text stays at +3px while the green readiness light moves down another 2px to +5px.
+- Includes V0.9.4.35 canonical border-free LotKeys icon assets and keeps V0.9.4.34 search filtering behavior.
+
+LotKeys V0.9.4.35 FULL RELEASE
+Canonical border-free LotKeys icon assets
+
+- Replaces all default LotKeys app/PWA icon assets from the user-supplied corrected source.
+- Bumps browser/PWA cache markers to 09435.
+- Keeps V0.9.4.34 application behavior unchanged.
+
+LotKeys V0.9.4.34 FULL RELEASE
+Search filtering repair + cohesive search / header alignment
+
+- Fixes Inventory and Listings search so non-matching cards are actually removed from the visible result list.
+- Search remains local/cached and does not refresh Drive while typing.
+- Search panel now uses a subtle Accent Color tint instead of a saturated red block.
+- Phone Sync text + readiness light move down 3px; + button stays fixed.
+- Keeps V0.9.4.33 matching logic and all current sync/import/recovery behavior unchanged.
+
+LotKeys V0.9.4.33 FULL RELEASE
+Fast Inventory / Listings search + CARFAX action position
+
+- Adds compact Find a vehicle fast search bars to Inventory and Marketplace Listings.
+- Filters already-loaded cards instantly by year, make, model, Profile/Listing name, Stock # and VIN without triggering Drive refreshes.
+- Marketplace Listing search can match the linked Vehicle Profile Stock # / VIN.
+- Vehicle Profile CARFAX findings now appear before compact 📋 / 🏷️ actions so those controls sit at the far right.
+- Keeps V0.9.4.32 sync, recovery, importer, photo ordering and responsive link behavior unchanged.
+
+LotKeys V0.9.4.32 FULL RELEASE
+Vehicle Profile alignment + compact link polish
+
+- Vehicle Profile value column pulled left consistently from Stock # through CARFAX.
+- Original Listing: 📋 Copy + 🏷️ View Link on phone and desktop.
+- CARFAX: compact 📋 + 🏷️ on all viewports so findings remain inline.
+- Facebook live Listing link: 🏷️ on phone, 🏷️ View Link on desktop.
+- Removes redundant CARFAX Findings text in Listing views.
+- Mobile Store Name can use the upper header row until just before the + button.
+- Keeps V0.9.4.31 view-count controls and all current sync/import behavior unchanged.
+
+LotKeys V0.9.4.31 FULL RELEASE
+Responsive Vehicle Profile actions + manual view count polish
+
+- Original Listing / CARFAX: phone = 📋 + 🏷️; desktop = 📋 Copy + 🏷️ View Link.
+- Copy appears before View; CARFAX findings remain inline.
+- Vehicle Profile bottom actions stay inline with Delete Vehicle shortened to Delete.
+- Add View Snapshot is now Save Count beside the cumulative Marketplace view input.
+- Keeps V0.9.4.30 importer/CARFAX fixes and current sync/recovery behavior unchanged.
+
+LotKeys V0.9.4.30 FULL RELEASE
+Vehicle link / CARFAX polish + website vehicle-field targeting
+
+- Original Listing and CARFAX now have compact Copy Link actions in Vehicle Profiles.
+- CARFAX branding/findings stay inline across Profile and Listing displays.
+- Posting Assistant View All Details moved below Odometer and before Description.
+- Website vehicle importer now targets Overview/specification labels for colors, transmission, engine displacement, horsepower and fuel type, avoiding Fuel Economy false matches.
+- Fuel and descriptive colors normalize to Facebook-ready Listing categories.
+
+LotKeys V0.9.4.29 FULL RELEASE
+Listing-owned Facebook fields + Posting Assistant details normalization
+
+LotKeys V0.9.4.28 FULL RELEASE
+Stable Listing photo toggle position + scroll-anchor repair
+
+Legacy Vehicle Profile compatibility + non-blocking Profile opening
+
+LotKeys V0.9.4.19 FULL RELEASE
+Startup / service-worker transition polish
+
+LotKeys V0.9.4.18 FULL RELEASE
+Corrected ring-free LotKeys icon / default app branding
+
+LotKeys Drive Test v0.9.4.16.10
+Build query: ?build=0941610
+Service worker: lotkeys-drive-test-v0941610
+
+Management Update mobile header spacing:
+- Keeps the account photo, flagged position and poster name grouped on the left.
+- Moves Posted date and Expires in days to the far right in the same header row on phones.
+- Removes the mobile rule that stacked dates under the poster name.
+- Uses smaller right-aligned date metadata to reduce visual clutter.
+- Keeps v0.9.4.16.9 Management Update profile/header behavior and all previous LotKeys fixes.
+
+LotKeys Drive Test v0.9.4.16.9
+Build query: ?build=094169
+Service worker: lotkeys-drive-test-v094169
+
+Management Update post header polish:
+- Shows the posting user's LotKeys Account profile photo on each Management Update card.
+- Moves the flagged position number and poster name directly to the right of the profile photo.
+- Removes Admin Level from the visible post header.
+- Shows the original Posted date in M/DD/YYYY format.
+- Shows expiration as a live remaining-day count (for example, Expires in 182 days).
+- The profile photo is tappable and opens the poster's public LotKeys profile.
+- Keeps v0.9.4.16.8 Top Contributors cleanup, v0.9.4.16.7 Listing refresh pacing, and all current Listing/Facebook workflow fixes.
+
+LotKeys Drive Test v0.9.4.16.8
+Build query: ?build=094168
+Service worker: lotkeys-drive-test-v094168
+
+Top Contributors cleanup:
+- Moves the smallest winner crowns on compact Account / Vehicle Profile cards slightly upward.
+- Moves the small Top Contributors chart crowns upward by roughly twice that adjustment for cleaner avatar alignment.
+- Removes the testing-only Month-End Wrap-Up feature.
+- Removes the duplicate top-level Replay Monthly Reveal button; replay remains available inside the previous-month contributor positions view.
+- Renames the administrative standings button to "View Last Months Contributor Positions".
+- Keeps v0.9.4.16.7 Listings refresh pacing and all current Listing / Facebook workflow fixes.
+
+LotKeys Drive Test v0.9.4.16.7
+Build query: ?build=094167
+Service worker: lotkeys-drive-test-v094167
+
+Listings refresh pacing:
+- Opening/switching to the Listings tab renders cached Listings immediately instead of forcing a Drive refresh every time.
+- The normal startup refresh remains.
+- Background Listing refresh runs only when 5 minutes have elapsed since the last successful Listing refresh.
+- Returning to the app / browser focus checks the 5-minute age first instead of refreshing unconditionally.
+- Refresh Listings always forces an immediate check.
+- A successful Listing Drive write updates the Listing refresh clock so creating/editing a Listing does not immediately trigger a redundant refresh.
+- Keeps v0.9.4.16.6 combined Listing workspace and all prior Listing/photo/Profile sync fixes.
+
+LotKeys Drive Test v0.9.4.16.6
+Build query: ?build=094166
+Service worker: lotkeys-drive-test-v094166
+
+Combined Marketplace Listing workspace:
+- Tapping a Listing now opens the Facebook Posting Assistant directly.
+- Listing details and Posting Assistant are merged into one screen instead of two overlapping modals.
+- Step 1 keeps the saved photo review and now shows Created date, Posted date and Carfax findings.
+- Open Facebook Vehicle Selling is moved near the top immediately after Listing photo/details review.
+- Facebook URL management and cumulative view snapshots live together at the bottom.
+- View history remains visible in the same screen.
+- Duplicate, Edit and Delete remain available at the bottom of the combined workspace.
+- Keeps v0.9.4.16.5 Facebook Marketplace Edmonton location presets and all prior Listing/photo/Profile sync fixes.
+
+LotKeys Drive Test v0.9.4.16.5
+Build query: ?build=094165
+Service worker: lotkeys-drive-test-v094165
+
+Facebook Marketplace Location presets:
+- Adds Edmonton, Alberta.
+- Adds Downtown Edmonton.
+- Adds Southeast Edmonton, AB, Canada.
+- Built-in Facebook presets appear before personal Saved Posting Locations in Listing creation.
+- The exact Facebook location name is stored in the Listing snapshot and carries into the Facebook Assistant.
+- More exact Facebook location presets can be added in future releases.
+- Keeps v0.9.4.16.4 unified Listing photo grid, v0.9.4.16.3 profile field options and v0.9.4.16.1 Listing Drive sync repair.
+
+LotKeys Drive Test v0.9.4.16.4
+Build query: ?build=094164
+Service worker: lotkeys-drive-test-v094164
+
+Unified Marketplace Listing photo picker:
+- Replaces the duplicate selected-photo + Vehicle Profile photo sections with one grid.
+- Tap any photo to toggle it on/off; unselected photos are visibly grayed out.
+- Selected photo numbering is derived from each selected image's position in the unified grid.
+- Centered drag handle reorders the whole grid and immediately recalculates selected Facebook photo order.
+- Added Listing photos are auto-selected and inserted first in the file-selection order.
+- Up to 20 photos may be selected for Facebook; unselected Listing Assets remain available for later re-use.
+- Adds persisted photoPickerOrder to Listing Drive data while keeping photoOrder as the selected Facebook transfer order.
+- Keeps v0.9.4.16.3 Facebook-compatible color/condition Profile options, v0.9.4.16.2 unified 20-photo rules, and v0.9.4.16.1 Listing Drive sync repair.
+
+LotKeys Drive Test v0.9.4.16.3
+Build query: ?build=094163
+Service worker: lotkeys-drive-test-v094163
+
+Vehicle Profile Facebook field standardization:
+- Exterior Color and Interior Color are dropdowns using Facebook's supported vehicle-color list.
+- Vehicle Condition is a dropdown using Excellent, Very good, Good, Fair, Poor.
+- Existing Grey is normalized to Gray and Off-White variants to Off white; unsupported legacy colors display as Other when edited.
+- These Profile values continue to carry into Marketplace Listings and the Facebook Assistant.
+- Keeps v0.9.4.16.2 unified Listing photo selection and v0.9.4.16.1 Listing Drive sync repair.
+
+LotKeys Drive Test v0.9.4.16.2
+Build query: ?build=094162
+Service worker: lotkeys-drive-test-v094162
+
+Listing photo selection update:
+- New Listings start with all Vehicle Profile photos unchecked.
+- Photos added directly to a Listing are checked automatically and remain Listing Assets.
+- Removes the separate Choose Vehicle Profile Photos and Reset to Inventory Order buttons.
+- Expand & Order Listing Photos now contains the selected draggable order plus all Vehicle Profile photo check choices in one place.
+- The 20-photo Facebook Marketplace limit is still enforced across Profile and Listing-added photos.
+- Existing Listings preserve their saved photo selection/order when edited.
+- Keeps the v0.9.4.16.1 Listing Drive sync repair and stranded-Listing retry behavior.
+
+LotKeys Drive Test v0.9.4.16.1
+Build query: ?build=094161
+Service worker: lotkeys-drive-test-v094161
+
+Full release based on current v0.9.4.15 source.
+
+Listing sync correction:
+- Restores the known-good DriveSync Listing serialization boundary: DriveSync writes the Listing's already-normalized photoOrder instead of calling App.normalizePhotoOrder across a private scope.
+- Fixes the ReferenceError that left new Marketplace Listings local/error while Inventory continued syncing normally.
+- Keeps schema v7 Facebook Assistant fields and the 20-photo selection UI.
+- Retries local/pending/syncing/error Listings on startup, focus, and app resume so stranded Listings can recover.
+- Restores the normal service worker; no injected release helper is required.
+
+LotKeys Drive Test v0.9.4.16
+Build query: ?build=09416
+Service worker: lotkeys-drive-test-v09416
+
+Full release source: current v0.9.4.15 repository plus v0.9.4.16 durable Listing reconciliation.
+
+Key v0.9.4.16 fix:
+- Retries local / pending / syncing / error Listings whenever Drive becomes available.
+- Rechecks stranded Listings on startup, focus, online/resume, visibility return and periodically while open.
+- Verifies that a synced Listing file still exists in the correct canonical Drive Listings folder.
+- Detects duplicate/legacy Listings folders for the current user, chooses one deterministic canonical folder and moves the newest Listing records into it.
+- Rebuilds Listings Index.json from the actual Drive Listing files instead of treating the index as authoritative.
+- Preserves existing Listing IDs, status, Facebook URL, photo order, description and other Listing data while recovering cross-device records.
+
+Preserved from v0.9.4.15:
+- Management Updates with image/video/file blocks and video card cleanup.
+- Month-End Top Contributors reveal, placement rings/crowns and custom audio.
+- Facebook Assistant companion fields and 20-photo Listing workflow.
+- Store connection, Account/Garage/Admin controls, Inventory sync, Listing alerts, Sold flow and media uploads.
+
+Release layout:
+- Standard LotKeys root layout: 11 files + assets folder.
+- v0.9.4.16 runtime helper lives inside assets/lotkeys-v09416.js rather than cluttering the repository root.
