@@ -723,7 +723,7 @@ async function lotKeysAudioDuration(blob){
   if(!blob)return 0;const url=URL.createObjectURL(blob);try{return await new Promise((resolve,reject)=>{const a=document.createElement('audio');let done=false;const finish=v=>{if(done)return;done=true;resolve(Number.isFinite(Number(v))?Number(v):0)};const fail=()=>{if(done)return;done=true;reject(new Error('LotKeys could not read the duration of that audio file.'))};a.preload='metadata';a.onloadedmetadata=()=>finish(a.duration);a.onerror=fail;a.src=url;setTimeout(()=>finish(a.duration||0),6000)})}finally{URL.revokeObjectURL(url)}
 }
 
-const DEFAULT_PUBLIC_SITE_URL = 'https://lot-keys.ca/';
+const DEFAULT_PUBLIC_SITE_URL = 'https://mrmilo34.github.io/Lot-Keys-TEST/';
 const DEFAULT_POST_BUDDY_RELEASE_URL = 'https://raw.githubusercontent.com/MrMilo34/Lot-Keys/main/extension/latest.json';
 
 function trustedPostBuddyUrl(value){
