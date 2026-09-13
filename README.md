@@ -1,26 +1,33 @@
-# LotKeys V0.9.4.73 — Drive-Published Info & Unified Award Celebrations
+# LotKeys V0.9.4.75 — Popup Shell & Leaderboard Contrast Repair
 
-This browser release gives the developer-facing LotKeys Info editor a single Google Drive-backed **Save & Publish** action, expands Award Drop into clear categories, and gives every newly granted Award the same recipient popup and unified top-layer celebration. It also removes the successful Post Buddy download’s `toast is not a function` alert. The proven V0.9.4.72 Inventory reconciliation and upload path are retained unchanged.
+This small browser release repairs the shared popup presentation shown in the V0.9.4.74 phone recording, adds contrast to tiny leaderboard scores, and removes duplicate Posting Buddy source/history from the public website package. It retains the V0.9.4.74 feature set and Posting Buddy V0.1.16.
 
-## V0.9.4.73 highlights
+## V0.9.4.75 highlights
 
-- **One-button platform notice:** **Garage → Dev Tool Kit → LotKeys Info** now ends in one **Save & Publish** action.
-- **Developer Files truth:** the first publish verifies or, with confirmation, creates `Lot-Keys Account / Developer Files` in the registered developer’s personal Google Drive. Every later publish replaces the same `LotKeys Info.json` file instead of creating clutter.
-- **Store delivery pointer:** the stable public-read Drive file ID is included in Store Access, so Store users read the current Drive message. The protected repository/bundled message remains the bootstrap and offline fallback.
-- **Automatic recovery:** a moved Developer Files folder keeps working by Drive ID, while a fresh device searches the personal account folder by role and name before asking to create anything. If the saved folder was deleted and cannot be found, LotKeys asks before creating a replacement.
-- **Info controls swapped:** the Information bubble now appears before the LotKeys Info bubble on phone and desktop.
-- **Five Award Drop categories:** **Special**, **Admin awarded**, **By Level**, **Automatic**, and **Other** are available without weakening Creator-only award rules.
-- **Award arrival popup:** automatic, Admin-approved, direct-grant and developer-grant paths queue one recipient-specific window with the Award artwork, public meaning and grant reason.
-- **Unified celebration:** Vehicle Sold, Monthly Wrap-Up and Award experiences now share the party-popper/confetti effect, rendered in its own browser top layer in front of the popup.
-- **Post Buddy success notice:** Garage now serves the included V0.1.15 ZIP, and a successful download no longer calls an out-of-scope `toast` symbol or displays a browser error.
+- **Shared popup repair:** closing a viewed user’s themed public Profile through Android Back or Escape can no longer leave its transparent dialog class on the next Inventory, Listing, wrap-up or other popup. Generic dialogs also declare their solid light/dark theme surface explicitly.
+- **Readable tiny scores:** values above very short leaderboard bars keep the user/bar color and receive a compact dark drop shadow so light accent colors remain readable against white.
+- **Actually clean extension delivery:** the public LotKeys ZIP ships only `extension/latest.json` and the current `extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.16.zip`. It excludes maintained development source and superseded V0.1.13–V0.1.15 ZIPs.
+- **No Buddy reinstall required:** Posting Buddy remains V0.1.16 because this update does not change its runtime.
 - **No Processor reinstall needed:** the installed V0.9.4.64 Store Processor remains current.
-- **V0.9.4.72 retained:** cross-device Inventory reconciliation, cache-first navigation, targeted Listing/Profile repair, faster bounded photo uploads, viewed-user public themes and deployment freshness checks remain included.
+- **V0.9.4.74 retained:** normal/admin point separation, month-end spacing, the 1.6 KB vehicle placeholder, longer combined celebration and Posting Buddy timing remain included.
 
 ## Required rollout
 
-Upload every item in the ZIP directly into the `Lot-Keys-TEST` repository root, including `lotkeys-info.js`, `lotkeys-info.json`, `extension/latest.json`, and the complete `extension/releases` folder. Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09473` and keep `CNAME` absent from TEST. Do not rerun `installLotKeysProcessor` when Apps Script already reports V0.9.4.64 with its trigger installed.
+Upload every item in the ZIP directly into the `Lot-Keys-TEST` repository root and open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09475`. Keep `CNAME` absent from TEST. Because GitHub file uploads do not delete older paths automatically, remove stale `extension/latest/`, `extension/source/`, and V0.1.13–V0.1.15 release ZIPs from TEST once; the only deployed extension files should be `extension/README.md`, `extension/latest.json`, and the V0.1.16 ZIP. Do not rerun `installLotKeysProcessor` when Apps Script already reports V0.9.4.64 with its trigger installed.
 
-After TEST passes, promote the same V0.9.4.73 files to `MrMilo34/Lot-Keys` while preserving that production repository’s `CNAME`. The first **Save & Publish** from the developer account creates or restores the stable Drive source and publishes its pointer into the connected Store’s access files; later edits replace that same file.
+After TEST passes, promote the same V0.9.4.75 files to `MrMilo34/Lot-Keys`, repeat the one-time stale extension-file cleanup there, and preserve that production repository’s `CNAME`.
+
+## Previous release
+
+# LotKeys V0.9.4.74 — Leaderboard Clarity, Vehicle Placeholder & Posting Time
+
+V0.9.4.74 made contributor scores readable at every bar height, separated private admin-approved points for administrators, adopted one tiny shared missing-vehicle image, extended the existing celebration with slower fading streamers, and bundled Posting Buddy V0.1.16 timing.
+
+## Previous release
+
+# LotKeys V0.9.4.73 — Drive-Published Info & Unified Award Celebrations
+
+V0.9.4.73 introduced the one-button Drive-backed LotKeys Info publisher, reordered the Info controls, grouped Award Drop categories, added recipient Award popups, unified the top-layer celebration, and repaired the Post Buddy download notice. It retained V0.9.4.72 Inventory reconciliation and Processor V0.9.4.64.
 
 ## Previous release
 
