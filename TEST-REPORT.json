@@ -1,0 +1,166 @@
+{
+  "release": "LotKeys 0.9.4.82 / Device Bridge Test Kit 0.1.0",
+  "date": "2026-09-20",
+  "baseline": "LotKeys 0.9.4.81 and Posting Buddy 0.1.23",
+  "tests": {
+    "models": {
+      "checks": 23,
+      "environment": "Node pure models; America/Edmonton time zone"
+    },
+    "browser": {
+      "passed": [
+        "Existing internal conversation rendered in global Hub",
+        "Repeated phone and email field labels increment",
+        "Contact saved with exactly one selected primary number",
+        "Private contact folder and Contact.json created through mocked Drive API",
+        "Primary/backup phone and alias search work",
+        "Customer colour follows the contact in global All",
+        "Device category and unread filters compose correctly",
+        "User-defined organization categories save and synchronize",
+        "Customer note saved only after explicit Save",
+        "Questions show known co-applicant note without credit/age inference",
+        "Selected document uploaded byte-for-byte and attached to the correct contact",
+        "Customer document path contains no Device transcript file",
+        "Appointment links customer/Vehicle and preserves Edmonton time in UTC",
+        "Day agenda card contains customer, stock, mileage and vehicle price",
+        "Month/Week/Day calendar controls change the actual view",
+        "Desktop calendar expands while mobile layout stays within viewport",
+        "Active Vehicle media prevents competing Hub Drive sync",
+        "Another-device revision is detected instead of silently overwriting",
+        "Use Drive version conflict choice actually selects remote data",
+        "Changing accounts cannot save the previous account\u2019s customer into the new one",
+        "Contact deletion removes attachments, linked appointments and local personal fields",
+        "Deletion tombstone prevents a stale-device contact resurrection",
+        "Shared personal root is rejected for private customer data",
+        "No JavaScript page errors throughout the browser workflows"
+      ],
+      "pageErrors": [],
+      "environment": "Chromium offline rendering; mocked IndexedDB/Google Drive. No live phone or Drive account."
+    },
+    "fullApp": {
+      "checks": 4,
+      "pageErrors": [],
+      "environment": "Entire production HTML/modules; storage/network, signed-in UI state and about:blank relative-URL base mocked; Google OAuth not exercised in isolated Chromium page"
+    },
+    "deviceClient": {
+      "passed": [
+        "Malformed, wrong-role and insecure pairing codes are rejected",
+        "Python AES-GCM event decrypts in actual JavaScript Device client",
+        "Duplicate, expired and tampered events do not create extra messages",
+        "Device unread state changes without an archive write",
+        "Actual JavaScript reply decrypts in Python and receives an acknowledgement",
+        "Phone rejection is not labelled delivered",
+        "Account changes stop sends and purge Device memory",
+        "Rapid disconnect/reconnect cannot strand the polling loop",
+        "Explicit disconnect removes messages and connection keys"
+      ],
+      "environment": "Actual Hub JavaScript WebCrypto client \u2194 Python adapter via localhost RAM relay; fictional messages, no carrier"
+    },
+    "relayAndMacFixture": {
+      "passed": [
+        "Pairing generates role-separated credentials and owner-only files; relay has no encryption key",
+        "Relay rejects bad bearer tokens and unapproved browser origins",
+        "Relay routes only to the opposite role and expires RAM envelopes",
+        "Relay payload contains ciphertext rather than readable message text",
+        "Adapter ignores tampered ciphertext",
+        "Two explicit test replies sent once each; no retry after account change",
+        "Mac adapter starts after existing history instead of importing it",
+        "Mac fixture filters outgoing/code messages and flags unsupported attachments honestly",
+        "Mac send remains disabled without explicit authorization"
+      ],
+      "limits": "No real Android notification, iPhone forwarding, macOS AppleScript or carrier delivery test. Mac database was fictional SQLite fixture."
+    },
+    "syntaxAndProtectedCode": {
+      "syntaxChecks": 16,
+      "appExistingFunctionsUnchanged": 660,
+      "appChangedFunctions": [
+        "storeWorkspaceAccessError",
+        "paintProtocolState",
+        "showVersionInfo",
+        "signOutLotKeysAccount"
+      ],
+      "protectedMediaFunctions": [
+        "syncVehicle",
+        "syncAssets",
+        "resumableCreate",
+        "uploadChunkSize",
+        "queueOwnedVehicleProfile",
+        "saveVehicleContributionRequest",
+        "syncVehicleNow",
+        "queueVehicleSync",
+        "hydrateVehicleAssets",
+        "refreshVehicleVideoMetadata"
+      ],
+      "messagingChangedFunctions": [
+        "openMessagesHome",
+        "openConversation",
+        "openLastBubble",
+        "refreshOpenUI"
+      ]
+    }
+  },
+  "notTested": [
+    "Real Google OAuth or Google Drive permissions/throughput/multi-device races",
+    "Android SDK compile/lint/signing or installation: no APK produced",
+    "Real Android notification/RemoteInput behavior, locked/background app behavior or carrier delivery",
+    "Real Mac Messages schema, iPhone forwarding, AppleScript send or rich/attributed message parsing",
+    "Physical phone camera behavior",
+    "Independent security/privacy/distribution audit",
+    "Google/Outlook calendar synchronization: not implemented"
+  ],
+  "browserTestDisclosure": "Chromium URL navigation is restricted in this environment. Tests use offline set_content with test-only simulated IndexedDB/network; full-app smoke also supplies a virtual URL base and seeded signed-in UI state. No browser policy was changed and no test mock is in production app files.",
+  "preservedByteForByte": [
+    "lotkeys-info.json",
+    "lotkeys-info.js",
+    "lotkeys-store-directory.json",
+    "lotkeys-awards.js",
+    "lotkeys-creator-access.json",
+    "assets/carfax-no-reported-accidents.png",
+    "assets/carfax-one-owner.png",
+    "assets/lotkeys-icon-192.png",
+    "assets/lotkeys-apple-touch-icon.png",
+    "assets/lotkeys-default-logo.png",
+    "assets/lotkeys-favicon.png",
+    "assets/vehicle-placeholder.webp",
+    "assets/carfax-low-kilometres.png",
+    "extension/latest.json",
+    "extension/README.md",
+    "processor/appsscript.json",
+    "processor/Code.gs",
+    "extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.23.zip",
+    "assets/awards/dude-wheres-my-car.png",
+    "assets/awards/silver-medal.png",
+    "assets/awards/sales-50.png",
+    "assets/awards/sales-500.png",
+    "assets/awards/sales-100.png",
+    "assets/awards/big-runner-up.png",
+    "assets/awards/bronze-medal.png",
+    "assets/awards/anti-celibratory.png",
+    "assets/awards/faster-as-f-boy.png",
+    "assets/awards/gold-medal.png",
+    "assets/awards/detail-detective.png",
+    "assets/awards/big-number-1.png",
+    "assets/awards/true-achiever.png",
+    "assets/awards/lotkeys-developer.png",
+    "assets/awards/sales-1000.png",
+    "assets/awards/hat-trick.png",
+    "assets/awards/almost-hat-trick.png",
+    "assets/awards/you-did-a-thing.png",
+    "assets/awards/no-newbie.png",
+    "assets/awards/maaaaybeee.png",
+    "assets/awards/mr-sales-man.png",
+    "assets/awards/new-kid-on-the-lot.png",
+    "assets/awards/folder-freak.png",
+    "assets/awards/iced-iced-baby.png",
+    "assets/awards/cherrys.png",
+    "assets/awards/the-dark-knight.png",
+    "assets/awards/ice-streak.png",
+    "assets/awards/mr-over-achiever.png",
+    "assets/awards/woop-woop.png",
+    "assets/awards/runner-up-to-runner-up.png",
+    "assets/awards/quarter-k-club.png"
+  ],
+  "functionalChecksPassed": 69,
+  "nativeManifestXML": "parsed; no SDK/Gradle build was executed",
+  "bundledBuddySha256": "4a72c636cb3d60716672d53ea0f25f543d30ea4766ac749583f6d6690f41f293"
+}

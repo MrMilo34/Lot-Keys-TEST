@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09481-fresh-video-management-updates';
+const CACHE='lotkeys-app-v09482-hub-private-customers-calendar';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -12,6 +12,11 @@ const CORE=[
   './lotkeys-creator-access.json',
   './lotkeys-store-directory.json',
   './lotkeys-messaging.js',
+  './lotkeys-hub-core.js',
+  './lotkeys-hub-store.js',
+  './lotkeys-device-client.js',
+  './lotkeys-hub.js',
+  './lotkeys-hub.css',
   './lotkeys-awards.js',
   './lotkeys-info.js',
   './lotkeys-info.json',

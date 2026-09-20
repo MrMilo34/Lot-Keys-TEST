@@ -1,9 +1,9 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.81",
-  "build": "09481",
-  "release": "fresh-video-management-updates",
+  "version": "0.9.4.82",
+  "build": "09482",
+  "release": "hub-private-customers-calendar",
   "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09481-fresh-video-management-updates",
-  "publishedAt": "2026-09-17"
+  "serviceWorkerCache": "lotkeys-app-v09482-hub-private-customers-calendar",
+  "publishedAt": "2026-09-20"
 }

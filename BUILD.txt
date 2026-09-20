@@ -1,3 +1,17 @@
+V0.9.4.82 HUB + PRIVATE CUSTOMERS + CALENDAR TEST RELEASE
+- Builds from the approved V0.9.4.81 app; preserves all Vehicle Profile media upload function bodies and Buddy V0.1.23.
+- Adds All/LotKeys/Device source categories with scoped filters and coloured Device organization subcategories.
+- Adds private, account-scoped customer contacts, repeated/renamed fields, email and a primary phone.
+- Stores contacts, notes, attachments and appointments in the owned, unshared personal Account/Hub area, never the Store directory.
+- Adds local cache, explicit revision conflicts, stale-editor rejection and permanent deletion with no-personal-data tombstones.
+- Adds camera/file customer attachments, saved-content cleanup and contact deletion with linked Hub appointments.
+- Adds Month/Week/Day calendar, chronological customer/Vehicle appointment cards and one-way .ics export.
+- Adds neutral Questions to Ask and explicit-approval local note suggestions; no automatic finance eligibility inference.
+- Integrates a session-only encrypted Device client; external phone access requires the separate experimental Bridge Test Kit.
+- Android companion source and Mac/iPhone adapter require setup and hardware validation; no automatic phone inbox access is claimed.
+- Store Processor V0.9.4.76 and Posting Buddy V0.1.23 remain unchanged; no reinstall for either component.
+- Build 09482; cache lotkeys-app-v09482-hub-private-customers-calendar.
+
 V0.9.4.81 FRESH VIDEO DISCOVERY + MANAGEMENT UPDATE POLISH
 - Builds directly on V0.9.4.80; parallel Vehicle Profile Photos + Video uploads, three-worker photos, resumable Drive sessions, MB diagnostics, V0.9.4.79 editor recovery, and all prior Store/Processor behavior remain intact.
 - Adds a targeted Vehicle Profile video-metadata refresh so Posting Buddy can see a video added after the LotKeys Listing was created without forcing the Listing to be edited/saved again.

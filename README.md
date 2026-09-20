@@ -1,18 +1,19 @@
-# LotKeys V0.9.4.81
+# LotKeys V0.9.4.82 — Hub test release
 
-V0.9.4.81 is a focused workflow update built directly on V0.9.4.80. It keeps the V0.9.4.80 parallel Vehicle Profile media uploader and V0.9.4.79 safe editor recovery unchanged while tightening Posting Buddy video discovery and Management Updates.
+Built forward from the user-approved V0.9.4.81 / Posting Buddy V0.1.23 media baseline.
 
-## Included
-- **Fresh Vehicle video discovery:** Posting Buddy can ask the open LotKeys tab to refresh the official Vehicle Profile Videos folder directly from Drive. A video added after a Marketplace Listing was created no longer requires re-saving the LotKeys Listing before the Buddy can discover it.
-- **Per-user More Media retained:** the signed-in user's own existing More Media Videos are checked separately; another user's More Media is never exposed and empty More folders are not created just for discovery.
-- **Management Updates cleanup:** admin controls are above the top post for administrators. Published images and videos no longer show device filenames, MIME types, or file sizes. Real downloadable documents/files keep their filename and open/download row.
-- **Posting Buddy V0.1.23 bundled:** video is prepared early and handed to Facebook first; selected Photos, Description and Details continue while Facebook handles the video. The fields timer finishes from live Facebook editor readiness rather than a fixed video delay.
-- **Existing update safety preserved:** selected photo updates still rebuild the Facebook photo set in the saved LotKeys order rather than appending duplicates; selected text fields remain replacement updates.
-- **Processor unchanged:** Store Processor V0.9.4.76 remains current.
+## Ready for controlled testing
 
-## Test deployment
-Upload the complete ZIP to `Lot-Keys-TEST`, keep `CNAME` absent, and open:
+Chat becomes Hub with All / LotKeys / Device categories, scoped unread filters, user-created coloured Device organization categories and searchable private customer contacts. Repeated phone/email/custom fields support renamed labels and a primary phone number. Existing internal messaging and VoIP remain available.
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09481`
+Private customer notes, Questions to Ask, camera/file attachments, individual/content/contact deletion and vehicle-linked Month/Week/Day appointments are implemented. Records synchronize to the user's owned, unshared personal Lot-Keys Account/Hub Drive area, with local account isolation, explicit conflicts and deletion tombstones. Calendar export is .ics only; no Google/Outlook two-way sync, automatic invitation or reminder is claimed.
 
-For the extension, install V0.1.23 unpacked, reload the LotKeys and Facebook tabs once, and test both a newly added official Vehicle Profile video and a video in the signed-in user's More Media.
+## Device messaging is a separate prototype
+
+Hub has an encrypted, session-only Device client. Actual texts require the separate Device Bridge Test Kit, adapter installation and an authorized private HTTPS relay. Android companion source is supplied but no compiled APK is included. iPhone testing uses a Mac intermediary; iPhone + Windows alone is not integrated. Native phone delivery has not been hardware-tested. Use the fictional-message simulator first.
+
+## Protected baseline
+
+Existing Vehicle Profile upload/resume function bodies, all original assets, awards/info code, Store Processor V0.9.4.76 and Posting Buddy V0.1.23 ZIP remain unchanged. No Processor reinstall or Buddy update is required. Upload all release files together to Lot-Keys-TEST; do not add CNAME to TEST. Open the test site with `?build=09482`.
+
+Read **HUB-TEST-GUIDE.md** first. **HUB-ARCHITECTURE.md** explains data boundaries and prototype limits. **TEST-REPORT.json** records exactly what was and was not tested. Start with fictional customer data, not IDs or financing records.

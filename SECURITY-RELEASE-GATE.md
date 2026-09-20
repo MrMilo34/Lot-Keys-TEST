@@ -2,7 +2,7 @@
 
 ## Current status: team testing
 
-V0.9.4.81 is suitable for controlled testing with approved Google accounts and non-sensitive dealership test data. It is **not yet the public-production security finish line**.
+V0.9.4.82 is suitable for controlled testing with approved Google accounts and non-sensitive dealership test data. It is **not yet the public-production security finish line**.
 
 The website remains a static browser application. Google Drive enforces file access, and the installed Store Processor is the trusted writer for the current Inventory test model; a production service is still required as the final authority for multi-Store Creator/Admin roles, global contact discovery, cross-Store message delivery, abuse controls, and long-lived authorization secrets.
 
@@ -68,7 +68,7 @@ The website remains a static browser application. Google Drive enforces file acc
    - Test direct/group Chat, block/mute/admin removal, unread state, key changes, attachments, and calls across two networks.
    - Complete accessibility, privacy, threat-model, and independent security reviews.
 
-## Safe V0.9.4.81 test rules
+## Safe V0.9.4.82 test rules
 
 - Keep Google OAuth in **Testing** and explicitly add every tester.
 - Share the Store folder only with those same tester Google accounts.
@@ -78,3 +78,7 @@ The website remains a static browser application. Google Drive enforces file acc
 - Back up the Store folder before testing migrations or administration actions.
 - Do not advertise Chat/calls as production-secure or always-on while the app is closed.
 - Do not distribute an EXE that modifies Chrome policy or silently installs the extension. Use the reviewed ZIP during testing and the Chrome Web Store for public release.
+
+
+## Hub additional release gates (V0.9.4.82)
+This is not a production-ready finance records vault. Validate private Drive permission inheritance, shared-computer/local-cache retention, cross-device conflicts/deletion, attachment upload failure cleanup and lawful customer-record retention before real deployment. Do not collect SIN or credit-eligibility decisions in ordinary notes. The Device bridge requires independent security review, native hardware tests, permission/distribution review, relay operational hardening and explicit user consent. Do not place pairing JSON, tokens, TLS keys or customer documents in a public repository. iPhone needs the documented Mac prototype path; do not advertise unsupported iPhone/Windows integration.
