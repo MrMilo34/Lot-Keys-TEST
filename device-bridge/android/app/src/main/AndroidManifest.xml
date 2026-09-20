@@ -1,0 +1,17 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <queries>
+    <intent><action android:name="android.intent.action.SENDTO" /><data android:scheme="smsto" /></intent>
+    <package android:name="com.google.android.apps.messaging" />
+    <package android:name="com.samsung.android.messaging" />
+  </queries>
+  <application android:label="LotKeys Device Bridge (Test)" android:icon="@android:drawable/ic_dialog_email" android:allowBackup="false" android:usesCleartextTraffic="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+    <activity android:name=".MainActivity" android:exported="true">
+      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+    </activity>
+    <service android:name=".BridgeNotificationListener" android:label="LotKeys live messaging bridge" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" android:exported="true">
+      <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
+    </service>
+  </application>
+</manifest>
