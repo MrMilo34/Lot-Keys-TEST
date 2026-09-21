@@ -1,6 +1,10 @@
-LotKeys 0.9.4.92 / 09492 — controlled TEST release
-Date: 2026-09-21
-Base: MrMilo34/Lot-Keys-TEST @ ba7df774436bb185ae6df84510b0a9e77d5fd739
-Android: keep installed Device Bridge 0.1.1. No native files changed.
-Posting Buddy 0.1.23 and Processor 0.9.4.76 unchanged.
-See RELEASE-0.9.4.92.md and TEST-REPORT.json for implementation and test boundaries.
+LotKeys 0.9.4.94 / 09494 — Phone Mirror controlled TEST release
+Packaged: 2026-09-21T17:22:55.082703+00:00
+Website baseline: 0.9.4.93 @ 2e8c1ec2e52ce36f1b2b89409d1b3925ed823533
+Website .94: NOT DEPLOYED; manual TEST upload required.
+Android: install separate Phone Mirror 0.2.0 Test APK; stop old notification Bridge.
+Android build: GitHub Actions 35629447834, 0 lint errors / 10 warnings.
+Completed automated suites: 88 checks. No physical phone/carrier verification.
+Private RCS, MMS sending and attachment download NOT implemented.
+Processor, Posting Buddy, CRM store, pairing storage and artwork unchanged.
+See RELEASE-0.9.4.94.md and TEST-REPORT.json. Older numbered release docs are historical.

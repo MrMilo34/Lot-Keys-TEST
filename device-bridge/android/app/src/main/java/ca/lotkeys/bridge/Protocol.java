@@ -500,12 +500,8 @@ final class Protocol {
                     )
                 ) {
 
-                    heartbeat(true);
-                    result.add(
-                        new JSONObject()
-                            .put("kind", "hello")
-                            .put("client", p.optString("client"))
-                    );
+                    // Preserve the fresh browser challenge and client identity.
+                    result.add(p);
                     continue;
                 }
 

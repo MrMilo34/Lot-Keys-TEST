@@ -1,0 +1,99 @@
+LOTKEYS PHONE MIRROR — START HERE
+Website 0.9.4.94 + Android Phone Mirror 0.2.0 TEST
+Prepared September 21, 2026
+
+THIS IS AN SMS/MMS TEST BUILD, NOT A COMPLETE GOOGLE MESSAGES / RCS MIRROR.
+The APK compiled and passed Android lint with 0 errors and 10 warnings.
+88 automated checks passed in five completed browser/model/transport suites.
+The actual phone, carrier SMS, screen-off connection and reboot have NOT been tested here.
+The .94 website is NOT yet live. Later repository writes were blocked.
+
+FAST SETUP
+
+1) WEBSITE — PC
+   Extract LotKeys-0.9.4.94-Website-Update.zip.
+   Open your MrMilo34 / Lot-Keys-TEST repository, main branch.
+   Choose Add file > Upload files, and upload ALL EIGHT extracted files to the ROOT.
+   Do not upload the ZIP itself; do not create a nested folder; do not use the production repository.
+   Commit together, wait for the Pages deployment, then reload LotKeys on PC and phone.
+   Confirm version 0.9.4.94. Do NOT clear site storage, delete customer data, or reset the app.
+   Hard-refresh the desktop if necessary; close/reopen the phone PWA after deployment.
+   The full website ZIP is an alternative backup, not an additional required upload.
+
+2) ANDROID — YOUR PHONE
+   Stop/disable the OLD LotKeys Device Bridge notification app first.
+   Install LotKeys-Phone-Mirror-0.2.0-Test.apk.
+   It installs separately as "LotKeys Phone Mirror (Test)".
+   You do NOT need to change your default messaging app or create phone contacts.
+   Open it and press "1. Allow SMS access". Read and approve the SMS permission request.
+   Press "2. Allow background connection" and approve the system prompt.
+   Keep this test companion out of sleeping/deep-sleeping apps in your phone settings.
+   Paste the SAME device.json used with your existing relay (role MUST be "device").
+   Press "Save pairing & start mirror". A persistent mirroring notification should appear.
+   Do not paste device.json into the LotKeys WEBSITE.
+
+3) PC AND PHONE LOTKEYS
+   Keep your existing Python relay and HTTPS tunnel windows running.
+   In BOTH LotKeys browser instances, use the SAME hub.json pairing (role "hub").
+   Existing saved pairing can be unlocked with its PIN rather than re-pasted.
+   Pairing credentials are not shared through customer Drive storage.
+   Open Hub > All or Device. Clear the search field.
+   The banner must identify Phone Mirror and say "SMS/MMS history".
+   "Android notification bridge [prototype]" means the old companion is still responding.
+   "RCS not included" is intentional; a private RCS-only thread will not appear in this build.
+
+FIRST LIVE TEST (USE A WILLING TEST RECIPIENT, NOT A CUSTOMER)
+
+A. Find a conversation known to contain ordinary SMS. Verify older phone messages appear.
+B. Open it on both PC and phone LotKeys. Confirm the same history is present.
+C. Use Send SMS on PC. Verify it arrives and appears in your normal phone messaging app.
+D. Reply directly from the normal phone messaging app using SMS. Verify both LotKeys views update.
+E. Turn the phone screen OFF for two minutes. Verify mirroring still updates from another device.
+F. Disconnect internet, try a draft, and confirm there is no delayed automatic send.
+   Restore internet. Verify automatic reconnection and refreshed history.
+G. Turn the phone OFF. Allow about 25 seconds for heartbeat expiry. History should hide and
+   sending should disable; saved customers/notes/documents/appointments should remain.
+H. Restart/unlock the phone and check automatic recovery without manually reopening the companion.
+   This is a required device acceptance check, not something the automated tests proved.
+
+SMS PERMISSION DOES NOT SHOW "ALLOWED"?
+
+Stop and diagnose permission access before judging synchronization.
+Android treats SMS permissions as restricted; some installation paths may not grant access.
+The source/test kit includes an OPTIONAL INSTALL-WITH-ADB.cmd for your own authorized phone.
+It uses the standard Android developer install flow; it does not switch your SMS app, root the
+phone, disable security protection, or force an SMS. Read its consent prompt before running.
+If policy or the installer still denies SMS access, keep using the phone and report the status.
+Do not enable a hidden/accessibility workaround or disable protection just to force installation.
+
+SENDING SAFETY
+
+Send SMS is SMS, not RCS. Carrier charges may apply.
+"Sent by phone" does not prove recipient delivery.
+If the result is "Not confirmed", check the normal messaging app before retrying.
+Cancel draft removes the local draft; it cannot recall a message already handed to the phone.
+There is no automatic outbox that resends later when the connection returns.
+Group threads and short codes are view-only. Use your normal phone app for those.
+
+WHAT THIS BUILD DOES NOT DO
+
+No private RCS history or RCS sending. No MMS sending or attachment downloads.
+MMS text can be shown; media is labelled "open on phone".
+No new-number compose flow; reply to existing supported SMS threads only.
+No replacement hosted relay: the existing relay/tunnel must stay up.
+A changed temporary tunnel address still needs updated pairing.
+This is an Android test APK, not an iPhone companion or a Google Play release.
+
+PRESERVED
+
+LotKeys customer names, categories, notes, documents, requirements and appointments remain.
+Phone communication stays on the phone. The mirror uses transient in-memory views.
+The Hub CRM store, internal messaging module, processor, extension and artwork are unchanged.
+Do not manually delete or reset them during installation.
+
+FULL TEST RECORD
+
+See LotKeys-0.9.4.94-Test-Report.json or the README in the source/test kit.
+One older broad UI test suite did not finish because its customer-dialog selector matched two
+open dialogs. Its six earlier passes are NOT included in the 88 completed-suite checks.
+This is not a claim of complete UI regression coverage or real-device reliability.

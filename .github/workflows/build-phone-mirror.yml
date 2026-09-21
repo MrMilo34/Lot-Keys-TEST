@@ -6,7 +6,6 @@ on:
     paths:
       - '.github/workflows/build-phone-mirror.yml'
       - 'device-bridge/**'
-      - 'mirror-update/**'
 
 permissions:
   contents: read
@@ -17,9 +16,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Apply reviewed mirror update in build workspace only
-        run: |
-          if [ -f mirror-update/apply.py ]; then python3 mirror-update/apply.py; fi
       - name: Package source snapshot
         run: |
           python3 - <<'PY'
