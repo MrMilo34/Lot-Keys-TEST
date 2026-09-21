@@ -7,6 +7,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.service.notification.NotificationListenerService;
@@ -18,11 +20,13 @@ public final class MainActivity extends Activity {
     private EditText pairing,packages;
     private TextView status;
     private CheckBox consent;
+    private final Handler ui=new Handler(Looper.getMainLooper());
+    private final Runnable statusLoop=new Runnable(){@Override public void run(){refreshStatus();ui.postDelayed(this,1000);}};
     @Override public void onCreate(Bundle state){
         super.onCreate(state);getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         ScrollView scroll=new ScrollView(this);LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);int pad=(int)(20*getResources().getDisplayMetrics().density);box.setPadding(pad,pad*2,pad,pad*2);scroll.addView(box);setContentView(scroll);
-        text(box,"LotKeys Device Bridge",25);text(box,"ANDROID PROTOTYPE · 0.1.0",13);
-        text(box,"Relays new messages exposed in notifications from the messaging apps you approve, plus their live Reply action. It does not import your SMS history, contacts or photos. Obvious verification-code notifications are filtered, but this is not a guarantee against sensitive text appearing. Your phone number stays with your phone/carrier.",15);
+        text(box,"LotKeys Device Bridge",25);text(box,"ANDROID PROTOTYPE · 0.1.1",13);
+        text(box,"Relays approved messaging notifications and their live Reply action. On reconnect it can replay conversations that Android still exposes as active notifications. It does not read the full SMS/RCS database, contacts or photos. Obvious verification-code notifications are filtered, but this is not a guarantee against sensitive text appearing.",15);
         text(box,"Paired browser replies can send through an active notification. Only enable this on a device you own or are authorized to use. Stop the bridge at any time below. No SMS or notification content is saved by this companion.",15);
         pairing=new EditText(this);pairing.setHint("Paste Device pairing JSON");pairing.setMinLines(3);pairing.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE|android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);box.addView(pairing);
         text(box,"Allowed messaging app package(s), separated by commas. The default SMS app is prefilled; no other app is enabled automatically.",13);
@@ -38,11 +42,12 @@ public final class MainActivity extends Activity {
         Button access=new Button(this);access.setText("Open notification access settings");box.addView(access);access.setOnClickListener(v->startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
         Button stop=new Button(this);stop.setText("STOP bridge & forget pairing");box.addView(stop);stop.setOnClickListener(v->new AlertDialog.Builder(this).setTitle("Disconnect device?").setMessage("Stops relaying and deletes this companion’s saved pairing. Messages on the phone are unchanged.").setNegativeButton("Cancel",null).setPositiveButton("Disconnect",(a,b)->{try{SecureConfig.clear(this);BridgeNotificationListener.reload(this);refreshStatus();}catch(Exception ex){error("Could not clear pairing.");}}).show());
         status=text(box,"Not connected",14);
-        text(box,"Pairing is encrypted using Android Keystore. Message content is memory-only and is not backed up. Sending depends on the messaging app exposing a free-text Reply action; notification dismissal revokes that reply. The phone, notification listener and private HTTPS relay must remain available. This test build is not a replacement default SMS app.",13);
+        text(box,"Pairing is encrypted using Android Keystore. Message content is memory-only and is not backed up. Notification dismissal revokes only the current Reply action; it no longer tells Hub to erase that conversation. The bridge retries temporary relay interruptions automatically.",13);
         refreshStatus();
     }
     private TextView text(LinearLayout box,String value,int size){TextView t=new TextView(this);t.setText(value);t.setTextSize(size);t.setPadding(0,12,0,12);box.addView(t);return t;}
     private void error(String message){new AlertDialog.Builder(this).setTitle("Bridge setup").setMessage(message).setPositiveButton("OK",null).show();}
     private void refreshStatus(){if(status==null)return;boolean allowed=getSystemService(NotificationManager.class).isNotificationListenerAccessGranted(new ComponentName(this,BridgeNotificationListener.class));boolean enabled=getSharedPreferences("bridge",0).getBoolean("enabled",false);status.setText((enabled?"Enabled":"Stopped")+" · Notification access "+(allowed?"granted":"not granted")+"\n"+BridgeNotificationListener.state);}
-    @Override protected void onResume(){super.onResume();refreshStatus();}
+    @Override protected void onResume(){super.onResume();ui.removeCallbacks(statusLoop);ui.post(statusLoop);}
+    @Override protected void onPause(){ui.removeCallbacks(statusLoop);super.onPause();}
 }
