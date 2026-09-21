@@ -1,9 +1,9 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.86",
-  "build": "09486",
-  "release": "hub-device-refinement",
+  "version": "0.9.4.87",
+  "build": "09487",
+  "release": "hub-stale-update-notice-fix",
   "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09486-hub-device-refinement",
+  "serviceWorkerCache": "lotkeys-app-v09487-hub-stale-update-notice-fix",
   "publishedAt": "2026-09-20"
 }
