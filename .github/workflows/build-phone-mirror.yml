@@ -15,6 +15,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Verify website navigation and JavaScript
+        run: node tests/navigation-regression-check.mjs
       - name: Package source snapshot
         run: |
           python3 - <<'PY'

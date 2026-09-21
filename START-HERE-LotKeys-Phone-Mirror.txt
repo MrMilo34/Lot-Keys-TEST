@@ -1,24 +1,22 @@
 LOTKEYS PHONE MIRROR — START HERE
-Website 0.9.4.94 + Android Phone Mirror 0.2.0 TEST
+Website 0.9.4.95 + Android Phone Mirror 0.2.0 TEST
 Prepared September 21, 2026
 
 THIS IS AN SMS/MMS TEST BUILD, NOT A COMPLETE GOOGLE MESSAGES / RCS MIRROR.
 The APK compiled and passed Android lint with 0 errors and 10 warnings.
 88 automated checks passed in five completed browser/model/transport suites.
 The actual phone, carrier SMS, screen-off connection and reboot have NOT been tested here.
-The .94 website is NOT yet live. Later repository writes were blocked.
+The .95 website is published from the complete Lot-Keys-TEST main branch.
 
 FAST SETUP
 
 1) WEBSITE — PC
-   Extract LotKeys-0.9.4.94-Website-Update.zip.
-   Open your MrMilo34 / Lot-Keys-TEST repository, main branch.
-   Choose Add file > Upload files, and upload ALL EIGHT extracted files to the ROOT.
-   Do not upload the ZIP itself; do not create a nested folder; do not use the production repository.
-   Commit together, wait for the Pages deployment, then reload LotKeys on PC and phone.
-   Confirm version 0.9.4.94. Do NOT clear site storage, delete customer data, or reset the app.
+   Open your MrMilo34 / Lot-Keys-TEST repository and the newest successful Actions run.
+   Download LotKeys-Phone-Mirror-Source for the complete repository folder backup.
+   The main branch deploys through GitHub Pages; do not upload a partial patch or nested folder.
+   Reload LotKeys on PC and phone and confirm version 0.9.4.95.
+   Do NOT clear site storage, delete customer data, reset the app, or replace working pairing files.
    Hard-refresh the desktop if necessary; close/reopen the phone PWA after deployment.
-   The full website ZIP is an alternative backup, not an additional required upload.
 
 2) ANDROID — YOUR PHONE
    Stop/disable the OLD LotKeys Device Bridge notification app first.
@@ -93,7 +91,8 @@ Do not manually delete or reset them during installation.
 
 FULL TEST RECORD
 
-See LotKeys-0.9.4.94-Test-Report.json or the README in the source/test kit.
+See RELEASE-0.9.4.95.md for the navigation hotfix and TEST-REPORT.json for the 0.9.4.94
+Phone Mirror test record, or read the README in the complete source artifact.
 One older broad UI test suite did not finish because its customer-dialog selector matched two
 open dialogs. Its six earlier passes are NOT included in the 88 completed-suite checks.
 This is not a claim of complete UI regression coverage or real-device reliability.

@@ -1,10 +1,22 @@
-# LotKeys 0.9.4.94 — Phone-source SMS/MMS mirror test
+# LotKeys 0.9.4.95 — Navigation recovery + Phone Mirror test
 
 **Use with the separately installed Phone Mirror 0.2.0 Test APK.**
 
-The website package is prepared for manual upload to **Lot-Keys-TEST**. It has not been deployed
-by this conversation. The Android sources were committed and compiled in GitHub Actions run
-35629447834; no physical phone/carrier or Google account was exercised.
+The complete website is published from the **Lot-Keys-TEST** main branch. GitHub Actions packages
+the whole repository as **LotKeys-Phone-Mirror-Source** and separately rebuilds the test APK.
+No browser storage reset, account reconnection or replacement pairing file is required for this hotfix.
+
+## 0.9.4.95 hotfix
+
+- Replaces the old page immediately when a tab is selected, so Account cannot remain visible under
+  an Inventory or Listings header.
+- Rejects late asynchronous renders and provides a safe retry after 12 seconds instead of leaving
+  the app indefinitely split or frozen.
+- Moves Account-icon and Listing-alert database reads off the blocking navigation path.
+- Keeps temporary vehicle-photo URLs alive until the cards that use them are removed, preventing
+  broken thumbnail tiles during refresh/navigation.
+- Reuses one cached user lookup while building Inventory cards, reducing phone database work.
+- Retains Phone Mirror 0.2.0 behavior, Store Processor 0.9.4.76 and Posting Buddy 0.1.23 unchanged.
 
 ## Scope
 
@@ -61,11 +73,11 @@ byte-for-byte unchanged from the .93 baseline; SHA-256 values are in TEST-REPORT
 
 ## Deployment
 
-Read START-HERE-LotKeys-Phone-Mirror.txt. Upload the eight files in Website-Update.zip together to
-the root of the TEST repository. The full website archive is an alternative; do not delete/recreate
-the repository or clear user browser storage. The Android APK is installed on the phone separately.
-Stop the old notification Bridge; use device.json in the companion and the same hub.json on both
-LotKeys browser instances. Retain your current PIN-protected browser pairing where present.
+Read START-HERE-LotKeys-Phone-Mirror.txt. For a local backup, download the newest successful Actions
+run’s **LotKeys-Phone-Mirror-Source** artifact; it contains the complete folder rather than a partial
+patch. Do not delete/recreate the repository or clear user browser storage. The Android APK is installed
+on the phone separately. Stop the old notification Bridge; use device.json in the companion and the
+same hub.json on both LotKeys browser instances. Retain your current PIN-protected browser pairing.
 
 ## Official API references checked September 21, 2026
 
