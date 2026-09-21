@@ -1,10 +1,10 @@
-LotKeys 0.9.4.95 / 09495 — Navigation recovery hotfix + Phone Mirror controlled TEST release
-Packaged: 2026-09-21T21:17:48Z
+LotKeys 0.9.4.96 / 09496 — Lightweight Inventory/Listings cache hotfix + Phone Mirror controlled TEST release
+Packaged: 2026-09-21
 Website baseline: 0.9.4.94 @ cc1b97b72b62f632115e42758f8f94b692da9b42
-Website .95: deployed from the complete Lot-Keys-TEST main branch through GitHub Pages.
+Website .96: lightweight card summaries and progressive covers; full media/sync records preserved.
 Android: install separate Phone Mirror 0.2.0 Test APK; stop old notification Bridge.
 Android: source and APK behavior unchanged from 0.9.4.94; GitHub Actions rebuilds the complete artifact set.
-Completed automated suites: 88 checks. No physical phone/carrier verification.
+Completed Phone Mirror suites: 88 checks. Browser cache/navigation regression checks run in GitHub Actions. No physical phone/carrier verification.
 Private RCS, MMS sending and attachment download NOT implemented.
 Processor, Posting Buddy, CRM store, pairing storage and artwork unchanged.
-See RELEASE-0.9.4.95.md for the navigation hotfix and RELEASE-0.9.4.94.md / TEST-REPORT.json for the Phone Mirror test record.
+See RELEASE-0.9.4.96.md for this hotfix, RELEASE-0.9.4.95.md for navigation recovery, and RELEASE-0.9.4.94.md / TEST-REPORT.json for the Phone Mirror test record.

@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09495-navigation-recovery';
+const CACHE='lotkeys-app-v09496-lightweight-lists';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

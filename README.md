@@ -1,10 +1,26 @@
-# LotKeys 0.9.4.95 — Navigation recovery + Phone Mirror test
+# LotKeys 0.9.4.96 — Fast Inventory/Listings recovery + Phone Mirror test
 
 **Use with the separately installed Phone Mirror 0.2.0 Test APK.**
 
 The complete website is published from the **Lot-Keys-TEST** main branch. GitHub Actions packages
 the whole repository as **LotKeys-Phone-Mirror-Source** and separately rebuilds the test APK.
 No browser storage reset, account reconnection or replacement pairing file is required for this hotfix.
+
+## 0.9.4.96 hotfix
+
+- Adds lightweight IndexedDB summaries for Inventory and Listings cards. Full cached photos, videos,
+  documents and upload checkpoints stay in their original records and are no longer cloned before a
+  list can open.
+- Builds those summaries and a separate cover-photo cache during the automatic database upgrade;
+  no saved-data reset or Drive re-download is required.
+- Hydrates card thumbnails progressively after the list is interactive, using the local cover cache
+  first and Google Drive only when needed.
+- Removes the 12-second self-cancel loop: a slow route reports that it is still opening and remains
+  allowed to finish, with a retry offered only after 45 seconds.
+- Reuses already-loaded Vehicle and location summaries while building Listing cards instead of
+  reopening the blob-heavy Vehicle store once per Listing.
+- Leaves the known-good parallel/resumable upload, background resume, Drive reconciliation,
+  Store Processor 0.9.4.76 and Phone Mirror 0.2.0 paths unchanged.
 
 ## 0.9.4.95 hotfix
 

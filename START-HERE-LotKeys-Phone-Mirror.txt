@@ -1,12 +1,12 @@
 LOTKEYS PHONE MIRROR — START HERE
-Website 0.9.4.95 + Android Phone Mirror 0.2.0 TEST
+Website 0.9.4.96 + Android Phone Mirror 0.2.0 TEST
 Prepared September 21, 2026
 
 THIS IS AN SMS/MMS TEST BUILD, NOT A COMPLETE GOOGLE MESSAGES / RCS MIRROR.
 The APK compiled and passed Android lint with 0 errors and 10 warnings.
 88 automated checks passed in five completed browser/model/transport suites.
 The actual phone, carrier SMS, screen-off connection and reboot have NOT been tested here.
-The .95 website is published from the complete Lot-Keys-TEST main branch.
+The .96 website is published from the complete Lot-Keys-TEST main branch.
 
 FAST SETUP
 
@@ -14,7 +14,7 @@ FAST SETUP
    Open your MrMilo34 / Lot-Keys-TEST repository and the newest successful Actions run.
    Download LotKeys-Phone-Mirror-Source for the complete repository folder backup.
    The main branch deploys through GitHub Pages; do not upload a partial patch or nested folder.
-   Reload LotKeys on PC and phone and confirm version 0.9.4.95.
+   Reload LotKeys on PC and phone and confirm version 0.9.4.96.
    Do NOT clear site storage, delete customer data, reset the app, or replace working pairing files.
    Hard-refresh the desktop if necessary; close/reopen the phone PWA after deployment.
 
@@ -91,7 +91,8 @@ Do not manually delete or reset them during installation.
 
 FULL TEST RECORD
 
-See RELEASE-0.9.4.95.md for the navigation hotfix and TEST-REPORT.json for the 0.9.4.94
+See RELEASE-0.9.4.96.md for the Inventory/Listings cache hotfix,
+RELEASE-0.9.4.95.md for navigation recovery, and TEST-REPORT.json for the 0.9.4.94
 Phone Mirror test record, or read the README in the complete source artifact.
 One older broad UI test suite did not finish because its customer-dialog selector matched two
 open dialogs. Its six earlier passes are NOT included in the 88 completed-suite checks.

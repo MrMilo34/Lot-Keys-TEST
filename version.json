@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.95",
-  "build": "09495",
-  "release": "navigation-recovery-phone-sms-mirror",
+  "version": "0.9.4.96",
+  "build": "09496",
+  "release": "lightweight-inventory-listings-cache",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09495-navigation-recovery",
+  "serviceWorkerCache": "lotkeys-app-v09496-lightweight-lists",
   "publishedAt": "2026-09-21",
   "basedOnCommit": "cc1b97b72b62f632115e42758f8f94b692da9b42"
 }

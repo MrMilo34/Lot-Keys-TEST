@@ -509,13 +509,13 @@ body[data-theme="dark"] #lotkeys-unlock-password,body[data-theme="dark"] .modern
 @media(prefers-reduced-motion:reduce){.lotkeys-guide-target,.readiness-btn.readiness-attention,.protocol-attention{animation:none!important}}
 .vehicle-placeholder-image{width:100%;height:100%;display:block;object-fit:cover;background:#f8f8f8}.vehicle-thumb-loading{width:100%;height:100%;display:block;background:linear-gradient(110deg,color-mix(in srgb,var(--ink) 7%,var(--card)) 28%,color-mix(in srgb,var(--ink) 2%,var(--card)) 42%,color-mix(in srgb,var(--ink) 7%,var(--card)) 56%);background-size:220% 100%;animation:vehicle-thumb-loading 1.15s linear infinite}@keyframes vehicle-thumb-loading{to{background-position-x:-220%}}body[data-theme="dark"] .vehicle-placeholder-image{background:#e9e9e9}.admin-profile-listing-thumb .vehicle-placeholder-image,.mini-thumb .vehicle-placeholder-image{width:100%;height:100%;object-fit:cover}@media(prefers-reduced-motion:reduce){.vehicle-thumb-loading{animation:none}}
 .pending-deal-form-field{border:1px solid color-mix(in srgb,var(--accent) 42%,var(--line))!important;border-radius:12px;padding:8px 10px!important;background:color-mix(in srgb,var(--accent) 6%,var(--card));box-shadow:none;margin-bottom:8px}.pending-deal-form-field .pending-deal-toggle{display:flex;align-items:center;gap:11px;margin:0;color:var(--ink);font-size:12px;line-height:1.2}.pending-deal-form-field .pending-deal-toggle input{flex:0 0 19px;margin:0}.vehicle-master-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;padding:0 14px;max-width:620px;margin-left:auto;margin-right:auto}.vehicle-master-photo-grid .photo-tile .drag-handle{left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);width:34px;height:34px;z-index:4;background:rgba(17,24,39,.78);color:#fff;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.22)}.vehicle-master-photo-grid .photo-tile .remove-photo{z-index:5}.contribution-decision-row{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:8px!important;align-items:start;padding:8px;border:1px solid var(--line);border-radius:11px;background:var(--card);font-size:11px}.contribution-decision-row>input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--accent)}.contribution-decision-row span,.contribution-decision-row strong,.contribution-decision-row small{display:block}.contribution-decision-row small{color:var(--muted);font-weight:500;margin-top:3px;word-break:break-word}.contribution-media-decisions{display:grid;gap:6px;margin-top:9px}.request-submit-status{border:2px solid var(--accent);border-radius:14px;padding:10px 12px;margin-top:10px;background:color-mix(in srgb,var(--accent) 8%,var(--card));font-size:11px;font-weight:850}.request-submit-status progress{width:100%;height:8px;margin-top:7px;accent-color:var(--accent)}
-/* V0.9.4.95 prevents split/frozen routes and preserves live vehicle thumbnails during navigation. */
+/* V0.9.4.96 opens Inventory/Listings from lightweight summaries while full media remains available to sync and profiles. */
 dialog:not(.sale-celebration-layer):not(.public-profile-modal){background:var(--card);color:var(--ink)}
 .builder-bar-value-outside,.builder-admin-value-outside{filter:drop-shadow(0 1px 1px rgba(15,23,42,.82)) drop-shadow(0 0 1px rgba(15,23,42,.45))}
 </style>
 <script>
 (() => {
-  const build='09495';
+  const build='09496';
   window.LotKeysBuild=build;
   const secure=location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
   if(!secure||!('serviceWorker' in navigator))return;
@@ -561,7 +561,7 @@ dialog:not(.sale-celebration-layer):not(.public-profile-modal){background:var(--
       </div>
     </header>
 
-    <div id="local-test-note" class="protocol-warning"><strong>LotKeys Drive Test · V0.9.4.95</strong> — Starting…<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button></div>
+    <div id="local-test-note" class="protocol-warning"><strong>LotKeys Drive Test · V0.9.4.96</strong> — Starting…<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button></div>
     <main id="main"><div class="lotkeys-boot-placeholder" aria-live="polite"><div class="lotkeys-boot-brand"><img src="./assets/lotkeys-default-logo.png" alt="" aria-hidden="true"><div><strong>Loading LotKeys…</strong><span>Restoring your Store and saved data</span></div></div><div class="lotkeys-boot-search"></div><div class="lotkeys-boot-stats"><i></i><i></i></div><div class="lotkeys-boot-lines"><i></i><i></i><i></i></div></div></main>
 
     <nav class="bottom-nav" aria-label="Primary">
@@ -604,10 +604,37 @@ dialog:not(.sale-celebration-layer):not(.public-profile-modal){background:var(--
   <div id="toast" class="toast" hidden></div>
 
   <script>
+function lotKeysListAsset(asset){
+  if(!asset||typeof asset!=='object')return asset;
+  const copy={...asset};delete copy.blob;return copy;
+}
+function lotKeysVehicleListSummary(value){
+  if(!value||typeof value!=='object')return value;
+  const copy={...value};
+  copy.photos=Array.isArray(value.photos)?value.photos.map(lotKeysListAsset):[];
+  copy.videos=[];copy.attachments=[];
+  delete copy.ownerSubmissionDraft;delete copy.localRecoverySnapshot;
+  return copy;
+}
+function lotKeysListingListSummary(value){
+  if(!value||typeof value!=='object')return value;
+  const copy={...value};
+  copy.listingAssets=Array.isArray(value.listingAssets)?value.listingAssets.map(lotKeysListAsset):[];
+  return copy;
+}
+function lotKeysVehicleCoverRecord(value){
+  const photo=Array.isArray(value?.photos)?value.photos[0]:null;
+  return value?.id&&photo?.blob?{id:String(value.id),photo:{...photo},updatedAt:Number(value.updatedAt)||Date.now()}:null;
+}
+function lotKeysListingCoverRecord(value){
+  if(!value?.id||!Array.isArray(value.listingAssets))return null;
+  const order=Array.isArray(value.photoOrder)?value.photoOrder:[],wanted=order.find(id=>value.listingAssets.some(asset=>asset?.id===id)),photo=value.listingAssets.find(asset=>asset?.id===wanted)||value.listingAssets[0]||null;
+  return photo?.blob?{id:String(value.id),photo:{...photo},updatedAt:Number(value.updatedAt)||Date.now()}:null;
+}
 const DB = (() => {
   const DB_NAME = 'autolister-v1';
-  const VERSION = 2;
-  const STORES = ['vehicles','listings','locations','analytics','settings','requestQueue'];
+  const VERSION = 3;
+  const STORES = ['vehicles','listings','locations','analytics','settings','requestQueue','vehicleSummaries','listingSummaries','vehicleCovers','listingCovers'];
   let db = null;
   let useMemory = false;
   const memory = Object.fromEntries(STORES.map(n => [n, new Map()]));
@@ -618,7 +645,7 @@ const DB = (() => {
         if (!('indexedDB' in window)) return reject(new Error('IndexedDB unavailable'));
         if(db) return resolve(db);
         const req=indexedDB.open(DB_NAME,VERSION);
-        req.onupgradeneeded=()=>{
+        req.onupgradeneeded=event=>{
           const d=req.result;
           STORES.forEach(name=>{
             if(!d.objectStoreNames.contains(name)){
@@ -627,10 +654,17 @@ const DB = (() => {
               if(name==='listings') s.createIndex('vehicleId','vehicleId',{unique:false});
             }
           });
+          if(event.oldVersion<3&&req.transaction){
+            const vehicleSummaries=req.transaction.objectStore('vehicleSummaries'),vehicleCovers=req.transaction.objectStore('vehicleCovers'),listingSummaries=req.transaction.objectStore('listingSummaries'),listingCovers=req.transaction.objectStore('listingCovers');
+            const vehicleCursor=req.transaction.objectStore('vehicles').openCursor();
+            vehicleCursor.onsuccess=()=>{const cursor=vehicleCursor.result;if(!cursor)return;const value=cursor.value,summary=lotKeysVehicleListSummary(value),cover=lotKeysVehicleCoverRecord(value);if(summary?.id)vehicleSummaries.put(summary);if(cover)vehicleCovers.put(cover);cursor.continue()};
+            const listingCursor=req.transaction.objectStore('listings').openCursor();
+            listingCursor.onsuccess=()=>{const cursor=listingCursor.result;if(!cursor)return;const value=cursor.value,summary=lotKeysListingListSummary(value),cover=lotKeysListingCoverRecord(value);if(summary?.id)listingSummaries.put(summary);if(cover)listingCovers.put(cover);cursor.continue()};
+          }
         };
-        req.onsuccess=()=>{db=req.result;resolve(db)};
+        req.onsuccess=()=>{db=req.result;db.onversionchange=()=>{db?.close();db=null};resolve(db)};
         req.onerror=()=>reject(req.error || new Error('IndexedDB failed'));
-        req.onblocked=()=>reject(new Error('IndexedDB blocked'));
+        req.onblocked=()=>console.warn('LotKeys phone-cache upgrade is waiting for another open LotKeys tab to close.');
       } catch(err) { reject(err); }
     });
   }
@@ -663,18 +697,24 @@ const DB = (() => {
   }
   async function put(name,value){
     await open();
-    if(useMemory){memory[name].set(value.id,value);return value;}
-    return new Promise(async(res,rej)=>{const r=(await store(name,'readwrite')).put(value);r.onsuccess=()=>res(value);r.onerror=()=>rej(r.error)});
+    if(useMemory){memory[name].set(value.id,value);if(name==='vehicles'){memory.vehicleSummaries.set(value.id,lotKeysVehicleListSummary(value));const cover=lotKeysVehicleCoverRecord(value);if(cover)memory.vehicleCovers.set(value.id,cover);else if(!value?.photos?.[0])memory.vehicleCovers.delete(value.id)}else if(name==='listings'){memory.listingSummaries.set(value.id,lotKeysListingListSummary(value));const cover=lotKeysListingCoverRecord(value);if(cover)memory.listingCovers.set(value.id,cover);else if(!value?.listingAssets?.length)memory.listingCovers.delete(value.id)}return value;}
+    const d=await open(),related=name==='vehicles'?['vehicleSummaries','vehicleCovers']:name==='listings'?['listingSummaries','listingCovers']:[];
+    if(!related.length)return new Promise((res,rej)=>{const r=d.transaction(name,'readwrite').objectStore(name).put(value);r.onsuccess=()=>res(value);r.onerror=()=>rej(r.error)});
+    return new Promise((res,rej)=>{const tx=d.transaction([name,...related],'readwrite');tx.objectStore(name).put(value);if(name==='vehicles'){tx.objectStore('vehicleSummaries').put(lotKeysVehicleListSummary(value));const cover=lotKeysVehicleCoverRecord(value);if(cover)tx.objectStore('vehicleCovers').put(cover);else if(!value?.photos?.[0])tx.objectStore('vehicleCovers').delete(value.id)}else{tx.objectStore('listingSummaries').put(lotKeysListingListSummary(value));const cover=lotKeysListingCoverRecord(value);if(cover)tx.objectStore('listingCovers').put(cover);else if(!value?.listingAssets?.length)tx.objectStore('listingCovers').delete(value.id)}tx.oncomplete=()=>res(value);tx.onerror=()=>rej(tx.error||new Error('IndexedDB write failed'));tx.onabort=()=>rej(tx.error||new Error('IndexedDB write aborted'))});
   }
   async function del(name,id){
     await open();
-    if(useMemory){memory[name].delete(id);return;}
-    return new Promise(async(res,rej)=>{const r=(await store(name,'readwrite')).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});
+    if(useMemory){memory[name].delete(id);if(name==='vehicles'){memory.vehicleSummaries.delete(id);memory.vehicleCovers.delete(id)}else if(name==='listings'){memory.listingSummaries.delete(id);memory.listingCovers.delete(id)}return;}
+    const d=await open(),related=name==='vehicles'?['vehicleSummaries','vehicleCovers']:name==='listings'?['listingSummaries','listingCovers']:[];
+    if(!related.length)return new Promise((res,rej)=>{const r=d.transaction(name,'readwrite').objectStore(name).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});
+    return new Promise((res,rej)=>{const tx=d.transaction([name,...related],'readwrite');tx.objectStore(name).delete(id);for(const linked of related)tx.objectStore(linked).delete(id);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error||new Error('IndexedDB delete failed'));tx.onabort=()=>rej(tx.error||new Error('IndexedDB delete aborted'))});
   }
   async function clear(name){
     await open();
-    if(useMemory){memory[name].clear();return;}
-    return new Promise(async(res,rej)=>{const r=(await store(name,'readwrite')).clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});
+    if(useMemory){memory[name].clear();if(name==='vehicles'){memory.vehicleSummaries.clear();memory.vehicleCovers.clear()}else if(name==='listings'){memory.listingSummaries.clear();memory.listingCovers.clear()}return;}
+    const d=await open(),related=name==='vehicles'?['vehicleSummaries','vehicleCovers']:name==='listings'?['listingSummaries','listingCovers']:[];
+    if(!related.length)return new Promise((res,rej)=>{const r=d.transaction(name,'readwrite').objectStore(name).clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});
+    return new Promise((res,rej)=>{const tx=d.transaction([name,...related],'readwrite');tx.objectStore(name).clear();for(const linked of related)tx.objectStore(linked).clear();tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error||new Error('IndexedDB clear failed'));tx.onabort=()=>rej(tx.error||new Error('IndexedDB clear aborted'))});
   }
   async function byIndex(name,index,key){
     await open();
@@ -1437,7 +1477,7 @@ const DriveSync = (() => {
   }
   function storeWorkspaceAccessError(rootName='',identityEmail='',cause=null){
     const store=String(rootName||'That LotKeys Store'),account=String(identityEmail||'this Google account');
-    const error=new Error(`${store} recognizes ${account}, but the account's private LotKeys workspace is not writable yet. Ask a Store Administrator to open LotKeys V0.9.4.95, run Repair Store Structure, and then reconnect. The Inventory can stay View only.`);
+    const error=new Error(`${store} recognizes ${account}, but the account's private LotKeys workspace is not writable yet. Ask a Store Administrator to open LotKeys V0.9.4.96, run Repair Store Structure, and then reconnect. The Inventory can stay View only.`);
     error.code='STORE_WORKSPACE_ACCESS_REQUIRED';if(cause)error.cause=cause;return error;
   }
   async function ensureStoreStructure(){
@@ -2907,6 +2947,18 @@ const App = (()=>{
   const VEHICLE_PLACEHOLDER_URL='./assets/vehicle-placeholder.webp';
   function vehiclePlaceholderHtml(alt='Vehicle photo unavailable'){return `<img class="vehicle-placeholder-image" src="${VEHICLE_PLACEHOLDER_URL}" alt="${esc(alt)}" loading="lazy" decoding="async">`}
   function vehicleThumbHtml(photo,alt='Vehicle photo'){return photo?.blob?`<img src="${blobUrl(photo.blob)}" alt="${esc(alt)}">`:photo?.driveFileId?'<span class="vehicle-thumb-loading" role="img" aria-label="Vehicle photo loading"></span>':vehiclePlaceholderHtml()}
+  function samePhotoAsset(left,right){return!!left&&!!right&&((left.id&&right.id&&String(left.id)===String(right.id))||(left.driveFileId&&right.driveFileId&&String(left.driveFileId)===String(right.driveFileId)))}
+  function vehicleCardSelector(id){const value=String(id||'');return `.open-vehicle[data-id="${globalThis.CSS?.escape?CSS.escape(value):value.replace(/["\\]/g,'\\$&')}"]`}
+  async function hydrateVehicleCardCover(vehicle){
+    const id=String(vehicle?.id||''),wanted=vehicle?.photos?.[0];if(!id||!wanted||wanted.blob||!document.querySelector(vehicleCardSelector(id)))return;
+    try{
+      const cached=await DB.get('vehicleCovers',id),cachedPhoto=cached?.photo;let photo=samePhotoAsset(cachedPhoto,wanted)?cachedPhoto:null,blob=photo?.blob||null;
+      if(!blob&&wanted.driveFileId&&DriveSync.connected()){blob=await DriveSync.fetchFileBlob(wanted.driveFileId);photo={...wanted,blob,type:blob.type||wanted.type||'image/jpeg'};DB.put('vehicleCovers',{id,photo,updatedAt:Date.now()}).catch(()=>{})}
+      if(!blob){const full=await DB.get('vehicles',id),fullPhoto=full?.photos?.find(item=>samePhotoAsset(item,wanted))||full?.photos?.[0];if(fullPhoto?.blob){photo=fullPhoto;blob=fullPhoto.blob}}
+      const card=document.querySelector(vehicleCardSelector(id)),thumb=card?.querySelector('.thumb');if(!thumb||!blob)return;thumb.innerHTML=`<img src="${blobUrl(blob)}" alt="${esc(vehicle.name||'Vehicle photo')}" loading="lazy" decoding="async">`;
+    }catch(error){console.warn('Background Vehicle cover hydration failed',id,error)}
+  }
+  function scheduleVehicleCoverHydration(vehicles=[]){const queue=vehicles.filter(vehicle=>vehicle?.photos?.[0]&&!vehicle.photos[0].blob).slice();if(!queue.length)return;setTimeout(()=>{const worker=async()=>{while(queue.length){const vehicle=queue.shift();if(!document.querySelector(vehicleCardSelector(vehicle?.id)))continue;await hydrateVehicleCardCover(vehicle)}};Promise.all(Array.from({length:Math.min(3,queue.length)},worker)).catch(error=>console.warn('Vehicle cover queue failed',error))},0)}
   async function setting(id,def=''){return (await DB.get('settings',id))?.value ?? def}
   async function setSetting(id,value){return DB.put('settings',{id,value})}
   const FORM_DRAFT_PREFIX='lotkeys-form-draft-v1',ACTIVE_FORM_DRAFT_KEY='lotkeys-active-form-draft-v1',FORM_DRAFT_TTL_MS=7*24*60*60*1000;
@@ -3059,7 +3111,7 @@ const App = (()=>{
 renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#description-add-type').value,block=DescriptionTemplates.defaultBlock(type);if(type==='price')block.config.text='{{PRICE}} + GST';if(type==='financing')block.config.text='Flexible financing options\nOAC (On Approved Credit)\nExtended warranty options available';if(type==='signature')block.config.text='Message {{USER_NAME}} to set up a viewing or to book.';t.blocks.push(block);renderBlocks()};$('#description-template-form').onsubmit=async e=>{e.preventDefault();t.name=$('#description-template-name').value.trim()||'My Marketplace Template';await DescriptionTemplates.save(t);await setSetting('lastDescriptionTemplateId',t.id);await markPersonalProfileChanged();modal.close();toast('Description template saved ✓');if(route==='profile')render()};if(!modal.open)modal.showModal()}
 
 
-  function paintProtocolState(st){const n=$('#local-test-note');if(!n||!st)return;const cls=st.level==='good'?'protocol-good':st.level==='bad'?'protocol-bad protocol-attention':'protocol-attention',label=st.level==='good'?'Authorized':st.level==='warn'?'Attention':'Action needed';n.className=`protocol-warning ${cls}`;n.innerHTML=`<strong>LotKeys Drive Test · V0.9.4.95</strong> — ${label}<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button>`;$('#version-info-btn')?.addEventListener('click',showVersionInfo);window.LotKeysPlatformInfo?.bindHeaderButton?.();bindLockControls()}
+  function paintProtocolState(st){const n=$('#local-test-note');if(!n||!st)return;const cls=st.level==='good'?'protocol-good':st.level==='bad'?'protocol-bad protocol-attention':'protocol-attention',label=st.level==='good'?'Authorized':st.level==='warn'?'Attention':'Action needed';n.className=`protocol-warning ${cls}`;n.innerHTML=`<strong>LotKeys Drive Test · V0.9.4.96</strong> — ${label}<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button>`;$('#version-info-btn')?.addEventListener('click',showVersionInfo);window.LotKeysPlatformInfo?.bindHeaderButton?.();bindLockControls()}
   async function updateProtocolNote(){paintProtocolState(await getReadinessState())}
   async function showVersionInfoV09450(){const signed=!!(await setting('currentAccountEmail','')),st=await getReadinessState();modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.4.50</div><h2>What’s new</h2></div><button class="close">×</button></div><div class="card" style="box-shadow:none"><div class="readiness-hero ${st.level}" style="margin-bottom:10px"><span class="readiness-big-dot ${st.level}"></span><div><strong>${esc(st.title)}</strong><div class="small" style="margin-top:4px">${esc(st.summary)}</div></div></div>${st.issues?.length?`<ul class="points-info-list">${st.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<ul class="points-info-list"><li><strong>V0.9.4.50 · Awards display repair:</strong> Primary Award changes now repaint Account and Store identity rows immediately. Small Primary Award artwork appears before the user name, and the five displayed Awards can be reordered by dragging the full badge on mouse or touch.</li><li><strong>Lock Screen:</strong> Set a local password or 4-digit PIN in Account, lock manually from the version bar, or choose PC Only, Phone Only or PC &amp; Phone idle locking. A refresh keeps the blurred LotKeys lock surface active.</li><li><strong>Account onboarding and installs:</strong> First-time users receive Google Account, personal Drive folder and Store Code/new Store guidance. Phone users receive an Install LotKeys App action.</li><li><strong>Garage organization:</strong> personal posting locations and FaceBook Listings Analytics now sit beneath Administrator &amp; Users; Store Saved Locations and highlighted reveal controls live in Advanced Google / Store controls. Awards Administration sits before User Reports.</li><li><strong>Post Buddy access:</strong> Garage now shows the accent-colored FaceBook Post Buddy panel immediately below Google &amp; Store Connection. Admin Level 2 can connect the current installer and website links.</li><li><strong>Listing workflow:</strong> Build Description now builds on the first press. Show Vehicle Details expands only when the user wants to edit or disable source facts, with checkboxes placed to the left. Existing Vehicle Profiles use a compact review-photo grid.</li><li><strong>Award inactivity rule:</strong> Iced Iced Baby now requires an established account returning after 30 inactive days and clears after five consecutive active days.</li><li><strong>New LotKeys icon:</strong> the supplied black-and-blue key/tag artwork is now the canonical default throughout the app, Chat, loading view, installed Android/PWA icon, Apple touch icon and favicon. Uploaded Store logos remain Store-specific overrides.</li><li><strong>Chat isolation repair:</strong> Chat now hides the live Home/Inventory route behind an opaque surface sized to the real bottom navigation, so Vehicle cards cannot show through while the Chat tab remains highlighted.</li>
 <li><strong>Registered contact lookup:</strong> Add Contact has a corrected person/plus control and accepts either an exact registered email address or phone number. This test build searches the current Store and saved conversations; global discovery still needs the future LotKeys account directory.</li>
@@ -3121,6 +3173,12 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
 <li>LotKeys requests a temporary screen wake lock during an active video transfer when the browser supports it, helping prevent an accidental screen lock from pausing the upload.</li></ul>${signed?'':'<div class="notice warning"><strong>New here?</strong><div class="small muted" style="margin-top:5px">Open Account and tap <strong>Click to Sign In</strong>, then use the Store Code your management team gives you.</div></div>'}</div>`;modalBody.querySelector('.close').onclick=()=>modal.close();if(!modal.open)modal.showModal()}
 
   async function showVersionInfo(){modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.4.95</div><h2>What’s new</h2></div><div class="modal-head-actions"><button class="btn ghost version-help-btn" id="version-help" type="button">Help❓</button><button class="close" aria-label="Close">×</button></div></div><div class="card release-notes-card" style="box-shadow:none"><ul class="points-info-list"><li><strong>Frozen-tab recovery:</strong> Inventory, Listings, Account and Garage now replace the old page immediately, reject late stale renders and show a safe retry if the phone cache takes too long. The header, highlighted tab and page body can no longer remain split across two sections.</li><li><strong>Vehicle thumbnails stay visible:</strong> temporary photo URLs are kept until the cards using them are actually removed, preventing the broken-image tiles seen during a slow refresh.</li><li><strong>Nonblocking navigation:</strong> Account-icon and Listing-alert checks now run after the selected page starts opening, and Inventory reuses one user lookup for all cached cards.</li><li><strong>Phone Mirror test:</strong> native SMS/MMS history, older-message paging, explicit SMS sending through the phone, and automatic reconnect. Install Phone Mirror 0.2.0. Private RCS history, MMS sending and attachment downloads are not included. Existing Hub contacts, notes, documents and categories are retained.</li><li><strong>Fresh Posting Buddy videos:</strong> Vehicle Profile video metadata can now be refreshed directly from Drive without requiring the connected LotKeys Listing to be edited/saved first. The signed-in user’s existing More Media video folder is still checked separately.</li><li><strong>Management Updates cleanup:</strong> image/video filenames and file details are hidden from published update cards, while real downloadable documents keep their filename/action row. Administration controls now stay above the top post for administrators.</li><li><strong>Posting Buddy V0.1.23:</strong> selected video is prepared early and handed to Facebook first. Photos, Description and Details then continue while Facebook handles the video, and the fields timer finishes when Facebook exposes the next Save / Update / Next step.</li><li><strong>Speed retained:</strong> V0.9.4.80 parallel Vehicle Profile Photos + Video uploads, three-worker photos, resumable Drive sessions and MB diagnostics remain intact.</li><li><strong>Processor unchanged:</strong> Store Processor V0.9.4.76 remains current; no Apps Script reinstall is needed for this browser update.</li></ul></div>`;modalBody.querySelector('.close').onclick=()=>modal.close();$('#version-help').onclick=()=>{modal.close();showHelpMenu()};if(!modal.open)modal.showModal()}
+  const showVersionInfoV09495=showVersionInfo;
+  showVersionInfo=async function(){
+    await showVersionInfoV09495();
+    const eyebrow=modalBody.querySelector('.eyebrow'),list=modalBody.querySelector('.points-info-list');if(eyebrow)eyebrow.textContent='LOTKEYS V0.9.4.96';
+    list?.insertAdjacentHTML('afterbegin','<li><strong>Fast saved-phone lists:</strong> Inventory and Listings now open from lightweight local summaries instead of cloning every cached photo, document and video before the first card appears.</li><li><strong>Media preserved:</strong> full cached records remain untouched for Vehicle Profiles, Listing editors, resumable uploads and Drive reconciliation; thumbnails hydrate progressively from a separate cover cache.</li><li><strong>Slow reads can finish:</strong> the route watchdog no longer cancels a valid cache read at 12 seconds. It reports slow progress first and leaves the active render free to complete.</li>');
+  };
   function readLiveProgressRows(){try{return JSON.parse(localStorage.getItem(LIVE_MEDIA_PROGRESS_STORAGE)||'{}')||{}}catch{return {}}}
   function writeLiveProgressRows(rows){try{localStorage.setItem(LIVE_MEDIA_PROGRESS_STORAGE,JSON.stringify(rows||{}))}catch{}}
   function restoreLiveMediaProgress(){const rows=readLiveProgressRows(),now=Date.now();let changed=false;for(const [id,row] of Object.entries(rows)){if(!row||now-(Number(row.updatedAt)||0)>7*86400000||row.status==='complete'){delete rows[id];changed=true;continue}const restored={...row,status:['queued','processing','uploading'].includes(row.status)?'paused':row.status};if(restored.status!==row.status){rows[id]=restored;changed=true}liveMediaProgress.set(id,restored)}if(changed)writeLiveProgressRows(rows)}
@@ -3709,6 +3767,11 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
     main.innerHTML=`<div class="lotkeys-boot-placeholder" data-route-loading="${context.epoch}" role="status" aria-live="polite"><div class="lotkeys-boot-brand"><img src="./assets/lotkeys-default-logo.png" alt=""><div><strong>Opening ${esc(title)}…</strong><span>Loading the saved phone copy</span></div></div><div class="lotkeys-boot-search"></div><div class="lotkeys-boot-stats"><i></i><i></i></div><div class="lotkeys-boot-lines"><i></i><i></i><i></i></div></div>`;
     cleanupUrls();
   }
+  function showRouteSlow(context){
+    if(!routeRenderCurrent(context))return;
+    const loading=main.querySelector(`[data-route-loading="${context.epoch}"]`),detail=loading?.querySelector('.lotkeys-boot-brand span');if(!loading||!detail)return;
+    detail.textContent='Still opening the saved phone copy…';loading.setAttribute('aria-label','Still loading saved LotKeys information');
+  }
   function showRouteError(context,error,{timedOut=false}={}){
     if(!routeRenderCurrent(context))return;
     const title=ROUTE_TITLES[context.target]||'Page';
@@ -3724,12 +3787,11 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
     activeNavigationEpoch=context.epoch;
     paintRouteChrome(target);
     showRouteLoading(context);
-    const watchdog=setTimeout(()=>{
+    const slowWatchdog=setTimeout(()=>showRouteSlow(context),12000),hardWatchdog=setTimeout(()=>{
       if(!routeRenderCurrent(context)||!main.querySelector(`[data-route-loading="${context.epoch}"]`))return;
-      const timeoutContext={target,epoch:++routeRenderEpoch};
-      showRouteError(timeoutContext,new Error(`${target} render timed out`),{timedOut:true});
-    },12000);
-    try{await render(context)}catch(error){if(routeRenderCurrent(context)&&main.querySelector(`[data-route-loading="${context.epoch}"]`))showRouteError(context,error);else console.warn(`Route ${target} finished with a deferred enhancement error`,error)}finally{clearTimeout(watchdog);if(activeNavigationEpoch===context.epoch)activeNavigationEpoch=0}
+      showRouteError(context,new Error(`${target} render timed out`),{timedOut:true});
+    },45000);
+    try{await render(context)}catch(error){if(routeRenderCurrent(context)&&main.querySelector(`[data-route-loading="${context.epoch}"]`))showRouteError(context,error);else console.warn(`Route ${target} finished with a deferred enhancement error`,error)}finally{clearTimeout(slowWatchdog);clearTimeout(hardWatchdog);if(activeNavigationEpoch===context.epoch)activeNavigationEpoch=0}
     if(!routeRenderCurrent(context))return;
     if(target==='vehicles'||target==='home')refreshInventoryIfDue().catch(console.warn);
     if(target==='listings'||target==='home')refreshListingsIfDue().catch(console.warn);
@@ -3755,7 +3817,7 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
   function empty(label,sub=''){return `<div class="card empty"><strong>${esc(label)}</strong>${sub?`<div class="small" style="margin-top:6px">${esc(sub)}</div>`:''}</div>`}
   async function renderHome(context=null){
     context=routeRenderContext('home',context);if(!routeRenderCurrent(context))return;
-    const vehicles=await DB.all('vehicles'), userName=await setting('userName',''), listings=(await DB.all('listings')).filter(x=>!x.ownerUserName||x.ownerUserName===userName);
+    const vehicles=await DB.all('vehicleSummaries'), userName=await setting('userName',''), listings=(await DB.all('listingSummaries')).filter(x=>!x.ownerUserName||x.ownerUserName===userName),locations=await DB.all('locations'),listingLookup={vehiclesById:new Map(vehicles.map(vehicle=>[String(vehicle.id),vehicle])),locationsById:new Map(locations.map(location=>[String(location.id),location]))};
     if(!routeRenderCurrent(context))return;
     const active=listings.filter(x=>x.status!=='Archived'&&x.status!=='Sold');
     main.innerHTML=`
@@ -3766,10 +3828,10 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
       <div id="recent-listings">${active.length?'':empty('No Marketplace listings yet','Create one from a saved vehicle.')}</div>
       <footer class="small muted" style="text-align:center;padding:18px 8px 4px;line-height:1.6">LotKeys helps approved dealership teams manage vehicle profiles, prepare Marketplace listings, and work together.<br><a href="./install.html">Install LotKeys</a> · <a href="./privacy.html">Privacy</a> · <a href="./terms.html">Terms</a></footer>`;
     $('#global-search').oninput=e=>renderSearch(e.target.value,vehicles,$('#search-results'));
-    const recent=active.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,4),recentHtml=recent.length?(await Promise.all(recent.map(safeListingCard))).join(''):empty('No Marketplace listings yet','Create one from a saved vehicle.');
+    const recent=active.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,4),recentHtml=recent.length?(await Promise.all(recent.map(listing=>safeListingCard(listing,listingLookup)))).join(''):empty('No Marketplace listings yet','Create one from a saved vehicle.');
     if(!routeRenderCurrent(context))return;
     const recentTarget=$('#recent-listings');if(recentTarget)recentTarget.innerHTML=recentHtml;
-    bindListingCards();scheduleListingCoverHydration(recent);
+    bindListingCards();scheduleListingCoverHydration(recent,listingLookup);
   }
   function normalizeVehicleSearchText(value){return String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
   function scoreVehicleSearch(v,q){
@@ -3801,13 +3863,13 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
   function listingMatchesSearch(l,q,v=null){const query=normalizeVehicleSearchText(q);if(!query)return true;const fields=[l?.marketplaceTitle,l?.year,l?.make,l?.model,l?.price,l?.locationSnapshot?.name,v?.name,v?.stock,v?.vin].map(normalizeVehicleSearchText).filter(Boolean);const hay=fields.join(' ');return query.split(/\s+/).filter(Boolean).every(token=>hay.includes(token))}
   function applyVehiclePageSearch(query,vehicles){const byId=new Map((vehicles||[]).map(v=>[String(v.id),v])),active=String(query||'').trim();let shown=0;main.querySelectorAll('.open-vehicle').forEach(card=>{const v=byId.get(String(card.dataset.id)),match=!active||!!(v&&scoreVehicleSearch(v,active)>0);card.classList.toggle('search-filtered-out',!match);card.setAttribute('aria-hidden',match?'false':'true');if(match)shown++});const count=$('#inventory-search-count');if(count)count.textContent=active?`${shown} match${shown===1?'':'es'}`:'';return shown}
   function applyListingPageSearch(query,listings,vehicles){const byListing=new Map((listings||[]).map(l=>[String(l.id),l])),byVehicle=new Map((vehicles||[]).map(v=>[String(v.id),v])),active=String(query||'').trim();let shown=0;main.querySelectorAll('.open-listing').forEach(card=>{const l=byListing.get(String(card.dataset.id)),v=l?.vehicleId?byVehicle.get(String(l.vehicleId)):null,match=listingMatchesSearch(l,active,v);card.classList.toggle('search-filtered-out',!match);card.setAttribute('aria-hidden',match?'false':'true');if(match)shown++});const count=$('#listings-search-count');if(count)count.textContent=active?`${shown} match${shown===1?'':'es'}`:'';return shown}
-  async function renderSearch(q,vehicles,target){q=q.trim();if(!q){target.innerHTML='';return}const scored=bestVehicleMatches(q,vehicles,5);target.innerHTML=scored.length?`<div class="section-title"><h2>Best matches</h2><small>${scored.length} shown</small></div>${(await Promise.all(scored.map(x=>vehicleCard(x.v)))).join('')}`:empty('No matches');bindVehicleCards()}
+  async function renderSearch(q,vehicles,target){q=q.trim();if(!q){target.innerHTML='';return}const scored=bestVehicleMatches(q,vehicles,5);target.innerHTML=scored.length?`<div class="section-title"><h2>Best matches</h2><small>${scored.length} shown</small></div>${(await Promise.all(scored.map(x=>vehicleCard(x.v)))).join('')}`:empty('No matches');bindVehicleCards();scheduleVehicleCoverHydration(scored.map(x=>x.v))}
   async function vehicleCard(v,viewer=null){const img=vehicleThumbHtml(v.photos?.[0]);viewer=viewer||await currentUserRecord();const mediaState=mediaStateForVehicle(v),media=mediaProgressText(mediaState),recovery=!!v.recoveryNeeded,metaState=recovery?' • Needs Recovery':v.syncStatus==='queued'?' • Submitted':v.syncStatus==='pending'||v.syncStatus==='syncing'?' • Syncing…':v.syncStatus==='error'?' • Sync needs attention':'',priceHtml=recovery&&!(Number(v.price)>0)?'<div class="price" style="color:#b45309">Needs Recovery</div>':`<div class="price">${money(v.price)}</div>`,progressClass=mediaState?.status==='paused'?'paused':mediaState?.status==='error'?'error':mediaState?.status==='complete'?'complete':'',pendingRibbon=v.pendingDeal?'<span class="vehicle-pending-ribbon" aria-label="Deal / Pending">Deal / Pending</span>':'';return `<div class="card vehicle-row open-vehicle ${syncCardClass(v.syncStatus)} ${v.pendingDeal?'has-pending-deal':''}" data-id="${v.id}">${viewerVehicleFlagHtml(v,viewer)}${pendingRibbon}<div class="thumb">${img}</div><div><div class="row-title">${esc(v.name||`${v.year||''} ${v.make||''} ${v.model||''}`.trim())}</div><div class="meta">STK# ${esc(v.stock||'—')} • ${fmtOdo(v.odometer)} ${esc(v.odometerUnit||'KM')}${metaState}</div><div class="price-row">${priceHtml}</div><div class="vehicle-upload-status ${progressClass}" data-upload-status>${esc(media)}</div></div><div class="chev">›</div></div>`}
   function setCardOpening(el,on=true){if(!el)return;el.classList.toggle('opening',!!on);if(on)el.setAttribute('aria-busy','true');else el.removeAttribute('aria-busy');}
   function bindVehicleCards(){document.querySelectorAll('.open-vehicle').forEach(x=>x.onclick=async()=>{if(x.classList.contains('opening'))return;setCardOpening(x,true);try{await showVehicle(x.dataset.id)}catch(error){console.error('Vehicle Profile could not open',error);modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">VEHICLE PROFILE</div><h2>Could not open this profile</h2></div><button class="close">×</button></div><div class="notice warning"><strong>The saved vehicle is still in Inventory.</strong><div class="small muted" style="margin-top:5px">${esc(error?.message||'LotKeys encountered an unexpected display error.')}</div></div><button class="btn primary block" id="retry-open-vehicle" type="button">Try Again</button>`;modalBody.querySelector('.close').onclick=()=>modal.close();$('#retry-open-vehicle').onclick=()=>{modal.close();x.click()};if(!modal.open)modal.showModal()}finally{setCardOpening(x,false)}})}
   async function renderVehicles(context=null){
     context=routeRenderContext('vehicles',context);if(!routeRenderCurrent(context))return;
-    const sortMode=await setting('inventorySort','new-old'),accidentFreeOnly=!!(await setting('inventoryAccidentFreeOnly',false)),allVehicles=await DB.all('vehicles'),filteredVehicles=accidentFreeOnly?allVehicles.filter(v=>v.carfaxNoAccidents===true):allVehicles,vs=sortVehicleLike(filteredVehicles,sortMode),countText=accidentFreeOnly?`${vs.length} of ${allVehicles.length} vehicles`:`${vs.length} vehicle${vs.length===1?'':'s'}`,canCreate=await currentUserCan('createVehicleProfiles');if(!routeRenderCurrent(context))return;
+    const sortMode=await setting('inventorySort','new-old'),accidentFreeOnly=!!(await setting('inventoryAccidentFreeOnly',false)),allVehicles=await DB.all('vehicleSummaries'),filteredVehicles=accidentFreeOnly?allVehicles.filter(v=>v.carfaxNoAccidents===true):allVehicles,vs=sortVehicleLike(filteredVehicles,sortMode),countText=accidentFreeOnly?`${vs.length} of ${allVehicles.length} vehicles`:`${vs.length} vehicle${vs.length===1?'':'s'}`,canCreate=await currentUserCan('createVehicleProfiles');if(!routeRenderCurrent(context))return;
     const viewer=await currentUserRecord();if(!routeRenderCurrent(context))return;
     const cards=vs.length?(await Promise.all(vs.map(vehicle=>vehicleCard(vehicle,viewer)))).join(''):empty(accidentFreeOnly?'No accident-free CARFAX vehicles found':'No vehicles yet',accidentFreeOnly?'Turn off the filter to see the full inventory.':'Connect Drive or add your first vehicle profile.');
     if(!routeRenderCurrent(context))return;
@@ -3816,7 +3878,7 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
     $('#refresh-inventory').onclick=()=>refreshInventory({quiet:false,forceFull:false});
     $('#inventory-sort').onchange=async e=>{await setSetting('inventorySort',e.target.value);await renderVehicles()};
     $('#inventory-accident-free').onchange=async e=>{await setSetting('inventoryAccidentFreeOnly',e.target.checked);await renderVehicles()};
-    const invSearch=$('#inventory-page-search');if(invSearch)invSearch.oninput=e=>applyVehiclePageSearch(e.target.value,vs);bindVehicleCards()
+    const invSearch=$('#inventory-page-search');if(invSearch)invSearch.oninput=e=>applyVehiclePageSearch(e.target.value,vs);bindVehicleCards();scheduleVehicleCoverHydration(vs)
   }
   function assetViewUrl(asset){
     if(asset?.blob)return blobUrl(asset.blob);
@@ -4205,10 +4267,10 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
   }
   function listingCover(l,v){const order=normalizePhotoOrder(l,v),coverId=order[0];return listingAllPhotos(l,v).find(p=>p.id===coverId)||v?.photos?.[0]||null}
   function listingCardSelector(id){const value=String(id||'');return `.open-listing[data-id="${globalThis.CSS?.escape?CSS.escape(value):value.replace(/["\\]/g,'\\$&')}"]`}
-  async function listingCard(l){const v=l.vehicleId?await DB.get('vehicles',l.vehicleId):null,profileMissing=!!l.vehicleId&&(!v||listingVehicleProfileMissing(l)),cover=listingCover(l,v),img=vehicleThumbHtml(cover),loc=l.locationId?await DB.get('locations',l.locationId):null,locName=loc?.name||l.locationSnapshot?.name||'No location',ageStart=l.postedAt||l.createdAt,age=ageStart?Math.max(0,Math.floor((Date.now()-ageStart)/86400000))+' days':'—',metaText=`${locName} • ${l.status||'Draft'} • ${age}`,progress=listingProgressFor(l),progressText=mediaProgressText(progress),alertKind=listingAlertKind(l),alertClass=alertKind==='call-price'?'call-price':alertKind==='unavailable'?'unavailable':priceAlertDirection(l),missingDays=listingProfileDeletionDays(l),missingNote=profileMissing?`<div class="listing-profile-missing-note">⚠ Vehicle Profile cannot be found · Marked for deletion in ${missingDays} day${missingDays===1?'':'s'}</div>`:'';return `<div class="card listing-row open-listing ${profileMissing?'vehicle-profile-missing ':''}${syncCardClass(l.syncStatus,l.status)}" data-id="${esc(l.id)}"><div class="thumb">${img}</div><div><div class="row-title">${esc(l.marketplaceTitle||'Untitled listing')}</div><div class="meta" data-listing-meta data-base-meta="${esc(metaText)}">${esc(metaText)}${listingSyncSuffix(l,progress)}</div>${missingNote}<div class="vehicle-upload-status listing-upload-status ${progress?.status==='error'?'error':progress?.status==='complete'?'complete':''}" data-listing-upload-status>${esc(progressText)}</div><div class="price">${money(l.price)}${priceAlertEmoji(l)?`<span class="listing-price-alert ${alertClass}" title="${esc(listingAlertTitle(l))}">${priceAlertEmoji(l)}</span>`:''}</div></div><div class="chev">›</div></div>`}
-  async function safeListingCard(l){try{return await listingCard(l)}catch(err){console.warn('Could not prepare cached Listing card',l?.id,err);const id=String(l?.id||''),title=l?.marketplaceTitle||[l?.year,l?.make,l?.model].filter(Boolean).join(' ')||'Listing';return `<div class="card listing-row open-listing" data-id="${esc(id)}"><div class="thumb">${vehiclePlaceholderHtml()}</div><div><div class="row-title">${esc(title)}</div><div class="meta">Cached Listing details need attention</div><div class="price">${money(l?.price)}</div></div><div class="chev">›</div></div>`}}
-  async function hydrateListingCardCover(l){const key=String(l?.id||'');if(!key||!document.querySelector(listingCardSelector(key)))return;if(listingCoverHydrationJobs.has(key))return listingCoverHydrationJobs.get(key);const job=(async()=>{try{const v=l?.vehicleId?await DB.get('vehicles',l.vehicleId):null,cover=listingCover(l,v);if(!cover||cover.blob||!cover.driveFileId)return;const blob=await DriveSync.fetchFileBlob(cover.driveFileId);if(!blob)return;cover.blob=blob;const own=(l.listingAssets||[]).find(a=>a.id===cover.id);if(own){own.blob=blob;DB.put('listings',l).catch(()=>{})}else if(v){const vehiclePhoto=(v.photos||[]).find(a=>a.id===cover.id);if(vehiclePhoto){vehiclePhoto.blob=blob;DB.put('vehicles',v).catch(()=>{})}}const card=document.querySelector(listingCardSelector(key)),thumb=card?.querySelector('.thumb');if(!thumb)return;thumb.innerHTML=`<img src="${blobUrl(blob)}">`}catch(err){console.warn('Background Listing cover hydration failed',key,err)}})();listingCoverHydrationJobs.set(key,job);job.finally(()=>{if(listingCoverHydrationJobs.get(key)===job)listingCoverHydrationJobs.delete(key)});return job}
-  function scheduleListingCoverHydration(listings=[]){const queue=listings.filter(Boolean).slice();if(!queue.length)return;setTimeout(()=>{const worker=async()=>{while(queue.length){const row=queue.shift();if(!document.querySelector(listingCardSelector(row?.id)))continue;await hydrateListingCardCover(row)}};Promise.all(Array.from({length:Math.min(3,queue.length)},worker)).catch(err=>console.warn('Listing cover queue failed',err))},0)}
+  async function listingCard(l,lookup=null){const v=l.vehicleId?(lookup?lookup.vehiclesById?.get(String(l.vehicleId))||null:await DB.get('vehicles',l.vehicleId)):null,profileMissing=!!l.vehicleId&&(!v||listingVehicleProfileMissing(l)),cover=listingCover(l,v),img=vehicleThumbHtml(cover),loc=l.locationId?(lookup?lookup.locationsById?.get(String(l.locationId))||null:await DB.get('locations',l.locationId)):null,locName=loc?.name||l.locationSnapshot?.name||'No location',ageStart=l.postedAt||l.createdAt,age=ageStart?Math.max(0,Math.floor((Date.now()-ageStart)/86400000))+' days':'—',metaText=`${locName} • ${l.status||'Draft'} • ${age}`,progress=listingProgressFor(l),progressText=mediaProgressText(progress),alertKind=listingAlertKind(l),alertClass=alertKind==='call-price'?'call-price':alertKind==='unavailable'?'unavailable':priceAlertDirection(l),missingDays=listingProfileDeletionDays(l),missingNote=profileMissing?`<div class="listing-profile-missing-note">⚠ Vehicle Profile cannot be found · Marked for deletion in ${missingDays} day${missingDays===1?'':'s'}</div>`:'';return `<div class="card listing-row open-listing ${profileMissing?'vehicle-profile-missing ':''}${syncCardClass(l.syncStatus,l.status)}" data-id="${esc(l.id)}"><div class="thumb">${img}</div><div><div class="row-title">${esc(l.marketplaceTitle||'Untitled listing')}</div><div class="meta" data-listing-meta data-base-meta="${esc(metaText)}">${esc(metaText)}${listingSyncSuffix(l,progress)}</div>${missingNote}<div class="vehicle-upload-status listing-upload-status ${progress?.status==='error'?'error':progress?.status==='complete'?'complete':''}" data-listing-upload-status>${esc(progressText)}</div><div class="price">${money(l.price)}${priceAlertEmoji(l)?`<span class="listing-price-alert ${alertClass}" title="${esc(listingAlertTitle(l))}">${priceAlertEmoji(l)}</span>`:''}</div></div><div class="chev">›</div></div>`}
+  async function safeListingCard(l,lookup=null){try{return await listingCard(l,lookup)}catch(err){console.warn('Could not prepare cached Listing card',l?.id,err);const id=String(l?.id||''),title=l?.marketplaceTitle||[l?.year,l?.make,l?.model].filter(Boolean).join(' ')||'Listing';return `<div class="card listing-row open-listing" data-id="${esc(id)}"><div class="thumb">${vehiclePlaceholderHtml()}</div><div><div class="row-title">${esc(title)}</div><div class="meta">Cached Listing details need attention</div><div class="price">${money(l?.price)}</div></div><div class="chev">›</div></div>`}}
+  async function hydrateListingCardCover(l,lookup=null){const key=String(l?.id||'');if(!key||!document.querySelector(listingCardSelector(key)))return;if(listingCoverHydrationJobs.has(key))return listingCoverHydrationJobs.get(key);const job=(async()=>{try{let v=l?.vehicleId?(lookup?.vehiclesById?.get(String(l.vehicleId))||null):null,cover=listingCover(l,v),blob=cover?.blob||null;if(!cover)return;const own=(l.listingAssets||[]).some(asset=>samePhotoAsset(asset,cover));if(!blob&&own){const cached=await DB.get('listingCovers',key);if(samePhotoAsset(cached?.photo,cover))blob=cached.photo.blob||null}if(!blob&&v&&samePhotoAsset(v.photos?.[0],cover)){const cached=await DB.get('vehicleCovers',String(v.id));if(samePhotoAsset(cached?.photo,cover))blob=cached.photo.blob||null}if(!blob&&cover.driveFileId&&DriveSync.connected()){blob=await DriveSync.fetchFileBlob(cover.driveFileId);const photo={...cover,blob,type:blob.type||cover.type||'image/jpeg'};if(own)DB.put('listingCovers',{id:key,photo,updatedAt:Date.now()}).catch(()=>{});else if(v&&samePhotoAsset(v.photos?.[0],cover))DB.put('vehicleCovers',{id:String(v.id),photo,updatedAt:Date.now()}).catch(()=>{})}if(!blob){const fullListing=await DB.get('listings',key),fullVehicle=l?.vehicleId?await DB.get('vehicles',l.vehicleId):null,fullCover=listingCover(fullListing||l,fullVehicle||v);blob=fullCover?.blob||null}const card=document.querySelector(listingCardSelector(key)),thumb=card?.querySelector('.thumb');if(!thumb)return;thumb.innerHTML=blob?`<img src="${blobUrl(blob)}" alt="${esc(l.marketplaceTitle||'Vehicle photo')}" loading="lazy" decoding="async">`:vehiclePlaceholderHtml()}catch(err){console.warn('Background Listing cover hydration failed',key,err)}})();listingCoverHydrationJobs.set(key,job);job.finally(()=>{if(listingCoverHydrationJobs.get(key)===job)listingCoverHydrationJobs.delete(key)});return job}
+  function scheduleListingCoverHydration(listings=[],lookup=null){const queue=listings.filter(Boolean).slice();if(!queue.length)return;setTimeout(()=>{const worker=async()=>{while(queue.length){const row=queue.shift();if(!document.querySelector(listingCardSelector(row?.id)))continue;await hydrateListingCardCover(row,lookup)}};Promise.all(Array.from({length:Math.min(3,queue.length)},worker)).catch(err=>console.warn('Listing cover queue failed',err))},0)}
   function scheduleMissingListingVehicleRecovery(listings=[],vehicles=[]){
     const known=new Set((vehicles||[]).map(vehicle=>String(vehicle?.id||'')).filter(Boolean)),missing=[...new Set((listings||[]).map(listing=>String(listing?.vehicleId||'')).filter(id=>id&&!known.has(id)))];
     if(!missing.length||listingVehicleRecoveryBusy||Date.now()-listingVehicleRecoveryAt<30000||!DriveSync.connected())return;
@@ -4222,16 +4284,16 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
   function bindListingCards(){document.querySelectorAll('.open-listing').forEach(x=>x.onclick=async()=>{if(x.classList.contains('opening'))return;setCardOpening(x,true);try{await showPostingAssistant(x.dataset.id)}catch(err){console.error('Could not open Marketplace Listing',err);alert('Could not open this Marketplace Listing:\n\n'+(err?.message||err))}finally{setCardOpening(x,false)}})}
   async function renderListings(context=null){
     context=routeRenderContext('listings',context);if(!routeRenderCurrent(context))return;
-    const userName=await setting('userName',''),sortMode=await setting('listingsSort','new-old'),allVehicles=await DB.all('vehicles'),ls=sortVehicleLike((await DB.all('listings')).filter(x=>!x.ownerUserName||x.ownerUserName===userName),sortMode),canUseListings=await currentUserCan('useListings');if(!routeRenderCurrent(context))return;
+    const userName=await setting('userName',''),sortMode=await setting('listingsSort','new-old'),allVehicles=await DB.all('vehicleSummaries'),ls=sortVehicleLike((await DB.all('listingSummaries')).filter(x=>!x.ownerUserName||x.ownerUserName===userName),sortMode),locations=await DB.all('locations'),listingLookup={vehiclesById:new Map(allVehicles.map(vehicle=>[String(vehicle.id),vehicle])),locationsById:new Map(locations.map(location=>[String(location.id),location]))},canUseListings=await currentUserCan('useListings');if(!routeRenderCurrent(context))return;
     if(!canUseListings){main.innerHTML=`<div class="notice warning"><strong>Marketplace Listings are restricted for this account.</strong><br>Administration has disabled the Listings feature for this user.</div>`;return}
-    const cards=ls.length?(await Promise.all(ls.map(safeListingCard))).join(''):empty('No listings yet','Create one from a vehicle profile or manually.');
+    const cards=ls.length?(await Promise.all(ls.map(listing=>safeListingCard(listing,listingLookup)))).join(''):empty('No listings yet','Create one from a vehicle profile or manually.');
     if(!routeRenderCurrent(context))return;
     main.innerHTML=`<div class="actions"><button class="btn primary" id="add-listing">＋ Create Listing</button><button class="btn refresh-action ${listingsRefreshBusy?'refreshing':''}" id="refresh-listings" ${listingsRefreshBusy?'disabled aria-busy="true"':''}><span>↻ Refresh Listings</span>${listingsRefreshBusy?'<span class="refresh-action-spinner" role="status" aria-label="Refreshing listings"></span>':''}</button></div><div class="compact-list-search"><strong>Find a vehicle fast</strong><input id="listings-page-search" placeholder="Enter part of Year Make Model STK# / VIN" autocomplete="off" aria-label="Search Marketplace listings"><small id="listings-search-count"></small></div><div class="section-title list-tools"><div class="section-title-copy"><h2>My Marketplace listings</h2><small>${ls.length} listing${ls.length===1?'':'s'}</small></div><div class="list-tool-controls"><select class="sort-select" id="listings-sort" aria-label="Sort listings">${sortOptions(sortMode)}</select></div></div>${cards}`;
     $('#add-listing').onclick=()=>showListingForm({});
     $('#refresh-listings').onclick=()=>refreshListings({quiet:false,forceFull:false});
     $('#listings-sort').onchange=async e=>{await setSetting('listingsSort',e.target.value);await renderListings()};
     const listSearch=$('#listings-page-search');if(listSearch)listSearch.oninput=e=>applyListingPageSearch(e.target.value,ls,allVehicles);bindListingCards();
-    scheduleListingCoverHydration(ls);scheduleMissingListingVehicleRecovery(ls,allVehicles)
+    scheduleListingCoverHydration(ls,listingLookup);scheduleMissingListingVehicleRecovery(ls,allVehicles)
   }
   async function analyticsFor(id){return (await DB.byIndex('analytics','listingId',id)).sort((a,b)=>new Date(a.date)-new Date(b.date))}
   function chartSvg(rows){if(!rows.length)return'<div class="notice">No view counts recorded yet.</div>';const vals=rows.map(r=>+r.views||0),w=560,h=150,p=18,min=Math.min(...vals),max=Math.max(...vals,1),span=Math.max(1,max-min),pts=vals.map((v,i)=>`${p+(i*(w-2*p)/Math.max(1,vals.length-1))},${h-p-((v-min)/span)*(h-2*p)}`).join(' ');return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img"><polyline points="${pts}"></polyline>${vals.map((v,i)=>{const x=p+(i*(w-2*p)/Math.max(1,vals.length-1)),y=h-p-((v-min)/span)*(h-2*p);return `<circle cx="${x}" cy="${y}" r="4"></circle>`}).join('')}<text x="18" y="16">${max} cumulative views</text><text x="18" y="142">${esc(rows[0].date)}</text><text x="470" y="142">${esc(rows.at(-1).date)}</text></svg>`}
@@ -4510,15 +4572,15 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
 window.addEventListener('DOMContentLoaded',App.boot);
 
   </script>
-  <script src="./lotkeys-info.js?v=09495"></script>
-  <script src="./lotkeys-messaging.js?v=09495"></script>
-  <script src="./lotkeys-awards.js?v=09495"></script>
-   <link rel="stylesheet" href="./lotkeys-hub.css?v=09495">
-   <script src="./lotkeys-hub-core.js?v=09495"></script>
-   <script src="./lotkeys-hub-store.js?v=09495"></script>
-   <script src="./lotkeys-device-pairing.js?v=09495"></script>
-   <script src="./lotkeys-device-client.js?v=09495"></script>
-   <script src="./lotkeys-hub.js?v=09495"></script>
+  <script src="./lotkeys-info.js?v=09496"></script>
+  <script src="./lotkeys-messaging.js?v=09496"></script>
+  <script src="./lotkeys-awards.js?v=09496"></script>
+   <link rel="stylesheet" href="./lotkeys-hub.css?v=09496">
+   <script src="./lotkeys-hub-core.js?v=09496"></script>
+   <script src="./lotkeys-hub-store.js?v=09496"></script>
+   <script src="./lotkeys-device-pairing.js?v=09496"></script>
+   <script src="./lotkeys-device-client.js?v=09496"></script>
+   <script src="./lotkeys-hub.js?v=09496"></script>
   <script>
   if(!window.LotKeysMessaging){
     const chatButton=document.getElementById('chat-nav-btn');
@@ -4528,7 +4590,7 @@ window.addEventListener('DOMContentLoaded',App.boot);
         panel=document.createElement('div');
         panel.id='lotkeys-messages-load-error';
         panel.style.cssText='position:fixed;inset:0;z-index:2147483600;background:var(--bg);color:var(--ink);padding:calc(20px + env(safe-area-inset-top)) 16px;';
-        panel.innerHTML='<div style="max-width:620px;margin:0 auto"><button id="lotkeys-messages-load-error-close" class="btn ghost" type="button">← Back</button><div class="card" style="margin-top:18px"><h2 style="margin-top:0">Chat did not finish updating</h2><div class="help">Install every file from the complete LotKeys V0.9.4.95 release, including lotkeys-messaging.js beside index.html, then reopen LotKeys.</div></div></div>';
+        panel.innerHTML='<div style="max-width:620px;margin:0 auto"><button id="lotkeys-messages-load-error-close" class="btn ghost" type="button">← Back</button><div class="card" style="margin-top:18px"><h2 style="margin-top:0">Chat did not finish updating</h2><div class="help">Install every file from the complete LotKeys V0.9.4.96 release, including lotkeys-messaging.js beside index.html, then reopen LotKeys.</div></div></div>';
         document.body.appendChild(panel);
         panel.querySelector('#lotkeys-messages-load-error-close').onclick=()=>panel.remove()
       }
