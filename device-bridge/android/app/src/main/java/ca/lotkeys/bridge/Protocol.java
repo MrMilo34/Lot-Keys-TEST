@@ -501,6 +501,11 @@ final class Protocol {
                 ) {
 
                     heartbeat(true);
+                    result.add(
+                        new JSONObject()
+                            .put("kind", "hello")
+                            .put("client", p.optString("client"))
+                    );
                     continue;
                 }
 
