@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09482-hub-private-customers-calendar';
+const CACHE='lotkeys-app-v09486-hub-device-refinement';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
