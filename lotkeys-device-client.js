@@ -1,37 +1,150 @@
-/* Device bridge: session-only AES-GCM messages. No transcript persistence. Successful Hub pairing may be encrypted locally per LotKeys account for reconnect. */
+/* LotKeys 0.9.4.91 Device client. Transcripts stay in RAM; saved pairing uses the PIN vault. */
 (()=>{'use strict';
-const H=window.LotKeysHubCore,te=new TextEncoder(),td=new TextDecoder();
-let config=null,key=null,cursor=0,timer=null,active=false,generation=0,owner='',lastPeer=0,session='',peerName='',capabilities={},inflight=false;
-const threads=new Map(),seen=new Set(),pending=new Map();
-const b64=b=>{let s='';for(const x of new Uint8Array(b))s+=String.fromCharCode(x);return btoa(s);};
+const H=window.LotKeysHubCore,V=window.LotKeysPairingVault,te=new TextEncoder(),td=new TextDecoder();
+let channel=null,generation=0,pollTimer=null,restoreJob=null,connectJob=null;
+let peerSession='',peerName='',peerCaps={},lastPeer=0,lastStatusAt=0,lastHello=0,lastGoodRelay=0;
+let activeOwner='',binding='',transportError='',failures=0,polling=false,lastUserActivity=Date.now();
+const threads=new Map(),seen=new Set(),pending=new Map(),controllers=new Set();
+const owner=()=>window.LotKeysHubStore.identity();
+const locked=()=>document.body.dataset.lotkeysLocked==='true';
+const b64=b=>{let s='';for(const n of new Uint8Array(b))s+=String.fromCharCode(n);return btoa(s);};
 const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const emit=(kind,extra={})=>window.dispatchEvent(new CustomEvent('lotkeys-device',{detail:{kind,...extra}}));
-const connected=()=>active&&!!session&&Date.now()-lastPeer<90000;
-let pairingDbPromise=null;
-function pairingDb(){if(pairingDbPromise)return pairingDbPromise;pairingDbPromise=new Promise((resolve,reject)=>{const r=indexedDB.open('lotkeys-device-pairing-v1',1);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains('keys'))db.createObjectStore('keys');if(!db.objectStoreNames.contains('pairings'))db.createObjectStore('pairings');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});return pairingDbPromise;}
-async function pairTx(store,mode,run){const db=await pairingDb();return new Promise((resolve,reject)=>{const tx=db.transaction(store,mode),os=tx.objectStore(store),req=run(os);let result;req.onsuccess=()=>result=req.result;tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Saved Device pairing storage was interrupted.'));});}
-async function localPairKey(ownerId,create=false){let k=await pairTx('keys','readonly',s=>s.get(ownerId));if(k||!create)return k||null;k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await pairTx('keys','readwrite',s=>s.put(k,ownerId));return k;}
-async function saveLocalPairing(raw,ownerId){const k=await localPairKey(ownerId,true),iv=crypto.getRandomValues(new Uint8Array(12)),plain=typeof raw==='string'?raw.trim():JSON.stringify(raw),cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:te.encode(ownerId)},k,te.encode(plain));await pairTx('pairings','readwrite',s=>s.put({iv:b64(iv),ciphertext:b64(cipher),updatedAt:Date.now()},ownerId));emit('saved');}
-async function readLocalPairing(ownerId){const row=await pairTx('pairings','readonly',s=>s.get(ownerId));if(!row)return '';const k=await localPairKey(ownerId,false);if(!k)return '';const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes(row.iv),additionalData:te.encode(ownerId)},k,bytes(row.ciphertext));return td.decode(plain);}
-async function savedInfo(){try{const ownerId=await window.LotKeysHubStore.identity(),row=await pairTx('pairings','readonly',s=>s.get(ownerId));return row?{saved:true,updatedAt:Number(row.updatedAt)||0}:null;}catch{return null;}}
-async function forgetSaved(){const ownerId=await window.LotKeysHubStore.identity();await pairTx('pairings','readwrite',s=>s.delete(ownerId));await pairTx('keys','readwrite',s=>s.delete(ownerId));emit('saved');}
-async function restoreSaved(){if(active)return true;let ownerId;try{ownerId=await window.LotKeysHubStore.identity();}catch{return false;}let raw='';try{raw=await readLocalPairing(ownerId);}catch{return false;}if(!raw)return false;try{await connect(raw,{save:false});return true;}catch(e){emit('saved-error',{message:String(e?.message||e)});return false;}}
-function validate(raw){const c=typeof raw==='string'?JSON.parse(raw.trim()):raw;if(c?.version!==1||c.role!=='hub')throw Error('Paste the Hub pairing code, not the phone/adapter code.');const u=new URL(c.url);const loop=['localhost','127.0.0.1','[::1]'];if(u.protocol!=='https:'&&!(u.protocol==='http:'&&loop.includes(u.hostname)&&loop.includes(location.hostname)))throw Error('A trusted HTTPS relay address is required.');if(u.username||u.password||u.search||u.hash||!['','/'].includes(u.pathname))throw Error('The relay URL must not contain credentials or query parameters.');if(!/^[a-zA-Z0-9_-]{16,80}$/.test(c.room)||!c.token||bytes(c.key).length!==32||c.token.length<40)throw Error('Invalid pairing code.');return {...c,url:u.href.replace(/\/$/,'')};}
-async function seal(data){const iv=crypto.getRandomValues(new Uint8Array(12));const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:te.encode(config.room)},key,te.encode(JSON.stringify(data)));return {v:1,iv:b64(iv),ciphertext:b64(ciphertext)};}
-async function unseal(x){if(x.v!==1||typeof x.ciphertext!=='string'||x.ciphertext.length>100000)throw Error('Invalid encrypted frame.');return JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes(x.iv),additionalData:te.encode(config.room)},key,bytes(x.ciphertext))));}
-async function http(path,opts={}){const c=config;if(!c)throw Error('Device not paired.');const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);try{const r=await fetch(c.url+path,{...opts,headers:{'Content-Type':'application/json','Authorization':'Bearer '+c.token,...opts.headers},credentials:'omit',redirect:'error',cache:'no-store',signal:controller.signal});if(!r.ok)throw Error('Bridge request failed ('+r.status+').');return r.json();}finally{clearTimeout(timeout);}}
-async function publish(data){if(!active)throw Error('Device not connected.');data={...data,id:data.id||H.uid('E'),at:Date.now(),expiresAt:Date.now()+30000};return http('/v1/event?room='+encodeURIComponent(config.room),{method:'POST',body:JSON.stringify(await seal(data))});}
-function trim(){for(const t of threads.values())t.messages=t.messages.slice(-250);while(threads.size>250)threads.delete(threads.keys().next().value);while(seen.size>2500)seen.delete(seen.values().next().value);}
-function receive(p){if(!p||!p.id||!Number.isFinite(p.at)||!Number.isFinite(p.expiresAt)||p.expiresAt>p.at+90000||p.at>Date.now()+60000||Date.now()>Number(p.expiresAt)||seen.has(p.id))return;seen.add(p.id);if(p.kind==='status'){if(session&&session!==p.session){for(const t of threads.values()){t.canReply=false;t.replyToken='';}for(const w of pending.values()){clearTimeout(w.timer);w.resolve({ok:false,error:'Device session refreshed. Wait for the current phone reply action before retrying.'});}pending.clear();}session=String(p.session||'');lastPeer=Date.now();peerName=String(p.deviceName||'Device');capabilities=p.capabilities||{};emit('status');return;}if(p.session!==session||!session)return;
-if(p.kind==='removed'){lastPeer=Date.now();const t=threads.get(p.threadId);if(t){t.canReply=false;t.replyToken='';emit('threads');}return;}
-if(p.kind==='ack'){lastPeer=Date.now();const waiting=pending.get(p.requestId);if(waiting){pending.delete(p.requestId);clearTimeout(waiting.timer);waiting.resolve(p);const t=threads.get(waiting.threadId),m=t?.messages.find(m=>m.id===p.requestId);if(m)m.state=p.ok?'Submitted to phone':'Not sent: '+String(p.error||'Phone rejected reply');emit('threads');}return;}
-if(p.kind!=='message'||!p.threadId||typeof p.text!=='string')return;lastPeer=Date.now();let t=threads.get(p.threadId)||{id:p.threadId,title:String(p.title||p.address||'Device contact'),address:String(p.address||''),messages:[],unread:0,group:!!p.group};t.title=String(p.title||t.title);t.address=String(p.address||t.address);t.canReply=!!p.canReply;t.replyToken=String(p.replyToken||'');t.at=p.at;t.session=session;const mid=String(p.messageId||p.id);if(!t.messages.some(m=>m.id===mid)){t.messages.push({id:mid,text:p.text.slice(0,16000),at:p.at,outgoing:!!p.outgoing,state:''});if(!p.outgoing)t.unread++;}threads.set(t.id,t);trim();emit('message',{threadId:t.id,outgoing:!!p.outgoing});}
-async function poll(){if(!active||inflight)return;inflight=true;const g=generation;try{const nowOwner=await window.LotKeysHubStore.identity();if(owner!==nowOwner){disconnect();return;}const data=await http('/v1/poll?room='+encodeURIComponent(config.room)+'&after='+cursor);if(g!==generation)return;for(const item of data.events||[]){try{const p=await unseal(item.envelope);if(g!==generation)return;receive(p);}catch{emit('warning',{message:'An invalid encrypted bridge event was ignored.'});}cursor=Math.max(cursor,Number(item.seq)||0);}trim();emit('status');}catch{if(g===generation)emit('status');}finally{if(g===generation)inflight=false;if(active&&g===generation)timer=setTimeout(poll,1500);}}
-function wake(){if(!active){restoreSaved().catch(()=>{});return;}clearTimeout(timer);timer=null;if(!inflight)poll();emit('status');}
-async function connect(raw,{save=true}={}){disconnect();const c=validate(raw);owner=await window.LotKeysHubStore.identity();config=c;key=await crypto.subtle.importKey('raw',bytes(c.key),'AES-GCM',false,['encrypt','decrypt']);active=true;generation++;try{await publish({kind:'hello',session:'',client:'LotKeys Hub'});await poll();if(save)await saveLocalPairing(raw,owner).catch(()=>{});}catch(e){disconnect();throw e;}emit('status');}
-function disconnect(){active=false;inflight=false;generation++;clearTimeout(timer);timer=null;for(const w of pending.values()){clearTimeout(w.timer);w.resolve({ok:false,error:'Disconnected. Check the phone before retrying.'});}pending.clear();threads.clear();seen.clear();config=null;key=null;cursor=0;session='';lastPeer=0;peerName='';capabilities={};emit('disconnect');}
-async function send(threadId,text){if(owner!==await window.LotKeysHubStore.identity()){disconnect();throw Error('Account changed. Pair this device again.');}const t=threads.get(threadId);if(!connected()||!t?.canReply||!t.replyToken)throw Error('No live reply action is available. Open the phone messaging app or wait for a new incoming message.');text=H.text(text);if(!text||text.length>16000)throw Error('Enter a message under 16,000 characters.');const id=H.uid('SEND');t.messages.push({id,text,at:Date.now(),outgoing:true,state:'Sending…'});t.at=Date.now();emit('threads');const result=new Promise(resolve=>{const w={threadId,resolve,timer:setTimeout(()=>{pending.delete(id);const m=t.messages.find(m=>m.id===id);if(m)m.state='Not confirmed — check the phone before retrying';emit('threads');resolve({ok:false,error:'Phone acknowledgement timed out. Check the phone before retrying.'});},20000)};pending.set(id,w);});try{await publish({id,kind:'send',session,threadId,replyToken:t.replyToken,text});}catch(e){const w=pending.get(id);if(w){clearTimeout(w.timer);pending.delete(id);w.resolve({ok:false,error:'Not confirmed. Check the phone before retrying.'});}const m=t.messages.find(m=>m.id===id);if(m)m.state='Not confirmed — check the phone before retrying';emit('threads');}return result;}
+const pauseKey=a=>'lotkeys-device-paused|'+new URL('.',location.href).pathname+'|'+a;
+function isPaused(a){try{return sessionStorage.getItem(pauseKey(a))==='1';}catch{return false;}}
+function setPaused(a,value){if(!a)return;try{if(value)sessionStorage.setItem(pauseKey(a),'1');else sessionStorage.removeItem(pauseKey(a));}catch{}}
+function current(c){return channel===c&&generation===c.g;}
+function connected(){return !!channel&&!!peerSession&&Date.now()-lastPeer<90000&&Date.now()-lastGoodRelay<90000;}
+function validate(raw){
+  let c;try{const clean=String(raw||'').trim().replace(/[\uFEFF\u200B\u200C\u200D\u2060]/g,'').replace(/\u00a0/g,' ').replace(/[\u201c\u201d]/g,'"');c=JSON.parse(clean);}catch{throw Error('The Hub pairing code is not valid JSON. Clear the box, then paste hub.json once.');}
+  if(c?.version!==1||c.role!=='hub')throw Error('Use the Hub pairing code here, not the Device code.');
+  let u;try{u=new URL(c.url);}catch{throw Error('The pairing has an invalid relay address.');}
+  const loop=['localhost','127.0.0.1','[::1]'];
+  if(u.protocol!=='https:'&&!(u.protocol==='http:'&&loop.includes(u.hostname)&&loop.includes(location.hostname)))throw Error('A trusted HTTPS relay is required.');
+  if(u.username||u.password||u.search||u.hash||!['','/'].includes(u.pathname))throw Error('Use only the relay origin, without credentials or a path.');
+  let key;try{key=bytes(c.key);}catch{throw Error('The pairing key is invalid.');}
+  if(!/^[a-zA-Z0-9_-]{16,80}$/.test(c.room)||typeof c.token!=='string'||c.token.length<40||c.token.length>2048||key.length!==32)throw Error('The Hub pairing code is incomplete or invalid.');
+  return {version:1,role:'hub',url:u.href.replace(/\/$/,''),room:c.room,token:c.token,key:c.key};
+}
+async function seal(c,data){const iv=crypto.getRandomValues(new Uint8Array(12)),ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:te.encode(c.config.room)},c.key,te.encode(JSON.stringify(data)));return {v:1,iv:b64(iv),ciphertext:b64(ciphertext)};}
+async function unseal(c,x){if(x?.v!==1||typeof x.ciphertext!=='string'||x.ciphertext.length>100000||bytes(x.iv).length!==12)throw Error('Invalid encrypted event.');return JSON.parse(td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes(x.iv),additionalData:te.encode(c.config.room)},c.key,bytes(x.ciphertext))));}
+async function http(c,path,opts={}){
+  if(!current(c))throw Error('Connection changed.');
+  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),12000);controllers.add(ctl);
+  try{const r=await fetch(c.config.url+path,{...opts,headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.config.token},credentials:'omit',redirect:'error',cache:'no-store',signal:ctl.signal});
+    if(!current(c))throw Error('Connection changed.');
+    if(!r.ok)throw Error('Relay request failed ('+r.status+').');
+    const data=await r.json();if(!current(c))throw Error('Connection changed.');lastGoodRelay=Date.now();return data;
+  }finally{clearTimeout(timer);controllers.delete(ctl);}
+}
+async function publish(c,data){const now=Date.now(),body=await seal(c,{...data,id:data.id||H.uid('E'),at:now,expiresAt:now+30000});if(!current(c))throw Error('Connection changed.');return http(c,'/v1/event?room='+encodeURIComponent(c.config.room),{method:'POST',body:JSON.stringify(body)});}
+function finishPending(id,result){const job=pending.get(id);if(!job)return;pending.delete(id);clearTimeout(job.timer);const m=threads.get(job.threadId)?.messages.find(m=>m.id===id);if(m)m.state=result.ok?'Submitted to phone':result.uncertain?'Not confirmed — check the phone before retrying':'Not sent: '+String(result.error||'Reply rejected');job.resolve(result);}
+function cancelPending(message){for(const id of [...pending.keys()])finishPending(id,{ok:false,uncertain:true,error:message});}
+function stop({clear=true}={}){
+  generation++;clearTimeout(pollTimer);pollTimer=null;controllers.forEach(c=>c.abort());controllers.clear();polling=false;
+  cancelPending('Connection ended. Check the phone before retrying.');
+  channel=null;peerSession='';peerName='';peerCaps={};lastPeer=0;lastStatusAt=0;lastGoodRelay=0;lastHello=0;failures=0;
+  if(clear){threads.clear();seen.clear();binding='';}else for(const t of threads.values()){t.canReply=false;t.replyToken='';}
+}
+function disconnect(){const a=activeOwner;setPaused(a,true);stop();V.clear();transportError='';emit('disconnect');}
+function trim(){for(const t of threads.values())t.messages=t.messages.slice(-250);while(threads.size>250)threads.delete(threads.keys().next().value);while(seen.size>3000)seen.delete(seen.values().next().value);}
+function receive(c,p){
+  if(!current(c)||!p||typeof p.id!=='string'||!p.id||!Number.isFinite(p.at)||!Number.isFinite(p.expiresAt)||p.at<=0||p.at>Date.now()+60000||p.expiresAt>p.at+90000||p.expiresAt<Date.now()||seen.has(p.id))return;
+  if(!['status','message','ack','removed'].includes(p.kind))return;
+  if(p.kind==='status'){
+    if(typeof p.session!=='string'||!p.session||p.at<lastStatusAt)return;
+    seen.add(p.id);lastStatusAt=p.at;
+    if(peerSession&&peerSession!==p.session){cancelPending('The phone restarted. Check the phone before retrying.');for(const t of threads.values()){t.canReply=false;t.replyToken='';}}
+    peerSession=p.session;peerName=String(p.deviceName||'My phone');peerCaps=p.capabilities||{};lastPeer=Date.now();emit('status');return;
+  }
+  if(!peerSession||p.session!==peerSession)return;
+  seen.add(p.id);lastPeer=Date.now();
+  if(p.kind==='removed'){const t=threads.get(p.threadId);if(t){t.canReply=false;t.replyToken='';emit('threads');}return;}
+  if(p.kind==='ack'){finishPending(p.requestId,{ok:p.ok===true,error:String(p.error||'')});emit('threads');return;}
+  if(typeof p.threadId!=='string'||!p.threadId||typeof p.text!=='string')return;
+  let t=threads.get(p.threadId)||{id:p.threadId,binding,title:String(p.title||p.address||'Device contact'),address:String(p.address||''),messages:[],unread:0,group:!!p.group};
+  t.title=String(p.title||t.title);t.address=String(p.address||t.address);t.canReply=!!p.canReply;t.replyToken=String(p.replyToken||'');t.at=p.at;t.session=peerSession;t.binding=binding;
+  const mid=String(p.messageId||p.id);
+  let existing=t.messages.find(m=>m.id===mid);
+  if(!existing&&p.outgoing){existing=t.messages.find(m=>m.outgoing&&m.text===p.text&&Math.abs(m.at-p.at)<30000&&m.id.startsWith('SEND-'));if(existing){existing.echoId=mid;existing.state='Submitted to phone';}}
+  if(!existing&&!t.messages.some(m=>m.echoId===mid)){t.messages.push({id:mid,text:p.text.slice(0,16000),at:Number.isFinite(p.messageAt)?p.messageAt:p.at,outgoing:!!p.outgoing,state:''});if(!p.outgoing)t.unread++;}
+  threads.set(t.id,t);trim();emit('message',{threadId:t.id,outgoing:!!p.outgoing});
+}
+async function hello(c){if(Date.now()-lastHello<15000)return;lastHello=Date.now();await publish(c,{kind:'hello',session:'',client:'LotKeys Hub'});}
+async function poll(c){
+  if(!current(c)||polling)return;polling=true;
+  try{
+    if(await owner()!==c.owner){stop();V.clear();emit('disconnect');return;}
+    if(!current(c))return;
+    if(Date.now()-lastUserActivity>V.workIdleMs){stop({clear:false});V.clear();transportError='Unlock saved Device access to resume this work session.';emit('status');return;}
+    if(!lastPeer||Date.now()-lastPeer>30000)await hello(c);
+    const data=await http(c,'/v1/poll?room='+encodeURIComponent(c.config.room)+'&after='+c.cursor);
+    for(const row of data.events||[]){try{const p=await unseal(c,row.envelope);if(!current(c))return;receive(c,p);}catch{if(current(c))emit('warning',{message:'An invalid bridge event was ignored.'});}if(!current(c))return;c.cursor=Math.max(c.cursor,Number(row.seq)||0);}
+    trim();failures=0;transportError='';emit('status');
+  }catch(e){if(current(c)){failures++;transportError='Relay temporarily unavailable — retrying automatically.';emit('status');}}
+  finally{if(current(c)){polling=false;pollTimer=setTimeout(()=>poll(c),Math.min(15000,1500*Math.pow(2,Math.min(failures,3))));}}
+}
+async function connect(raw,{save=true,pin='',label='My phone'}={}){
+  if(connectJob)throw Error('A connection attempt is already in progress.');
+  connectJob=(async()=>{
+    const requestGeneration=generation;
+    if(locked())throw Error('Unlock LotKeys first.');
+    const config=validate(raw),a=await owner();
+    if(pin)await V.unlock(pin);
+    if(save&&!(await V.info()).unlocked)throw Error('Enter your LotKeys PIN/password to remember this pairing, or choose a session-only connection.');
+    if(a!==await owner())throw Error('Account changed. Reopen Device connection.');
+    const key=await crypto.subtle.importKey('raw',bytes(config.key),'AES-GCM',false,['encrypt','decrypt']);
+    if(a!==await owner()||locked())throw Error('Unlock LotKeys in the correct account first.');
+    const hash=await crypto.subtle.digest('SHA-256',te.encode(config.room));
+    const nextBinding=[...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('');
+    const currentOwner=await owner();if(requestGeneration!==generation||locked()||a!==currentOwner)throw Error('Connection attempt cancelled. Reopen Device connection.');
+    const preserve=binding===nextBinding&&activeOwner===a;
+    stop({clear:!preserve});activeOwner=a;binding=nextBinding;lastUserActivity=Date.now();setPaused(a,false);
+    const c=channel={config,key,owner:a,cursor:0,g:generation};transportError='';
+    try{
+      await hello(c);
+      if(a!==await owner()||!current(c))throw Error('Account changed during pairing.');
+      if(save){await V.save(JSON.stringify(config),label);if(!current(c)||a!==await owner())throw Error('Account changed during pairing.');emit('saved');}
+    }catch(e){if(current(c)){stop({clear:false});transportError=e.message;emit('status');}throw e;}
+    await poll(c);return true;
+  })().finally(()=>{connectJob=null;});return connectJob;
+}
+async function restoreSaved({manual=false}={}){
+  if(channel)return true;if(restoreJob)return restoreJob;if(connectJob)return false;
+  restoreJob=(async()=>{
+    const requestGeneration=generation;
+    let a;try{a=await owner();}catch{return false;}
+    if(locked()||(!manual&&isPaused(a)))return false;
+    const raw=await V.readUnlocked();if(!raw)return false;
+    if(a!==await owner()||requestGeneration!==generation||locked()||(!manual&&isPaused(a)))return false;
+    try{await connect(raw,{save:false});return true;}catch(e){transportError=e.message;emit('saved-error',{message:transportError});return false;}
+  })().finally(()=>{restoreJob=null;});return restoreJob;
+}
+function wake(){if(locked()&&!channel)return;if(!channel){if(!restoreJob&&!connectJob)restoreSaved().catch(()=>{});return;}clearTimeout(pollTimer);pollTimer=null;if(!polling)poll(channel);emit('status');}
+async function unlockSaved(pin){await V.unlock(pin);lastUserActivity=Date.now();return restoreSaved({manual:true});}
+async function onAppUnlock(pin){await V.unlock(pin);lastUserActivity=Date.now();const a=await owner();if(!isPaused(a))await restoreSaved();wake();}
+async function savedInfo(){return V.info();}
+async function forgetSaved(){const a=await owner();setPaused(a,true);stop();await V.forget();emit('saved');emit('disconnect');}
+async function send(threadId,text){
+  if(locked())throw Error('Unlock LotKeys before replying.');
+  const c=channel,t=threads.get(threadId);if(!c||!connected()||!t?.canReply||!t.replyToken)throw Error('No live Reply action is available. Use Continue in Messages or wait for a new notification.');
+  if([...pending.values()].some(x=>x.threadId===threadId))throw Error('A reply is already awaiting phone confirmation.');
+  if(await owner()!==c.owner||!current(c)){stop();V.clear();throw Error('Account changed.');}
+  text=H.text(text);if(!text||text.length>16000)throw Error('Enter a message under 16,000 characters.');
+  touch();const id=H.uid('SEND');t.messages.push({id,text,at:Date.now(),outgoing:true,state:'Sending…'});t.at=Date.now();emit('threads');
+  const result=new Promise(resolve=>pending.set(id,{threadId,resolve,timer:setTimeout(()=>{finishPending(id,{ok:false,uncertain:true,error:'Phone acknowledgement timed out. Check the phone before retrying.'});emit('threads');},20000)}));
+  try{await publish(c,{id,kind:'send',session:peerSession,threadId,replyToken:t.replyToken,text});}
+  catch{finishPending(id,{ok:false,uncertain:true,error:'Not confirmed. Check the phone before retrying.'});emit('threads');}return result;
+}
 function read(id){const t=threads.get(id);if(t){t.unread=0;emit('read');}return t;}
-window.LotKeysDevice={connect,disconnect,wake,restoreSaved,savedInfo,forgetSaved,send,read,threads:()=>[...threads.values()],get:id=>threads.get(id),status:()=>({paired:active,connected:connected(),name:peerName,capabilities,lastSeen:lastPeer}),cryptoTest:{b64,bytes}};
-window.addEventListener('lotkeys-hub-identity',e=>{const next=String(e.detail.owner||'');if(owner&&owner!==next)disconnect();if(next)wake();});document.addEventListener('visibilitychange',()=>{if(!document.hidden)wake();});window.addEventListener('online',wake);window.addEventListener('pagehide',disconnect);setTimeout(()=>restoreSaved().catch(()=>{}),700);
+function clearThread(id){const t=threads.get(id);if(!t)return;if([...pending.values()].some(x=>x.threadId===id))throw Error('Wait for the pending reply result before clearing this view.');t.messages=[];t.unread=0;emit('threads');}
+function touch(){if(!locked()&&!document.hidden){if(channel&&Date.now()-lastUserActivity>V.workIdleMs){stop({clear:false});V.clear();transportError='Unlock saved Device access to resume this work session.';emit('status');}lastUserActivity=Date.now();V.touch();}}
+function status(){return {paired:!!channel,connected:connected(),name:peerName,capabilities:peerCaps,lastSeen:lastPeer,error:transportError,paused:isPaused(activeOwner),locked:locked(),binding};}
+window.LotKeysDevice={connect,disconnect,wake,restoreSaved,unlockSaved,onAppUnlock,savedInfo,forgetSaved,send,read,clearThread,threads:()=>[...threads.values()],get:id=>threads.get(id),status,cryptoTest:{b64,bytes}};
+window.addEventListener('lotkeys-hub-identity',e=>{const a=String(e.detail.owner||'');if(activeOwner&&activeOwner!==a){stop();V.clear();activeOwner='';emit('disconnect');}if(a)setTimeout(wake,0);});
+window.addEventListener('pagehide',()=>{stop();V.clear();});
+window.addEventListener('online',wake);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){touch();wake();}});
+for(const type of ['pointerdown','keydown'])document.addEventListener(type,touch,{passive:true});
+setTimeout(wake,700);
 })();

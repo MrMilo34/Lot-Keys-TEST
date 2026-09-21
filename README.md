@@ -1,55 +1,48 @@
-# LotKeys V0.9.4.84 — Hub + Device bridge refinement test
+# LotKeys 0.9.4.91 — Customer records + dependable Device sessions
 
-Built forward from the user-approved **V0.9.4.81 / Posting Buddy V0.1.23** media baseline. Vehicle photo/video upload logic, Store Processor V0.9.4.76 and Posting Buddy V0.1.23 remain protected from this Hub work.
+Controlled TEST build based on `MrMilo34/Lot-Keys-TEST` commit
+`ba7df774436bb185ae6df84510b0a9e77d5fd739` (website 0.9.4.90).
 
-## V0.9.4.84 focus
+**Keep Android Bridge 0.1.1. This is a website update, not an APK update.**
 
-- LotKeys Lock Screen no longer intentionally disconnects the in-memory Device bridge. Unlocking wakes the existing pairing/poll immediately, so idle lock behaves like privacy protection rather than a Device-session teardown.
-- Returning to a visible/online Hub wakes Device polling without requiring the user to paste the Hub code again, as long as the browser session itself was not reloaded.
-- On desktop, Calendar / Phone / ＋ float against the viewport edge instead of the Hub list edge, keeping them clear of the list scrollbar.
+Start with **START-HERE-0.9.4.91.txt**. The full feature/change list, migration notes,
+known boundaries and morning test sequence are in **RELEASE-0.9.4.91.md**.
+Automated results are in **TEST-REPORT.json**; hashes are in **CHECKSUMS.txt**.
 
-- Device organization chips are now **multi-select**. A user can view Facebook + Store + another coloured group together without selecting every Device conversation.
-- Device conversations no longer disappear just because Android removes or refreshes the source notification after a reply. Notification removal now revokes the current live Reply action only.
-- Browser Device status accepts a longer heartbeat window and refreshes on real phone activity, reducing false “waiting for adapter” states.
-- A restarted Android bridge keeps the current browser-session conversation list instead of clearing it solely because the phone-side session ID changed.
-- Device contact links use the stable bridge thread identity rather than the temporary Android service session, so saved organization/category links survive bridge reconnects.
-- Android Bridge **0.1.1** retries temporary relay interruptions, refreshes its on-screen status while open, and replays messaging notifications Android still exposes when the listener reconnects.
-- The Android bridge now uses a more stable conversation identity and can replay multiple message rows exposed inside an active MessagingStyle notification.
-- The stale Hub connection error is cleared after a successful reconnect.
+## What this build changes
 
-## Hardware result established before this refinement
+Customer profiles, deliberately saved notes/documents, buying requirements and
+appointments are independent of transient Device messages. Archive/restore keeps
+the record, clear-visible-messages clears only RAM, clear-saved-contents removes
+saved notes/requirements/registered attachments, and Delete customer removes the
+record, its folder and linked Hub appointments after explicit confirmation.
 
-A real Samsung / Google Messages test proved both directions through the temporary HTTPS relay:
+Device category chips are multi-select; a separate customer-status filter narrows
+that union. Desktop drag/drop and a touch handle/chooser support organization.
+Appointments accept typed names and vehicles without forcing saved-record matches.
 
-1. A real incoming phone message appeared in LotKeys Hub.
-2. A reply typed in LotKeys Hub was submitted through the Samsung notification Reply action.
-3. The recipient received that carrier-delivered reply.
-4. The sent reply also appeared in the phone’s normal Google Messages conversation.
+The saved-pairing box now asks for the existing LotKeys PIN/password once for a
+work session. A successful normal Lock Screen unlock can satisfy the same gate.
+Temporary network interruptions retry; intentional Disconnect does not undo itself.
+Saved .90 browser pairings migrate only after PIN validation. See security limits
+in the release notes: this is not a production second-factor enrollment service.
 
-The current Android route therefore has a working real-device receive/reply path. V0.9.4.84 is primarily refining reliability, conversation retention and organization around that proven path.
+## Protected baseline
 
-## Device history boundary
+The existing Vehicle media function bodies, original artwork, internal messaging
+module, extension assets/Posting Buddy archive, and Store Processor are unchanged.
+Approved phone floating-button placement remains unchanged. No CNAME is included
+for the TEST repository. Do not delete existing repository folders when uploading.
 
-Google Messages for web can show existing conversation threads because Google Messages itself participates in that pairing/sync system. LotKeys does **not** have a public Google Messages history API.
+## Boundaries
 
-The current LotKeys Android bridge uses authorized Android notification access and live RemoteInput reply actions. V0.1.1 can repopulate messages still present in active messaging notifications, but it does **not** claim complete SMS/MMS/RCS history.
+No complete phone SMS/RCS inbox mirror, 15-day phone approval/2FA service, cloud
+relay deployment, automatic inventory matching or outgoing customer campaign is
+implemented. Existing Android 0.1.1 continues to supply notification-based replies.
+The temporary PC relay and tunnel must stay available, including while using Hub
+on the phone. Saved customer records remain usable without a live Device link.
 
-A later full-history experiment must be treated separately because Android SMS database permissions are restricted and do not provide equivalent generic access to Google Messages RCS history. Do not silently substitute partial SMS history and call it a complete phone mirror.
-
-## Hub features retained
-
-Hub keeps All / LotKeys / Device scopes, coloured Device organization, searchable private customer contacts, notes, Questions to Ask, photo/document records and Month/Week/Day appointments. Contact records can be linked to live Device conversations and keep their organization colour.
-
-Appointments remain forgiving: typed customer/vehicle snapshots are allowed even when no saved contact or Vehicle Profile match exists.
-
-## Test deployment
-
-This repository is the public **Lot-Keys-TEST** deployment. Do not add the production CNAME here.
-
-Open the test site with:
-
-`?build=09484`
-
-The Android bridge source lives under `device-bridge/android/`. Build the debug APK using the existing **Build Android test APK** GitHub Action. The APK version for this refinement is **0.1.1-prototype**.
-
-Pairing/relay JSON files remain private test credentials and must not be committed to this repository.
+Tests use fictional records, actual local protocol/crypto, API contract fixtures,
+and Chromium UI interactions. They do not certify Android background reliability,
+actual carrier delivery, native browser IndexedDB persistence or real Google Drive
+permissions. Those need the next hardware/browser test.

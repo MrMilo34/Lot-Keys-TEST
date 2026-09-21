@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09490-hub-encrypted-saved-device-pairing';
+const CACHE='lotkeys-app-v09491-hub-customer-lifecycle-pin-pairing';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -14,6 +14,7 @@ const CORE=[
   './lotkeys-messaging.js',
   './lotkeys-hub-core.js',
   './lotkeys-hub-store.js',
+  './lotkeys-device-pairing.js',
   './lotkeys-device-client.js',
   './lotkeys-hub.js',
   './lotkeys-hub.css',

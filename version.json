@@ -1,9 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.90",
-  "build": "09490",
-  "release": "hub-encrypted-saved-device-pairing",
-  "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09490-hub-encrypted-saved-device-pairing",
-  "publishedAt": "2026-09-20"
+  "version": "0.9.4.91",
+  "build": "09491",
+  "release": "hub-customer-lifecycle-pin-pairing",
+  "channel": "test",
+  "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
+  "serviceWorkerCache": "lotkeys-app-v09491-hub-customer-lifecycle-pin-pairing",
+  "publishedAt": "2026-09-21",
+  "basedOnCommit": "ba7df774436bb185ae6df84510b0a9e77d5fd739"
 }
