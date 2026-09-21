@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09491-hub-customer-lifecycle-pin-pairing';
+const CACHE='lotkeys-app-v09492-hub-device-session-mirror';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
