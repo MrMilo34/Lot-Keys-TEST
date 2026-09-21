@@ -1,9 +1,9 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.88",
-  "build": "09488",
-  "release": "hub-mobile-control-placement",
+  "version": "0.9.4.89",
+  "build": "09489",
+  "release": "hub-auth-resume-device-reconnect",
   "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09488-hub-mobile-control-placement",
+  "serviceWorkerCache": "lotkeys-app-v09489-hub-auth-resume-device-reconnect",
   "publishedAt": "2026-09-20"
 }
