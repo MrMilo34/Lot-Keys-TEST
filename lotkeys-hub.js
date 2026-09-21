@@ -1,4 +1,4 @@
-/* LotKeys Hub 0.9.4.91. UI is independent of the approved Vehicle media pipeline. */
+/* LotKeys Hub 0.9.4.92. UI is independent of the approved Vehicle media pipeline. */
 (()=>{'use strict';
 const H=window.LotKeysHubCore,S=window.LotKeysHubStore,D=window.LotKeysDevice,M=window.LotKeysMessaging,Core=window.LotKeysMessagingBridge;
 if(!H||!S||!D||!M)return;
@@ -74,9 +74,9 @@ async function paintStatus(){
   const st=D.status(),b=$('#hub-status',panel());if(!b)return;
   const state=st.connected?`${st.name} connected`:st.paired?'Device paired · waiting for phone':st.paused?'Device paused · reconnect when ready':'Device not connected · saved customers are available';
   b.innerHTML=scope==='lotkeys'?`<div class="hub-status"><span>LotKeys internal chat · no Device pairing required</span><button type="button" class="hub-link" id="hub-refresh-internal">Refresh chat</button></div>`:
-    `<div class="hub-status ${st.connected?'':'warn'}"><span>${e(state)}${st.error?`<br>${e(st.error)}`:''}${count?`<br>${count} private record${count===1?'':'s'} awaiting Drive sync`:''}${lastError?`<br>${e(lastError)}`:''}</span><button type="button" class="hub-link" id="hub-connect">${st.paired?'Connection':'Connect'}</button><button type="button" class="hub-link" id="hub-sync">Sync</button></div>`;
+    `<div class="hub-status ${st.connected?'':'warn'}"><span>${e(state)}${st.error?`<br>${e(st.error)}`:''}${count?`<br>${count} private record${count===1?'':'s'} awaiting Drive sync`:''}${lastError?`<br>${e(lastError)}`:''}</span><button type="button" class="hub-link" id="hub-connect">${st.paired?'Connection':'Connect'}</button>${st.paired?'<button type="button" class="hub-link" id="hub-device-refresh">Refresh Device</button>':''}<button type="button" class="hub-link" id="hub-sync">Sync</button></div>`;
   action($('#hub-refresh-internal',b),async()=>{await M.refresh();await refresh();});
-  action($('#hub-connect',b),bridgeDialog);action($('#hub-sync',b),async()=>{await S.sync();lastError='';await refresh();toast('Customer records synchronized.');});
+  action($('#hub-connect',b),bridgeDialog);action($('#hub-device-refresh',b),async()=>{await D.resync();toast('Asked the phone to refresh its current session mirror.');});action($('#hub-sync',b),async()=>{await S.sync();lastError='';await refresh();toast('Customer records synchronized.');});
 }
 function paintRows(){
   if(!home()||draggedRow)return;
@@ -273,7 +273,7 @@ function wireCategoryDrag(row){
   grip.onpointercancel=()=>{touch=null;lifted=false;cleanup();};
 }
 
-window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,deviceLatest:()=>Math.max(0,...D.threads().map(t=>t.at||0)),previewDevice,calendar,plus:plusMenu,pending:S.pending,version:'0.9.4.91'};
+window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,deviceLatest:()=>Math.max(0,...D.threads().map(t=>t.at||0)),previewDevice,calendar,plus:plusMenu,pending:S.pending,version:'0.9.4.92'};
 window.addEventListener('lotkeys-hub-data',scheduleRefresh);
 window.addEventListener('lotkeys-hub-internal',scheduleRefresh);
 window.addEventListener('lotkeys-device',ev=>{if(D.status().connected)lastError='';updateBadge();if(['message','threads','read','removed','disconnect'].includes(ev.detail.kind)){if(home())paintRows();else if(deviceId)paintDevice();if(ev.detail.kind==='message'&&!ev.detail.outgoing&&D.status().connected&&!(shown()&&deviceId===ev.detail.threadId)){lastDeviceAt=Date.now();toast('New Device message · hold Hub to preview and reply.');}}if(home())paintStatus();});
