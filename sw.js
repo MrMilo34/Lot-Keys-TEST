@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09487-hub-stale-update-notice-fix';
+const CACHE='lotkeys-app-v09488-hub-mobile-control-placement';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
