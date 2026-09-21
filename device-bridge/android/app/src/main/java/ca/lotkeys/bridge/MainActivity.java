@@ -25,8 +25,8 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle state){
         super.onCreate(state);getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         ScrollView scroll=new ScrollView(this);LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);int pad=(int)(20*getResources().getDisplayMetrics().density);box.setPadding(pad,pad*2,pad,pad*2);scroll.addView(box);setContentView(scroll);
-        text(box,"LotKeys Device Bridge",25);text(box,"ANDROID PROTOTYPE · 0.1.1",13);
-        text(box,"Relays approved messaging notifications and their live Reply action. On reconnect it can replay conversations that Android still exposes as active notifications. It does not read the full SMS/RCS database, contacts or photos. Obvious verification-code notifications are filtered, but this is not a guarantee against sensitive text appearing.",15);
+        text(box,"LotKeys Device Bridge",25);text(box,"ANDROID PROTOTYPE · 0.1.2",13);
+        text(box,"Relays approved messaging notifications and their live Reply action. During the current listener session it keeps a RAM-only mirror of messages it has observed and can replay that mirror to newly connected Hub clients. It does not read the full SMS/RCS database, contacts or photos. Obvious verification-code notifications are filtered, but this is not a guarantee against sensitive text appearing.",15);
         text(box,"Paired browser replies can send through an active notification. Only enable this on a device you own or are authorized to use. Stop the bridge at any time below. No SMS or notification content is saved by this companion.",15);
         pairing=new EditText(this);pairing.setHint("Paste Device pairing JSON");pairing.setMinLines(3);pairing.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE|android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);box.addView(pairing);
         text(box,"Allowed messaging app package(s), separated by commas. The default SMS app is prefilled; no other app is enabled automatically.",13);
