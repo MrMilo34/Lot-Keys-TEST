@@ -15,6 +15,7 @@ public final class BridgeNotificationListener extends NotificationListenerServic
     private Protocol protocol;
     private final LinkedHashMap<String,Reply> replies=new LinkedHashMap<>();
     private final LinkedHashSet<String> seenMessageIds=new LinkedHashSet<>();
+    private final LinkedHashMap<String,JSONObject> recentMessages=new LinkedHashMap<>();
     private Set<String> allowed=new HashSet<>();
     private boolean listening=false;
     private static final int STATUS_ID=8801;
@@ -53,13 +54,13 @@ public final class BridgeNotificationListener extends NotificationListenerServic
     private void stop(){
         if(worker!=null)worker.shutdownNow();
         if(protocol!=null)protocol.destroy();
-        protocol=null;replies.clear();seenMessageIds.clear();
+        protocol=null;replies.clear();seenMessageIds.clear();recentMessages.clear();
         try{getSystemService(NotificationManager.class).cancel(STATUS_ID);}catch(Exception ignored){}
     }
 
     private void configure(){
         if(protocol!=null)protocol.destroy();
-        protocol=null;replies.clear();seenMessageIds.clear();allowed.clear();
+        protocol=null;replies.clear();seenMessageIds.clear();recentMessages.clear();allowed.clear();
 
         if(!getSharedPreferences("bridge",0).getBoolean("enabled",false)){
             state="Stopped by user";
@@ -106,7 +107,10 @@ public final class BridgeNotificationListener extends NotificationListenerServic
         try{
             if(!getSharedPreferences("bridge",0).getBoolean("enabled",false)){configure();return;}
             protocol.heartbeat(false);
-            for(JSONObject cmd:protocol.poll())if("send".equals(cmd.optString("kind")))sendReply(cmd);
+            for(JSONObject cmd:protocol.poll()){
+                if("send".equals(cmd.optString("kind")))sendReply(cmd);
+                else if("hello".equals(cmd.optString("kind")))replayMirror();
+            }
             state="HTTPS relay reachable · listening for approved app messages";
         }catch(Exception ex){
             state="Relay temporarily unavailable · retrying automatically";
@@ -146,6 +150,43 @@ public final class BridgeNotificationListener extends NotificationListenerServic
     private void rememberMessage(String id){
         seenMessageIds.add(id);
         while(seenMessageIds.size()>2500)seenMessageIds.remove(seenMessageIds.iterator().next());
+    }
+
+    private void rememberRecent(JSONObject event){
+        try{
+            String id=event.optString("messageId");
+            if(id.isEmpty())return;
+            recentMessages.put(id,new JSONObject(event.toString()));
+            while(recentMessages.size()>500)recentMessages.remove(recentMessages.keySet().iterator().next());
+        }catch(Exception ignored){}
+    }
+
+    private void publishObserved(JSONObject event) throws Exception {
+        rememberRecent(event);
+        protocol.publish(new JSONObject(event.toString()));
+    }
+
+    private void replayMirror(){
+        if(protocol==null)return;
+        try{
+            // First refresh anything Android still exposes as an active messaging notification.
+            StatusBarNotification[] active=getActiveNotifications();
+            if(active!=null)for(StatusBarNotification sbn:active)capture(sbn);
+
+            // Then replay the RAM-only messages already observed during this listener session.
+            for(JSONObject cached:new ArrayList<>(recentMessages.values())){
+                JSONObject event=new JSONObject(cached.toString());
+                String thread=event.optString("threadId");
+                Reply r=replies.get(thread);
+                boolean canReply=r!=null&&r.action!=null;
+                event.put("canReply",canReply);
+                event.put("replyToken",canReply?r.token:"");
+                protocol.publish(event);
+            }
+            protocol.heartbeat(true);
+        }catch(Exception ignored){
+            state="Session mirror replay deferred · live notification bridge remains enabled";
+        }
     }
 
     private void capture(StatusBarNotification sbn){
@@ -202,12 +243,14 @@ public final class BridgeNotificationListener extends NotificationListenerServic
                     String messageId=Protocol.digest(thread+"|"+at+"|"+senderKey+"|"+body);
                     if(seenMessageIds.contains(messageId))continue;
                     rememberMessage(messageId);
-                    protocol.publish(new JSONObject()
+                    JSONObject event=new JSONObject()
                         .put("kind","message").put("threadId",thread).put("address",address)
                         .put("title",title).put("text",body.substring(0,Math.min(16000,body.length())))
-                        .put("messageId",messageId).put("replyToken",token).put("canReply",action!=null)
+                        .put("messageId",messageId).put("messageAt",at)
+                        .put("replyToken",token).put("canReply",action!=null)
                         .put("group",extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION,false))
-                        .put("outgoing",outgoing));
+                        .put("outgoing",outgoing);
+                    publishObserved(event);
                     published=true;
                 }
             }
@@ -218,12 +261,14 @@ public final class BridgeNotificationListener extends NotificationListenerServic
                     String messageId=Protocol.digest(thread+"|"+sbn.getPostTime()+"|"+body);
                     if(!seenMessageIds.contains(messageId)){
                         rememberMessage(messageId);
-                        protocol.publish(new JSONObject()
+                        JSONObject event=new JSONObject()
                             .put("kind","message").put("threadId",thread).put("address",address)
                             .put("title",title).put("text",body.substring(0,Math.min(16000,body.length())))
-                            .put("messageId",messageId).put("replyToken",token).put("canReply",action!=null)
+                            .put("messageId",messageId).put("messageAt",sbn.getPostTime())
+                            .put("replyToken",token).put("canReply",action!=null)
                             .put("group",extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION,false))
-                            .put("outgoing",false));
+                            .put("outgoing",false);
+                        publishObserved(event);
                     }
                 }
             }
