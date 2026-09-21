@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.82 — pure models, filtering and appointment utilities. */
+/* LotKeys Hub V0.9.4.83 — pure models, filtering and appointment utilities. */
 (function(root){
 'use strict';
 const uid=(prefix='H')=>prefix+'-'+(globalThis.crypto?.randomUUID?.()||Array.from(globalThis.crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,'0')).join(''));
@@ -15,7 +15,7 @@ function validateContact(c){if(!text(c.name))throw Error('Enter a contact name.'
 function contactSearch(c){return [c.name,...(c.fields||[]).flatMap(f=>[f.label,f.value,...(f.kind==='phone'?[phone(f.value)]:[])])].join(' ').toLowerCase();}
 function matches(c,q){q=text(q).toLowerCase();if(!q)return true;if(contactSearch(c).includes(q))return true;const digits=q.replace(/\D/g,'');return digits.length>=3&&(c.fields||[]).some(f=>f.kind==='phone'&&phone(f.value).replace(/\D/g,'').includes(digits));}
 function conversationMatch(r,q){return matches(r.contact||{name:r.title,fields:[{kind:'phone',value:r.phone||r.address||''},{kind:'email',value:r.email||''}]},q)||text(r.title+' '+(r.preview||'')).toLowerCase().includes(text(q).toLowerCase());}
-function filtered(rows,{scope='all',filter='all',category='',query=''}={}){return rows.filter(r=>(scope==='all'||r.source===scope)&&(!category||r.source==='device'&&r.contact?.categoryId===category)&&(filter!=='unread'||r.unread>0)&&(filter!=='groups'||r.group===true)&&(filter!=='contacts'||r.favorite||r.contact)&&conversationMatch(r,query)).sort((a,b)=>(b.at||0)-(a.at||0)||text(a.title).localeCompare(text(b.title)));}
+function filtered(rows,{scope='all',filter='all',category='',categories=[],query=''}={}){const wanted=Array.isArray(categories)?categories.filter(Boolean):[];return rows.filter(r=>(scope==='all'||r.source===scope)&&((!wanted.length&&!category)||(r.source==='device'&&(wanted.length?wanted.includes(r.contact?.categoryId):r.contact?.categoryId===category)))&&(filter!=='unread'||r.unread>0)&&(filter!=='groups'||r.group===true)&&(filter!=='contacts'||r.favorite||r.contact)&&conversationMatch(r,query)).sort((a,b)=>(b.at||0)-(a.at||0)||text(a.title).localeCompare(text(b.title)));}
 function localDay(d=new Date()){const x=d instanceof Date?d:new Date(d);return [x.getFullYear(),String(x.getMonth()+1).padStart(2,'0'),String(x.getDate()).padStart(2,'0')].join('-');}
 function atLocal(date,time){const d=new Date(date+'T'+time+':00');if(!Number.isFinite(d.getTime())||localDay(d)!==date||String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')!==time)throw Error('That local date/time does not exist. Check the date and daylight-saving change.');return d.toISOString();}
 function agenda(rows,date){return rows.filter(a=>localDay(a.start)===date&&!a.deleted).sort((a,b)=>Date.parse(a.start)-Date.parse(b.start));}
