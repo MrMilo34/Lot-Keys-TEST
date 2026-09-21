@@ -1,9 +1,9 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.89",
-  "build": "09489",
-  "release": "hub-auth-resume-device-reconnect",
+  "version": "0.9.4.90",
+  "build": "09490",
+  "release": "hub-encrypted-saved-device-pairing",
   "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09489-hub-auth-resume-device-reconnect",
+  "serviceWorkerCache": "lotkeys-app-v09490-hub-encrypted-saved-device-pairing",
   "publishedAt": "2026-09-20"
 }
