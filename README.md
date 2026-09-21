@@ -1,8 +1,12 @@
-# LotKeys V0.9.4.83 — Hub + Device bridge refinement test
+# LotKeys V0.9.4.84 — Hub + Device bridge refinement test
 
 Built forward from the user-approved **V0.9.4.81 / Posting Buddy V0.1.23** media baseline. Vehicle photo/video upload logic, Store Processor V0.9.4.76 and Posting Buddy V0.1.23 remain protected from this Hub work.
 
-## V0.9.4.83 focus
+## V0.9.4.84 focus
+
+- LotKeys Lock Screen no longer intentionally disconnects the in-memory Device bridge. Unlocking wakes the existing pairing/poll immediately, so idle lock behaves like privacy protection rather than a Device-session teardown.
+- Returning to a visible/online Hub wakes Device polling without requiring the user to paste the Hub code again, as long as the browser session itself was not reloaded.
+- On desktop, Calendar / Phone / ＋ float against the viewport edge instead of the Hub list edge, keeping them clear of the list scrollbar.
 
 - Device organization chips are now **multi-select**. A user can view Facebook + Store + another coloured group together without selecting every Device conversation.
 - Device conversations no longer disappear just because Android removes or refreshes the source notification after a reply. Notification removal now revokes the current live Reply action only.
@@ -22,7 +26,7 @@ A real Samsung / Google Messages test proved both directions through the tempora
 3. The recipient received that carrier-delivered reply.
 4. The sent reply also appeared in the phone’s normal Google Messages conversation.
 
-The current Android route therefore has a working real-device receive/reply path. V0.9.4.83 is primarily refining reliability, conversation retention and organization around that proven path.
+The current Android route therefore has a working real-device receive/reply path. V0.9.4.84 is primarily refining reliability, conversation retention and organization around that proven path.
 
 ## Device history boundary
 
@@ -44,7 +48,7 @@ This repository is the public **Lot-Keys-TEST** deployment. Do not add the produ
 
 Open the test site with:
 
-`?build=09483`
+`?build=09484`
 
 The Android bridge source lives under `device-bridge/android/`. Build the debug APK using the existing **Build Android test APK** GitHub Action. The APK version for this refinement is **0.1.1-prototype**.
 
