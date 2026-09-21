@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.92",
-  "build": "09492",
-  "release": "hub-device-session-mirror",
+  "version": "0.9.4.93",
+  "build": "09493",
+  "release": "hub-internal-chat-refresh",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09492-hub-device-session-mirror",
+  "serviceWorkerCache": "lotkeys-app-v09493-hub-internal-chat-refresh",
   "publishedAt": "2026-09-21",
   "basedOnCommit": "ba7df774436bb185ae6df84510b0a9e77d5fd739"
 }
