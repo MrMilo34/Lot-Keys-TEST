@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09496-lightweight-lists';
+const CACHE='lotkeys-app-v09497-stable-81-core-phone-hub';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

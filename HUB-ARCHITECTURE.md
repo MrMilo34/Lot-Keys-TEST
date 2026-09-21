@@ -1,4 +1,4 @@
-# Hub 0.9.4.82 implementation notes
+# Hub 0.9.4.97 implementation notes
 
 ## Integration boundary
 
@@ -41,12 +41,12 @@ Hub sync yields at entry and before writes when existing Vehicle/Listing/More jo
 
 Version 1 envelopes: AES-256-GCM; random 12-byte nonce; room ID as additional authenticated data; JSON {v,iv,ciphertext}. Hub and adapter share the content key, with distinct role bearer tokens for relay endpoints. Relay knows role tokens but not the content key. TLS is required outside the loopback simulator. No redirects are accepted by clients.
 
-Encrypted events carry id, at, expiresAt, kind and adapter session. Readiness is an adapter heartbeat, not merely an open HTTP connection. Browser filters replayed, expired, tampered and wrong-session events. Only an exact active thread/reply capability authorizes a send. Replies never use fuzzy name matching. Payloads are bounded; messages are held in browser memory for at most 30 minutes (up to 100 threads/100 messages each). Relay ciphertext is bounded to 512 envelopes/120 seconds in RAM; do not enable request-body logging. Browser pairing is session-only. Native Android configuration is encrypted with AndroidKeyStore; Mac pairing is in a user-protected local file.
+Encrypted events carry id, at, expiresAt, kind and adapter session. Readiness is an adapter heartbeat, not merely an open HTTP connection. Browser filters replayed, expired, tampered and wrong-session events. Only an exact active thread and recipient authorize a send; fuzzy-name matching is never used. Relay ciphertext is bounded and temporary in RAM; do not enable request-body logging. Browser pairing can remain session-only or be saved encrypted by the LotKeys Lock PIN. Native Android configuration is encrypted with AndroidKeyStore.
 
 This is an experimental protocol implementation, not independently security-audited. Manual Device-to-contact links are adapter-session scoped, to avoid assigning a reused notification/thread key to an old customer. An exact unambiguous phone-number match can resolve the saved contact across sessions. No durable message archive, history import, attachment transport, delivery/read receipt, phone-call relay or push-when-browser-closed is claimed. A live browser tab, relay and adapter are required. Explicitly saved notes/documents are a separate retained data path.
 
 ## Phone adapters
 
-Android: system NotificationListenerService, user-approved package list, new MessagingStyle/notification text only, RemoteInput reply PendingIntent tied to the exact active notification. No SMS database, Contacts, accessibility, default-SMS takeover, root or silent permission grant. Notification text/reply availability, phone lock/OEM process restrictions and app-specific notification behavior must be tested.
+Android Phone Mirror 0.2.0: after explicit READ_SMS/SEND_SMS approval, a foreground remote-messaging service reads the native SMS/MMS provider, pages history, observes changes and submits confirmed SMS with an idempotent local receipt ledger. The phone remains the message database. It does not read Contacts, use Accessibility, become the default SMS app, root the phone, expose RCS, send MMS or silently grant permissions. Boot recovery, battery restrictions, carrier behavior and OEM background rules require physical testing.
 
-iPhone: experimental local Mac adapter reads new rows of the user's Messages database in read-only mode after start and uses Messages AppleScript for explicit sends to exact known chat GUIDs. Requires iPhone forwarding to the same-account Mac plus Full Disk Access and Automation consent. Database schema and AppleScript are platform-sensitive. Unsupported rich-message bodies are labelled unavailable, not guessed. No direct iOS API or unsupported iPhone/Windows claim.
+There is no supported direct iPhone-to-Windows Phone Mirror in this release.

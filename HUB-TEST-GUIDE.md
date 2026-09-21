@@ -1,10 +1,10 @@
-# LotKeys Hub V0.9.4.82 — first test
+# LotKeys Hub V0.9.4.97 — first test
 
 This is a controlled test build, made from the approved V0.9.4.81 release. Start with a fictional customer and non-sensitive documents. Do not replace your dealership's approved customer/finance system with this prototype.
 
 ## Install the main app
 
-Keep the V0.9.4.81 ZIP as a rollback copy. Upload the complete contents of this release to the existing Lot-Keys-TEST repository, with the same folder structure. Do not add CNAME to the TEST repository. Open the TEST site with `?build=09482` after deployment and confirm V0.9.4.82 in Account. The main bottom tab now says **Hub**.
+Keep the V0.9.4.81 ZIP as a rollback copy. Upload the complete contents of this release to the existing Lot-Keys-TEST repository, with the same folder structure. Do not add CNAME to the TEST repository. Open the TEST site with `?build=09497` after deployment and confirm V0.9.4.97 in Account. The main bottom tab now says **Hub**.
 
 Posting Buddy stays V0.1.23. Its bundled ZIP and `extension/latest.json` are unchanged. Store Processor stays V0.9.4.76; no reinstall is required.
 
@@ -42,13 +42,13 @@ The calendar is private Hub data. **Google Calendar/Outlook are not synchronized
 
 ## Device bridge test
 
-The main ZIP contains the real encrypted Device client, but it does not automatically install a phone bridge or host a relay. Use the separate **LotKeys Device Bridge Test Kit 0.1.0**.
+The main source artifact contains the encrypted Device client and Android Phone Mirror 0.2.0 source. The successful GitHub Actions run also provides a compiled APK artifact. The existing Python relay and HTTPS tunnel must stay running; this website does not host a replacement relay.
 
-Start with its fictional-message simulator. Android is a native companion **source project**, not a compiled APK in this delivery. The Mac/iPhone adapter is runnable Python source, but needs a Mac with Messages forwarding and explicit local permissions. Neither native route has been tested on your actual devices. An iPhone plus a Windows PC alone is not supported as an integrated Device bridge in this prototype.
+Phone Mirror reads Android's native SMS/MMS provider after explicit permission. It can page older SMS/MMS text history and submit an explicitly confirmed SMS through the phone. It does not change the default messaging app, create contacts, expose private RCS history, send MMS, or download MMS attachments. Groups and short codes remain view-only.
 
-Device replies require a live, exact adapter conversation/reply capability. The UI distinguishes sending, submitted to phone, rejected and unconfirmed. “Submitted” does not mean carrier delivery. Never retry an unconfirmed reply until checking the source phone.
+Device sends require the exact live phone thread and recipient. The UI distinguishes accepted, sent, rejected, failed and uncertain results. Never retry an uncertain send until checking the normal phone messaging app.
 
-Device transcripts and browser pairing keys stay in memory only; disconnect, lock, account change, page close or reload clears them. The external messaging app retains its own normal history. An Android notification may disappear/revoke reply ability when dismissed. Device history, MMS/photo attachment transfer and unsolicited outbound messages to arbitrary contacts are not part of this first bridge test.
+Device transcripts remain a transient mirror. Disconnect, phone-off heartbeat expiry, account change or reload hides them while saved Hub customers, notes, documents and appointments remain. A saved pairing may be encrypted with the LotKeys Lock PIN; it is not synchronized through customer Drive data.
 
 ## Preserve the known-good baseline
 

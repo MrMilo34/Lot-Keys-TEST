@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.96",
-  "build": "09496",
-  "release": "lightweight-inventory-listings-cache",
-  "channel": "test",
-  "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09496-lightweight-lists",
-  "publishedAt": "2026-09-21",
-  "basedOnCommit": "cc1b97b72b62f632115e42758f8f94b692da9b42"
+  "version": "0.9.4.97",
+  "build": "09497",
+  "release": "stable-81-core-phone-hub",
+  "canonicalUrl": "https://lot-keys.ca/",
+  "serviceWorkerCache": "lotkeys-app-v09497-stable-81-core-phone-hub",
+  "basedOnCommit": "13e50428fb13ef1c296d1bb79fccdb88c57e1cd2",
+  "hubSourceCommit": "cc1b97b",
+  "publishedAt": "2026-09-21"
 }

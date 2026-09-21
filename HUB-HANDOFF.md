@@ -1,30 +1,13 @@
-# Current Hub handoff — 0.9.4.91
+# Current Hub handoff — 0.9.4.97
 
-Use README.md, RELEASE-0.9.4.91.md and TEST-REPORT.json as the current behavior and
-validation record. Other architecture/checklist documents retained from .82 are
-historical and are not assertions that the new features or production security
-have been certified.
+V0.9.4.97 uses the final V0.9.4.81 application checkpoint as its protected base. Do not replace the startup, Inventory, Listings, Vehicle Profile, Drive synchronization, upload or Posting Buddy paths with code from V0.9.4.95 or V0.9.4.96.
 
-This is a website-only patch over verified .90. Keep the current Android 0.1.1
-project/APK and existing Python relay. No GitHub deployment occurred automatically.
+The permitted overlay is the isolated Hub set: `lotkeys-hub-*`, `lotkeys-device-*`, the small internal-Chat hooks in `lotkeys-messaging.js`, the documented Hub integration points in `index.html`, and Android Phone Mirror 0.2.0 under `device-bridge/android`.
 
-Next: physical receive/reply + lock/reload/PIN tests on Samsung/Windows and real
-private Drive sync; then fix native fallback conversation identity for same-name
-contacts, reply-action refresh/replay and Android background behavior. Do not claim
-notification history equals complete SMS/RCS history. A permanent relay and unique
-revocable per-browser credentials need server-validated account/device enrollment.
-Two-digit number matching is only approval context, never a bearer secret. New-PC
-and 15-day policy remain unimplemented. Do not add a fake OTP flow.
+The website opens IndexedDB schema version 3 solely so a device that opened V0.9.4.96 can return without a downgrade error. It uses the original V0.9.4.81 Vehicle and Listing stores. Do not ask testers to clear site storage.
 
-The local PIN vault improves at-rest protection but short PINs can be brute-forced
-from a copied browser profile. Same-origin scripts remain a trust boundary. The
-15-day cloud identity system must not reuse this as a server authentication design.
+Phone Mirror uses Android's SMS/MMS provider and sends explicitly confirmed SMS through the phone. Private RCS, MMS sending/attachment downloads, groups, short codes and new-number composition are not supported. The existing Python relay and current HTTPS tunnel must stay running; a changed tunnel URL requires new pairing files.
 
-Customer lifecycle and source are separate. Category chips use OR, lifecycle/unread
-use AND. Archive keeps the record, clear-visible only clears RAM, clear-content
-removes saved details/files, delete removes the record/folder and linked Hub events.
-Requirements are stored explicitly; no automatic outreach/matching engine exists.
+The phone is the communication source of truth. Device history is transient in Hub; saved CRM contacts, organization, notes, documents and appointments remain separate private Hub records. Offline drafts never auto-send, and an uncertain send must be checked on the phone before retrying.
 
-Keep media upload functions, Posting Buddy 0.1.23, Store Processor 0.9.4.76,
-artwork and original internal messaging unchanged. Keep accepted mobile action
-placement. Always update page, version.json, manifest and sw.js together.
+Keep Posting Buddy V0.1.23, Store Processor V0.9.4.76, Drive authority, Viewer-only official Inventory permissions and the full source artifact unchanged unless a separately tested release intentionally advances them.

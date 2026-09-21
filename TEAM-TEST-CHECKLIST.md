@@ -1,15 +1,13 @@
-# V0.9.4.82 Hub tests
-
-Follow HUB-TEST-GUIDE.md with fictional customer data first. Read the Device prototype limits before attempting real messaging. Then run the prior known-good media checks below.
-
-# LotKeys V0.9.4.81 + Posting Buddy V0.1.23 team-test checklist
+# LotKeys V0.9.4.97 stable-core + Hub team-test checklist
 
 ## App baseline
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09481`.
-- Confirm version metadata reports **V0.9.4.81 / 09481**.
-- Confirm service worker cache is `lotkeys-app-v09481-fresh-video-management-updates`.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09497`.
+- Confirm version metadata reports **V0.9.4.97 / 09497** and identifies the V0.9.4.81 core.
+- Confirm service worker cache is `lotkeys-app-v09497-stable-81-core-phone-hub`.
+- Open Home, Inventory and Listings before testing Hub; none should remain on a loading skeleton.
 - Confirm V0.9.4.80 Vehicle Profile Photos + Video parallel upload behavior still works and active video progress still shows MB transferred / total MB.
 - Confirm V0.9.4.79 Vehicle/Listing draft recovery still works.
+- Follow `HUB-TEST-GUIDE.md` with fictional data, then verify Phone Mirror reconnect/history using `START-HERE-LotKeys-Phone-Mirror.txt`.
 
 ## Management Updates
 - As Admin Level 1/2, confirm **Administration controls** appears above the top/pinned post.
@@ -32,4 +30,4 @@ Follow HUB-TEST-GUIDE.md with fictional customer data first. Read the Device pro
 
 ## Processor
 - Garage should still report **Store Processor V0.9.4.76** current.
-- No Apps Script reinstall is expected for V0.9.4.81.
+- No Apps Script reinstall is expected for V0.9.4.97.

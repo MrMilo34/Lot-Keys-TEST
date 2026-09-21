@@ -1,26 +1,26 @@
 LOTKEYS PHONE MIRROR — START HERE
-Website 0.9.4.96 + Android Phone Mirror 0.2.0 TEST
+Website 0.9.4.97 + Android Phone Mirror 0.2.0 TEST
 Prepared September 21, 2026
 
 THIS IS AN SMS/MMS TEST BUILD, NOT A COMPLETE GOOGLE MESSAGES / RCS MIRROR.
-The APK compiled and passed Android lint with 0 errors and 10 warnings.
-88 automated checks passed in five completed browser/model/transport suites.
-The actual phone, carrier SMS, screen-off connection and reboot have NOT been tested here.
-The .96 website is published from the complete Lot-Keys-TEST main branch.
+GitHub Actions packages the complete source folder, builds the APK and runs Android lint.
+The actual phone, carrier SMS, screen-off connection and reboot still require physical testing.
 
 FAST SETUP
 
 1) WEBSITE — PC
-   Open your MrMilo34 / Lot-Keys-TEST repository and the newest successful Actions run.
-   Download LotKeys-Phone-Mirror-Source for the complete repository folder backup.
-   The main branch deploys through GitHub Pages; do not upload a partial patch or nested folder.
-   Reload LotKeys on PC and phone and confirm version 0.9.4.96.
-   Do NOT clear site storage, delete customer data, reset the app, or replace working pairing files.
-   Hard-refresh the desktop if necessary; close/reopen the phone PWA after deployment.
+   Open the successful Build LotKeys Phone Mirror run for V0.9.4.97.
+   Download LotKeys-Phone-Mirror-Source for the complete repository backup.
+   The matching main-branch commit is deployed automatically to GitHub Pages.
+   Confirm version 0.9.4.97. Do NOT clear site storage, delete customer data, or reset the app.
+   Close every older LotKeys tab/PWA instance, then reopen the phone app after deployment.
 
 2) ANDROID — YOUR PHONE
+   If Phone Mirror 0.2.0 is already installed and connecting, keep it; this website
+   rollback does not require another APK installation.
    Stop/disable the OLD LotKeys Device Bridge notification app first.
-   Install LotKeys-Phone-Mirror-0.2.0-Test.apk.
+   Download LotKeys-Phone-Mirror-APK from the same successful Actions run, extract it,
+   and install app-debug.apk.
    It installs separately as "LotKeys Phone Mirror (Test)".
    You do NOT need to change your default messaging app or create phone contacts.
    Open it and press "1. Allow SMS access". Read and approve the SMS permission request.
@@ -91,9 +91,6 @@ Do not manually delete or reset them during installation.
 
 FULL TEST RECORD
 
-See RELEASE-0.9.4.96.md for the Inventory/Listings cache hotfix,
-RELEASE-0.9.4.95.md for navigation recovery, and TEST-REPORT.json for the 0.9.4.94
-Phone Mirror test record, or read the README in the complete source artifact.
-One older broad UI test suite did not finish because its customer-dialog selector matched two
-open dialogs. Its six earlier passes are NOT included in the 88 completed-suite checks.
-This is not a claim of complete UI regression coverage or real-device reliability.
+See RELEASE-0.9.4.97.md and README.md in the complete source artifact.
+The build proves source consistency, JavaScript parsing and Android compilation/lint.
+It is not a claim of complete real-device, carrier or RCS reliability.
