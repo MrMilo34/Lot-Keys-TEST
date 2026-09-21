@@ -3,9 +3,8 @@ name: Build LotKeys Phone Mirror
 on:
   workflow_dispatch:
   push:
-    paths:
-      - '.github/workflows/build-phone-mirror.yml'
-      - 'device-bridge/**'
+    branches:
+      - main
 
 permissions:
   contents: read
