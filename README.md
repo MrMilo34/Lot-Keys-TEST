@@ -1,19 +1,51 @@
-# LotKeys V0.9.4.82 — Hub test release
+# LotKeys V0.9.4.83 — Hub + Device bridge refinement test
 
-Built forward from the user-approved V0.9.4.81 / Posting Buddy V0.1.23 media baseline.
+Built forward from the user-approved **V0.9.4.81 / Posting Buddy V0.1.23** media baseline. Vehicle photo/video upload logic, Store Processor V0.9.4.76 and Posting Buddy V0.1.23 remain protected from this Hub work.
 
-## Ready for controlled testing
+## V0.9.4.83 focus
 
-Chat becomes Hub with All / LotKeys / Device categories, scoped unread filters, user-created coloured Device organization categories and searchable private customer contacts. Repeated phone/email/custom fields support renamed labels and a primary phone number. Existing internal messaging and VoIP remain available.
+- Device organization chips are now **multi-select**. A user can view Facebook + Store + another coloured group together without selecting every Device conversation.
+- Device conversations no longer disappear just because Android removes or refreshes the source notification after a reply. Notification removal now revokes the current live Reply action only.
+- Browser Device status accepts a longer heartbeat window and refreshes on real phone activity, reducing false “waiting for adapter” states.
+- A restarted Android bridge keeps the current browser-session conversation list instead of clearing it solely because the phone-side session ID changed.
+- Device contact links use the stable bridge thread identity rather than the temporary Android service session, so saved organization/category links survive bridge reconnects.
+- Android Bridge **0.1.1** retries temporary relay interruptions, refreshes its on-screen status while open, and replays messaging notifications Android still exposes when the listener reconnects.
+- The Android bridge now uses a more stable conversation identity and can replay multiple message rows exposed inside an active MessagingStyle notification.
+- The stale Hub connection error is cleared after a successful reconnect.
 
-Private customer notes, Questions to Ask, camera/file attachments, individual/content/contact deletion and vehicle-linked Month/Week/Day appointments are implemented. Records synchronize to the user's owned, unshared personal Lot-Keys Account/Hub Drive area, with local account isolation, explicit conflicts and deletion tombstones. Calendar export is .ics only; no Google/Outlook two-way sync, automatic invitation or reminder is claimed.
+## Hardware result established before this refinement
 
-## Device messaging is a separate prototype
+A real Samsung / Google Messages test proved both directions through the temporary HTTPS relay:
 
-Hub has an encrypted, session-only Device client. Actual texts require the separate Device Bridge Test Kit, adapter installation and an authorized private HTTPS relay. Android companion source is supplied but no compiled APK is included. iPhone testing uses a Mac intermediary; iPhone + Windows alone is not integrated. Native phone delivery has not been hardware-tested. Use the fictional-message simulator first.
+1. A real incoming phone message appeared in LotKeys Hub.
+2. A reply typed in LotKeys Hub was submitted through the Samsung notification Reply action.
+3. The recipient received that carrier-delivered reply.
+4. The sent reply also appeared in the phone’s normal Google Messages conversation.
 
-## Protected baseline
+The current Android route therefore has a working real-device receive/reply path. V0.9.4.83 is primarily refining reliability, conversation retention and organization around that proven path.
 
-Existing Vehicle Profile upload/resume function bodies, all original assets, awards/info code, Store Processor V0.9.4.76 and Posting Buddy V0.1.23 ZIP remain unchanged. No Processor reinstall or Buddy update is required. Upload all release files together to Lot-Keys-TEST; do not add CNAME to TEST. Open the test site with `?build=09482`.
+## Device history boundary
 
-Read **HUB-TEST-GUIDE.md** first. **HUB-ARCHITECTURE.md** explains data boundaries and prototype limits. **TEST-REPORT.json** records exactly what was and was not tested. Start with fictional customer data, not IDs or financing records.
+Google Messages for web can show existing conversation threads because Google Messages itself participates in that pairing/sync system. LotKeys does **not** have a public Google Messages history API.
+
+The current LotKeys Android bridge uses authorized Android notification access and live RemoteInput reply actions. V0.1.1 can repopulate messages still present in active messaging notifications, but it does **not** claim complete SMS/MMS/RCS history.
+
+A later full-history experiment must be treated separately because Android SMS database permissions are restricted and do not provide equivalent generic access to Google Messages RCS history. Do not silently substitute partial SMS history and call it a complete phone mirror.
+
+## Hub features retained
+
+Hub keeps All / LotKeys / Device scopes, coloured Device organization, searchable private customer contacts, notes, Questions to Ask, photo/document records and Month/Week/Day appointments. Contact records can be linked to live Device conversations and keep their organization colour.
+
+Appointments remain forgiving: typed customer/vehicle snapshots are allowed even when no saved contact or Vehicle Profile match exists.
+
+## Test deployment
+
+This repository is the public **Lot-Keys-TEST** deployment. Do not add the production CNAME here.
+
+Open the test site with:
+
+`?build=09483`
+
+The Android bridge source lives under `device-bridge/android/`. Build the debug APK using the existing **Build Android test APK** GitHub Action. The APK version for this refinement is **0.1.1-prototype**.
+
+Pairing/relay JSON files remain private test credentials and must not be committed to this repository.
