@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09488-hub-mobile-control-placement';
+const CACHE='lotkeys-app-v09489-hub-auth-resume-device-reconnect';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
