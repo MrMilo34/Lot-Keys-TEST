@@ -1,4 +1,4 @@
-/* LotKeys 0.9.4.91 Device client. Transcripts stay in RAM; saved pairing uses the PIN vault. */
+/* LotKeys 0.9.4.92 Device client. Transcripts stay in RAM; saved pairing uses the PIN vault. */
 (()=>{'use strict';
 const H=window.LotKeysHubCore,V=window.LotKeysPairingVault,te=new TextEncoder(),td=new TextDecoder();
 let channel=null,generation=0,pollTimer=null,restoreJob=null,connectJob=null;
@@ -63,10 +63,10 @@ function receive(c,p){
   if(p.kind==='ack'){finishPending(p.requestId,{ok:p.ok===true,error:String(p.error||'')});emit('threads');return;}
   if(typeof p.threadId!=='string'||!p.threadId||typeof p.text!=='string')return;
   let t=threads.get(p.threadId)||{id:p.threadId,binding,title:String(p.title||p.address||'Device contact'),address:String(p.address||''),messages:[],unread:0,group:!!p.group};
-  t.title=String(p.title||t.title);t.address=String(p.address||t.address);t.canReply=!!p.canReply;t.replyToken=String(p.replyToken||'');t.at=p.at;t.session=peerSession;t.binding=binding;
+  t.title=String(p.title||t.title);t.address=String(p.address||t.address);t.canReply=!!p.canReply;t.replyToken=String(p.replyToken||'');t.at=Number.isFinite(p.messageAt)?p.messageAt:p.at;t.session=peerSession;t.binding=binding;
   const mid=String(p.messageId||p.id);
   let existing=t.messages.find(m=>m.id===mid);
-  if(!existing&&p.outgoing){existing=t.messages.find(m=>m.outgoing&&m.text===p.text&&Math.abs(m.at-p.at)<30000&&m.id.startsWith('SEND-'));if(existing){existing.echoId=mid;existing.state='Submitted to phone';}}
+  if(!existing&&p.outgoing){const sourceAt=Number.isFinite(p.messageAt)?p.messageAt:p.at;existing=t.messages.find(m=>m.outgoing&&m.text===p.text&&Math.abs(m.at-sourceAt)<30000&&m.id.startsWith('SEND-'));if(existing){existing.echoId=mid;existing.state='Submitted to phone';}}
   if(!existing&&!t.messages.some(m=>m.echoId===mid)){t.messages.push({id:mid,text:p.text.slice(0,16000),at:Number.isFinite(p.messageAt)?p.messageAt:p.at,outgoing:!!p.outgoing,state:''});if(!p.outgoing)t.unread++;}
   threads.set(t.id,t);trim();emit('message',{threadId:t.id,outgoing:!!p.outgoing});
 }
@@ -121,7 +121,6 @@ async function restoreSaved({manual=false}={}){
   })().finally(()=>{restoreJob=null;});return restoreJob;
 }
 function wake(){if(locked()&&!channel)return;if(!channel){if(!restoreJob&&!connectJob)restoreSaved().catch(()=>{});return;}clearTimeout(pollTimer);pollTimer=null;if(!polling)poll(channel);emit('status');}
-async function resync(){const c=channel;if(!c)throw Error('Device is not connected.');lastHello=0;await hello(c);if(!polling)poll(c);}
 async function unlockSaved(pin){await V.unlock(pin);lastUserActivity=Date.now();return restoreSaved({manual:true});}
 async function onAppUnlock(pin){await V.unlock(pin);lastUserActivity=Date.now();const a=await owner();if(!isPaused(a))await restoreSaved();wake();}
 async function savedInfo(){return V.info();}
@@ -141,7 +140,7 @@ function read(id){const t=threads.get(id);if(t){t.unread=0;emit('read');}return 
 function clearThread(id){const t=threads.get(id);if(!t)return;if([...pending.values()].some(x=>x.threadId===id))throw Error('Wait for the pending reply result before clearing this view.');t.messages=[];t.unread=0;emit('threads');}
 function touch(){if(!locked()&&!document.hidden){if(channel&&Date.now()-lastUserActivity>V.workIdleMs){stop({clear:false});V.clear();transportError='Unlock saved Device access to resume this work session.';emit('status');}lastUserActivity=Date.now();V.touch();}}
 function status(){return {paired:!!channel,connected:connected(),name:peerName,capabilities:peerCaps,lastSeen:lastPeer,error:transportError,paused:isPaused(activeOwner),locked:locked(),binding};}
-window.LotKeysDevice={connect,disconnect,wake,resync,restoreSaved,unlockSaved,onAppUnlock,savedInfo,forgetSaved,send,read,clearThread,threads:()=>[...threads.values()],get:id=>threads.get(id),status,cryptoTest:{b64,bytes}};
+window.LotKeysDevice={connect,disconnect,wake,restoreSaved,unlockSaved,onAppUnlock,savedInfo,forgetSaved,send,read,clearThread,threads:()=>[...threads.values()],get:id=>threads.get(id),status,cryptoTest:{b64,bytes}};
 window.addEventListener('lotkeys-hub-identity',e=>{const a=String(e.detail.owner||'');if(activeOwner&&activeOwner!==a){stop();V.clear();activeOwner='';emit('disconnect');}if(a)setTimeout(wake,0);});
 window.addEventListener('pagehide',()=>{stop();V.clear();});
 window.addEventListener('online',wake);

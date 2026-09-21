@@ -1,6 +1,6 @@
-LotKeys 0.9.4.91 / 09491 — controlled TEST release
+LotKeys 0.9.4.92 / 09492 — controlled TEST release
 Date: 2026-09-21
 Base: MrMilo34/Lot-Keys-TEST @ ba7df774436bb185ae6df84510b0a9e77d5fd739
 Android: keep installed Device Bridge 0.1.1. No native files changed.
 Posting Buddy 0.1.23 and Processor 0.9.4.76 unchanged.
-See RELEASE-0.9.4.91.md and TEST-REPORT.json for implementation and test boundaries.
+See RELEASE-0.9.4.92.md and TEST-REPORT.json for implementation and test boundaries.

@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09493-hub-internal-chat-refresh';
+const CACHE='lotkeys-app-v09492-sms-mirror-poc';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
