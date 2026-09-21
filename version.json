@@ -1,9 +1,9 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.82",
-  "build": "09482",
-  "release": "hub-private-customers-calendar",
+  "version": "0.9.4.86",
+  "build": "09486",
+  "release": "hub-device-refinement",
   "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09482-hub-private-customers-calendar",
+  "serviceWorkerCache": "lotkeys-app-v09486-hub-device-refinement",
   "publishedAt": "2026-09-20"
 }
