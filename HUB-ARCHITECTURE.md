@@ -1,4 +1,4 @@
-# Hub 0.9.4.97 implementation notes
+# Hub 0.9.4.98 implementation notes
 
 ## Integration boundary
 
