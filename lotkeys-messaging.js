@@ -16,7 +16,7 @@ const lotKeysUserKey=Core.lotKeysUserKey;
 */
 
 const MSG_VERSION=1;
-const APP_VERSION='0.9.4.93';
+const APP_VERSION='0.9.4.78';
 const CONV_KEY='lotkeysMessagingConversationsV1';
 const ID_KEY='lotkeysMessagingIdentityV1';
 const LAST_KEY='lotkeysMessagingLastConversationV1';
@@ -242,13 +242,7 @@ async function refreshMessagingInBackground({force=false}={}){
   if(force||!archivesLoaded){jobs.push(loadArchives().catch(err=>console.warn('Chat history refresh deferred',err)).finally(()=>{archivesLoaded=true}))}
   if(force||!partiesLoaded){jobs.push(syncMyParties().catch(err=>console.warn('Group Chat refresh deferred',err)).finally(()=>{partiesLoaded=true}))}
   cleanupOwnOutbox().catch(err=>console.warn('Outbox cleanup deferred',err));await Promise.allSettled(jobs);
-  if(panel&&!panel.hidden&&!panel.dataset.conversationId){
-    if(panel.dataset.hub){
-      window.dispatchEvent(new CustomEvent('lotkeys-hub-internal'));
-    }else{
-      openMessagesHome({refresh:false});
-    }
-  }
+  if(panel&&!panel.hidden&&!panel.dataset.conversationId)openMessagesHome({refresh:false});
   updateUnreadBadges();
   return true
 }
@@ -573,7 +567,7 @@ function myDisplayNameCached(){return String(document.querySelector('.profile-id
 async function sendShareToConversation(convId,share){const rows=await conversations(),conv=rows.find(c=>c.id===convId);if(!conv)return;if(conv.type==='party')await sendParty(conv,'',share);else{const u=await recipientForAddress(conv.peerAddress);if(!u)throw new Error('Recipient unavailable.');await sendDirect(u,'',share)}scrollChatBottom()}
 
 function showTransientBubble(conv,msg){ensureBaseUI();document.querySelector('.lkmsg-transient')?.remove();const el=document.createElement('div');el.className='lkmsg-transient';const title=conv.type==='party'?conv.partyName:(conv.peerDisplayName||msg.senderDisplayName||'LotKeys Message');el.innerHTML=`<span style="font-size:25px">${conv.type==='party'?'👥':'💬'}</span><span><strong>${esc(title)}</strong><small>${esc(messagePreview(msg))}</small></span>`;document.body.appendChild(el);el.onclick=()=>{el.remove();openBubble(conv.id)};clearTimeout(transientTimer);transientTimer=setTimeout(()=>el.remove(),TRANSIENT_MS)}
-async function openLastBubble(){const id=String(await setting(LAST_KEY,'')||''),rows=await conversations(),recent=rows.slice().sort((a,b)=>Date.parse(b.messages?.at(-1)?.createdAt||0)-Date.parse(a.messages?.at(-1)?.createdAt||0)),conv=recent[0]||rows.find(c=>c.id===id);const internalAt=Date.parse(conv?.messages?.at(-1)?.createdAt||0)||0;if(window.LotKeysHub?.deviceLatest?.()>internalAt)return window.LotKeysHub.previewDevice();if(!conv)return false;await openBubble(conv.id);return true}
+async function openLastBubble(){const id=String(await setting(LAST_KEY,'')||''),rows=await conversations(),recent=rows.slice().sort((a,b)=>Date.parse(b.messages?.at(-1)?.createdAt||0)-Date.parse(a.messages?.at(-1)?.createdAt||0)),conv=recent[0]||rows.find(c=>c.id===id);if(!conv)return false;await openBubble(conv.id);return true}
 async function openBubble(convId){ensureBaseUI();const rows=await conversations(),conv=rows.find(c=>c.id===convId);if(!conv)return;persistentBubble=true;activeConversationId=conv.id;await setSetting(LAST_KEY,conv.id);conv.unread=0;await saveConversationLocal(conv);const users=await storeUsers(),title=conversationTitle(conv,users),el=document.getElementById(BUBBLE_ID);el.hidden=false;el.dataset.convId=conv.id;const last=conv.messages.slice(-4);el.innerHTML=`<div class="lkmsg-bubble-head"><button class="lkmsg-icon-btn" id="lkmsg-bubble-collapse">↓</button><strong>${esc(title)}</strong><button class="lkmsg-icon-btn" id="lkmsg-bubble-full">↗</button></div><div class="lkmsg-bubble-mini">${last.map(m=>messageHtml(m,conv,users)).join('')||'<div class="help">No messages yet.</div>'}</div><div class="lkmsg-bubble-compose"><input id="lkmsg-bubble-text" placeholder="Reply"><button id="lkmsg-bubble-send">➤</button></div>`;el.querySelector('#lkmsg-bubble-collapse').onclick=collapseBubble;el.querySelector('#lkmsg-bubble-full').onclick=()=>{collapseBubble();openConversation(conv.id)};const input=el.querySelector('#lkmsg-bubble-text'),send=async()=>{const text=String(input.value||'').trim();if(!text)return;input.value='';const current=(await conversations()).find(c=>c.id===conv.id);if(!current)return;if(current.type==='party')await sendParty(current,text);else{const u=await recipientForAddress(current.peerAddress);if(u)await sendDirect(u,text)}openBubble(conv.id)};el.querySelector('#lkmsg-bubble-send').onclick=send;input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();send()}};bindSharedFileCards(el);hydrateAvatars(el);updateUnreadBadges()}
 function collapseBubble(){persistentBubble=false;activeConversationId='';const el=document.getElementById(BUBBLE_ID);if(el)el.hidden=true;updateUnreadBadges()}
 function closeBubbleIfConversation(id){const el=document.getElementById(BUBBLE_ID);if(el?.dataset?.convId===id)collapseBubble()}
@@ -604,6 +598,6 @@ function hubMount(){++homeOpenToken;stopChatClock();setChatNavActive(true);const
 async function hubRows(){const rows=await conversations(),users=await storeUsers(),saved=await contacts(),favorites=new Set(saved.map(x=>x.address)),storeAddresses=new Set(users.map(userAddress));const result=rows.map(c=>{const last=c.messages?.at(-1);return{id:c.id,source:'lotkeys',title:conversationTitle(c,users),phone:c.peerPhone||'',email:c.peerEmail||'',address:c.peerPhone||c.peerEmail||'',preview:last?messagePreview(last):'No messages yet',at:Date.parse(last?.createdAt||c.updatedAt||0)||0,unread:Number(c.unread)||0,group:c.type==='party',favorite:!!(c.favorite||favorites.has(c.peerAddress)),html:conversationRow(c,users,storeAddresses)};});for(const u of await knownPeople(users,rows)){if(!u.address||rows.some(c=>c.type==='direct'&&c.peerAddress===u.address))continue;result.push({id:'person:'+u.address,source:'lotkeys',person:true,title:displayNameFor(u),phone:u.phoneNumber||'',email:u.email||'',preview:'',at:0,unread:0,group:false,favorite:!!(u.favorite||favorites.has(u.address)),html:personRow(u,storeAddresses.has(u.address))});}return result;}
 async function hubOpenPerson(address){const users=await storeUsers(),u=users.find(x=>userAddress(x)===address);if(!u||!userReady(u)){showMiniToast('This contact is not available in the current Store.');return;}const conv=await ensureDirectConversation(u);await openConversation(conv.id);}
 async function hubVisibleText(id){const c=(await conversations()).find(x=>x.id===id);const me=window.__lotKeysMessagingMyAddress;return(c?.messages||[]).slice(-20).filter(m=>m.senderAddress!==me&&!m.outgoing).map(m=>String(m.text||'')).join('\n');}
-window.LotKeysMessaging={open:openMessagesHome,openUser,openLastBubble,close:closePanel,refresh:()=>refreshMessagingInBackground({force:true}),hubMount,hubRows,hubOpenPerson,hubVisibleText,hubHydrate:hydrateAvatars,openConversation,newChat:showNewChatMenu,call:showCallPicker,preview:openBubble,share:showSharePicker,version:'0.9.4.93'};
+window.LotKeysMessaging={open:openMessagesHome,openUser,openLastBubble,close:closePanel,refresh:()=>refreshMessagingInBackground({force:true}),hubMount,hubRows,hubOpenPerson,hubVisibleText,hubHydrate:hydrateAvatars,openConversation,newChat:showNewChatMenu,call:showCallPicker,preview:openBubble,share:showSharePicker,version:'0.9.4.78'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

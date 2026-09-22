@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09494-phone-sms-mirror';
+const CACHE='lotkeys-app-v09483-hub-foundation-rebuild';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -14,8 +14,6 @@ const CORE=[
   './lotkeys-messaging.js',
   './lotkeys-hub-core.js',
   './lotkeys-hub-store.js',
-  './lotkeys-device-pairing.js',
-  './lotkeys-device-client.js',
   './lotkeys-hub.js',
   './lotkeys-hub.css',
   './lotkeys-awards.js',

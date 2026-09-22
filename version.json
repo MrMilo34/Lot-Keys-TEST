@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.94",
-  "build": "09494",
-  "release": "phone-sms-mirror",
+  "version": "0.9.4.83",
+  "build": "09483",
+  "release": "hub-foundation-rebuild",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09494-phone-sms-mirror",
-  "publishedAt": "2026-09-21",
-  "basedOnCommit": "2e8c1ec2e52ce36f1b2b89409d1b3925ed823533"
+  "serviceWorkerCache": "lotkeys-app-v09483-hub-foundation-rebuild",
+  "publishedAt": "2026-09-22",
+  "basedOn": "LotKeys-V0.9.4.81.zip + LotKeys-V0.9.4.82-Hub-Test.zip"
 }

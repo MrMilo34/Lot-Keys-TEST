@@ -1,0 +1,29 @@
+name: Validate LotKeys web build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript syntax
+        run: |
+          node --check lotkeys-info.js
+          node --check lotkeys-messaging.js
+          node --check lotkeys-awards.js
+          node --check lotkeys-hub-core.js
+          node --check lotkeys-hub-store.js
+          node --check lotkeys-hub.js
+          node --check sw.js
+      - name: Hub and release contract tests
+        run: node --test tests/*.test.js
