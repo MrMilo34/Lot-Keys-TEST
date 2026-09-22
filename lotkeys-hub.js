@@ -1,4 +1,4 @@
-/* LotKeys Hub 0.9.4.97. UI is independent of the approved Vehicle media pipeline. */
+/* LotKeys Hub 0.9.4.98. UI is independent of the approved Vehicle media pipeline. */
 (()=>{'use strict';
 const H=window.LotKeysHubCore,S=window.LotKeysHubStore,D=window.LotKeysDevice,M=window.LotKeysMessaging,Core=window.LotKeysMessagingBridge;
 if(!H||!S||!D||!M)return;
@@ -302,7 +302,7 @@ function wireCategoryDrag(row){
   grip.onpointercancel=()=>{touch=null;lifted=false;cleanup();};
 }
 
-window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,deviceLatest:()=>Math.max(0,...D.threads().map(t=>t.at||0)),previewDevice,calendar,plus:plusMenu,pending:S.pending,version:'0.9.4.97'};
+window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,deviceLatest:()=>Math.max(0,...D.threads().map(t=>t.at||0)),previewDevice,calendar,plus:plusMenu,pending:S.pending,version:'0.9.4.98'};
 window.addEventListener('lotkeys-hub-data',scheduleRefresh);
 window.addEventListener('lotkeys-hub-internal',scheduleRefresh);
 window.addEventListener('lotkeys-device',ev=>{if(D.status().connected)lastError='';updateBadge();if(['message','threads','read','removed','disconnect','status'].includes(ev.detail.kind)){if(home())paintRows();else if(deviceId)paintDevice();if(ev.detail.kind==='message'&&!ev.detail.outgoing&&D.status().connected&&!(shown()&&deviceId===ev.detail.threadId)){lastDeviceAt=Date.now();toast('New Device message · hold Hub to preview and reply.');}}if(home())paintStatus();});
