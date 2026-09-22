@@ -1,5 +1,5 @@
 LOTKEYS PHONE MIRROR — START HERE
-Website 0.9.4.98 + Android Phone Mirror 0.2.0 TEST
+Website 0.9.4.99 + Android Phone Mirror 0.2.0 TEST
 Prepared September 22, 2026
 
 THIS IS AN SMS/MMS TEST BUILD, NOT A COMPLETE GOOGLE MESSAGES / RCS MIRROR.
@@ -9,10 +9,10 @@ The actual phone, carrier SMS, screen-off connection and reboot still require ph
 FAST SETUP
 
 1) WEBSITE — PC
-   Open the successful Build LotKeys Phone Mirror run for V0.9.4.98.
+   Open the successful Build LotKeys Phone Mirror run for V0.9.4.99.
    Download LotKeys-Phone-Mirror-Source for the complete repository backup.
    The matching main-branch commit is deployed automatically to GitHub Pages.
-   Confirm version 0.9.4.98. Do NOT clear site storage, delete customer data, or reset the app.
+   Confirm version 0.9.4.99. Do NOT clear site storage, delete customer data, or reset the app.
    Close every older LotKeys tab/PWA instance, then reopen the phone app after deployment.
 
 2) ANDROID — YOUR PHONE
@@ -91,6 +91,6 @@ Do not manually delete or reset them during installation.
 
 FULL TEST RECORD
 
-See RELEASE-0.9.4.98.md and README.md in the complete source artifact.
+See RELEASE-0.9.4.99.md and README.md in the complete source artifact.
 The build proves source consistency, JavaScript parsing and Android compilation/lint.
 It is not a claim of complete real-device, carrier or RCS reliability.
