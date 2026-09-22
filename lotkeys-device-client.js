@@ -1,4 +1,4 @@
-/* LotKeys 0.9.4.97 Device client. Transcripts stay in RAM; saved pairing uses the PIN vault. */
+/* LotKeys 0.9.4.98 Device client. Transcripts stay in RAM; saved pairing uses the PIN vault. */
 (()=>{'use strict';
 const H=window.LotKeysHubCore,V=window.LotKeysPairingVault,te=new TextEncoder(),td=new TextDecoder();
 let channel=null,generation=0,pollTimer=null,restoreJob=null,connectJob=null;
