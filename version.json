@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.97",
-  "build": "09497",
-  "release": "stable-81-core-phone-hub",
+  "version": "0.9.4.98",
+  "build": "09498",
+  "release": "stable-81-route-sync-repair",
   "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09497-stable-81-core-phone-hub",
+  "serviceWorkerCache": "lotkeys-app-v09498-stable-81-route-sync-repair",
   "basedOnCommit": "13e50428fb13ef1c296d1bb79fccdb88c57e1cd2",
   "hubSourceCommit": "cc1b97b",
-  "publishedAt": "2026-09-21"
+  "publishedAt": "2026-09-22"
 }
