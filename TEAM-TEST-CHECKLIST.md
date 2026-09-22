@@ -1,10 +1,14 @@
-# LotKeys V0.9.4.97 stable-core + Hub team-test checklist
+# LotKeys V0.9.4.98 route/sync repair + Hub team-test checklist
 
 ## App baseline
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09497`.
-- Confirm version metadata reports **V0.9.4.97 / 09497** and identifies the V0.9.4.81 core.
-- Confirm service worker cache is `lotkeys-app-v09497-stable-81-core-phone-hub`.
-- Open Home, Inventory and Listings before testing Hub; none should remain on a loading skeleton.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09498`.
+- Confirm version metadata reports **V0.9.4.98 / 09498** and identifies the V0.9.4.81 core.
+- Confirm service worker cache is `lotkeys-app-v09498-stable-81-route-sync-repair`.
+- Rapidly tap Home → Inventory → Listings → Garage → Account several times. The header, highlighted tab and body must always identify the same page.
+- Open Home, Inventory and Listings before testing Hub; a slow cache read may say it is still opening but must finish without a false timeout card.
+- Leave LotKeys open through one background refresh. The header and Refresh buttons must return from Syncing to their normal state when the unchanged Drive check finishes.
+- If the connection is deliberately interrupted during a read-only refresh, confirm Syncing releases after at most about 30 seconds and a later retry can succeed.
+- Confirm cached Vehicle thumbnails remain visible while changing tabs and do not turn into broken-image placeholders.
 - Confirm V0.9.4.80 Vehicle Profile Photos + Video parallel upload behavior still works and active video progress still shows MB transferred / total MB.
 - Confirm V0.9.4.79 Vehicle/Listing draft recovery still works.
 - Follow `HUB-TEST-GUIDE.md` with fictional data, then verify Phone Mirror reconnect/history using `START-HERE-LotKeys-Phone-Mirror.txt`.
@@ -30,4 +34,4 @@
 
 ## Processor
 - Garage should still report **Store Processor V0.9.4.76** current.
-- No Apps Script reinstall is expected for V0.9.4.97.
+- No Apps Script reinstall is expected for V0.9.4.98.
