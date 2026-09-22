@@ -14,6 +14,8 @@ This TEST release is rebuilt from the supplied **LotKeys V0.9.4.81** gold-standa
 - Private notes, documents, questions, Month/Week/Day appointments, and one-way `.ics` export from the V0.9.4.82 Hub boundary.
 - Backward reading of legacy single-category Hub contacts; they migrate to `categoryIds` when saved.
 - Complete Google TEST browser configuration fallbacks for the approved OAuth web client, restricted Picker API key, and matching Cloud project number; saved Admin overrides still take precedence.
+- Restore-first personal Account sync: a device must load the existing `Account.json` before it can save, cross-device changes stop on conflict instead of overwriting, and a missing local photo never deletes the Drive photo without an explicit Remove Photo action.
+- Account includes a read-only **Restore from Drive** action for reloading the theme, photo, Celebration Sound links, Description Builder templates, and other personal settings after recovery or when adding a device.
 
 ## Deliberately not in this build
 

@@ -6,9 +6,11 @@ V0.9.4.83 CLEAN HUB FOUNDATION REBUILD
 - Intentionally excludes live phone pairing, message history, notification capture and PC-to-phone transport. Device chat is visibly marked as the next build instead of pretending to connect.
 - Removes the abandoned Android notification-bridge, phone-client and phone-pairing runtime from the TEST release tree.
 - Restores the complete approved Google TEST browser configuration as safe fallbacks while preserving saved Admin overrides.
+- Repairs personal Account restore so a phone cannot save blank defaults over `Account.json`; cross-device conflicts stop safely and Account Photo deletion now requires an explicit removal request.
+- Adds Restore from Drive for reloading recovered photo, sound links, appearance and custom Description Builder templates.
 - Leaves production lot-keys.ca untouched.
 - Build: 09483.
-- Service worker cache: lotkeys-app-v09483-hub-foundation-credentials-repair.
+- Service worker cache: lotkeys-app-v09483-account-restore-safety.
 
 V0.9.4.81 FRESH VIDEO DISCOVERY + MANAGEMENT UPDATE POLISH
 - Builds directly on V0.9.4.80; parallel Vehicle Profile Photos + Video uploads, three-worker photos, resumable Drive sessions, MB diagnostics, V0.9.4.79 editor recovery, and all prior Store/Processor behavior remain intact.

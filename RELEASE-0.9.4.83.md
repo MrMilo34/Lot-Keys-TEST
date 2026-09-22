@@ -13,6 +13,8 @@ Everything added after those supplied archives was removed from the TEST file tr
 - Existing internal LotKeys direct chat, group chat, calls, unread/favourite state, and Store/Drive delivery remain functional.
 - Opening Hub does not replace, emulate, or combine internal LotKeys messages with customer phone messages.
 - The approved TEST OAuth client, browser-restricted Picker key, and matching project number are available as bundled fallbacks and appear in Google Test Credentials when no saved override exists.
+- Personal Account data is restore-first and conflict-safe. Blank device defaults cannot replace an existing `Account.json`, and profile-photo deletion requires the explicit Remove Photo action.
+- **Restore from Drive** reapplies the recovered Account photo, theme/accent, Celebration Sound metadata, and Description Builder templates, then redraws the current device.
 
 ### Device organization
 
@@ -44,5 +46,5 @@ The next phase should build a Google-Messages-for-Web-style interface where the 
 - Pages root: `https://mrmilo34.github.io/Lot-Keys-TEST/`
 - Version: `0.9.4.83`
 - Build: `09483`
-- Cache: `lotkeys-app-v09483-hub-foundation-credentials-repair`
+- Cache: `lotkeys-app-v09483-account-restore-safety`
 - Production `lot-keys.ca`: unchanged
