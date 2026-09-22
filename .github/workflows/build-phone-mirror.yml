@@ -22,6 +22,7 @@ jobs:
           node tests/stable-core-regression-check.mjs
           node tests/navigation-sync-regression-check.mjs
           node tests/drive-read-timeout-check.mjs
+          node tests/indexeddb-read-cache-check.mjs
           node tests/runtime-file-audit.mjs
           tail -n +2 CHECKSUMS.txt | sha256sum --check --strict --status
       - name: Package source snapshot
