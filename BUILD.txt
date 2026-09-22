@@ -1,3 +1,15 @@
+V0.9.4.99 STABLE V0.9.4.81 CORE + PHONE INDEXEDDB NAVIGATION CACHE
+- Retains every V0.9.4.98 route-ownership, Blob lifecycle, routine-sync and read-timeout repair.
+- Fixes the physical-phone freeze where Home could load once, then Inventory, Listings, Garage and Home waited indefinitely behind repeated media-heavy IndexedDB clones while Account and Hub still opened.
+- Reads each existing IndexedDB store in full at most once per page session and serves later navigation from a disposable in-memory read-through cache.
+- Deduplicates concurrent first reads and keeps cached navigation available while an existing background write is pending.
+- Updates the in-session cache only through successful put/delete/clear operations; IndexedDB remains authoritative across reloads.
+- Keeps schema version 3 and the original V0.9.4.81 object stores. No summary store, cover store, migration, storage clear or data reset is used.
+- Adds a deterministic IndexedDB cache regression harness to the GitHub Actions release gate.
+- Retains Phone Mirror 0.2.0, the private Hub, Posting Buddy V0.1.23 and Store Processor V0.9.4.76.
+- Build: 09499.
+- Service worker cache: lotkeys-app-v09499-indexeddb-navigation-cache.
+
 V0.9.4.98 STABLE V0.9.4.81 CORE + ROUTE/SYNC REPAIR + PHONE HUB
 - Keeps the final V0.9.4.81 application checkpoint at commit 13e50428fb13ef1c296d1bb79fccdb88c57e1cd2 as the data, upload and synchronization baseline.
 - Prevents an older slow Home, Inventory, Listings, Account or Garage render from painting after the user has selected another tab.
