@@ -1,4 +1,28 @@
-# LotKeys V0.9.4.81
+# LotKeys V0.9.5.0 — isolated Hub V2 preview
+
+V0.9.5.0 starts the Hub rebuild from the exact final V0.9.4.81 commit. Inventory, Listings, Google Drive synchronization, resumable media uploads, Posting Buddy V0.1.23, Store Processor V0.9.4.76, Awards, Account and Garage remain on that known-good foundation.
+
+## Hub V2 checkpoint
+
+- The Hub is a separately loaded overlay. It does not own application startup, normal route rendering, Inventory/Listings reads, Google Drive synchronization, or media-upload state.
+- The existing encrypted LotKeys Chat file remains byte-for-byte identical to V0.9.4.81 and opens as its own surface.
+- The Device connector talks only to the Phone Mirror relay. SMS/MMS threads and message bodies stay in RAM and disappear from Hub when the phone is unavailable.
+- Saved pairing contains no message bodies and remains encrypted locally with the LotKeys Lock Screen PIN/password.
+- The first checkpoint intentionally implements the All / LotKeys / Device boundary and live Device replies before adding customer categories, notes, documents and calendar back as separate modules.
+
+## Preview testing
+
+This branch is not the live release. Test only after the full automated package passes, then open the staging URL supplied with the build and confirm:
+
+1. Home, Inventory, Listings, Garage and Account behave exactly like V0.9.4.81.
+2. Hub opens without starting or blocking Store synchronization.
+3. LotKeys Chat still opens and sends independently.
+4. Device conversations appear only while Phone Mirror is connected.
+5. Closing the phone/relay removes Device access without affecting Inventory or Listings.
+
+---
+
+## Preserved V0.9.4.81 release notes
 
 V0.9.4.81 is a focused workflow update built directly on V0.9.4.80. It keeps the V0.9.4.80 parallel Vehicle Profile media uploader and V0.9.4.79 safe editor recovery unchanged while tightening Posting Buddy video discovery and Management Updates.
 
