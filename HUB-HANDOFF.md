@@ -1,6 +1,6 @@
-# Current Hub handoff — 0.9.4.98
+# Current Hub handoff — 0.9.4.99
 
-V0.9.4.98 uses the final V0.9.4.81 application checkpoint as its protected data/upload base. The only approved core repair is the documented route-ownership guard, safe Blob URL lifecycle and lightweight disposable synchronization metadata mirror. Do not restore the V0.9.4.95 route deadline or the V0.9.4.96 summary/cover stores and migration.
+V0.9.4.99 uses the final V0.9.4.81 application checkpoint as its protected data/upload base. Approved core repairs are the documented route-ownership guard, safe Blob URL lifecycle, lightweight disposable synchronization metadata mirror and disposable in-session IndexedDB read-through cache. Do not restore the V0.9.4.95 route deadline or the V0.9.4.96 summary/cover stores and migration.
 
 The permitted overlay is the isolated Hub set: `lotkeys-hub-*`, `lotkeys-device-*`, the small internal-Chat hooks in `lotkeys-messaging.js`, the documented Hub integration points in `index.html`, and Android Phone Mirror 0.2.0 under `device-bridge/android`.
 
