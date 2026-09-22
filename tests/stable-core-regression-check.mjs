@@ -1,26 +1,40 @@
 import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 
-const BASE='13e50428fb13ef1c296d1bb79fccdb88c57e1cd2';
+const BASE81='13e50428fb13ef1c296d1bb79fccdb88c57e1cd2';
+const BASE97='7e18944c3f86789d6541085b5017d960d7739b77';
 const read=file=>fs.readFileSync(file,'utf8');
+const fromGit=(commit,file)=>execFileSync('git',['show',`${commit}:${file}`],{encoding:'utf8'});
 const fail=message=>{throw new Error(message)};
 const expect=(condition,message)=>{if(!condition)fail(message)};
+const slice=(source,start,end)=>{
+  const a=source.indexOf(start),b=source.indexOf(end,a+start.length);
+  expect(a>=0,`protected start marker is missing: ${start}`);
+  expect(b>a,`protected end marker is missing after ${start}: ${end}`);
+  return source.slice(a,b);
+};
 
 const index=read('index.html');
+const base97=fromGit(BASE97,'index.html');
 const version=JSON.parse(read('version.json'));
 const manifest=JSON.parse(read('manifest.webmanifest'));
 const sw=read('sw.js');
 
-expect(version.version==='0.9.4.97','version.json must identify V0.9.4.97');
-expect(version.build==='09497','version.json build must be 09497');
-expect(version.basedOnCommit===BASE,'version.json must record the approved V0.9.4.81 base');
-expect(manifest.start_url.includes('09497'),'manifest must request build 09497');
-expect(sw.includes("lotkeys-app-v09497-stable-81-core-phone-hub"),'service-worker cache key is stale');
-expect(index.includes("const build='09497'"),'index build marker is stale');
+expect(version.version==='0.9.4.98','version.json must identify V0.9.4.98');
+expect(version.build==='09498','version.json build must be 09498');
+expect(version.basedOnCommit===BASE81,'version.json must record the approved V0.9.4.81 base');
+expect(version.release==='stable-81-route-sync-repair','version.json release label is stale');
+expect(manifest.start_url.includes('09498'),'manifest must request build 09498');
+expect(sw.includes("lotkeys-app-v09498-stable-81-route-sync-repair"),'service-worker cache key is stale');
+expect(index.includes("const build='09498'"),'index build marker is stale');
 expect(index.includes('const VERSION = 3;'),'IndexedDB must remain forward-compatible with V0.9.4.96 phones');
+expect(index.includes("const STORES = ['vehicles','listings','locations','analytics','settings','requestQueue'];"),'the original IndexedDB store set changed');
 
-for(const forbidden of ['vehicleSummaries','listingSummaries','vehicleCovers','listingCovers','Inventory needs another try','Listings needs another try','Opening Inventory…','Opening Listings…']){
-  expect(!index.includes(forbidden),`abandoned V0.9.4.95/.96 route-cache code returned: ${forbidden}`);
+for(const forbidden of ['vehicleSummaries','listingSummaries','vehicleCovers','listingCovers','migrationV09496SummaryCache','render timed out','timedOut:true']){
+  expect(!index.includes(forbidden),`abandoned route-deadline/summary-store code returned: ${forbidden}`);
+}
+for(const required of ['routeRenderEpoch','routeRenderCurrent(context)','data-route-loading','Still opening the saved phone copy','STATE_PREFIX','stateRows(name)','INVENTORY_FOLDER_AUDIT_MS=5*60*1000']){
+  expect(index.includes(required),`V0.9.4.98 repair is missing: ${required}`);
 }
 
 for(const required of ['lotkeys-hub-core.js','lotkeys-hub-store.js','lotkeys-device-pairing.js','lotkeys-device-client.js','lotkeys-hub.js','lotkeys-hub.css']){
@@ -30,17 +44,24 @@ for(const required of ['lotkeys-hub-core.js','lotkeys-hub-store.js','lotkeys-dev
 }
 
 const protectedPaths=['processor','extension','assets','lotkeys-awards.js','lotkeys-info.js','lotkeys-info.json'];
-try{
-  execFileSync('git',['diff','--quiet',BASE,'--',...protectedPaths]);
-}catch{
-  fail('A protected V0.9.4.81 Processor, Posting Buddy, asset, Award or Info file changed');
-}
+try{execFileSync('git',['diff','--quiet',BASE81,'--',...protectedPaths])}
+catch{fail('A protected V0.9.4.81 Processor, Posting Buddy, asset, Award or Info file changed')}
 
-const diff=execFileSync('git',['diff','--unified=0',BASE,'--','index.html'],{encoding:'utf8'});
-const permittedOldLines=new Set([512,518,522,562,607,1438,2989,3000,3056,3117,4282,4403,4411,4423]);
-for(const match of diff.matchAll(/^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@/gm)){
-  const oldLine=Number(match[1]);
-  expect(permittedOldLines.has(oldLine),`index.html changed outside the approved V0.9.4.81 Hub/version integration points at old line ${oldLine}`);
+// Guards may surround these functions, but the proven upload, full
+// reconciliation and remote-write implementations stay byte-for-byte .97.
+const protectedSpans=[
+  ['async function resumableCreate(', 'async function ensureManagementUpdatesFolder('],
+  ['async function refreshInventoryFromDrive(', 'async function quickRefreshInventoryFromDrive('],
+  ['async function reconcileListingVehicleProfiles(', 'async function refreshUserListingsFromDrive('],
+  ['async function refreshUserListingsFromDrive(', 'async function quickRefreshUserListingsFromDrive('],
+  ['async function syncVehicle(v,', 'async function syncVehicleState('],
+  ['async function syncListingAssets(', 'async function syncListing(l,'],
+  ['async function syncListing(l,', 'async function deleteListing('],
+  ['async function syncVehicleNow(', 'function vehicleNeedsAutomaticResume('],
+  ['async function syncListingNow(', 'async function copyText(']
+];
+for(const [start,end] of protectedSpans){
+  expect(slice(index,start,end)===slice(base97,start,end),`protected V0.9.4.97 implementation changed: ${start}`);
 }
 
 const inlineScripts=[...index.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(match=>match[1]).filter(code=>code.trim());
@@ -51,4 +72,4 @@ for(const file of ['lotkeys-messaging.js','lotkeys-hub-core.js','lotkeys-hub-sto
   try{new Function(read(file))}catch(error){fail(`${file} does not parse: ${error.message}`)}
 }
 
-console.log(`Stable-core checks passed: ${inlineScripts.length} inline scripts, V0.9.4.81 core boundary, Hub assets and V0.9.4.97 cache/version consistency.`);
+console.log(`Stable-core checks passed: ${inlineScripts.length} inline scripts, protected Drive/upload spans, Hub assets and V0.9.4.98 cache/version consistency.`);
