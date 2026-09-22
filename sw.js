@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09483-hub-foundation-rebuild';
+const CACHE='lotkeys-app-v09483-hub-foundation-credentials-repair';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

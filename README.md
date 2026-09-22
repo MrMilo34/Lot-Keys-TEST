@@ -13,6 +13,7 @@ This TEST release is rebuilt from the supplied **LotKeys V0.9.4.81** gold-standa
 - Category colour carried through filters, contact rows, contact details, and appointment cards.
 - Private notes, documents, questions, Month/Week/Day appointments, and one-way `.ics` export from the V0.9.4.82 Hub boundary.
 - Backward reading of legacy single-category Hub contacts; they migrate to `categoryIds` when saved.
+- Complete Google TEST browser configuration fallbacks for the approved OAuth web client, restricted Picker API key, and matching Cloud project number; saved Admin overrides still take precedence.
 
 ## Deliberately not in this build
 

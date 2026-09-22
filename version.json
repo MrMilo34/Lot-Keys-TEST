@@ -5,7 +5,7 @@
   "release": "hub-foundation-rebuild",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09483-hub-foundation-rebuild",
+  "serviceWorkerCache": "lotkeys-app-v09483-hub-foundation-credentials-repair",
   "publishedAt": "2026-09-22",
   "basedOn": "LotKeys-V0.9.4.81.zip + LotKeys-V0.9.4.82-Hub-Test.zip"
 }

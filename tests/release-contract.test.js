@@ -13,10 +13,23 @@ test('release metadata is consistently V0.9.4.83', () => {
   assert.equal(version.version, '0.9.4.83');
   assert.equal(version.build, '09483');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09483-hub-foundation-rebuild');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09483-hub-foundation-credentials-repair');
   assert.match(read('index.html'), /V0\.9\.4\.83/);
   assert.match(read('manifest.webmanifest'), /build=09483/);
-  assert.match(read('sw.js'), /lotkeys-app-v09483-hub-foundation-rebuild/);
+  assert.match(read('sw.js'), /lotkeys-app-v09483-hub-foundation-credentials-repair/);
+});
+
+test('TEST Google browser configuration has complete safe fallbacks', () => {
+  const html = read('index.html');
+  const clientId = html.match(/googleClientId:'([^']+)'/)?.[1] || '';
+  const apiKey = html.match(/googleApiKey:'([^']+)'/)?.[1] || '';
+  const projectNumber = html.match(/googleProjectNumber:'([^']+)'/)?.[1] || '';
+  assert.match(clientId, /^\d+-[a-z0-9_-]+\.apps\.googleusercontent\.com$/i);
+  assert.match(apiKey, /^AIza[A-Za-z0-9_-]{30,}$/);
+  assert.match(projectNumber, /^\d{10,15}$/);
+  assert.equal(projectNumber, clientId.split('-')[0]);
+  assert.match(html, /configuredSettingValue\(id,value,fallback/);
+  assert.doesNotMatch(html, /client[_ ]?secret/i);
 });
 
 test('phone bridge, pairing and Android artifacts are absent', () => {
@@ -50,4 +63,3 @@ test('Device is an organization surface, not a connection claim', () => {
   assert.match(hub, /Subcategory/);
   assert.doesNotMatch(hub, /id="hub-connect"/);
 });
-

@@ -825,6 +825,16 @@ const LISTING_PROFILE_RETENTION_MS=15*24*60*60*1000;
 function listingVehicleProfileMissing(listing={}){return String(listing?.vehicleProfileState||'').toLowerCase()==='missing'}
 function listingProfileDeletionDays(listing={},at=Date.now()){const due=Number(listing?.vehicleProfileDeleteAfter)||0;return due?Math.max(0,Math.ceil((due-at)/86400000)):15}
 
+const LOTKEYS_GOOGLE_TEST_CONFIG=Object.freeze({
+  googleClientId:'61170708521-468omogqcjqfv4msjjl7pqihcjfocl5i.apps.googleusercontent.com',
+  googleApiKey:'AIzaSyA1O-WkCbCQi3qz2wcjmaWNWaBclJsGP6Y',
+  googleProjectNumber:'61170708521'
+});
+function configuredSettingValue(id,value,fallback=''){
+  const bundled=LOTKEYS_GOOGLE_TEST_CONFIG[id];
+  return bundled!==undefined&&!String(value??'').trim()?bundled:(value??fallback);
+}
+
 const DriveSync = (() => {
   const FOLDER_MIME = 'application/vnd.google-apps.folder';
   const SHEET_MIME = 'application/vnd.google-apps.spreadsheet';
@@ -845,14 +855,13 @@ const DriveSync = (() => {
   let authRecoveryPromise = null;
   const AUTH_SESSION_KEY = 'lotkeys-google-auth-v3-workspace-access';
   const LEGACY_AUTH_SESSION_KEYS = ['lotkeys-google-auth-v1'];
-  const DEFAULT_GOOGLE_CLIENT_ID = '61170708521-468omogqcjqfv4msjjl7pqihcjfocl5i.apps.googleusercontent.com';
   const DEFAULT_AUTH_VALIDITY_MS = 60000;
   const LONG_UPLOAD_AUTH_VALIDITY_MS = 15*60*1000;
   const activeUploadRequests = new Set();
 
   function pauseActiveUploads(){let count=0;for(const request of [...activeUploadRequests]){try{request.abort();count++}catch{}}return count}
 
-  async function setting(id, def=''){ return (await DB.get('settings',id))?.value ?? def; }
+  async function setting(id,def=''){const row=await DB.get('settings',id);return configuredSettingValue(id,row?.value,def)}
   async function setSetting(id,value){ return DB.put('settings',{id,value}); }
   const LISTING_DELETE_TOMBSTONES='listingDeletionTombstonesV1';
   async function getListingDeleteTombstones(){const raw=await setting(LISTING_DELETE_TOMBSTONES,{});return raw&&typeof raw==='object'&&!Array.isArray(raw)?{...raw}:{}}
@@ -883,7 +892,7 @@ const DriveSync = (() => {
   function isHttps(){ return location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; }
   async function config(){
     return {
-      clientId: (await setting('googleClientId','')).trim() || DEFAULT_GOOGLE_CLIENT_ID,
+      clientId: String(await setting('googleClientId','')).trim(),
       apiKey: (await setting('googleApiKey','')).trim(),
       projectNumber: String(await setting('googleProjectNumber','')).trim(),
       storeFolderId: (await setting('storeFolderId','')).trim(),
@@ -2901,7 +2910,7 @@ const App = (()=>{
   const VEHICLE_PLACEHOLDER_URL='./assets/vehicle-placeholder.webp';
   function vehiclePlaceholderHtml(alt='Vehicle photo unavailable'){return `<img class="vehicle-placeholder-image" src="${VEHICLE_PLACEHOLDER_URL}" alt="${esc(alt)}" loading="lazy" decoding="async">`}
   function vehicleThumbHtml(photo,alt='Vehicle photo'){return photo?.blob?`<img src="${blobUrl(photo.blob)}" alt="${esc(alt)}">`:photo?.driveFileId?'<span class="vehicle-thumb-loading" role="img" aria-label="Vehicle photo loading"></span>':vehiclePlaceholderHtml()}
-  async function setting(id,def=''){return (await DB.get('settings',id))?.value ?? def}
+  async function setting(id,def=''){const row=await DB.get('settings',id);return configuredSettingValue(id,row?.value,def)}
   async function setSetting(id,value){return DB.put('settings',{id,value})}
   const FORM_DRAFT_PREFIX='lotkeys-form-draft-v1',ACTIVE_FORM_DRAFT_KEY='lotkeys-active-form-draft-v1',FORM_DRAFT_TTL_MS=7*24*60*60*1000;
   function formDraftSafe(value=''){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'')||'user'}
