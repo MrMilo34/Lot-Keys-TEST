@@ -1,0 +1,62 @@
+name: Build LotKeys Phone Mirror
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - hub-rebuild-phone-truth
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify V0.9.4.81 core and isolated Hub V2 boundary
+        run: |
+          node tests/hub-v2-isolation-check.mjs
+          tail -n +2 CHECKSUMS.txt | sha256sum --check --strict --status
+      - name: Package source snapshot
+        run: |
+          python3 - <<'PY'
+          import pathlib, zipfile
+          root = pathlib.Path('.')
+          with zipfile.ZipFile('/tmp/LotKeys-Phone-Mirror-Source.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+              for p in root.rglob('*'):
+                  if p.is_file() and '.git' not in p.parts and '.gradle' not in p.parts and 'build' not in p.parts:
+                      z.write(p, p.as_posix())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LotKeys-Phone-Mirror-Source
+          path: /tmp/LotKeys-Phone-Mirror-Source.zip
+          retention-days: 7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Build and lint Android companion
+        working-directory: device-bridge/android
+        run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: LotKeys-Phone-Mirror-APK
+          path: device-bridge/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: LotKeys-Phone-Mirror-Build-Reports
+          path: device-bridge/android/app/build/reports/
+          if-no-files-found: ignore
+          retention-days: 7
