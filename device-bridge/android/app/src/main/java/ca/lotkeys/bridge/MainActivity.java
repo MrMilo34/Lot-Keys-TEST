@@ -50,7 +50,7 @@ public final class MainActivity extends Activity {
                 pairing.setText("");handler.postDelayed(()->startForegroundService(new Intent(this,PhoneMirrorService.class)),500);paint();
             }catch(Exception ex){alert(ex.getMessage()==null?"Could not start Phone Mirror.":ex.getMessage());}
         });
-        button(body,"Open LotKeys TEST",()->startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://mrmilo34.github.io/Lot-Keys-TEST/?build=09497"))));
+        button(body,"Open LotKeys TEST",()->startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://mrmilo34.github.io/Lot-Keys-TEST/?build=09498"))));
         button(body,"Stop mirroring",()->{getSharedPreferences("bridge",0).edit().putBoolean("mirrorEnabled",false).putString("mirrorStatus","Mirroring stopped by you.").commit();stopService(new Intent(this,PhoneMirrorService.class));paint();});
         button(body,"App permission / battery settings",()->startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName()))));
         button(body,"Forget this device pairing",()->new AlertDialog.Builder(this).setTitle("Forget pairing?").setMessage("This stops Phone Mirror and removes this app's pairing. It does not delete your phone messages or LotKeys customer data.")
