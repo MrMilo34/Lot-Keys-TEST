@@ -1,11 +1,12 @@
-# LotKeys V0.9.4.98 route/sync repair + Hub team-test checklist
+# LotKeys V0.9.4.99 phone navigation repair + Hub team-test checklist
 
 ## App baseline
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09498`.
-- Confirm version metadata reports **V0.9.4.98 / 09498** and identifies the V0.9.4.81 core.
-- Confirm service worker cache is `lotkeys-app-v09498-stable-81-route-sync-repair`.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09499`.
+- Confirm version metadata reports **V0.9.4.99 / 09499** and identifies the V0.9.4.81 core.
+- Confirm service worker cache is `lotkeys-app-v09499-indexeddb-navigation-cache`.
 - Rapidly tap Home → Inventory → Listings → Garage → Account several times. The header, highlighted tab and body must always identify the same page.
-- Open Home, Inventory and Listings before testing Hub; a slow cache read may say it is still opening but must finish without a false timeout card.
+- Starting from a loaded Home page, open Inventory, Listings and Garage while the header says Syncing. Each tab must render promptly from the already-read phone copy instead of remaining on its skeleton.
+- Return to Home and repeat the tab cycle. Repeated navigation must not trigger another full IndexedDB media clone.
 - Leave LotKeys open through one background refresh. The header and Refresh buttons must return from Syncing to their normal state when the unchanged Drive check finishes.
 - If the connection is deliberately interrupted during a read-only refresh, confirm Syncing releases after at most about 30 seconds and a later retry can succeed.
 - Confirm cached Vehicle thumbnails remain visible while changing tabs and do not turn into broken-image placeholders.
@@ -34,4 +35,4 @@
 
 ## Processor
 - Garage should still report **Store Processor V0.9.4.76** current.
-- No Apps Script reinstall is expected for V0.9.4.98.
+- No Apps Script reinstall is expected for V0.9.4.99.
