@@ -509,13 +509,13 @@ body[data-theme="dark"] #lotkeys-unlock-password,body[data-theme="dark"] .modern
 @media(prefers-reduced-motion:reduce){.lotkeys-guide-target,.readiness-btn.readiness-attention,.protocol-attention{animation:none!important}}
 .vehicle-placeholder-image{width:100%;height:100%;display:block;object-fit:cover;background:#f8f8f8}.vehicle-thumb-loading{width:100%;height:100%;display:block;background:linear-gradient(110deg,color-mix(in srgb,var(--ink) 7%,var(--card)) 28%,color-mix(in srgb,var(--ink) 2%,var(--card)) 42%,color-mix(in srgb,var(--ink) 7%,var(--card)) 56%);background-size:220% 100%;animation:vehicle-thumb-loading 1.15s linear infinite}@keyframes vehicle-thumb-loading{to{background-position-x:-220%}}body[data-theme="dark"] .vehicle-placeholder-image{background:#e9e9e9}.admin-profile-listing-thumb .vehicle-placeholder-image,.mini-thumb .vehicle-placeholder-image{width:100%;height:100%;object-fit:cover}@media(prefers-reduced-motion:reduce){.vehicle-thumb-loading{animation:none}}
 .pending-deal-form-field{border:1px solid color-mix(in srgb,var(--accent) 42%,var(--line))!important;border-radius:12px;padding:8px 10px!important;background:color-mix(in srgb,var(--accent) 6%,var(--card));box-shadow:none;margin-bottom:8px}.pending-deal-form-field .pending-deal-toggle{display:flex;align-items:center;gap:11px;margin:0;color:var(--ink);font-size:12px;line-height:1.2}.pending-deal-form-field .pending-deal-toggle input{flex:0 0 19px;margin:0}.vehicle-master-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;padding:0 14px;max-width:620px;margin-left:auto;margin-right:auto}.vehicle-master-photo-grid .photo-tile .drag-handle{left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);width:34px;height:34px;z-index:4;background:rgba(17,24,39,.78);color:#fff;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.22)}.vehicle-master-photo-grid .photo-tile .remove-photo{z-index:5}.contribution-decision-row{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:8px!important;align-items:start;padding:8px;border:1px solid var(--line);border-radius:11px;background:var(--card);font-size:11px}.contribution-decision-row>input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--accent)}.contribution-decision-row span,.contribution-decision-row strong,.contribution-decision-row small{display:block}.contribution-decision-row small{color:var(--muted);font-weight:500;margin-top:3px;word-break:break-word}.contribution-media-decisions{display:grid;gap:6px;margin-top:9px}.request-submit-status{border:2px solid var(--accent);border-radius:14px;padding:10px 12px;margin-top:10px;background:color-mix(in srgb,var(--accent) 8%,var(--card));font-size:11px;font-weight:850}.request-submit-status progress{width:100%;height:8px;margin-top:7px;accent-color:var(--accent)}
-/* V0.9.4.98 keeps the V0.9.4.81 data/upload core and adds route ownership plus lightweight routine sync checks. */
+/* V0.9.4.99 keeps the V0.9.4.81 data/upload core and prevents repeated media-heavy phone-cache clones during navigation. */
 dialog:not(.sale-celebration-layer):not(.public-profile-modal){background:var(--card);color:var(--ink)}
 .builder-bar-value-outside,.builder-admin-value-outside{filter:drop-shadow(0 1px 1px rgba(15,23,42,.82)) drop-shadow(0 0 1px rgba(15,23,42,.45))}
 </style>
 <script>
 (() => {
-  const build='09498';
+  const build='09499';
   window.LotKeysBuild=build;
   const secure=location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
   if(!secure||!('serviceWorker' in navigator))return;
@@ -561,7 +561,7 @@ dialog:not(.sale-celebration-layer):not(.public-profile-modal){background:var(--
       </div>
     </header>
 
-    <div id="local-test-note" class="protocol-warning"><strong>LotKeys Drive Test · V0.9.4.98</strong> — Starting…<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button></div>
+    <div id="local-test-note" class="protocol-warning"><strong>LotKeys Drive Test · V0.9.4.99</strong> — Starting…<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button></div>
     <main id="main"><div class="lotkeys-boot-placeholder" aria-live="polite"><div class="lotkeys-boot-brand"><img src="./assets/lotkeys-default-logo.png" alt="" aria-hidden="true"><div><strong>Loading LotKeys…</strong><span>Restoring your Store and saved data</span></div></div><div class="lotkeys-boot-search"></div><div class="lotkeys-boot-stats"><i></i><i></i></div><div class="lotkeys-boot-lines"><i></i><i></i><i></i></div></div></main>
 
     <nav class="bottom-nav" aria-label="Primary">
@@ -615,6 +615,20 @@ const DB = (() => {
   let db = null;
   let useMemory = false;
   const memory = Object.fromEntries(STORES.map(n => [n, new Map()]));
+  const hydratedStores = new Set();
+  const pendingStoreReads = new Map();
+
+  // A Vehicle Profile may contain large photo/video Blobs. Android Chrome can spend
+  // minutes cloning the same 37 records every time Home, Inventory, Listings or
+  // Garage opens, especially while a Drive write is queued. Keep the first complete
+  // IndexedDB read in this page's memory and maintain it through the normal put/delete
+  // helpers. IndexedDB remains authoritative across reloads; this is only a disposable
+  // read-through cache for the current page and does not change the stored schema.
+  function rememberStore(name,rows=[]){
+    const cache=memory[name];cache.clear();
+    for(const row of rows)if(row?.id!=null)cache.set(row.id,row);
+    hydratedStores.add(name);return rows;
+  }
 
   // Keep only synchronization metadata in localStorage. IndexedDB remains the
   // authoritative record and continues to hold every photo, video and document.
@@ -704,34 +718,40 @@ const DB = (() => {
   async function all(name){
     await open();
     if(useMemory){const rows=Array.from(memory[name].values());seedState(name,rows);return rows;}
-    const rows=await new Promise(async(res,rej)=>{const r=(await store(name)).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});seedState(name,rows);return rows;
+    if(hydratedStores.has(name))return Array.from(memory[name].values());
+    const pending=pendingStoreReads.get(name);if(pending)return pending;
+    const read=new Promise(async(res,rej)=>{try{const r=(await store(name)).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(error){rej(error)}})
+      .then(rows=>{rememberStore(name,rows);seedState(name,rows);return rows})
+      .finally(()=>{if(pendingStoreReads.get(name)===read)pendingStoreReads.delete(name)});
+    pendingStoreReads.set(name,read);return read;
   }
   async function get(name,id){
     await open();
-    if(useMemory) return memory[name].get(id);
-    return new Promise(async(res,rej)=>{const r=(await store(name)).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+    if(useMemory||hydratedStores.has(name)||memory[name].has(id))return memory[name].get(id);
+    const value=await new Promise(async(res,rej)=>{try{const r=(await store(name)).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(error){rej(error)}});
+    if(value?.id!=null)memory[name].set(value.id,value);return value;
   }
   async function put(name,value){
     await open();
     if(useMemory){memory[name].set(value.id,value);updateState(name,value);return value;}
-    const saved=await new Promise(async(res,rej)=>{const r=(await store(name,'readwrite')).put(value);r.onsuccess=()=>res(value);r.onerror=()=>rej(r.error)});updateState(name,value);return saved;
+    const saved=await new Promise(async(res,rej)=>{try{const r=(await store(name,'readwrite')).put(value);r.onsuccess=()=>res(value);r.onerror=()=>rej(r.error)}catch(error){rej(error)}});memory[name].set(value.id,value);updateState(name,value);return saved;
   }
   async function del(name,id){
     await open();
     if(useMemory){memory[name].delete(id);deleteState(name,id);return;}
-    await new Promise(async(res,rej)=>{const r=(await store(name,'readwrite')).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});deleteState(name,id);
+    await new Promise(async(res,rej)=>{try{const r=(await store(name,'readwrite')).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)}catch(error){rej(error)}});memory[name].delete(id);deleteState(name,id);
   }
   async function clear(name){
     await open();
     if(useMemory){memory[name].clear();seedState(name,[]);return;}
-    await new Promise(async(res,rej)=>{const r=(await store(name,'readwrite')).clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});seedState(name,[]);
+    await new Promise(async(res,rej)=>{try{const r=(await store(name,'readwrite')).clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)}catch(error){rej(error)}});memory[name].clear();hydratedStores.add(name);seedState(name,[]);
   }
   async function byIndex(name,index,key){
     await open();
-    if(useMemory){
+    if(useMemory||hydratedStores.has(name)){
       return Array.from(memory[name].values()).filter(v=>v && v[index]===key);
     }
-    return new Promise(async(res,rej)=>{const s=await store(name);const r=s.index(index).getAll(key);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+    const rows=await new Promise(async(res,rej)=>{try{const s=await store(name);const r=s.index(index).getAll(key);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(error){rej(error)}});for(const row of rows)if(row?.id!=null)memory[name].set(row.id,row);return rows;
   }
   function stateRows(name){return readState(name)}
   function isTemporary(){ return useMemory; }
@@ -1498,7 +1518,7 @@ const DriveSync = (() => {
   }
   function storeWorkspaceAccessError(rootName='',identityEmail='',cause=null){
     const store=String(rootName||'That LotKeys Store'),account=String(identityEmail||'this Google account');
-    const error=new Error(`${store} recognizes ${account}, but the account's private LotKeys workspace is not writable yet. Ask a Store Administrator to open LotKeys V0.9.4.98, run Repair Store Structure, and then reconnect. The Inventory can stay View only.`);
+    const error=new Error(`${store} recognizes ${account}, but the account's private LotKeys workspace is not writable yet. Ask a Store Administrator to open LotKeys V0.9.4.99, run Repair Store Structure, and then reconnect. The Inventory can stay View only.`);
     error.code='STORE_WORKSPACE_ACCESS_REQUIRED';if(cause)error.cause=cause;return error;
   }
   async function ensureStoreStructure(){
@@ -3120,7 +3140,7 @@ const App = (()=>{
 renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#description-add-type').value,block=DescriptionTemplates.defaultBlock(type);if(type==='price')block.config.text='{{PRICE}} + GST';if(type==='financing')block.config.text='Flexible financing options\nOAC (On Approved Credit)\nExtended warranty options available';if(type==='signature')block.config.text='Message {{USER_NAME}} to set up a viewing or to book.';t.blocks.push(block);renderBlocks()};$('#description-template-form').onsubmit=async e=>{e.preventDefault();t.name=$('#description-template-name').value.trim()||'My Marketplace Template';await DescriptionTemplates.save(t);await setSetting('lastDescriptionTemplateId',t.id);await markPersonalProfileChanged();modal.close();toast('Description template saved ✓');if(route==='profile')render()};if(!modal.open)modal.showModal()}
 
 
-  function paintProtocolState(st){const n=$('#local-test-note');if(!n||!st)return;const cls=st.level==='good'?'protocol-good':st.level==='bad'?'protocol-bad protocol-attention':'protocol-attention',label=st.level==='good'?'Authorized':st.level==='warn'?'Attention':'Action needed';n.className=`protocol-warning ${cls}`;n.innerHTML=`<strong>LotKeys Drive Test · V0.9.4.98</strong> — ${label}<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button>`;$('#version-info-btn')?.addEventListener('click',showVersionInfo);window.LotKeysPlatformInfo?.bindHeaderButton?.();bindLockControls()}
+  function paintProtocolState(st){const n=$('#local-test-note');if(!n||!st)return;const cls=st.level==='good'?'protocol-good':st.level==='bad'?'protocol-bad protocol-attention':'protocol-attention',label=st.level==='good'?'Authorized':st.level==='warn'?'Attention':'Action needed';n.className=`protocol-warning ${cls}`;n.innerHTML=`<strong>LotKeys Drive Test · V0.9.4.99</strong> — ${label}<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button>`;$('#version-info-btn')?.addEventListener('click',showVersionInfo);window.LotKeysPlatformInfo?.bindHeaderButton?.();bindLockControls()}
   async function updateProtocolNote(){paintProtocolState(await getReadinessState())}
   async function showVersionInfoV09450(){const signed=!!(await setting('currentAccountEmail','')),st=await getReadinessState();modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.4.50</div><h2>What’s new</h2></div><button class="close">×</button></div><div class="card" style="box-shadow:none"><div class="readiness-hero ${st.level}" style="margin-bottom:10px"><span class="readiness-big-dot ${st.level}"></span><div><strong>${esc(st.title)}</strong><div class="small" style="margin-top:4px">${esc(st.summary)}</div></div></div>${st.issues?.length?`<ul class="points-info-list">${st.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<ul class="points-info-list"><li><strong>V0.9.4.50 · Awards display repair:</strong> Primary Award changes now repaint Account and Store identity rows immediately. Small Primary Award artwork appears before the user name, and the five displayed Awards can be reordered by dragging the full badge on mouse or touch.</li><li><strong>Lock Screen:</strong> Set a local password or 4-digit PIN in Account, lock manually from the version bar, or choose PC Only, Phone Only or PC &amp; Phone idle locking. A refresh keeps the blurred LotKeys lock surface active.</li><li><strong>Account onboarding and installs:</strong> First-time users receive Google Account, personal Drive folder and Store Code/new Store guidance. Phone users receive an Install LotKeys App action.</li><li><strong>Garage organization:</strong> personal posting locations and FaceBook Listings Analytics now sit beneath Administrator &amp; Users; Store Saved Locations and highlighted reveal controls live in Advanced Google / Store controls. Awards Administration sits before User Reports.</li><li><strong>Post Buddy access:</strong> Garage now shows the accent-colored FaceBook Post Buddy panel immediately below Google &amp; Store Connection. Admin Level 2 can connect the current installer and website links.</li><li><strong>Listing workflow:</strong> Build Description now builds on the first press. Show Vehicle Details expands only when the user wants to edit or disable source facts, with checkboxes placed to the left. Existing Vehicle Profiles use a compact review-photo grid.</li><li><strong>Award inactivity rule:</strong> Iced Iced Baby now requires an established account returning after 30 inactive days and clears after five consecutive active days.</li><li><strong>New LotKeys icon:</strong> the supplied black-and-blue key/tag artwork is now the canonical default throughout the app, Chat, loading view, installed Android/PWA icon, Apple touch icon and favicon. Uploaded Store logos remain Store-specific overrides.</li><li><strong>Chat isolation repair:</strong> Chat now hides the live Home/Inventory route behind an opaque surface sized to the real bottom navigation, so Vehicle cards cannot show through while the Chat tab remains highlighted.</li>
 <li><strong>Registered contact lookup:</strong> Add Contact has a corrected person/plus control and accepts either an exact registered email address or phone number. This test build searches the current Store and saved conversations; global discovery still needs the future LotKeys account directory.</li>
@@ -3182,7 +3202,7 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
 <li>LotKeys requests a temporary screen wake lock during an active video transfer when the browser supports it, helping prevent an accidental screen lock from pausing the upload.</li></ul>${signed?'':'<div class="notice warning"><strong>New here?</strong><div class="small muted" style="margin-top:5px">Open Account and tap <strong>Click to Sign In</strong>, then use the Store Code your management team gives you.</div></div>'}</div>`;modalBody.querySelector('.close').onclick=()=>modal.close();if(!modal.open)modal.showModal()}
 
   async function showVersionInfo(){
-    modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.4.98</div><h2>What’s new</h2></div><div class="modal-head-actions"><button class="btn ghost version-help-btn" id="version-help" type="button">Help❓</button><button class="close" aria-label="Close">×</button></div></div><div class="card release-notes-card" style="box-shadow:none"><ul class="points-info-list"><li><strong>Correct page every time:</strong> a slow Home, Inventory, Listings, Account or Garage read can no longer paint after you select another tab. The selected header, highlighted tab and page body stay together.</li><li><strong>Lighter routine sync:</strong> normal due checks read a tiny ID/status mirror instead of repeatedly cloning every cached photo, video and document. Full records remain in the original IndexedDB stores and full reconciliation still runs when Drive changes.</li><li><strong>Syncing cannot wait forever on a read:</strong> read-only Google Drive checks stop after 30 seconds and release the refresh state. Drive writes are not blindly timed out or repeated.</li><li><strong>No destructive migration:</strong> there is no new database store, summary/cover migration, route deadline or storage reset. Phones that opened V0.9.4.96 remain compatible.</li><li><strong>Stable cached images:</strong> LotKeys keeps a visible Blob thumbnail alive until its page is actually replaced, avoiding broken placeholders during navigation.</li><li><strong>Stable V0.9.4.81 baseline:</strong> Vehicle Profiles, Listings, Drive writes, resumable uploads, Posting Buddy V0.1.23 and Processor V0.9.4.76 stay on the final known-good V0.9.4.81 paths.</li><li><strong>Phone Mirror retained:</strong> Phone Mirror 0.2.0 and the upgraded private Hub remain included. This website repair does not require reinstalling the APK.</li><li><strong>Processor unchanged:</strong> Store Processor V0.9.4.76 remains current; no Apps Script reinstall is needed.</li></ul></div>`;
+    modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.4.99</div><h2>What’s new</h2></div><div class="modal-head-actions"><button class="btn ghost version-help-btn" id="version-help" type="button">Help❓</button><button class="close" aria-label="Close">×</button></div></div><div class="card release-notes-card" style="box-shadow:none"><ul class="points-info-list"><li><strong>Phone navigation unblocked:</strong> after LotKeys reads each local database store once, Home, Inventory, Listings and Garage reuse that in-session copy instead of cloning every photo, video and document again behind an active sync.</li><li><strong>Write-through safety:</strong> saves, deletes and clears update the in-session copy only through the existing IndexedDB helpers. IndexedDB remains authoritative and the cache disappears naturally when the page closes.</li><li><strong>Correct page every time:</strong> a slow Home, Inventory, Listings, Account or Garage read can no longer paint after you select another tab. The selected header, highlighted tab and page body stay together.</li><li><strong>Lighter routine sync:</strong> normal due checks read a tiny ID/status mirror instead of repeatedly cloning every cached photo, video and document. Full records remain in the original IndexedDB stores and full reconciliation still runs when Drive changes.</li><li><strong>Syncing cannot wait forever on a read:</strong> read-only Google Drive checks stop after 30 seconds and release the refresh state. Drive writes are not blindly timed out or repeated.</li><li><strong>No destructive migration:</strong> there is no new database store, summary/cover migration, route deadline or storage reset. Phones that opened V0.9.4.96 remain compatible.</li><li><strong>Stable V0.9.4.81 baseline:</strong> Vehicle Profiles, Listings, Drive writes, resumable uploads, Posting Buddy V0.1.23 and Processor V0.9.4.76 stay on the final known-good V0.9.4.81 paths.</li><li><strong>Phone Mirror retained:</strong> Phone Mirror 0.2.0 and the upgraded private Hub remain included. This website repair does not require reinstalling the APK.</li></ul></div>`;
     modalBody.querySelector('.close').onclick=()=>modal.close();$('#version-help').onclick=()=>{modal.close();showHelpMenu()};if(!modal.open)modal.showModal()
   }
   function readLiveProgressRows(){try{return JSON.parse(localStorage.getItem(LIVE_MEDIA_PROGRESS_STORAGE)||'{}')||{}}catch{return {}}}
@@ -4561,15 +4581,15 @@ async function resumePendingContributionSubmissions(){const jobs=await DB.all('r
 window.addEventListener('DOMContentLoaded',App.boot);
 
   </script>
-  <script src="./lotkeys-info.js?v=09498"></script>
-  <script src="./lotkeys-messaging.js?v=09498"></script>
-  <script src="./lotkeys-awards.js?v=09498"></script>
-   <link rel="stylesheet" href="./lotkeys-hub.css?v=09498">
-   <script src="./lotkeys-hub-core.js?v=09498"></script>
-   <script src="./lotkeys-hub-store.js?v=09498"></script>
-   <script src="./lotkeys-device-pairing.js?v=09498"></script>
-   <script src="./lotkeys-device-client.js?v=09498"></script>
-   <script src="./lotkeys-hub.js?v=09498"></script>
+  <script src="./lotkeys-info.js?v=09499"></script>
+  <script src="./lotkeys-messaging.js?v=09499"></script>
+  <script src="./lotkeys-awards.js?v=09499"></script>
+   <link rel="stylesheet" href="./lotkeys-hub.css?v=09499">
+   <script src="./lotkeys-hub-core.js?v=09499"></script>
+   <script src="./lotkeys-hub-store.js?v=09499"></script>
+   <script src="./lotkeys-device-pairing.js?v=09499"></script>
+   <script src="./lotkeys-device-client.js?v=09499"></script>
+   <script src="./lotkeys-hub.js?v=09499"></script>
   <script>
   if(!window.LotKeysMessaging){
     const chatButton=document.getElementById('chat-nav-btn');
@@ -4579,7 +4599,7 @@ window.addEventListener('DOMContentLoaded',App.boot);
         panel=document.createElement('div');
         panel.id='lotkeys-messages-load-error';
         panel.style.cssText='position:fixed;inset:0;z-index:2147483600;background:var(--bg);color:var(--ink);padding:calc(20px + env(safe-area-inset-top)) 16px;';
-        panel.innerHTML='<div style="max-width:620px;margin:0 auto"><button id="lotkeys-messages-load-error-close" class="btn ghost" type="button">← Back</button><div class="card" style="margin-top:18px"><h2 style="margin-top:0">Chat did not finish updating</h2><div class="help">Install every file from the complete LotKeys V0.9.4.98 release, including lotkeys-messaging.js beside index.html, then reopen LotKeys.</div></div></div>';
+        panel.innerHTML='<div style="max-width:620px;margin:0 auto"><button id="lotkeys-messages-load-error-close" class="btn ghost" type="button">← Back</button><div class="card" style="margin-top:18px"><h2 style="margin-top:0">Chat did not finish updating</h2><div class="help">Install every file from the complete LotKeys V0.9.4.99 release, including lotkeys-messaging.js beside index.html, then reopen LotKeys.</div></div></div>';
         document.body.appendChild(panel);
         panel.querySelector('#lotkeys-messages-load-error-close').onclick=()=>panel.remove()
       }

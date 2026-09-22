@@ -20,21 +20,21 @@ const version=JSON.parse(read('version.json'));
 const manifest=JSON.parse(read('manifest.webmanifest'));
 const sw=read('sw.js');
 
-expect(version.version==='0.9.4.98','version.json must identify V0.9.4.98');
-expect(version.build==='09498','version.json build must be 09498');
+expect(version.version==='0.9.4.99','version.json must identify V0.9.4.99');
+expect(version.build==='09499','version.json build must be 09499');
 expect(version.basedOnCommit===BASE81,'version.json must record the approved V0.9.4.81 base');
-expect(version.release==='stable-81-route-sync-repair','version.json release label is stale');
-expect(manifest.start_url.includes('09498'),'manifest must request build 09498');
-expect(sw.includes("lotkeys-app-v09498-stable-81-route-sync-repair"),'service-worker cache key is stale');
-expect(index.includes("const build='09498'"),'index build marker is stale');
+expect(version.release==='stable-81-indexeddb-navigation-cache','version.json release label is stale');
+expect(manifest.start_url.includes('09499'),'manifest must request build 09499');
+expect(sw.includes("lotkeys-app-v09499-indexeddb-navigation-cache"),'service-worker cache key is stale');
+expect(index.includes("const build='09499'"),'index build marker is stale');
 expect(index.includes('const VERSION = 3;'),'IndexedDB must remain forward-compatible with V0.9.4.96 phones');
 expect(index.includes("const STORES = ['vehicles','listings','locations','analytics','settings','requestQueue'];"),'the original IndexedDB store set changed');
 
 for(const forbidden of ['vehicleSummaries','listingSummaries','vehicleCovers','listingCovers','migrationV09496SummaryCache','render timed out','timedOut:true']){
   expect(!index.includes(forbidden),`abandoned route-deadline/summary-store code returned: ${forbidden}`);
 }
-for(const required of ['routeRenderEpoch','routeRenderCurrent(context)','data-route-loading','Still opening the saved phone copy','STATE_PREFIX','stateRows(name)','INVENTORY_FOLDER_AUDIT_MS=5*60*1000']){
-  expect(index.includes(required),`V0.9.4.98 repair is missing: ${required}`);
+for(const required of ['routeRenderEpoch','routeRenderCurrent(context)','data-route-loading','Still opening the saved phone copy','STATE_PREFIX','stateRows(name)','INVENTORY_FOLDER_AUDIT_MS=5*60*1000','hydratedStores','pendingStoreReads','rememberStore(name,rows=[])']){
+  expect(index.includes(required),`V0.9.4.99 repair is missing: ${required}`);
 }
 
 for(const required of ['lotkeys-hub-core.js','lotkeys-hub-store.js','lotkeys-device-pairing.js','lotkeys-device-client.js','lotkeys-hub.js','lotkeys-hub.css']){
@@ -72,4 +72,4 @@ for(const file of ['lotkeys-messaging.js','lotkeys-hub-core.js','lotkeys-hub-sto
   try{new Function(read(file))}catch(error){fail(`${file} does not parse: ${error.message}`)}
 }
 
-console.log(`Stable-core checks passed: ${inlineScripts.length} inline scripts, protected Drive/upload spans, Hub assets and V0.9.4.98 cache/version consistency.`);
+console.log(`Stable-core checks passed: ${inlineScripts.length} inline scripts, protected Drive/upload spans, Hub assets and V0.9.4.99 cache/version consistency.`);

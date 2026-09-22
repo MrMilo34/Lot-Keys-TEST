@@ -1,11 +1,13 @@
-# LotKeys V0.9.4.98 — stable V0.9.4.81 core + route/sync repair + Phone Hub
+# LotKeys V0.9.4.99 — stable V0.9.4.81 core + phone navigation repair + Phone Hub
 
-V0.9.4.98 keeps the final proven V0.9.4.81 checkpoint (`13e5042`) as its data, upload and synchronization baseline, retains the upgraded Hub/Phone Mirror, and repairs the two failures observed in V0.9.4.97: stale page bodies after rapid navigation and routine synchronization checks that repeatedly cloned media-heavy IndexedDB records.
+V0.9.4.99 keeps the final proven V0.9.4.81 checkpoint (`13e5042`) as its data, upload and synchronization baseline, retains the upgraded Hub/Phone Mirror, and fixes the remaining physical-phone failure recorded on V0.9.4.98: data-backed tabs waiting indefinitely while Android Chrome repeatedly cloned the same media-heavy IndexedDB records behind synchronization work.
 
 ## Included
 - **V0.9.4.81 application core restored:** the V0.9.4.95 route watchdog and V0.9.4.96 summary-store experiment are not included.
 - **Correct route ownership:** every Home, Inventory, Listings, Account and Garage render owns a navigation token. A slow page can finish its read, but it cannot overwrite a newer selected page.
 - **No false route timeout:** the loading shell can report that a read is still opening, but it never invalidates or cancels a legitimate phone-cache read.
+- **One full local read per store per page session:** after the first complete IndexedDB read, normal tab changes reuse an in-memory read-through copy instead of cloning all cached media again. Existing save/delete/clear helpers maintain the copy after IndexedDB succeeds.
+- **No database migration:** the read-through copy is disposable page memory, not a new object store or authoritative data source. Closing the page discards it naturally.
 - **Lightweight routine synchronization checks:** a small local metadata mirror tracks IDs and sync state only. Full Vehicle/Listing records and all media remain exclusively authoritative in the existing IndexedDB stores.
 - **Unchanged Drive checks stay light:** unchanged indexes no longer launch full Vehicle/Listing reconciliation scans, while actual index/folder changes still use the complete V0.9.4.81 reconciliation path.
 - **Syncing cannot wait forever on a read:** read-only Google Drive requests stop after 30 seconds and unwind the visible refresh state. Potentially ambiguous Drive writes are not automatically timed out or repeated.
@@ -23,7 +25,7 @@ V0.9.4.98 keeps the final proven V0.9.4.81 checkpoint (`13e5042`) as its data, u
 ## Test deployment
 The GitHub Actions run packages the complete repository as `LotKeys-Phone-Mirror-Source` and builds the Android companion APK. Keep `CNAME` absent in `Lot-Keys-TEST`, and open:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09498`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09499`
 
 Do not clear site storage. Close every older LotKeys tab/PWA instance before reopening so the new service worker and the existing phone database can reconnect cleanly. Phone Mirror 0.2.0 does not need to be reinstalled for this website-only repair.
 
