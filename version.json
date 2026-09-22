@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.99",
-  "build": "09499",
-  "release": "stable-81-indexeddb-navigation-cache",
+  "version": "0.9.5.0",
+  "build": "09500",
+  "release": "hub-v2-isolated-phone-truth-preview",
   "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09499-indexeddb-navigation-cache",
+  "serviceWorkerCache": "lotkeys-app-v09500-hub-v2-isolated-phone-truth",
   "basedOnCommit": "13e50428fb13ef1c296d1bb79fccdb88c57e1cd2",
-  "hubSourceCommit": "cc1b97b",
+  "phoneMirrorProtocol": "0.2.0",
   "publishedAt": "2026-09-22"
 }

@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - hub-rebuild-phone-truth
 
 permissions:
   contents: read
@@ -17,13 +18,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Verify stable core, navigation, synchronization and runtime files
+      - name: Verify V0.9.4.81 core and isolated Hub V2 boundary
         run: |
-          node tests/stable-core-regression-check.mjs
-          node tests/navigation-sync-regression-check.mjs
-          node tests/drive-read-timeout-check.mjs
-          node tests/indexeddb-read-cache-check.mjs
-          node tests/runtime-file-audit.mjs
+          node tests/hub-v2-isolation-check.mjs
           tail -n +2 CHECKSUMS.txt | sha256sum --check --strict --status
       - name: Package source snapshot
         run: |

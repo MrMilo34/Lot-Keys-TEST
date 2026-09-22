@@ -1,11 +1,11 @@
-/* LotKeys 0.9.4.91: local, account-scoped pairing vault. No message bodies. */
+/* LotKeys Hub V2: local, account-scoped pairing vault. No message bodies. */
 (()=>{'use strict';
 const te=new TextEncoder(),td=new TextDecoder();
 const IDB_NAME='lotkeys-device-pairing-v1',KDF_ROUNDS=600000,WORK_IDLE=4*60*60*1000;
 let dbPromise,material=null,materialOwner='',credentialId='',lastUse=0,unlockJob=null,vaultEpoch=0;
 const b64=b=>{let s='';for(const n of new Uint8Array(b))s+=String.fromCharCode(n);return btoa(s);};
 const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-const identity=()=>window.LotKeysHubStore.identity();
+const identity=()=>window.LotKeysHubV2Identity.identity();
 const core=()=>window.LotKeysMessagingBridge;
 const scope=a=>location.origin+'|'+new URL('.',location.href).pathname+'|'+a+'|pairing-v2';
 const locked=()=>document.body.dataset.lotkeysLocked==='true';
@@ -102,6 +102,6 @@ async function info(){try{const c=await credentials(),row=await readPair(c.owner
 async function forget(){clear();const a=await identity();await write(a,null);}
 function touch(){if(material&&!locked())lastUse=Date.now();}
 window.LotKeysPairingVault={unlock,readUnlocked,save,info,forget,clear,touch,isUnlocked,workIdleMs:WORK_IDLE};
-window.addEventListener('lotkeys-hub-identity',ev=>{if(materialOwner&&materialOwner!==ev.detail.owner)clear();});
+window.addEventListener('lotkeys-hub-v2-identity',ev=>{if(materialOwner&&materialOwner!==ev.detail.owner)clear();});
 window.addEventListener('pagehide',clear);
 })();

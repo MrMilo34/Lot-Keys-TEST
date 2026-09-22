@@ -1,27 +1,15 @@
-V0.9.4.99 STABLE V0.9.4.81 CORE + PHONE INDEXEDDB NAVIGATION CACHE
-- Retains every V0.9.4.98 route-ownership, Blob lifecycle, routine-sync and read-timeout repair.
-- Fixes the physical-phone freeze where Home could load once, then Inventory, Listings, Garage and Home waited indefinitely behind repeated media-heavy IndexedDB clones while Account and Hub still opened.
-- Reads each existing IndexedDB store in full at most once per page session and serves later navigation from a disposable in-memory read-through cache.
-- Deduplicates concurrent first reads and keeps cached navigation available while an existing background write is pending.
-- Updates the in-session cache only through successful put/delete/clear operations; IndexedDB remains authoritative across reloads.
-- Keeps schema version 3 and the original V0.9.4.81 object stores. No summary store, cover store, migration, storage clear or data reset is used.
-- Adds a deterministic IndexedDB cache regression harness to the GitHub Actions release gate.
-- Retains Phone Mirror 0.2.0, the private Hub, Posting Buddy V0.1.23 and Store Processor V0.9.4.76.
-- Build: 09499.
-- Service worker cache: lotkeys-app-v09499-indexeddb-navigation-cache.
-
-V0.9.4.98 STABLE V0.9.4.81 CORE + ROUTE/SYNC REPAIR + PHONE HUB
-- Keeps the final V0.9.4.81 application checkpoint at commit 13e50428fb13ef1c296d1bb79fccdb88c57e1cd2 as the data, upload and synchronization baseline.
-- Prevents an older slow Home, Inventory, Listings, Account or Garage render from painting after the user has selected another tab.
-- Shows a loading shell while the selected route reads the existing phone database, but does not cancel a legitimate slow read or introduce a route deadline.
-- Keeps IndexedDB as the authoritative full record store. A tiny local metadata mirror lets routine due checks and pending-sync discovery avoid cloning photo, video and document Blobs.
-- Skips unchanged Inventory/Listing reconciliation scans, performs the folder audit at the existing five-minute refresh cadence, and leaves full reconciliation intact when Drive actually changed.
-- Bounds read-only Google Drive checks at 30 seconds so a stalled request releases the Syncing state; write requests remain un-timed and are never blindly retried.
-- Preserves live Blob thumbnails until their DOM nodes are replaced, avoiding broken image placeholders during navigation.
-- Retains the private Hub, internal Chat integration, Device client, Android Phone Mirror 0.2.0, Posting Buddy V0.1.23 and Store Processor V0.9.4.76.
-- Keeps IndexedDB schema version 3 only for compatibility with phones that briefly opened V0.9.4.96; no new store, migration, storage clear or data reset is used.
-- Build: 09498.
-- Service worker cache: lotkeys-app-v09498-stable-81-route-sync-repair.
+V0.9.5.0 HUB V2 ISOLATION CHECKPOINT
+- Rebuilds from the exact V0.9.4.81 commit `13e50428fb13ef1c296d1bb79fccdb88c57e1cd2`.
+- Keeps lotkeys-messaging.js, Processor V0.9.4.76 and Posting Buddy V0.1.23 byte-for-byte identical to V0.9.4.81.
+- Adds a separately loaded Hub V2 shell with All / LotKeys / Device views.
+- Treats the paired Android phone as the only SMS/MMS transcript and sending authority.
+- Keeps Device message bodies in RAM only; no Device transcript is written to IndexedDB, localStorage or Google Drive.
+- Stops the Device connector from auto-starting during normal LotKeys boot.
+- Prevents Hub V2 from reading Inventory/Listings, starting Store synchronization or taking ownership of application routes.
+- Deliberately defers categories, customer notes/documents and calendar until the clean boundary passes on Blair's phone.
+- Phone Mirror protocol remains 0.2.0; no APK reinstall is expected for this checkpoint.
+- Build: 09500.
+- Service worker cache: lotkeys-app-v09500-hub-v2-isolated-phone-truth.
 
 V0.9.4.81 FRESH VIDEO DISCOVERY + MANAGEMENT UPDATE POLISH
 - Builds directly on V0.9.4.80; parallel Vehicle Profile Photos + Video uploads, three-worker photos, resumable Drive sessions, MB diagnostics, V0.9.4.79 editor recovery, and all prior Store/Processor behavior remain intact.
