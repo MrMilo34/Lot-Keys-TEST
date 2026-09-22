@@ -1,3 +1,16 @@
+V0.9.5.0 HUB V2 ISOLATION CHECKPOINT
+- Rebuilds from the exact V0.9.4.81 commit `13e50428fb13ef1c296d1bb79fccdb88c57e1cd2`.
+- Keeps lotkeys-messaging.js, Processor V0.9.4.76 and Posting Buddy V0.1.23 byte-for-byte identical to V0.9.4.81.
+- Adds a separately loaded Hub V2 shell with All / LotKeys / Device views.
+- Treats the paired Android phone as the only SMS/MMS transcript and sending authority.
+- Keeps Device message bodies in RAM only; no Device transcript is written to IndexedDB, localStorage or Google Drive.
+- Stops the Device connector from auto-starting during normal LotKeys boot.
+- Prevents Hub V2 from reading Inventory/Listings, starting Store synchronization or taking ownership of application routes.
+- Deliberately defers categories, customer notes/documents and calendar until the clean boundary passes on Blair's phone.
+- Phone Mirror protocol remains 0.2.0; no APK reinstall is expected for this checkpoint.
+- Build: 09500.
+- Service worker cache: lotkeys-app-v09500-hub-v2-isolated-phone-truth.
+
 V0.9.4.81 FRESH VIDEO DISCOVERY + MANAGEMENT UPDATE POLISH
 - Builds directly on V0.9.4.80; parallel Vehicle Profile Photos + Video uploads, three-worker photos, resumable Drive sessions, MB diagnostics, V0.9.4.79 editor recovery, and all prior Store/Processor behavior remain intact.
 - Adds a targeted Vehicle Profile video-metadata refresh so Posting Buddy can see a video added after the LotKeys Listing was created without forcing the Listing to be edited/saved again.
