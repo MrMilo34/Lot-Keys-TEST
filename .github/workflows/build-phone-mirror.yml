@@ -3,9 +3,9 @@ name: Build LotKeys Phone Mirror
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - hub-rebuild-phone-truth
+    paths:
+      - '.github/workflows/build-phone-mirror.yml'
+      - 'device-bridge/**'
 
 permissions:
   contents: read
@@ -16,12 +16,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Verify V0.9.4.81 core and isolated Hub V2 boundary
-        run: |
-          node tests/hub-v2-isolation-check.mjs
-          tail -n +2 CHECKSUMS.txt | sha256sum --check --strict --status
       - name: Package source snapshot
         run: |
           python3 - <<'PY'

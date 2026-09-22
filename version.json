@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.0",
-  "build": "09500",
-  "release": "hub-v2-isolated-phone-truth-preview",
-  "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09500-hub-v2-isolated-phone-truth",
-  "basedOnCommit": "13e50428fb13ef1c296d1bb79fccdb88c57e1cd2",
-  "phoneMirrorProtocol": "0.2.0",
-  "publishedAt": "2026-09-22"
+  "version": "0.9.4.94",
+  "build": "09494",
+  "release": "phone-sms-mirror",
+  "channel": "test",
+  "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
+  "serviceWorkerCache": "lotkeys-app-v09494-phone-sms-mirror",
+  "publishedAt": "2026-09-21",
+  "basedOnCommit": "2e8c1ec2e52ce36f1b2b89409d1b3925ed823533"
 }

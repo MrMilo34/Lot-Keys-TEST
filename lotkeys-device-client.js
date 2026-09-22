@@ -1,6 +1,6 @@
-/* LotKeys Hub V2 Device transport. Transcripts stay in RAM; saved pairing uses the PIN vault. */
+/* LotKeys 0.9.4.94 Device client. Transcripts stay in RAM; saved pairing uses the PIN vault. */
 (()=>{'use strict';
-const H=window.LotKeysHubV2Core,V=window.LotKeysPairingVault,te=new TextEncoder(),td=new TextDecoder();
+const H=window.LotKeysHubCore,V=window.LotKeysPairingVault,te=new TextEncoder(),td=new TextDecoder();
 let channel=null,generation=0,pollTimer=null,restoreJob=null,connectJob=null;
 let peerSession='',peerName='',peerCaps={},lastPeer=0,lastStatusAt=0,lastHello=0,lastGoodRelay=0;
 let activeOwner='',binding='',transportError='',failures=0,polling=false,lastUserActivity=Date.now();
@@ -8,7 +8,7 @@ const threads=new Map(),seen=new Set(),pending=new Map(),controllers=new Set();
 let nativeMode=false,sourceApp='',focused='',refreshNativeTimer;
 let listing={loading:false,hasMore:false,nextOffset:0,total:0,error:''};
 const queries=new Map(),historyJobs=new Map();let listJob=null;
-const owner=()=>window.LotKeysHubV2Identity.identity();
+const owner=()=>window.LotKeysHubStore.identity();
 const locked=()=>document.body.dataset.lotkeysLocked==='true';
 const b64=b=>{let s='';for(const n of new Uint8Array(b))s+=String.fromCharCode(n);return btoa(s);};
 const bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
@@ -261,11 +261,11 @@ function clearThread(id){const t=threads.get(id);if(!t)return;if([...pending.val
 function touch(){if(!locked()&&!document.hidden){if(channel&&Date.now()-lastUserActivity>V.workIdleMs){stop({clear:false});V.clear();transportError='Unlock saved Device access to resume this work session.';emit('status');}lastUserActivity=Date.now();V.touch();}}
 function status(){return {paired:!!channel,connected:connected(),name:peerName,capabilities:peerCaps,sourceApp,listing:{...listing},lastSeen:lastPeer,error:transportError,paused:isPaused(activeOwner),locked:locked(),binding};}
 window.LotKeysDevice={connect,disconnect,wake,resync,restoreSaved,unlockSaved,onAppUnlock,savedInfo,forgetSaved,send,read,clearThread,loadHistory,refreshConversations,unwatch:()=>{focused='';},isSending:id=>[...pending.values()].some(x=>x.threadId===id),threads:()=>nativeMode&&!connected()?[]:[...threads.values()],get:id=>nativeMode&&!connected()?undefined:threads.get(id),status,cryptoTest:{b64,bytes}};
-window.addEventListener('lotkeys-hub-v2-identity',e=>{const a=String(e.detail.owner||'');if(activeOwner&&activeOwner!==a){stop();V.clear();activeOwner='';emit('disconnect');}});
-window.addEventListener('lotkeys-hub-v2-open',()=>{touch();if(channel)wake();});
+window.addEventListener('lotkeys-hub-identity',e=>{const a=String(e.detail.owner||'');if(activeOwner&&activeOwner!==a){stop();V.clear();activeOwner='';emit('disconnect');}if(a)setTimeout(wake,0);});
 window.addEventListener('pagehide',()=>{stop();V.clear();});
-window.addEventListener('online',()=>{if(channel){channel.cursor=0;lastHello=0;wake();}});
+window.addEventListener('online',()=>{if(channel){channel.cursor=0;lastHello=0;}wake();});
 window.addEventListener('offline',()=>{if(nativeMode)hideNative('Internet unavailable. Your draft is not queued to send.');emit('status');});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){touch();if(channel)wake();}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){touch();wake();}});
 for(const type of ['pointerdown','keydown'])document.addEventListener(type,touch,{passive:true});
+setTimeout(wake,700);
 })();

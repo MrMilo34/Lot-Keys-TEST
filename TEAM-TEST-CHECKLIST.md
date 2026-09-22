@@ -1,3 +1,7 @@
+# V0.9.4.82 Hub tests
+
+Follow HUB-TEST-GUIDE.md with fictional customer data first. Read the Device prototype limits before attempting real messaging. Then run the prior known-good media checks below.
+
 # LotKeys V0.9.4.81 + Posting Buddy V0.1.23 team-test checklist
 
 ## App baseline

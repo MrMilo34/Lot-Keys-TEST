@@ -1,10 +1,10 @@
 # LotKeys architecture v0.2
 
-## V0.9.4.81 least-privilege Store model
+## V0.9.4.82 least-privilege Store model
 
 The official Inventory remains on the Store side. Ordinary and Trusted users receive Viewer access to it; each user receives Writer access only to their own limited-access workspace. The Admin Level 2 Store Processor validates the workspace that contains a request instead of trusting identity fields supplied by the browser.
 
-## V0.9.4.81 LotKeys Info source
+## V0.9.4.82 LotKeys Info source
 
 - The registered developer publishes one `Lot-Keys Account / Developer Files / LotKeys Info.json` file in personal Google Drive.
 - The file ID stays stable while Save & Publish replaces its JSON content; moving the folder does not invalidate the Drive ID.
@@ -181,3 +181,8 @@ Info From Photo is an assisted data-entry layer only. It does not become a new s
 
 ### v0.8.7.2 UI polish
 Dialog/modal backdrops use neutral black transparency rather than a blue/slate overlay in both appearance modes.
+
+
+## V0.9.4.82 Hub boundary
+
+See HUB-ARCHITECTURE.md. Hub records are in personal Account/Hub, not Store Users. Existing media and messaging transport are preserved. External Device adapters are a separate experimental kit.
