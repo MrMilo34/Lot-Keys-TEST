@@ -1,10 +1,10 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.98",
-  "build": "09498",
-  "release": "stable-81-route-sync-repair",
+  "version": "0.9.4.99",
+  "build": "09499",
+  "release": "stable-81-indexeddb-navigation-cache",
   "canonicalUrl": "https://lot-keys.ca/",
-  "serviceWorkerCache": "lotkeys-app-v09498-stable-81-route-sync-repair",
+  "serviceWorkerCache": "lotkeys-app-v09499-indexeddb-navigation-cache",
   "basedOnCommit": "13e50428fb13ef1c296d1bb79fccdb88c57e1cd2",
   "hubSourceCommit": "cc1b97b",
   "publishedAt": "2026-09-22"
