@@ -1,10 +1,10 @@
-# LotKeys Hub V0.9.4.97 — first test
+# LotKeys Hub V0.9.4.98 — first test
 
 This is a controlled test build, made from the approved V0.9.4.81 release. Start with a fictional customer and non-sensitive documents. Do not replace your dealership's approved customer/finance system with this prototype.
 
 ## Install the main app
 
-Keep the V0.9.4.81 ZIP as a rollback copy. Upload the complete contents of this release to the existing Lot-Keys-TEST repository, with the same folder structure. Do not add CNAME to the TEST repository. Open the TEST site with `?build=09497` after deployment and confirm V0.9.4.97 in Account. The main bottom tab now says **Hub**.
+Keep the V0.9.4.81 ZIP as a rollback copy. Upload the complete contents of this release to the existing Lot-Keys-TEST repository, with the same folder structure. Do not add CNAME to the TEST repository. Open the TEST site with `?build=09498` after deployment and confirm V0.9.4.98 in Account. The main bottom tab now says **Hub**.
 
 Posting Buddy stays V0.1.23. Its bundled ZIP and `extension/latest.json` are unchanged. Store Processor stays V0.9.4.76; no reinstall is required.
 
