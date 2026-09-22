@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09498-stable-81-route-sync-repair';
+const CACHE='lotkeys-app-v09499-indexeddb-navigation-cache';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
