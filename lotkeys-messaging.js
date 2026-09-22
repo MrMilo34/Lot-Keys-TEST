@@ -16,7 +16,7 @@ const lotKeysUserKey=Core.lotKeysUserKey;
 */
 
 const MSG_VERSION=1;
-const APP_VERSION='0.9.4.97';
+const APP_VERSION='0.9.4.98';
 const CONV_KEY='lotkeysMessagingConversationsV1';
 const ID_KEY='lotkeysMessagingIdentityV1';
 const LAST_KEY='lotkeysMessagingLastConversationV1';
@@ -604,6 +604,6 @@ function hubMount(){++homeOpenToken;stopChatClock();setChatNavActive(true);const
 async function hubRows(){const rows=await conversations(),users=await storeUsers(),saved=await contacts(),favorites=new Set(saved.map(x=>x.address)),storeAddresses=new Set(users.map(userAddress));const result=rows.map(c=>{const last=c.messages?.at(-1);return{id:c.id,source:'lotkeys',title:conversationTitle(c,users),phone:c.peerPhone||'',email:c.peerEmail||'',address:c.peerPhone||c.peerEmail||'',preview:last?messagePreview(last):'No messages yet',at:Date.parse(last?.createdAt||c.updatedAt||0)||0,unread:Number(c.unread)||0,group:c.type==='party',favorite:!!(c.favorite||favorites.has(c.peerAddress)),html:conversationRow(c,users,storeAddresses)};});for(const u of await knownPeople(users,rows)){if(!u.address||rows.some(c=>c.type==='direct'&&c.peerAddress===u.address))continue;result.push({id:'person:'+u.address,source:'lotkeys',person:true,title:displayNameFor(u),phone:u.phoneNumber||'',email:u.email||'',preview:'',at:0,unread:0,group:false,favorite:!!(u.favorite||favorites.has(u.address)),html:personRow(u,storeAddresses.has(u.address))});}return result;}
 async function hubOpenPerson(address){const users=await storeUsers(),u=users.find(x=>userAddress(x)===address);if(!u||!userReady(u)){showMiniToast('This contact is not available in the current Store.');return;}const conv=await ensureDirectConversation(u);await openConversation(conv.id);}
 async function hubVisibleText(id){const c=(await conversations()).find(x=>x.id===id);const me=window.__lotKeysMessagingMyAddress;return(c?.messages||[]).slice(-20).filter(m=>m.senderAddress!==me&&!m.outgoing).map(m=>String(m.text||'')).join('\n');}
-window.LotKeysMessaging={open:openMessagesHome,openUser,openLastBubble,close:closePanel,refresh:()=>refreshMessagingInBackground({force:true}),hubMount,hubRows,hubOpenPerson,hubVisibleText,hubHydrate:hydrateAvatars,openConversation,newChat:showNewChatMenu,call:showCallPicker,preview:openBubble,share:showSharePicker,version:'0.9.4.97'};
+window.LotKeysMessaging={open:openMessagesHome,openUser,openLastBubble,close:closePanel,refresh:()=>refreshMessagingInBackground({force:true}),hubMount,hubRows,hubOpenPerson,hubVisibleText,hubHydrate:hydrateAvatars,openConversation,newChat:showNewChatMenu,call:showCallPicker,preview:openBubble,share:showSharePicker,version:'0.9.4.98'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
