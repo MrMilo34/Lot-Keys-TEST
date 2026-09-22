@@ -17,8 +17,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Verify stable V0.9.4.81 core and Hub integration
-        run: node tests/stable-core-regression-check.mjs
+      - name: Verify stable core, navigation, synchronization and runtime files
+        run: |
+          node tests/stable-core-regression-check.mjs
+          node tests/navigation-sync-regression-check.mjs
+          node tests/drive-read-timeout-check.mjs
+          node tests/runtime-file-audit.mjs
+          tail -n +2 CHECKSUMS.txt | sha256sum --check --strict --status
       - name: Package source snapshot
         run: |
           python3 - <<'PY'
