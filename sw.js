@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09483-account-restore-safety';
+const CACHE='lotkeys-app-v09483-account-folder-recovery';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

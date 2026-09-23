@@ -15,6 +15,8 @@ Everything added after those supplied archives was removed from the TEST file tr
 - The approved TEST OAuth client, browser-restricted Picker key, and matching project number are available as bundled fallbacks and appear in Google Test Credentials when no saved override exists.
 - Personal Account data is restore-first and conflict-safe. Blank device defaults cannot replace an existing `Account.json`, and profile-photo deletion requires the explicit Remove Photo action.
 - **Restore from Drive** reapplies the recovered Account photo, theme/accent, Celebration Sound metadata, and Description Builder templates, then redraws the current device.
+- Folder discovery now recovers an unreferenced `Account Photo.jpg`, repopulates every supported audio file found in `Celebration Sounds`, and lets the user choose which recovered sound to use.
+- Custom Description Builder templates now receive individual recovery JSON files in `Description Templates`, allowing future reconstruction even when `Account.json` is missing.
 
 ### Device organization
 
@@ -46,5 +48,5 @@ The next phase should build a Google-Messages-for-Web-style interface where the 
 - Pages root: `https://mrmilo34.github.io/Lot-Keys-TEST/`
 - Version: `0.9.4.83`
 - Build: `09483`
-- Cache: `lotkeys-app-v09483-account-restore-safety`
+- Cache: `lotkeys-app-v09483-account-folder-recovery`
 - Production `lot-keys.ca`: unchanged

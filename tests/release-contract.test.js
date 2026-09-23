@@ -13,10 +13,10 @@ test('release metadata is consistently V0.9.4.83', () => {
   assert.equal(version.version, '0.9.4.83');
   assert.equal(version.build, '09483');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09483-account-restore-safety');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09483-account-folder-recovery');
   assert.match(read('index.html'), /V0\.9\.4\.83/);
   assert.match(read('manifest.webmanifest'), /build=09483/);
-  assert.match(read('sw.js'), /lotkeys-app-v09483-account-restore-safety/);
+  assert.match(read('sw.js'), /lotkeys-app-v09483-account-folder-recovery/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -52,6 +52,28 @@ test('personal Account sync restores before writing and deletes photos only by e
   assert.doesNotMatch(html, /choosePersonalAccountLocation\(\);loaded=await DriveSync\.loadPersonalProfile\(\{forceRemote:true\}\)/);
   assert.match(html, /markPersonalProfileChanged\(\).*personalProfileSyncPending/s);
   assert.match(messaging, /personalProfileSyncPending/);
+});
+
+test('personal Account folders can rebuild recoverable assets without Account.json pointers', () => {
+  const html = read('index.html');
+  assert.match(html, /discoverPersonalAccountAssets/);
+  assert.match(html, /discoverPersonalCelebrationSounds/);
+  assert.match(html, /personalCelebrationAudioFile/);
+  assert.match(html, /selectedCelebrationSoundId:selectedId&&soundIds\.has\(selectedId\)\?selectedId:''/);
+  assert.match(html, /recoverPersonalAccountFolder\(\{folder=null,preserveLocal=true\}/);
+  assert.match(html, /Celebration Sounds folder whenever this opens/);
+  assert.match(html, /lotkeysOriginalName/);
+  assert.match(html, /syncPersonalDescriptionTemplateFiles/);
+  assert.match(html, /personalDescriptionTemplates/);
+  assert.match(html, /recordType:'descriptionTemplate'/);
+  assert.match(html, /deletePersonalDescriptionTemplateFile/);
+  assert.match(html, /preserveLocalPreferences:localPending/);
+  assert.match(html, /templateSource=preserveLocalPreferences/);
+  assert.match(html, /personalCelebrationSoundClearRequested/);
+  assert.match(html, /if\(photoFile\?\.trashed\)photoFile=null/);
+  assert.match(html, /if\(accountFile\?\.trashed\)accountFile=null/);
+  assert.match(html, /if\(!selected&&storeFileId&&!clearRequested\)return/);
+  assert.match(html, /syncStoreCelebrationSound\(null,\{allowDelete:!fileId\}\)/);
 });
 
 test('phone bridge, pairing and Android artifacts are absent', () => {

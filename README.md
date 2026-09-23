@@ -16,6 +16,8 @@ This TEST release is rebuilt from the supplied **LotKeys V0.9.4.81** gold-standa
 - Complete Google TEST browser configuration fallbacks for the approved OAuth web client, restricted Picker API key, and matching Cloud project number; saved Admin overrides still take precedence.
 - Restore-first personal Account sync: a device must load the existing `Account.json` before it can save, cross-device changes stop on conflict instead of overwriting, and a missing local photo never deletes the Drive photo without an explicit Remove Photo action.
 - Account includes a read-only **Restore from Drive** action for reloading the theme, photo, Celebration Sound links, Description Builder templates, and other personal settings after recovery or when adding a device.
+- Account-folder recovery scans the real `Account Photo.jpg` and `Celebration Sounds` contents, rebuilding missing references without re-uploading files or selecting a sound automatically.
+- Custom Description Builder templates are mirrored into individual JSON recovery files under `Description Templates`; unknown Drive files are left untouched and deletion remains an explicit user action.
 
 ## Deliberately not in this build
 

@@ -8,9 +8,11 @@ V0.9.4.83 CLEAN HUB FOUNDATION REBUILD
 - Restores the complete approved Google TEST browser configuration as safe fallbacks while preserving saved Admin overrides.
 - Repairs personal Account restore so a phone cannot save blank defaults over `Account.json`; cross-device conflicts stop safely and Account Photo deletion now requires an explicit removal request.
 - Adds Restore from Drive for reloading recovered photo, sound links, appearance and custom Description Builder templates.
+- Scans Account Photo and Celebration Sounds directly from the selected Account folder so missing `Account.json` references can be rebuilt without re-uploading the surviving files.
+- Mirrors custom Description Builder templates as individual recovery JSON files and never removes discovered assets unless the user explicitly requests deletion.
 - Leaves production lot-keys.ca untouched.
 - Build: 09483.
-- Service worker cache: lotkeys-app-v09483-account-restore-safety.
+- Service worker cache: lotkeys-app-v09483-account-folder-recovery.
 
 V0.9.4.81 FRESH VIDEO DISCOVERY + MANAGEMENT UPDATE POLISH
 - Builds directly on V0.9.4.80; parallel Vehicle Profile Photos + Video uploads, three-worker photos, resumable Drive sessions, MB diagnostics, V0.9.4.79 editor recovery, and all prior Store/Processor behavior remain intact.
