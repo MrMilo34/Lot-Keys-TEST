@@ -9,7 +9,8 @@
 
 ## Android setup
 
-- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.84** and install its `app-debug.apk` on an Android 11+ test phone.
+- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.85** and install its `app-debug.apk` on an Android 11+ test phone.
+- Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
 - Approve the quiet connection-status notification, then tap **Open LotKeys & Link This Phone**.

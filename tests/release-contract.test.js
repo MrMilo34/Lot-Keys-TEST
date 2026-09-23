@@ -110,6 +110,7 @@ test('Android layer keeps the existing messenger and requests only checkpoint ca
   assert.doesNotMatch(manifest, /RECEIVE_SMS|RECEIVE_MMS|RECEIVE_WAP_PUSH|WRITE_SMS|READ_CALL_LOG|WRITE_CALL_LOG|BIND_ACCESSIBILITY_SERVICE|MANAGE_EXTERNAL_STORAGE/);
   assert.match(activity, /remains your default messaging app/);
   assert.match(activity, /#lotkeys-phone=/);
+  assert.doesNotMatch(activity, /FLAG_SECURE/, 'TEST connector must allow screenshots and screen recording');
   assert.doesNotMatch(activity, /ROLE_SMS|device\.json|hub\.json/);
   assert.match(store, /Telephony\.Threads/);
   assert.match(store, /sendTextMessage|sendMultipartTextMessage/);

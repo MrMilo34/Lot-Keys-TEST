@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -34,7 +33,6 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         render();
     }
 
@@ -53,7 +51,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.4.84 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.4.85 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();

@@ -37,7 +37,7 @@ This TEST release keeps the clean **V0.9.4.83** rebuild intact and adds the firs
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the debug APK artifact as `LotKeys-Android-V0.9.4.84`.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the current screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.85`. The connected web checkpoint remains V0.9.4.84 because this Android-only hotfix does not change its messaging logic or stored data.
 
 The Android setup uses four short screens:
 
@@ -50,7 +50,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.4.84 Android TEST APK.
+1. Install and open the V0.9.4.85 Android TEST APK.
 2. Complete its permission screens and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
