@@ -1,3 +1,18 @@
+V0.9.4.84 ANDROID PHONE-SOURCE CHECKPOINT
+- Builds directly on the clean V0.9.4.83 Hub foundation; Inventory, Listings, Account recovery, internal LotKeys Chat and private Hub records retain their existing boundaries.
+- Adds a small Android permission/capability layer while keeping the LotKeys website/PWA as the phone and computer interface and leaving the user's chosen messaging app as default.
+- Reads the current Android SMS/MMS conversation index and paged history, with optional existing Android Contact names and no message-database write/delete permission.
+- Pairs one active computer with four matching digits and phone approval; no Bluetooth, screen casting, manual JSON, Python relay or HTTPS tunnel is used.
+- Uses ephemeral ECDH P-256 / AES-GCM session keys and short-lived encrypted Google Drive app-data frames; normal phone history is not retained as a customer Drive record or independent PC archive.
+- Sends explicit plain-text SMS instructions through the phone and renders Sending, Sent and Failed without automatic retry.
+- Adds honest green/amber/red coverage state; this checkpoint is amber because SMS/MMS is live while RCS safety coverage is deferred.
+- Adds phone-number sorting records so unknown numbers can use multiple categories without forcing a full LotKeys customer folder.
+- Includes Ask Every Time, 36 Hours, 7 Days and Until I Disconnect trust choices with one active PC plus phone.
+- Adds Android Gradle source and a GitHub Actions APK/lint workflow for the private TEST artifact.
+- Keeps production lot-keys.ca untouched.
+- Build: 09484.
+- Service worker cache: lotkeys-app-v09484-phone-source-checkpoint.
+
 V0.9.4.83 CLEAN HUB FOUNDATION REBUILD
 - Rebuilds directly on the supplied V0.9.4.81 gold-standard LotKeys application.
 - Retains the V0.9.4.82 Hub integration boundary for the existing internal LotKeys Chat.

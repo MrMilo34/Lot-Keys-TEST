@@ -54,6 +54,15 @@ test('parent Device filter includes contacts filed only in its subcategory', () 
   }).length, 1);
 });
 
+test('Unsorted includes only Device conversations without category paths', () => {
+  const rows = [
+    { id: 'unknown', source: 'device', title: 'Unknown', organization: { categoryIds: [] } },
+    { id: 'filed', source: 'device', title: 'Filed', organization: { categoryIds: ['customers'] } },
+    { id: 'chat', source: 'lotkeys', title: 'Internal' }
+  ];
+  assert.deepEqual(Hub.filtered(rows, { filter: 'unsorted', categoryRows: categories }).map(row => row.id), ['unknown']);
+});
+
 test('phone matching and contact validation retain the V0.9.4.82 contract', () => {
   const contact = {
     name: 'Jordan Example',
@@ -72,4 +81,3 @@ test('appointment overlap excludes cancelled appointments', () => {
   ];
   assert.deepEqual(Hub.overlap(rows, candidate).map(row => row.id), ['b']);
 });
-

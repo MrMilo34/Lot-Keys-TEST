@@ -8,15 +8,15 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.83', () => {
+test('release metadata is consistently V0.9.4.84', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.83');
-  assert.equal(version.build, '09483');
+  assert.equal(version.version, '0.9.4.84');
+  assert.equal(version.build, '09484');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09483-account-folder-recovery');
-  assert.match(read('index.html'), /V0\.9\.4\.83/);
-  assert.match(read('manifest.webmanifest'), /build=09483/);
-  assert.match(read('sw.js'), /lotkeys-app-v09483-account-folder-recovery/);
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-phone-source-checkpoint');
+  assert.match(read('index.html'), /V0\.9\.4\.84/);
+  assert.match(read('manifest.webmanifest'), /build=09484/);
+  assert.match(read('sw.js'), /lotkeys-app-v09484-phone-source-checkpoint/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -76,16 +76,49 @@ test('personal Account folders can rebuild recoverable assets without Account.js
   assert.match(html, /syncStoreCelebrationSound\(null,\{allowDelete:!fileId\}\)/);
 });
 
-test('phone bridge, pairing and Android artifacts are absent', () => {
+test('phone checkpoint uses the new Android layer and encrypted same-account transport', () => {
   for (const target of [
-    'lotkeys-device-client.js',
-    'lotkeys-device-pairing.js',
-    'device-bridge',
-    '.github/workflows/build-phone-mirror.yml'
-  ]) assert.equal(fs.existsSync(path.join(root, target)), false, target);
-  assert.doesNotMatch(read('index.html'), /lotkeys-device-client|LotKeysDevice/);
-  assert.doesNotMatch(read('sw.js'), /lotkeys-device-client/);
-  assert.doesNotMatch(read('lotkeys-hub.js'), /LotKeysDevice|bridgeDialog|pairing code|D\.send/);
+    'lotkeys-phone-core.js',
+    'lotkeys-phone.js',
+    'android/app/src/main/AndroidManifest.xml',
+    'android/app/src/main/java/ca/lotkeys/connector/MainActivity.java',
+    'android/app/src/main/java/ca/lotkeys/connector/PhoneStore.java',
+    '.github/workflows/build-lotkeys-android.yml'
+  ]) assert.equal(fs.existsSync(path.join(root, target)), true, target);
+  const phone = read('lotkeys-phone.js');
+  assert.match(phone, /appDataFolder/);
+  assert.match(phone, /name: 'ECDH'/);
+  assert.match(phone, /name: 'AES-GCM'/);
+  assert.match(phone, /lotkeysPairOffer/);
+  assert.match(phone, /String\(1000 .* % 9000\)/);
+  assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
+  assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09484/);
+  assert.match(read('sw.js'), /lotkeys-phone\.js/);
+});
+
+test('Android layer keeps the existing messenger and requests only checkpoint capabilities', () => {
+  const manifest = read('android/app/src/main/AndroidManifest.xml');
+  const activity = read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java');
+  const store = read('android/app/src/main/java/ca/lotkeys/connector/PhoneStore.java');
+  const server = read('android/app/src/main/java/ca/lotkeys/connector/LocalApiServer.java');
+  const boot = read('android/app/src/main/java/ca/lotkeys/connector/BootReceiver.java');
+  assert.match(manifest, /android\.permission\.READ_SMS/);
+  assert.match(manifest, /android\.permission\.SEND_SMS/);
+  assert.match(manifest, /android\.permission\.READ_CONTACTS/);
+  assert.match(manifest, /foregroundServiceType="remoteMessaging"/);
+  assert.doesNotMatch(manifest, /RECEIVE_SMS|RECEIVE_MMS|RECEIVE_WAP_PUSH|WRITE_SMS|READ_CALL_LOG|WRITE_CALL_LOG|BIND_ACCESSIBILITY_SERVICE|MANAGE_EXTERNAL_STORAGE/);
+  assert.match(activity, /remains your default messaging app/);
+  assert.match(activity, /#lotkeys-phone=/);
+  assert.doesNotMatch(activity, /ROLE_SMS|device\.json|hub\.json/);
+  assert.match(store, /Telephony\.Threads/);
+  assert.match(store, /sendTextMessage|sendMultipartTextMessage/);
+  assert.match(store, /The phone recipient changed/);
+  assert.match(server, /127\.0\.0\.1/);
+  assert.match(server, /Bearer /);
+  assert.match(server, /allowedOrigin/);
+  assert.match(boot, /ACTION_BOOT_COMPLETED\.equals\(action\)/);
+  assert.match(manifest, /dataExtractionRules="@xml\/data_extraction_rules"/);
 });
 
 test('internal LotKeys chat remains wired into Hub', () => {
@@ -95,15 +128,20 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09483/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09483/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09484/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09484/);
 });
 
-test('Device is an organization surface, not a connection claim', () => {
+test('Device is driven by real phone availability and never simulates connectivity', () => {
   const hub = read('lotkeys-hub.js');
-  assert.match(hub, /Phone connection intentionally not included in V0\.9\.4\.83/);
+  assert.match(hub, /P\.refreshThreads/);
+  assert.match(hub, /openDeviceConversation/);
+  assert.match(hub, /Approve & Connect/);
+  assert.match(hub, /Sending/);
+  assert.match(hub, /Sent/);
+  assert.match(hub, /Failed/);
   assert.match(hub, /data-category-all/);
   assert.match(hub, /selectedCategories/);
   assert.match(hub, /Subcategory/);
-  assert.doesNotMatch(hub, /id="hub-connect"/);
+  assert.doesNotMatch(hub, /simulated|fake conversation/i);
 });

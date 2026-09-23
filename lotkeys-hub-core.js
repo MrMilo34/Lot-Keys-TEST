@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.83 — pure models for contacts, organization and appointments. */
+/* LotKeys Hub V0.9.4.84 — pure models for contacts, organization and appointments. */
 (function (root) {
   'use strict';
 
@@ -159,7 +159,7 @@
   }
 
   function conversationMatch(row, query) {
-    return matches(row.contact || {
+    return matches(row.savedContact || row.contact || {
       name: row.title,
       fields: [
         { kind: 'phone', value: row.phone || row.address || '' },
@@ -180,12 +180,13 @@
       if (scope !== 'all' && row.source !== scope) return false;
       if (wanted.length) {
         if (row.source !== 'device') return false;
-        const assigned = categoryClosure(row.contact, categoryRows);
+        const assigned = categoryClosure(row.organization || row.contact, categoryRows);
         if (!wanted.some(id => assigned.includes(id))) return false;
       }
       if (filter === 'unread' && !(row.unread > 0)) return false;
       if (filter === 'groups' && row.group !== true) return false;
-      if (filter === 'contacts' && !(row.favorite || row.contact)) return false;
+      if (filter === 'contacts' && !(row.favorite || row.savedContact || (row.source !== 'device' && row.contact))) return false;
+      if (filter === 'unsorted' && (row.source !== 'device' || categoryIds(row.organization || row.contact).length)) return false;
       return conversationMatch(row, query);
     }).sort((a, b) => (b.at || 0) - (a.at || 0) || text(a.title).localeCompare(text(b.title)));
   }

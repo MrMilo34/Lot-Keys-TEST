@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09483-account-folder-recovery';
+const CACHE='lotkeys-app-v09484-phone-source-checkpoint';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -14,6 +14,8 @@ const CORE=[
   './lotkeys-messaging.js',
   './lotkeys-hub-core.js',
   './lotkeys-hub-store.js',
+  './lotkeys-phone-core.js',
+  './lotkeys-phone.js',
   './lotkeys-hub.js',
   './lotkeys-hub.css',
   './lotkeys-awards.js',
