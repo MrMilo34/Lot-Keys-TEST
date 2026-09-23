@@ -8,6 +8,8 @@ Device chat hotfix 2 keeps an open phone conversation isolated from LotKeys Chat
 
 Local-first hotfix 3 paints the cached LotKeys application before remote Account, Store, Chat and Phone work begins. Hub phone coverage now uses one compact green/amber/red signal control in the upper-right header; tapping it opens the full connection, pairing and Hub-sync controls, and the header scrolls away with the conversation list.
 
+Adaptive-monitor hotfix 4 prevents Phone and internal Chat Drive polling from competing at full speed with Inventory/Listings refreshes or Vehicle Profile/Listing uploads. Normal checks use 3 seconds for Phone and 1.5 seconds for Chat; heavy work temporarily uses 30 seconds and 10 seconds, then performs an immediate catch-up. Active calls and requested phone operations retain their faster safety path.
+
 ## Release contract
 
 - Phone is the only SMS/MMS source of truth.
@@ -47,7 +49,7 @@ Keep LotKeys open on the phone during this checkpoint's paired-computer test. Th
 
 - Version: `0.9.4.84`
 - Build: `09484`
-- Cache: `lotkeys-app-v09484-local-first-hotfix3`
+- Cache: `lotkeys-app-v09484-adaptive-monitor-hotfix4`
 - Website: `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09484`
 - Android application ID: `ca.lotkeys.connector.test`
 - Android artifact: `LotKeys-Android-V0.9.4.84`

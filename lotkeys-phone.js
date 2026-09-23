@@ -14,6 +14,12 @@
   const TRUST_KEY = 'lotkeys-phone-trusted-pcs-v1';
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
+  const PHONE_POLL_IDLE_MS = 3000;
+  const PHONE_POLL_HEAVY_MS = 30000;
+  const FRAME_POLL_ACTIVE_MS = 1100;
+  const FRAME_POLL_HEAVY_MS = 10000;
+  const HEARTBEAT_IDLE_MS = 6500;
+  const HEARTBEAT_HEAVY_MS = 30000;
   const listeners = new Set();
   const pendingRpc = new Map();
   const pendingOffers = new Map();
@@ -39,10 +45,22 @@
   let frameBusy = false;
   let offerBusy = false;
   let heartbeatBusy = false;
+  let monitoringWasHeavy = false;
+  let monitoringGraceUntil = 0;
 
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   const text = value => String(value ?? '').trim();
   const now = () => Date.now();
+  const monitoringState = () => {
+    try { return Core.monitoringState?.() || { heavy: false, phonePollMs: PHONE_POLL_IDLE_MS }; }
+    catch { return { heavy: false, phonePollMs: PHONE_POLL_IDLE_MS }; }
+  };
+  const phonePollDelay = () => {
+    const state = monitoringState();
+    return state.heavy ? (Number(state.phonePollMs) || PHONE_POLL_HEAVY_MS) : (Number(state.phonePollMs) || PHONE_POLL_IDLE_MS);
+  };
+  const framePollDelay = () => pendingRpc.size ? FRAME_POLL_ACTIVE_MS : (monitoringState().heavy ? FRAME_POLL_HEAVY_MS : PHONE_POLL_IDLE_MS);
+  const heartbeatDelay = () => monitoringState().heavy ? HEARTBEAT_HEAVY_MS : HEARTBEAT_IDLE_MS;
   const event = (type, detail = {}) => {
     const snapshot = status();
     for (const listener of listeners) {
@@ -415,6 +433,53 @@
     }
   }
 
+  function scheduleNativeTick(delay = phonePollDelay()) {
+    clearTimeout(nativeTimer);
+    nativeTimer = setTimeout(async () => {
+      await nativeTick().catch(() => {});
+      scheduleNativeTick(phonePollDelay());
+    }, Math.max(100, Number(delay) || PHONE_POLL_IDLE_MS));
+  }
+
+  function scheduleOfferPoll(delay = phonePollDelay()) {
+    clearTimeout(offerTimer);
+    offerTimer = setTimeout(async () => {
+      await pollOffers().catch(() => {});
+      scheduleOfferPoll(phonePollDelay());
+    }, Math.max(100, Number(delay) || PHONE_POLL_IDLE_MS));
+  }
+
+  function scheduleFramePoll(delay = framePollDelay()) {
+    clearTimeout(frameTimer);
+    if (!state.session) return;
+    frameTimer = setTimeout(async () => {
+      if (!state.session) return;
+      await pollFrames().catch(sessionError);
+      if (state.session) scheduleFramePoll(framePollDelay());
+    }, Math.max(100, Number(delay) || FRAME_POLL_ACTIVE_MS));
+  }
+
+  function scheduleHeartbeat(delay = heartbeatDelay()) {
+    clearTimeout(heartbeatTimer);
+    if (state.session?.role !== 'pc') return;
+    heartbeatTimer = setTimeout(async () => {
+      if (state.session?.role !== 'pc') return;
+      await heartbeat().catch(sessionError);
+      if (state.session?.role === 'pc') scheduleHeartbeat(heartbeatDelay());
+    }, Math.max(100, Number(delay) || HEARTBEAT_IDLE_MS));
+  }
+
+  function workloadChanged() {
+    const heavy = !!monitoringState().heavy;
+    if (monitoringWasHeavy && !heavy) monitoringGraceUntil = now() + 15000;
+    monitoringWasHeavy = heavy;
+    scheduleNativeTick(heavy ? phonePollDelay() : 100);
+    scheduleOfferPoll(heavy ? phonePollDelay() : 100);
+    if (state.session) scheduleFramePoll(heavy ? framePollDelay() : 100);
+    if (state.session?.role === 'pc') scheduleHeartbeat(heavy ? heartbeatDelay() : 100);
+    event('status');
+  }
+
   const publicOffer = offer => ({
     sessionId: offer.sessionId,
     code: offer.code,
@@ -484,13 +549,11 @@
   }
 
   function beginSession() {
-    clearInterval(frameTimer);
-    clearInterval(heartbeatTimer);
-    frameTimer = setInterval(pollFrames, 1100);
-    pollFrames().catch(sessionError);
+    clearTimeout(frameTimer);
+    clearTimeout(heartbeatTimer);
+    scheduleFramePoll(100);
     if (state.session?.role === 'pc') {
-      heartbeatTimer = setInterval(heartbeat, 6500);
-      heartbeat().catch(sessionError);
+      scheduleHeartbeat(100);
     }
   }
 
@@ -606,7 +669,7 @@
         reject(Error('The phone did not answer in time. Check that LotKeys is connected on the phone.'));
       }, timeout);
       pendingRpc.set(id, { resolve, reject, timer });
-      sendFrame('phone', { kind: 'request', id, op, payload }).catch(error => {
+      sendFrame('phone', { kind: 'request', id, op, payload }).then(() => scheduleFramePoll(100)).catch(error => {
         pendingRpc.delete(id);
         clearTimeout(timer);
         reject(error);
@@ -628,7 +691,7 @@
     if (heartbeatBusy || state.session?.role !== 'pc') return;
     heartbeatBusy = true;
     try {
-      const result = await request('status', {}, 18000);
+      const result = await request('status', {}, monitoringState().heavy ? 45000 : 18000);
       state.lastPhoneSeenAt = now();
       state.session.lastSeenAt = now();
       state.session.phoneStatus = result;
@@ -696,7 +759,8 @@
   function connected() {
     if (!state.session) return false;
     if (state.session.role === 'phone') return !!state.nativeStatus;
-    return now() - Math.max(state.session.lastSeenAt || 0, state.lastPhoneSeenAt || 0) < 22000;
+    const staleAfter = monitoringState().heavy || now() < monitoringGraceUntil ? 75000 : 22000;
+    return now() - Math.max(state.session.lastSeenAt || 0, state.lastPhoneSeenAt || 0) < staleAfter;
   }
 
   async function disconnect({ notify = true, forget = false } = {}) {
@@ -710,8 +774,8 @@
     state.threads = [];
     state.threadPage = { hasMore: false, nextOffset: 0, total: 0 };
     state.lastPhoneSeenAt = 0;
-    clearInterval(frameTimer);
-    clearInterval(heartbeatTimer);
+    clearTimeout(frameTimer);
+    clearTimeout(heartbeatTimer);
     for (const [id, pending] of pendingRpc) {
       clearTimeout(pending.timer);
       pending.reject(Error('Phone disconnected. Nothing was sent.'));
@@ -759,10 +823,10 @@
     parseNativeToken();
     await Drive.restoreSessionAuthorization?.().catch(() => false);
     await nativeTick();
-    clearInterval(nativeTimer);
-    clearInterval(offerTimer);
-    nativeTimer = setInterval(nativeTick, 1800);
-    offerTimer = setInterval(() => pollOffers().catch(() => {}), 2600);
+    monitoringWasHeavy = !!monitoringState().heavy;
+    scheduleNativeTick(phonePollDelay());
+    scheduleOfferPoll(phonePollDelay());
+    window.addEventListener('lotkeys-workload-change', workloadChanged);
     if (state.nativeStatus) {
       pollOffers().catch(() => {});
       refreshThreads().catch(() => {});

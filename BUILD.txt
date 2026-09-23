@@ -1,4 +1,5 @@
 V0.9.4.84 ANDROID PHONE-SOURCE CHECKPOINT
+- Adaptive-monitor hotfix 4 gives Inventory/Listings refreshes and Vehicle Profile/Listing uploads temporary network priority: Phone checks move from 3 seconds to 30 seconds and internal Chat from 1.5 seconds to 10 seconds, followed by an immediate catch-up when heavy work ends. Active calls and requested phone operations keep a faster safety path.
 - Local-first hotfix 3 renders cached LotKeys before remote Account/Store/Chat/Phone startup, then starts the connection layers in the background. Hub phone coverage is now a compact upper-right signal control whose popup retains status, pairing and Hub sync actions.
 - Device chat hotfix 2 prevents LotKeys Chat background refresh from replacing an open phone conversation and keeps unsent per-conversation drafts locally for up to 30 days.
 - Connection hotfix 1 requests browser loopback access from the Reconnect phone tap, improves blocked-connector guidance, and uses a small clickable signal indicator instead of the oversized status dot.
@@ -14,7 +15,7 @@ V0.9.4.84 ANDROID PHONE-SOURCE CHECKPOINT
 - Adds Android Gradle source and a GitHub Actions APK/lint workflow for the private TEST artifact.
 - Keeps production lot-keys.ca untouched.
 - Build: 09484.
-- Service worker cache: lotkeys-app-v09484-local-first-hotfix3.
+- Service worker cache: lotkeys-app-v09484-adaptive-monitor-hotfix4.
 
 V0.9.4.83 CLEAN HUB FOUNDATION REBUILD
 - Rebuilds directly on the supplied V0.9.4.81 gold-standard LotKeys application.

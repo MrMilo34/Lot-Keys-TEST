@@ -13,10 +13,10 @@ test('release metadata is consistently V0.9.4.84', () => {
   assert.equal(version.version, '0.9.4.84');
   assert.equal(version.build, '09484');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-local-first-hotfix3');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-adaptive-monitor-hotfix4');
   assert.match(read('index.html'), /V0\.9\.4\.84/);
   assert.match(read('manifest.webmanifest'), /build=09484/);
-  assert.match(read('sw.js'), /lotkeys-app-v09484-local-first-hotfix3/);
+  assert.match(read('sw.js'), /lotkeys-app-v09484-adaptive-monitor-hotfix4/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -93,7 +93,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09484/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09484h4/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -132,8 +132,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09484/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09484/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09484h4/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09484h4/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -149,6 +149,32 @@ test('cached LotKeys renders before Chat and Phone background startup', () => {
   assert.match(messaging, /lotkeys-base-ready/);
   assert.match(phone, /lotkeys-base-ready/);
   assert.match(hub, /lotkeys-base-ready/);
+});
+
+test('adaptive monitoring gives refreshes and uploads temporary network priority', () => {
+  const html = read('index.html');
+  const messaging = read('lotkeys-messaging.js');
+  const phone = read('lotkeys-phone.js');
+  const activity = read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java');
+  assert.match(html, /MONITOR_MESSAGE_IDLE_MS=1500,MONITOR_MESSAGE_HEAVY_MS=10000/);
+  assert.match(html, /MONITOR_PHONE_IDLE_MS=3000,MONITOR_PHONE_HEAVY_MS=30000/);
+  for (const reason of ['inventory-refresh', 'listings-refresh', 'vehicle-profile-upload', 'vehicle-listing-upload']) {
+    assert.match(html, new RegExp(reason));
+  }
+  assert.match(html, /lotkeys-workload-change/);
+  assert.match(html, /monitoringState,/);
+  assert.match(messaging, /const POLL_NORMAL=1500/);
+  assert.match(messaging, /const POLL_HEAVY=10000/);
+  assert.match(messaging, /nextPollDelay/);
+  assert.match(messaging, /resumeMessageMonitoring/);
+  assert.match(phone, /PHONE_POLL_IDLE_MS = 3000/);
+  assert.match(phone, /PHONE_POLL_HEAVY_MS = 30000/);
+  assert.match(phone, /FRAME_POLL_HEAVY_MS = 10000/);
+  assert.match(phone, /scheduleNativeTick/);
+  assert.match(phone, /scheduleOfferPoll/);
+  assert.doesNotMatch(phone, /nativeTimer\s*=\s*setInterval/);
+  assert.doesNotMatch(phone, /offerTimer\s*=\s*setInterval/);
+  assert.match(activity, /This is not a second customer-message alert and it does not replace your normal messaging notifications/);
 });
 
 test('Hub connection status is compact, actionable and scrolls with Hub home', () => {
