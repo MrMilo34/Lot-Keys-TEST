@@ -5,7 +5,7 @@
   "release": "android-phone-source-checkpoint",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09484-phone-source-checkpoint",
+  "serviceWorkerCache": "lotkeys-app-v09484-phone-link-hotfix1",
   "publishedAt": "2026-09-23",
   "basedOn": "LotKeys V0.9.4.83 clean rebuild"
 }

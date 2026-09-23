@@ -90,32 +90,55 @@
     }
   }
 
+  async function loopbackPermissionState() {
+    if (!navigator.permissions?.query) return '';
+    for (const name of ['loopback-network', 'local-network-access']) {
+      try { return (await navigator.permissions.query({ name })).state || ''; }
+      catch {}
+    }
+    return '';
+  }
+
   async function nativeCall(path, options = {}) {
     if (!state.nativeToken) throw Error('Open LotKeys from the Android setup once to link this phone browser.');
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), options.timeout || 7000);
+    const { timeout: timeoutMs = 7000, diagnose = false, ...requestOptions } = options;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const headers = new Headers(options.headers || {});
+      const headers = new Headers(requestOptions.headers || {});
       headers.set('Authorization', 'Bearer ' + state.nativeToken);
-      if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-      const response = await fetch(NATIVE_ORIGIN + path, { ...options, headers, signal: controller.signal, cache: 'no-store' });
+      if (requestOptions.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+      const response = await fetch(NATIVE_ORIGIN + path, {
+        ...requestOptions,
+        headers,
+        signal: controller.signal,
+        cache: 'no-store',
+        targetAddressSpace: 'loopback'
+      });
       let data = {};
       try { data = await response.json(); } catch {}
       if (!response.ok) throw Error(data.error || 'The Android phone layer returned ' + response.status + '.');
       return data;
     } catch (error) {
       if (error?.name === 'AbortError') throw Error('The Android phone layer did not answer. Reopen LotKeys Connector TEST.');
+      if (error instanceof TypeError || /failed to fetch/i.test(error?.message || '')) {
+        const permission = diagnose ? await loopbackPermissionState() : '';
+        if (permission === 'denied') {
+          throw Error('Chrome blocked the phone connector. Open this site\'s permissions, allow Loopback network access, then tap Reconnect phone.');
+        }
+        throw Error('The browser could not reach the phone connector. Keep LotKeys Connector TEST running, tap Reconnect phone, and allow Loopback network access if asked.');
+      }
       throw error;
     } finally {
       clearTimeout(timeout);
     }
   }
 
-  async function nativeTick() {
+  async function nativeTick({ throwOnError = false, userInitiated = false } = {}) {
     if (!state.nativeToken) return;
     try {
       const previous = state.nativeRevision;
-      const native = await nativeCall('/v1/status', { timeout: 2500 });
+      const native = await nativeCall('/v1/status', { timeout: 2500, diagnose: userInitiated });
       state.nativeStatus = native;
       state.nativeError = '';
       state.nativeRevision = Number(native.revision) || 0;
@@ -128,11 +151,22 @@
       }
       event('status');
     } catch (error) {
-      if (state.nativeStatus) event('status');
+      const changed = !!state.nativeStatus || state.nativeError !== error.message;
       state.nativeStatus = null;
       state.nativeError = error.message;
-      if (!state.session) state.role = 'pc';
+      if (!state.session) state.role = 'phone';
+      if (changed) event('status');
+      if (throwOnError) throw error;
     }
+  }
+
+  async function connectNative() {
+    if (!state.nativeToken) throw Error('Open LotKeys from the Android setup once to link this phone browser.');
+    state.role = 'phone';
+    await nativeTick({ throwOnError: true, userInitiated: true });
+    pollOffers().catch(() => {});
+    await refreshThreads(0);
+    return status();
   }
 
   async function driveFetch(url, options = {}) {
@@ -253,7 +287,10 @@
   }
 
   async function startPairing({ trustMode = '36h' } = {}) {
-    if (state.nativeStatus) throw Error('This is the phone. Start Connect Phone from the computer instead.');
+    if (state.nativeToken) {
+      if (!state.nativeStatus) throw Error(state.nativeError || 'Reconnect this phone before pairing a computer.');
+      throw Error('This is the phone. Start Connect Phone from the computer instead.');
+    }
     if (state.pairing) return { code: state.pairing.code, sessionId: state.pairing.sessionId, expiresAt: state.pairing.expiresAt };
     if (!Drive.connected?.()) await Drive.authorize(false);
     await cleanupStale();
@@ -694,7 +731,8 @@
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
       version: '0.9.4.84',
-      role: state.nativeStatus ? 'phone' : 'pc',
+      role: state.nativeToken ? 'phone' : 'pc',
+      nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
       nativeError: state.nativeError,
       connected: connected(),
@@ -738,6 +776,7 @@
     init,
     status,
     subscribe,
+    connectNative,
     startPairing,
     cancelPairing,
     pendingPairings,
@@ -751,7 +790,7 @@
     disconnect,
     trusts,
     forgetDevice,
-    clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; event('status'); }
+    clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; state.role = 'pc'; event('status'); }
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });

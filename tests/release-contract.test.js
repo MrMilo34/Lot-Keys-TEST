@@ -13,10 +13,10 @@ test('release metadata is consistently V0.9.4.84', () => {
   assert.equal(version.version, '0.9.4.84');
   assert.equal(version.build, '09484');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-phone-source-checkpoint');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-phone-link-hotfix1');
   assert.match(read('index.html'), /V0\.9\.4\.84/);
   assert.match(read('manifest.webmanifest'), /build=09484/);
-  assert.match(read('sw.js'), /lotkeys-app-v09484-phone-source-checkpoint/);
+  assert.match(read('sw.js'), /lotkeys-app-v09484-phone-link-hotfix1/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -94,6 +94,9 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
   assert.match(read('index.html'), /lotkeys-phone\.js\?v=09484/);
+  assert.match(phone, /targetAddressSpace: 'loopback'/);
+  assert.match(phone, /connectNative/);
+  assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
   assert.match(read('sw.js'), /lotkeys-phone\.js/);
 });
 

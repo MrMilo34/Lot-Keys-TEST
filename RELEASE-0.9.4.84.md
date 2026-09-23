@@ -2,6 +2,8 @@
 
 V0.9.4.84 branches from the clean V0.9.4.83 rebuild. It does not restore the abandoned Phone Mirror interface or its manual JSON/Python/tunnel workflow.
 
+Connection hotfix 1 explicitly requests Chrome's loopback-network access from the user's **Reconnect phone** tap, replaces raw `Failed to fetch` errors with useful recovery guidance, and replaces the oversized status dot with a small clickable signal indicator.
+
 ## Release contract
 
 - Phone is the only SMS/MMS source of truth.
@@ -41,7 +43,7 @@ Keep LotKeys open on the phone during this checkpoint's paired-computer test. Th
 
 - Version: `0.9.4.84`
 - Build: `09484`
-- Cache: `lotkeys-app-v09484-phone-source-checkpoint`
+- Cache: `lotkeys-app-v09484-phone-link-hotfix1`
 - Website: `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09484`
 - Android application ID: `ca.lotkeys.connector.test`
 - Android artifact: `LotKeys-Android-V0.9.4.84`

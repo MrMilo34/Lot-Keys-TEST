@@ -1,4 +1,5 @@
 V0.9.4.84 ANDROID PHONE-SOURCE CHECKPOINT
+- Connection hotfix 1 requests browser loopback access from the Reconnect phone tap, improves blocked-connector guidance, and uses a small clickable signal indicator instead of the oversized status dot.
 - Builds directly on the clean V0.9.4.83 Hub foundation; Inventory, Listings, Account recovery, internal LotKeys Chat and private Hub records retain their existing boundaries.
 - Adds a small Android permission/capability layer while keeping the LotKeys website/PWA as the phone and computer interface and leaving the user's chosen messaging app as default.
 - Reads the current Android SMS/MMS conversation index and paged history, with optional existing Android Contact names and no message-database write/delete permission.
@@ -11,7 +12,7 @@ V0.9.4.84 ANDROID PHONE-SOURCE CHECKPOINT
 - Adds Android Gradle source and a GitHub Actions APK/lint workflow for the private TEST artifact.
 - Keeps production lot-keys.ca untouched.
 - Build: 09484.
-- Service worker cache: lotkeys-app-v09484-phone-source-checkpoint.
+- Service worker cache: lotkeys-app-v09484-phone-link-hotfix1.
 
 V0.9.4.83 CLEAN HUB FOUNDATION REBUILD
 - Rebuilds directly on the supplied V0.9.4.81 gold-standard LotKeys application.
