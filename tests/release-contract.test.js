@@ -13,10 +13,10 @@ test('release metadata is consistently V0.9.4.84', () => {
   assert.equal(version.version, '0.9.4.84');
   assert.equal(version.build, '09484');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-device-chat-hotfix2');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-local-first-hotfix3');
   assert.match(read('index.html'), /V0\.9\.4\.84/);
   assert.match(read('manifest.webmanifest'), /build=09484/);
-  assert.match(read('sw.js'), /lotkeys-app-v09484-device-chat-hotfix2/);
+  assert.match(read('sw.js'), /lotkeys-app-v09484-local-first-hotfix3/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -134,6 +134,35 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function hubRows/);
   assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09484/);
   assert.match(read('index.html'), /lotkeys-hub\.js\?v=09484/);
+});
+
+test('cached LotKeys renders before Chat and Phone background startup', () => {
+  const html = read('index.html');
+  const messaging = read('lotkeys-messaging.js');
+  const phone = read('lotkeys-phone.js');
+  const hub = read('lotkeys-hub.js');
+  const firstRender = html.indexOf('await render();\n    signalBaseReady();');
+  const onlineBoot = html.indexOf("requestAnimationFrame(()=>setTimeout(()=>finishOnlineBoot().catch(console.warn),0))");
+  assert.ok(firstRender >= 0, 'base render must signal readiness');
+  assert.ok(onlineBoot > firstRender, 'remote startup must begin after the cached render');
+  assert.match(html, /window\.__lotKeysBaseReady=true/);
+  assert.match(messaging, /lotkeys-base-ready/);
+  assert.match(phone, /lotkeys-base-ready/);
+  assert.match(hub, /lotkeys-base-ready/);
+});
+
+test('Hub connection status is compact, actionable and scrolls with Hub home', () => {
+  const hub = read('lotkeys-hub.js');
+  const css = read('lotkeys-hub.css');
+  assert.match(hub, /class="hub-phone-indicator amber" id="hub-phone-status"/);
+  assert.match(hub, /async function phoneStatusDetails/);
+  assert.match(hub, /id="hub-phone-action"/);
+  assert.match(hub, /id="hub-sync"/);
+  assert.doesNotMatch(hub, /<div id="hub-status"><\/div>/);
+  assert.match(css, /\.hub-shell\.home\{overflow:auto/);
+  assert.match(css, /\.hub-phone-indicator\.green/);
+  assert.match(css, /\.hub-phone-indicator\.amber/);
+  assert.match(css, /\.hub-phone-indicator\.red/);
 });
 
 test('Device chat survives background refresh and preserves its unsent draft', () => {

@@ -793,6 +793,11 @@
     clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; state.role = 'pc'; event('status'); }
   };
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
-  else init();
+  function initAfterBase() {
+    if (window.__lotKeysBaseReady) setTimeout(() => init(), 0);
+    else window.addEventListener('lotkeys-base-ready', () => init(), { once: true });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAfterBase, { once: true });
+  else initAfterBase();
 })();

@@ -3485,6 +3485,37 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
       await refreshListingsIfDue().catch(()=>{});
     }finally{foregroundResumeBusy=false}
   }
+  let baseReadySignaled=false;
+  function signalBaseReady(){
+    if(baseReadySignaled)return;
+    baseReadySignaled=true;
+    window.__lotKeysBaseReady=true;
+    requestAnimationFrame(()=>setTimeout(()=>window.dispatchEvent(new CustomEvent('lotkeys-base-ready')),0));
+  }
+  async function finishOnlineBoot(){
+    if(!DriveSync.connected())return;
+    await DriveSync.loadPersonalProfile().catch(err=>console.warn('Personal profile restore deferred',err));
+    await applyPersonalAppearance();
+    if(DriveSync.connected()&&await DriveSync.ready()){
+      await Promise.all([
+        DriveSync.refreshStoreDirectory().catch(err=>console.warn('Store user directory restore deferred',err)),
+        DriveSync.loadStoreConfig().catch(err=>console.warn('Store branding restore deferred',err))
+      ]);
+      storeProfileThumbCache.clear();
+    }
+    await updateProtocolNote();
+    await updateProfileNavIcon();
+    if(document.visibilityState==='visible'&&!modal.open)await render();
+    if(DriveSync.connected()&&await DriveSync.ready()){
+      await resumeForegroundWork();
+      await DriveSync.syncPersonalProfile({preferRemote:true});
+      await applyPersonalAppearance();
+      await updateProfileNavIcon();
+      if(document.visibilityState==='visible'&&!modal.open)await render();
+      await window.LotKeysAwards?.reconcileCurrentAccount?.();
+      await DriveSync.syncStoreProfileThumbnail();
+    }
+  }
   async function boot(){
     await DB.open();
     restoreLiveMediaProgress();
@@ -3498,7 +3529,6 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
     await applyPersonalAppearance();
     await DriveSync.restoreSessionAuthorization();
     await migrateSavedListingFacebookFields().catch(err=>console.warn('Listing Facebook field migration deferred',err));
-    if(DriveSync.connected()){await DriveSync.loadPersonalProfile().catch(err=>console.warn('Personal profile restore deferred',err));await applyPersonalAppearance();}
     await updateProtocolNote();
     $('#quick-add').onclick=async()=>{const canCreate=await currentUserCan('createVehicleProfiles'),canList=await currentUserCan('useListings');if(!canCreate&&!canList){toast('Your account cannot create Vehicles or Listings right now.');return}showCreateChooser()};
     $('#sync-readiness').onclick=()=>showReadinessModal();
@@ -3510,8 +3540,8 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
     window.addEventListener('pagehide',()=>DriveSync.pauseActiveUploads());
     window.addEventListener('focus',()=>resumeForegroundWork().catch(console.warn));
     window.addEventListener('online',()=>resumeForegroundWork().catch(console.warn));
-    if(DriveSync.connected() && await DriveSync.ready()){await DriveSync.refreshStoreDirectory().catch(err=>console.warn('Store user directory restore deferred',err));await DriveSync.loadStoreConfig().catch(err=>console.warn('Store branding restore deferred',err));}
     await render();
+    signalBaseReady();
     startLockIdleWatch();
     const resumedDraft=await maybeResumeActiveFormDraft();
     if(!resumedDraft)maybeNotifyUnfinishedDraft().catch(console.warn);
@@ -3519,12 +3549,7 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
     if(new URLSearchParams(location.search).get('section')==='post-buddy'){await go('settings');setTimeout(()=>$('#post-buddy-download')?.scrollIntoView({behavior:'smooth',block:'center'}),120)}
     if(!resumedDraft)maybeShowFirstRunGuide().catch(console.warn);
     maybeShowMonthlyReveal().catch(console.warn);
-    if(DriveSync.connected() && await DriveSync.ready()){
-      resumeForegroundWork().then(()=>DriveSync.syncPersonalProfile({preferRemote:true}))
-        .then(async()=>{await applyPersonalAppearance();await updateProfileNavIcon();if(document.visibilityState==='visible'&&!modal.open)await render();return window.LotKeysAwards?.reconcileCurrentAccount?.()})
-        .then(()=>DriveSync.syncStoreProfileThumbnail())
-        .catch(console.warn);
-    }
+    requestAnimationFrame(()=>setTimeout(()=>finishOnlineBoot().catch(console.warn),0));
   }
 
   function userKey(u={}){return String(u.googleSub||u.email||u.userName||'').trim().toLowerCase()}

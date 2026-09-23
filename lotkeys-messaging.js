@@ -599,5 +599,6 @@ async function hubRows(){const rows=await conversations(),users=await storeUsers
 async function hubOpenPerson(address){const users=await storeUsers(),u=users.find(x=>userAddress(x)===address);if(!u||!userReady(u)){showMiniToast('This contact is not available in the current Store.');return;}const conv=await ensureDirectConversation(u);await openConversation(conv.id);}
 async function hubVisibleText(id){const c=(await conversations()).find(x=>x.id===id);const me=window.__lotKeysMessagingMyAddress;return(c?.messages||[]).slice(-20).filter(m=>m.senderAddress!==me&&!m.outgoing).map(m=>String(m.text||'')).join('\n');}
 window.LotKeysMessaging={open:openMessagesHome,openUser,openLastBubble,close:closePanel,refresh:()=>refreshMessagingInBackground({force:true}),hubMount,hubRows,hubOpenPerson,hubVisibleText,hubHydrate:hydrateAvatars,openConversation,newChat:showNewChatMenu,call:showCallPicker,preview:openBubble,share:showSharePicker,version:'0.9.4.78'};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+function initAfterBase(){if(window.__lotKeysBaseReady)setTimeout(()=>init(),0);else window.addEventListener('lotkeys-base-ready',()=>init(),{once:true});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initAfterBase,{once:true});else initAfterBase();
 })();

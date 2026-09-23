@@ -1,4 +1,5 @@
 V0.9.4.84 ANDROID PHONE-SOURCE CHECKPOINT
+- Local-first hotfix 3 renders cached LotKeys before remote Account/Store/Chat/Phone startup, then starts the connection layers in the background. Hub phone coverage is now a compact upper-right signal control whose popup retains status, pairing and Hub sync actions.
 - Device chat hotfix 2 prevents LotKeys Chat background refresh from replacing an open phone conversation and keeps unsent per-conversation drafts locally for up to 30 days.
 - Connection hotfix 1 requests browser loopback access from the Reconnect phone tap, improves blocked-connector guidance, and uses a small clickable signal indicator instead of the oversized status dot.
 - Builds directly on the clean V0.9.4.83 Hub foundation; Inventory, Listings, Account recovery, internal LotKeys Chat and private Hub records retain their existing boundaries.
@@ -13,7 +14,7 @@ V0.9.4.84 ANDROID PHONE-SOURCE CHECKPOINT
 - Adds Android Gradle source and a GitHub Actions APK/lint workflow for the private TEST artifact.
 - Keeps production lot-keys.ca untouched.
 - Build: 09484.
-- Service worker cache: lotkeys-app-v09484-device-chat-hotfix2.
+- Service worker cache: lotkeys-app-v09484-local-first-hotfix3.
 
 V0.9.4.83 CLEAN HUB FOUNDATION REBUILD
 - Rebuilds directly on the supplied V0.9.4.81 gold-standard LotKeys application.

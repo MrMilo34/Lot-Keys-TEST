@@ -6,6 +6,8 @@ Connection hotfix 1 explicitly requests Chrome's loopback-network access from th
 
 Device chat hotfix 2 keeps an open phone conversation isolated from LotKeys Chat's background refresh and preserves an unsent SMS draft locally for that signed-in account and conversation for up to 30 days. Sending clears its saved draft.
 
+Local-first hotfix 3 paints the cached LotKeys application before remote Account, Store, Chat and Phone work begins. Hub phone coverage now uses one compact green/amber/red signal control in the upper-right header; tapping it opens the full connection, pairing and Hub-sync controls, and the header scrolls away with the conversation list.
+
 ## Release contract
 
 - Phone is the only SMS/MMS source of truth.
@@ -45,7 +47,7 @@ Keep LotKeys open on the phone during this checkpoint's paired-computer test. Th
 
 - Version: `0.9.4.84`
 - Build: `09484`
-- Cache: `lotkeys-app-v09484-device-chat-hotfix2`
+- Cache: `lotkeys-app-v09484-local-first-hotfix3`
 - Website: `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09484`
 - Android application ID: `ca.lotkeys.connector.test`
 - Android artifact: `LotKeys-Android-V0.9.4.84`
