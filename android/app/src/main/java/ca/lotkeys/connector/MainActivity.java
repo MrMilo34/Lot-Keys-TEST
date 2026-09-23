@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -27,6 +28,7 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_MESSAGES = 41;
     private static final int REQUEST_CONTACTS = 42;
     private static final int REQUEST_NOTIFICATIONS = 43;
+    private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
     private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=09484";
     private LinearLayout body;
 
@@ -82,7 +84,7 @@ public final class MainActivity extends Activity {
             text("Android requires a quiet connection-status notification while the protected phone layer is available. " +
                 "This is not a second customer-message alert and it does not replace your normal messaging notifications.", 16, Color.LTGRAY, false);
             button("Allow Connection Status", () -> requestPermissions(
-                new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATIONS), true);
+                new String[]{POST_NOTIFICATIONS}, REQUEST_NOTIFICATIONS), true);
             footer();
             return;
         }
@@ -135,7 +137,7 @@ public final class MainActivity extends Activity {
     }
 
     private boolean notificationsGranted() {
-        return checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        return Build.VERSION.SDK_INT < 33 || checkSelfPermission(POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void openLotKeys() {

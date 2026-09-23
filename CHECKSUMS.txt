@@ -18,7 +18,7 @@ d14e7b07884c8fba4b2cb27bc176a78b3409966f2869f9de4cc89d00989a315c  SECURITY-RELEA
 b7cbfa2cf1a29b6fa51dec8b28dec119e419b6b7cf7eedde40b50eb7281b73f3  android/app/src/main/java/ca/lotkeys/connector/BootReceiver.java
 e6e3d2d448bdd40bcfaadf00b8ed5443edd66be95c5e9532bd31d5c7ef420bb8  android/app/src/main/java/ca/lotkeys/connector/InstallIdentity.java
 50547e7adeae3251f8906931ab95c36af49dd5e53b63c8b3730a22c353438674  android/app/src/main/java/ca/lotkeys/connector/LocalApiServer.java
-8c1f73d1490e2cd7d12a646c6d6b4ad1798dec99d39b26abfc6c0f55d43a2b49  android/app/src/main/java/ca/lotkeys/connector/MainActivity.java
+a5eab1d7bd33fbd43dac6095462c8aac7a63bff5609f7e3946f6a3436586c813  android/app/src/main/java/ca/lotkeys/connector/MainActivity.java
 346eb9604b7c4b2d2f494e0b70668babb25ff2ce594b8c989e72225fbe60678f  android/app/src/main/java/ca/lotkeys/connector/PhoneConnectorService.java
 bcc925c54587f7c5c4fb4064e130db9157495e79303e70b1dfacef858236c596  android/app/src/main/java/ca/lotkeys/connector/PhoneStore.java
 8f8438f404d7303ad8f0a08f4d65db59a25ce36b884f40d8706397302b944972  android/app/src/main/java/ca/lotkeys/connector/SmsResultReceiver.java
