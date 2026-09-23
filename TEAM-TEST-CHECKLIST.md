@@ -1,35 +1,59 @@
-# V0.9.4.82 Hub tests
+# LotKeys V0.9.4.84 team-test checklist
 
-Follow HUB-TEST-GUIDE.md with fictional customer data first. Read the Device prototype limits before attempting real messaging. Then run the prior known-good media checks below.
+## Clean V0.9.4.83 baseline
 
-# LotKeys V0.9.4.81 + Posting Buddy V0.1.23 team-test checklist
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09484` and confirm **V0.9.4.84 / 09484**.
+- Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
+- Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
+- Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
-## App baseline
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09481`.
-- Confirm version metadata reports **V0.9.4.81 / 09481**.
-- Confirm service worker cache is `lotkeys-app-v09481-fresh-video-management-updates`.
-- Confirm V0.9.4.80 Vehicle Profile Photos + Video parallel upload behavior still works and active video progress still shows MB transferred / total MB.
-- Confirm V0.9.4.79 Vehicle/Listing draft recovery still works.
+## Android setup
 
-## Management Updates
-- As Admin Level 1/2, confirm **Administration controls** appears above the top/pinned post.
-- Confirm regular users do not see Administration controls.
-- Publish an image update and confirm the image shows without the original device filename, MIME type, or file size.
-- Publish a video update and confirm no video filename/details are exposed in the post.
-- Publish a PDF/document/file and confirm its filename plus open/download row still appears.
+- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.84** and install its `app-debug.apk` on an Android 11+ test phone.
+- Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
+- Confirm the setup clearly says the phone's existing messaging app stays the default.
+- Approve the quiet connection-status notification, then tap **Open LotKeys & Link This Phone**.
+- Confirm LotKeys opens in the browser and shows **SMS/MMS live** in amber—not full/RCS coverage.
 
-## Posting Buddy V0.1.23
-- Confirm `extension/latest.json` reports **V0.1.23** and points to `LotKeys-Facebook-Assistant-Beta-v0.1.23.zip`.
-- Create or use an existing LotKeys Listing whose Vehicle Profile initially has no video.
-- Add a <=60 second video to the official Vehicle Profile **without editing/saving the LotKeys Listing again**.
-- Re-select that Listing in Posting Buddy and confirm the new official video appears.
-- Repeat with a video in the signed-in user's own existing More Media Videos; confirm it is available to that user and no other user's More Media is exposed.
-- On a new Facebook post with Video selected, confirm video preparation begins early and the video is handed to Facebook before Photos / Description / Details.
-- Confirm there is no fixed wait before video handoff after the user manually presses Post / Update on a ready Facebook editor.
-- Confirm the **Fields filled in** timer stops when Facebook has accepted the video and the next Save / Update / Next action is enabled.
-- On an existing Facebook Listing with Photos selected, confirm the old Facebook photos are cleared and the current LotKeys photo set is re-uploaded in saved order rather than appended.
-- On a mixed media picker, confirm starting Video first does not cause the selected video to disappear when Photos are added.
+## Pairing
 
-## Processor
-- Garage should still report **Store Processor V0.9.4.76** current.
-- No Apps Script reinstall is expected for V0.9.4.81.
+- Sign into the same LotKeys Google account on the phone and computer.
+- On the computer, open Hub and choose **Connect phone**.
+- Confirm a four-digit code appears on the computer and the same code plus computer name appears on the phone.
+- Approve with each trust choice at least once: Ask Every Time, 36 Hours, 7 Days, and Until I Disconnect.
+- Confirm a second computer connection replaces the first active computer session.
+- Confirm **Forget** removes a trusted computer and **Disconnect** locks Device Messages on the computer.
+- Power off or disconnect the phone and confirm the computer changes to red/unavailable rather than showing stale messages as live.
+
+## Phone conversations and sending
+
+- Confirm Device lists the phone's newest SMS/MMS conversations first and loads only 40 at a time.
+- Use **Load older conversations** and confirm additional threads append without duplicates.
+- Open a conversation and confirm older messages are above newer messages; use **Load older messages** for history.
+- Confirm Android contact names appear when Contacts access is approved and LotKeys custom names take priority.
+- Send a short SMS from the phone view and from the paired computer. Confirm it is actually sent by the phone.
+- Confirm the message state changes through **Sending**, then **Sent** or **Failed**.
+- Force a send failure and confirm LotKeys never retries automatically; only the explicit **Retry** button can try again.
+- Confirm group/unsupported threads cannot be replied to from this checkpoint.
+
+## Organization and customer records
+
+- Sort an unknown number into multiple categories/subcategories without creating a LotKeys contact.
+- Confirm parent filters include conversations assigned to their subcategories and multiple selected filters combine results.
+- Confirm **Unsorted** contains only numbers without a category path.
+- Create a LotKeys contact from an already-sorted conversation and confirm its category choices carry into the contact.
+- Rename the LotKeys contact and confirm the custom name overrides the Android contact name.
+- Delete the LotKeys contact and confirm its number returns to Unsorted while the phone conversation remains.
+- Confirm deleting/clearing a phone conversation does not delete the LotKeys customer folder, notes, or saved documents.
+
+## Known checkpoint boundaries
+
+- RCS watching/sending, MMS/file sending, complete group/dual-SIM behavior, iPhone support, and phone-conversation deletion are not included.
+- Keep LotKeys open on the phone while testing a paired computer. The Android layer stays ready, but this checkpoint does not claim browser-independent always-on internet relay.
+- Use test/non-sensitive customer data. This is a controlled TEST build, not a public Play Store release.
+
+## Automated checks
+
+- Run `node --test tests/*.test.js`.
+- Run `node --check` on `lotkeys-phone-core.js`, `lotkeys-phone.js`, `lotkeys-hub-core.js`, `lotkeys-hub-store.js`, and `lotkeys-hub.js`.
+- Confirm the GitHub workflow **Build LotKeys Android Layer** completes `assembleDebug` and `lintDebug`.

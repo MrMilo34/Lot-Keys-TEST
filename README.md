@@ -1,78 +1,69 @@
-# LotKeys 0.9.4.94 — Phone-source SMS/MMS mirror test
+# LotKeys V0.9.4.84 — Android phone-source checkpoint
 
-**Use with the separately installed Phone Mirror 0.2.0 Test APK.**
+This TEST release keeps the clean **V0.9.4.83** rebuild intact and adds the first deliberately small Android phone connection. The phone remains the message source of truth; LotKeys supplies the existing interface, organization and contact overlay.
 
-The website package is prepared for manual upload to **Lot-Keys-TEST**. It has not been deployed
-by this conversation. The Android sources were committed and compiled in GitHub Actions run
-35629447834; no physical phone/carrier or Google account was exercised.
+## First checkpoint included
 
-## Scope
+- The current LotKeys Hub is the conversation interface on both phone and computer.
+- A small Android setup layer requests SMS/MMS, SMS-send, optional Contact Names and connection-status access without becoming the default messenger.
+- The phone reads its current Android SMS/MMS conversation index and paged message history.
+- Existing Android contact names appear when optional Contacts access is granted; LotKeys custom contact names still take precedence.
+- A computer on the same authorized LotKeys Google account pairs with a short-lived matching four-digit code and phone approval.
+- Session requests and message responses are end-to-end encrypted before entering short-lived files in Google Drive's hidden application-data area. Processed and expired frames are deleted.
+- The computer can open phone history and submit a plain-text SMS through the phone.
+- Outgoing messages show Sending, Sent or Failed. A failure never retries automatically.
+- Coverage is honest: amber means SMS/MMS is live but RCS safety coverage is not enabled; red locks Device Messages when the phone is unavailable.
+- Phone numbers can be sorted without creating a full LotKeys contact folder. The same number keeps its category paths after the phone conversation is removed.
+- The four trust choices are present: Ask Every Time, 36 Hours, 7 Days and Until I Disconnect.
 
-The native companion reads Android's SMS/MMS provider and responds to authenticated, encrypted,
-short-lived browser requests. Conversations/history are paged on demand. The browser does not
-archive a transcript to the customer database or Drive. Hub contacts, categories, requirements,
-notes, documents, appointments and the internal LotKeys chat remain their existing independent layer.
-No Android contact permission is requested, and no Android contacts are created.
+## Existing V0.9.4.83 behavior retained
 
-The companion keeps a user-visible remote-messaging foreground service with provider observers,
-network callbacks, retry, and boot recovery. These paths compiled; OEM sleep/Doze/boot behavior
-still needs acceptance testing on the actual phone. An always-on production relay was NOT added.
-Keep the original authenticated relay and HTTPS tunnel running.
+- Home, Inventory, Listings, Garage, Account, Store, media uploads, Management Updates, awards and Posting Buddy V0.1.23.
+- Internal LotKeys direct/group chat and calls remain a separate Hub source.
+- Private contacts, notes, documents, questions and appointments remain in the user's private Account/Hub Drive boundary.
+- Multiple category assignments, one nested subcategory level, combined filtering and category colours remain functional.
+- Restore-first Account sync, Account Photo/Celebration Sound recovery and Description Builder template recovery remain intact.
+- The approved TEST OAuth web client, restricted Picker API key and matching Cloud project fallback remain present.
 
-## Included behavior
+## Intentional checkpoint limits
 
-- Discover existing SMS/MMS threads, 40 conversations per page; load older messages in pages.
-- Open the same authoritative phone history from separately paired PC and phone browsers.
-- Explicit **Send SMS** through the phone's chosen default SMS subscription.
-- Keep an in-flight send pending until the Android send callback; do not treat acceptance as delivery.
-- Record send request IDs/results on the phone to avoid duplicate execution; no stored message bodies.
-- Hide device transcripts/disable sending after disconnect or heartbeat expiry; retain CRM records.
-- Preserve a local unsent draft for manual retry or cancellation; never auto-resend it on reconnect.
-- Fresh browser-to-phone challenge before considering a native connection live.
-- Reconcile phone-side activity with provider refresh/invalidation, not notification previews.
+- Android first; no iPhone connection yet.
+- SMS/MMS history plus plain SMS sending only. Existing private RCS history, RCS send and the RCS Notification Safety Watcher are not included.
+- MMS attachment bodies are represented in history but are not transferred or sent in this checkpoint.
+- Group conversations are view-only and dual-SIM selection is deferred.
+- One active computer session plus the phone. Several trusted computer records can exist, but simultaneous multi-PC messaging is deferred.
+- Keep LotKeys open on the phone during this first end-to-end test. The Android capability service stays ready in the background, but a permanent always-on internet relay/token-renewal service is not claimed yet.
+- This is private test software using sensitive Android permissions. It is not a Google Play production release and has not completed an independent security review.
 
-## Excluded / not proven
+## Android build
 
-Private RCS history and RCS sending are **not implemented**. SMS is labelled explicitly rather than
-silently presented as RCS. MMS sending/media download is not implemented; MMS text and media indicators
-are read where the provider supplies them. Groups and short codes are view-only; reply to existing
-supported individual threads only. iOS is not part of this build.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the debug APK artifact as `LotKeys-Android-V0.9.4.84`.
 
-The supplied APK is the EXACT remotely compiled debug APK, with matching Android source. Later
-uncompiled hardening ideas are deliberately absent. Long-duration phone sleep, dual-SIM behavior,
-actual SMS provider differences, permissions, carrier sending, reboot and tunnel recovery still
-need physical testing. Restriction or failure must not be presented as successful mirroring.
+The Android setup uses four short screens:
 
-## Validation
+1. Confirm the existing messaging app remains the default.
+2. Allow required Messages access.
+3. Optionally allow Contact Names.
+4. Allow the quiet connection-status notification, then open LotKeys from the setup app once to link the browser.
 
-19 model/filter checks, 16 CRM/Drive-contract checks, 26 legacy encrypted-transport checks,
-17 native mirror browser checks, and 10 rendered native Hub UI checks passed: **88 total**.
-Native tests use a fictional phone/database; the legacy transport suite uses the real local Python
-relay and a simulated device. No actual SMS was sent. Android build/lint: **0 errors, 10 warnings**.
+No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen casting, Accessibility permission or default-messenger switch is used.
 
-The older broad UI suite stopped after six passes because a strict Playwright customer-dialog
-selector matched two dialogs. It did not complete and is not counted as passing. The native UI
-suite passed, but this release is not a complete regression certification.
+## TEST pairing walkthrough
 
-Both native UI screenshots were inspected at desktop and 412px mobile widths.
-The eight changed browser files passed syntax checks, including inline application scripts.
-Protected CRM storage, internal messaging, pairing storage, processor, extension and artwork are
-byte-for-byte unchanged from the .93 baseline; SHA-256 values are in TEST-REPORT.json.
+1. Install and open the V0.9.4.84 Android TEST APK.
+2. Complete its permission screens and tap **Open LotKeys & Link This Phone**.
+3. Sign into the same LotKeys Google account on phone and computer.
+4. Open Hub on both devices.
+5. On the computer, select **Connect phone**.
+6. Confirm the same four digits on the phone, choose the trust position and tap **Approve & Connect**.
+7. Open a Device conversation and send a fictional test SMS.
 
-## Deployment
+## TEST deployment
 
-Read START-HERE-LotKeys-Phone-Mirror.txt. Upload the eight files in Website-Update.zip together to
-the root of the TEST repository. The full website archive is an alternative; do not delete/recreate
-the repository or clear user browser storage. The Android APK is installed on the phone separately.
-Stop the old notification Bridge; use device.json in the companion and the same hub.json on both
-LotKeys browser instances. Retain your current PIN-protected browser pairing where present.
+GitHub Pages serves:
 
-## Official API references checked September 21, 2026
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09484`
 
-- SMS permission restrictions: https://developer.android.com/reference/android/Manifest.permission#READ_SMS
-- SMS send API/provider behavior: https://developer.android.com/reference/android/telephony/SmsManager
-- SMS/MMS provider: https://developer.android.com/reference/android/provider/Telephony
-- Remote messaging foreground service: https://developer.android.com/develop/background-work/services/fgs/service-types#remote-messaging
-- ADB install and authorized debugging: https://developer.android.com/tools/adb
+Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-The Android references describe platform capabilities, not proof that this APK works on a particular phone.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.84 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
