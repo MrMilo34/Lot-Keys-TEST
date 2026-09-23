@@ -242,7 +242,7 @@ async function refreshMessagingInBackground({force=false}={}){
   if(force||!archivesLoaded){jobs.push(loadArchives().catch(err=>console.warn('Chat history refresh deferred',err)).finally(()=>{archivesLoaded=true}))}
   if(force||!partiesLoaded){jobs.push(syncMyParties().catch(err=>console.warn('Group Chat refresh deferred',err)).finally(()=>{partiesLoaded=true}))}
   cleanupOwnOutbox().catch(err=>console.warn('Outbox cleanup deferred',err));await Promise.allSettled(jobs);
-  if(panel&&!panel.hidden&&!panel.dataset.conversationId)openMessagesHome({refresh:false});
+  if(panel&&!panel.hidden&&!panel.dataset.conversationId&&!panel.dataset.hub)openMessagesHome({refresh:false});
   updateUnreadBadges();
   return true
 }
@@ -333,7 +333,7 @@ async function pollInbox(){
     const pending=new Map();for(const file of [...liveFiles,...inboxFiles]){const props={...(file.properties||{}),...(file.appProperties||{})},verified=String(file.__verifiedFromAddress||props.verifiedFromAddress||'');if(!verified)continue;const key=`${verified}|${String(props.messageId||file.id)}`;if(processedRelayIds.has(key))continue;file.__processedKey=key;const current=pending.get(key);if(!current||file.__liveLane&&!current.__liveLane)pending.set(key,file)}
     const files=[...pending.values()].sort((a,b)=>(Date.parse(b.createdTime)||0)-(Date.parse(a.createdTime)||0)).slice(0,RELAY_LIMIT).sort((a,b)=>(Date.parse(a.createdTime)||0)-(Date.parse(b.createdTime)||0));let processedChanged=false;
     for(const file of files){try{const props={...(file.properties||{}),...(file.appProperties||{})},verified=String(file.__verifiedFromAddress||props.verifiedFromAddress||''),key=file.__processedKey;if(!verified||!key)continue;const env=JSON.parse(await fetchText(file.id));if(env.toAddress!==id.address||String(env.fromAddress||'')!==verified)continue;const payload=await decryptEnvelope(env,id.privateKeyJwk);payload.fromAddress=verified;if(payload.from&&typeof payload.from==='object')payload.from.address=verified;if(payload.message&&typeof payload.message==='object')payload.message.senderAddress=verified;await handleIncomingPayload(payload,file);rememberRelayProcessed(key);processedChanged=true;if(!file.__liveLane)deleteRelayFile(file).catch(()=>{})}catch(err){console.warn('Could not process one incoming LotKeys message',err);if(!file.__liveLane&&/decrypt|operation|key/i.test(String(err?.message||err)))deleteRelayFile(file).catch(()=>{})}}
-    if(processedChanged)await persistProcessedRelayIds();if(Date.now()-lastDirectoryRefresh>60000){lastDirectoryRefresh=Date.now();DriveSync.refreshStoreDirectory?.().then(()=>{if(panel&&!panel.hidden&&!panel.dataset.conversationId)openMessagesHome({refresh:false})}).catch(()=>{})}
+    if(processedChanged)await persistProcessedRelayIds();if(Date.now()-lastDirectoryRefresh>60000){lastDirectoryRefresh=Date.now();DriveSync.refreshStoreDirectory?.().then(()=>{if(panel&&!panel.hidden&&!panel.dataset.conversationId&&!panel.dataset.hub)openMessagesHome({refresh:false})}).catch(()=>{})}
   }catch(err){console.warn('Message check deferred',err)}finally{pollBusy=false}
 }
 function schedulePoll(delay=POLL_NORMAL){clearTimeout(pollTimer);pollTimer=setTimeout(()=>{pollInbox().finally(()=>schedulePoll(activeCall?POLL_CALL:(document.hidden?POLL_HIDDEN:POLL_NORMAL)))},delay)}

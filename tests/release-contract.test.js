@@ -13,10 +13,10 @@ test('release metadata is consistently V0.9.4.84', () => {
   assert.equal(version.version, '0.9.4.84');
   assert.equal(version.build, '09484');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-phone-link-hotfix1');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-device-chat-hotfix2');
   assert.match(read('index.html'), /V0\.9\.4\.84/);
   assert.match(read('manifest.webmanifest'), /build=09484/);
-  assert.match(read('sw.js'), /lotkeys-app-v09484-phone-link-hotfix1/);
+  assert.match(read('sw.js'), /lotkeys-app-v09484-device-chat-hotfix2/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -134,6 +134,16 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function hubRows/);
   assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09484/);
   assert.match(read('index.html'), /lotkeys-hub\.js\?v=09484/);
+});
+
+test('Device chat survives background refresh and preserves its unsent draft', () => {
+  const messaging = read('lotkeys-messaging.js');
+  const hub = read('lotkeys-hub.js');
+  assert.match(messaging, /!panel\.dataset\.conversationId&&!panel\.dataset\.hub/);
+  assert.match(hub, /DEVICE_DRAFT_PREFIX='lotkeys-device-draft-v1:'/);
+  assert.match(hub, /draft\.value=readDeviceDraft\(draftKey\)/);
+  assert.match(hub, /saveDeviceDraft\(draftKey,draft\.value\)/);
+  assert.match(hub, /input\.value='';saveDeviceDraft\(draftKey,''\)/);
 });
 
 test('Device is driven by real phone availability and never simulates connectivity', () => {

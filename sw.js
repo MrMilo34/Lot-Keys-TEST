@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09484-phone-link-hotfix1';
+const CACHE='lotkeys-app-v09484-device-chat-hotfix2';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
