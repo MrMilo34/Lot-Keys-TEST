@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -82,10 +81,8 @@ public final class MainActivity extends Activity {
             step("3 of 4 · Stay Connected");
             text("Android requires a quiet connection-status notification while the protected phone layer is available. " +
                 "This is not a second customer-message alert and it does not replace your normal messaging notifications.", 16, Color.LTGRAY, false);
-            button("Allow Connection Status", () -> {
-                if (Build.VERSION.SDK_INT >= 33) requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATIONS);
-                else render();
-            }, true);
+            button("Allow Connection Status", () -> requestPermissions(
+                new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATIONS), true);
             footer();
             return;
         }
@@ -138,7 +135,7 @@ public final class MainActivity extends Activity {
     }
 
     private boolean notificationsGranted() {
-        return Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        return checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void openLotKeys() {

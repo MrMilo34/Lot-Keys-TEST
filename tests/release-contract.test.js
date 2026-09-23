@@ -102,6 +102,7 @@ test('Android layer keeps the existing messenger and requests only checkpoint ca
   const activity = read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java');
   const store = read('android/app/src/main/java/ca/lotkeys/connector/PhoneStore.java');
   const server = read('android/app/src/main/java/ca/lotkeys/connector/LocalApiServer.java');
+  const boot = read('android/app/src/main/java/ca/lotkeys/connector/BootReceiver.java');
   assert.match(manifest, /android\.permission\.READ_SMS/);
   assert.match(manifest, /android\.permission\.SEND_SMS/);
   assert.match(manifest, /android\.permission\.READ_CONTACTS/);
@@ -116,6 +117,8 @@ test('Android layer keeps the existing messenger and requests only checkpoint ca
   assert.match(server, /127\.0\.0\.1/);
   assert.match(server, /Bearer /);
   assert.match(server, /allowedOrigin/);
+  assert.match(boot, /ACTION_BOOT_COMPLETED\.equals\(action\)/);
+  assert.match(manifest, /dataExtractionRules="@xml\/data_extraction_rules"/);
 });
 
 test('internal LotKeys chat remains wired into Hub', () => {
