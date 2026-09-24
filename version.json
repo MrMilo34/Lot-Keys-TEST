@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.87",
-  "build": "09487",
-  "release": "smart-customer-chat",
+  "version": "0.9.4.88",
+  "build": "09488",
+  "release": "chat-polish",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09487-smart-customer-chat",
+  "serviceWorkerCache": "lotkeys-app-v09488-chat-polish",
   "publishedAt": "2026-09-24",
-  "basedOn": "LotKeys V0.9.4.86 Hub customer workflow"
+  "basedOn": "LotKeys V0.9.4.87 smart customer chat"
 }

@@ -8,15 +8,15 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.87', () => {
+test('release metadata is consistently V0.9.4.88', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.87');
-  assert.equal(version.build, '09487');
+  assert.equal(version.version, '0.9.4.88');
+  assert.equal(version.build, '09488');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09487-smart-customer-chat');
-  assert.match(read('index.html'), /V0\.9\.4\.87/);
-  assert.match(read('manifest.webmanifest'), /build=09487/);
-  assert.match(read('sw.js'), /lotkeys-app-v09487-smart-customer-chat/);
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09488-chat-polish');
+  assert.match(read('index.html'), /V0\.9\.4\.88/);
+  assert.match(read('manifest.webmanifest'), /build=09488/);
+  assert.match(read('sw.js'), /lotkeys-app-v09488-chat-polish/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -93,7 +93,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09487/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09488/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -144,8 +144,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09487/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09487/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09488/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09488/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -251,6 +251,8 @@ test('current Device conversation layout omits avatar and uses the five requeste
   assert.match(current, /hub-device-mic/);
   assert.match(current, /P\.sendMedia/);
   assert.match(current, /questionsDialog/);
+  assert.doesNotMatch(current, /interestedVehicleMarkup|vehicleCard|hub-interest-card/);
+  assert.doesNotMatch(current, /hub-device-foot|Text sends directly|reviewed native handoff/);
 });
 
 test('contacts share Interested Vehicle, buying details, appointment chips and reminders', () => {
@@ -270,6 +272,13 @@ test('contacts share Interested Vehicle, buying details, appointment chips and r
     assert.match(core, new RegExp(field));
   }
   assert.match(core, /DTSTART;VALUE=DATE/);
+  const start = hub.lastIndexOf('async function showContact');
+  const current = hub.slice(start, hub.indexOf('async function ensureDeviceContact', start));
+  assert.match(current, /modal\(contact\.name,`\$\{vehicleCard\}<div class="hub-status hub-contact-summary"/);
+  assert.match(hub, /id="hub-note-value-field"/);
+  assert.match(hub, /valueField\.hidden=choiceOnly/);
+  assert.match(hub, /choiceOnly=selectedKey==='purchaseMethod'/);
+  assert.match(hub, /aria-label="Cash or financing"/);
 });
 
 test('appointment form follows the agreed order and display rules', () => {
@@ -305,7 +314,12 @@ test('smart-note choices stay local, recent and explicitly approved', () => {
 test('both chat composers expose tap and hold media/voice controls', () => {
   const hub = read('lotkeys-hub.js');
   const messaging = read('lotkeys-messaging.js');
-  assert.match(hub, /setTimeout\(\(\)=>\{active=true;suppress=true;menu=gestureMenu\(button,items,onChoose\).*\},500\)/);
+  assert.match(hub, /holdTimer=setTimeout\(\(\)=>\{if\(!start\)return;active=true;menu=gestureMenu\(button,items,onChoose\).*\},500\)/);
+  assert.match(hub, /activeGestureTimer=setTimeout\(.*5000\)/);
+  assert.match(hub, /button\.setPointerCapture\?\.\(pointerId\)/);
+  assert.match(hub, /event\.preventDefault\(\);event\.stopPropagation\(\)/);
+  assert.match(hub, /candidate\.score>\.45/);
+  assert.match(hub, /hub-gesture-anchor/);
   for (const item of ['Camera', 'Images', 'Documents', 'Voice memo', 'Talk to text']) assert.match(hub, new RegExp(item));
   assert.match(hub, /navigator\.vibrate/);
   assert.match(hub, /SpeechRecognition|webkitSpeechRecognition/);
@@ -314,6 +328,14 @@ test('both chat composers expose tap and hold media/voice controls', () => {
   assert.match(messaging, /async function sendFile/);
   assert.match(messaging, /data-lkmsg-save-media/);
   assert.match(messaging, /async function mediaFile/);
+});
+
+test('Lock Screen and Device composer omit the reported clutter', () => {
+  const html = read('index.html');
+  const css = read('lotkeys-hub.css');
+  assert.match(html, /<p>Enter your Lock Screen Password<\/p>/);
+  assert.doesNotMatch(html, /Enter your Lock Screen password or 4-digit PIN/);
+  assert.doesNotMatch(css, /\.hub-device-foot/);
 });
 
 test('Add to Hub contains exactly the five primary actions', () => {

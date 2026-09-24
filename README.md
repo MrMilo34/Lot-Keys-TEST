@@ -1,17 +1,18 @@
-# LotKeys V0.9.4.87 — Smart customer chat update
+# LotKeys V0.9.4.88 — Chat polish update
 
-This TEST release builds on the V0.9.4.86 Hub workflow with one reusable customer card, structured buying details, the revised appointment form, smart-note suggestions, and matching Device/LotKeys chat composers. The phone remains the Device-message source of truth.
+This TEST release polishes the V0.9.4.87 customer workflow after phone testing. It keeps the full customer card in Contact and Calendar, gives the conversation more room, repairs the composer gestures, and removes unnecessary instructions. The phone remains the Device-message source of truth.
 
-## V0.9.4.87 included
+## V0.9.4.88 included
 
-- Customer cards reuse the primary Interested Vehicle, stock, odometer, price, Cash/Financing goals, trade details and next appointment across Hub, Contact and Calendar.
-- Add Note has searchable structured fields for purchase method, total budget, bi-weekly goal, down payment, trade/no trade, expected trade value and Interested Vehicle.
+- The primary Interested Vehicle and buying summary stay at the top of Contact and on customer/Calendar cards, but no longer consume space inside an open Device conversation.
+- Add Note has searchable structured fields for purchase method, total budget, bi-weekly goal, down payment, trade/no trade, expected trade value and Interested Vehicle. Cash / Financing is now a two-button choice with no text box.
 - Recent incoming messages can show a temporary ⤴️ suggestion for a narrow contact field. Only the newest five messages qualify; a user must choose every value before it is retained.
 - Appointment entry follows the nine-field workflow, accepts a free typed customer name, uses Tentative/Booked/Confirmed/Double Confirm states, and displays MM/DD/YYYY plus 12-hour times.
-- Device and LotKeys Chat use the same ＋ Camera/Images/Documents and 🎙️ Voice memo/Talk to text composer. Tap opens choices; a 0.5-second hold enables directional shortcuts.
+- Device and LotKeys Chat use the same ＋ Camera/Images/Documents and 🎙️ Voice memo/Talk to text composer. Tap opens choices for five seconds; a 0.5-second hold captures the gesture and enables directional shortcuts without browser scrolling or text selection.
 - Sent and received Chat media exposes a deliberate 💾 action to save a separate copy in the private Contact folder. A source key prevents accidental duplicate saves.
 - The conversation action row is Notes, Questions, Call, Booking and Organize. Add to Hub is reduced to Start Chat/Group, Create Contact, Add Note, Upload and Reminder.
-- The V0.9.4.87 Android connector reads MMS attachment metadata/content and prepares Device media in the phone's default messaging app for final review and Send.
+- The Device composer no longer shows the implementation explanation beneath the message box, and the Lock Screen now asks simply for the user's Lock Screen Password.
+- The matching V0.9.4.88 Android connector retains MMS attachment reading and the reviewed default-messaging-app handoff.
 - V0.9.4.86 grouping, reminders, PC-only LotKeys alert sounds, corrected logo crop and responsive floating controls remain in place.
 
 ## First checkpoint included
@@ -49,7 +50,7 @@ This TEST release builds on the V0.9.4.86 Hub workflow with one reusable custome
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.87`. This web release requires that matching connector for MMS attachment saving and the reviewed media handoff.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.88`. This web release requires that matching connector for MMS attachment saving and the reviewed media handoff.
 
 The Android setup uses four short screens:
 
@@ -62,7 +63,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.4.87 Android TEST APK.
+1. Install and open the V0.9.4.88 Android TEST APK.
 2. Complete its permission screens and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -74,8 +75,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09487`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09488`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.87 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.88 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

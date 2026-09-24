@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.4.87 — Android loopback bridge plus same-account encrypted session transport. */
+/* LotKeys Phone V0.9.4.88 — Android loopback bridge plus same-account encrypted session transport. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -844,7 +844,7 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.4.87',
+      version: '0.9.4.88',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -887,7 +887,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.4.87',
+    version: '0.9.4.88',
     init,
     status,
     subscribe,
