@@ -8,16 +8,16 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.89', () => {
+test('release metadata is consistently V0.9.4.90', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.89');
-  assert.equal(version.build, '09489');
+  assert.equal(version.version, '0.9.4.90');
+  assert.equal(version.build, '09490');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'device-header-card');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09489-device-header-card');
-  assert.match(read('index.html'), /V0\.9\.4\.89/);
-  assert.match(read('manifest.webmanifest'), /build=09489/);
-  assert.match(read('sw.js'), /lotkeys-app-v09489-device-header-card/);
+  assert.equal(version.release, 'compact-schedule-cards');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09490-compact-schedule-cards');
+  assert.match(read('index.html'), /V0\.9\.4\.90/);
+  assert.match(read('manifest.webmanifest'), /build=09490/);
+  assert.match(read('sw.js'), /lotkeys-app-v09490-compact-schedule-cards/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -94,7 +94,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09489/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09490/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -145,8 +145,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09489/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09489/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09490/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09490/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -296,7 +296,7 @@ test('appointment form follows the agreed order and display rules', () => {
   const hub = read('lotkeys-hub.js');
   const start = hub.lastIndexOf('async function editAppointment');
   const current = hub.slice(start, hub.indexOf('const structuredNoteKeys', start));
-  const ids = ['hub-appt-contact', 'hub-appt-vehicle', 'hub-appt-status', 'hub-appt-date', 'hub-appt-time', 'hub-appt-duration', 'hub-appt-kind', 'hub-appt-notes', 'hub-appt-location'];
+  const ids = ['hub-appt-contact', 'hub-appt-vehicle', 'hub-appt-status', 'hub-appt-date', 'hub-appt-time', 'hub-appt-end-time', 'hub-appt-kind', 'hub-appt-notes', 'hub-appt-location'];
   let previous = -1;
   for (const id of ids) {
     const position = current.indexOf(id);
@@ -308,6 +308,28 @@ test('appointment form follows the agreed order and display rules', () => {
   assert.match(current, /MM\/DD\/YYYY/);
   assert.match(current, /A typed name can be linked/);
   assert.match(current, /Optional while Tentative/);
+  assert.match(current, /6\. End Time/);
+  assert.match(hub, /No end time/);
+  assert.match(current, /End Time must be later than the start time/);
+  assert.doesNotMatch(current, /hub-appt-duration|Appointment Duration/);
+});
+
+test('customer rows and Calendar cards use compact schedule placement', () => {
+  const hub = read('lotkeys-hub.js');
+  const css = read('lotkeys-hub.css');
+  const rowStart = hub.lastIndexOf('function deviceRow');
+  const row = hub.slice(rowStart, hub.indexOf('function appointmentCard', rowStart));
+  assert.match(row, /hub-device-name-row.*hub-tags/s);
+  assert.match(row, /hub-device-phone-open.*appointmentChipMarkup\(contact\)/s);
+  assert.doesNotMatch(row, /<footer>/);
+  assert.match(hub, /function appointmentTimeRange/);
+  assert.match(hub, /suffix=hour>=12\?'PM':'AM'/);
+  const cardStart = hub.lastIndexOf('function appointmentCard');
+  const card = hub.slice(cardStart, hub.indexOf('function appointmentTimeOptions', cardStart));
+  assert.match(card, /hub-appointment-entry.*hub-calendar-time-range.*hub-appointment customer-card/s);
+  assert.doesNotMatch(card, /durationMinutes| min<\/small>/);
+  assert.match(css, /\.hub-device-card-top\{[^}]*grid-template-areas:"name timestamp" "phone appointment"/);
+  assert.match(css, /\.hub-appointment-entry>\.hub-appointment\.customer-card\{grid-template-columns:64px minmax\(0,1fr\)/);
 });
 
 test('smart-note choices stay local, recent and explicitly approved', () => {

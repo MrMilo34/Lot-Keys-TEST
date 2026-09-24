@@ -2,7 +2,7 @@
 
 ## Current status: team testing
 
-V0.9.4.89 is suitable for controlled testing with approved Google accounts, the matching explicitly installed Android test APK, and non-sensitive dealership test data. It is **not yet the public-production security finish line**.
+V0.9.4.90 is suitable for controlled testing with approved Google accounts, the matching explicitly installed Android test APK, and non-sensitive dealership test data. It is **not yet the public-production security finish line**.
 
 The website remains a static browser application. Google Drive enforces file access, and the installed Store Processor is the trusted writer for the current Inventory test model; a production service is still required as the final authority for multi-Store Creator/Admin roles, global contact discovery, cross-Store message delivery, abuse controls, and long-lived authorization secrets.
 
@@ -37,7 +37,7 @@ The website remains a static browser application. Google Drive enforces file acc
 - The bundled Apps Script processor is a controlled-test management boundary, not a general public backend. Protect the Admin Level 2 Google account and Apps Script project, limit editors on that project, and replace it with a production-reviewed service if LotKeys becomes public or multi-dealership.
 - End-to-end encryption, key changes, recovery, attachments, group membership changes, and multi-device behavior require an independent security review before sensitive use.
 - SMS access is highly sensitive. The TEST APK is for controlled sideload testing; any public app-store distribution requires a separate permission-policy, privacy, disclosure, and security review.
-- V0.9.4.89 does not provide RCS coverage, automatic direct MMS delivery, complete group/dual-SIM handling, iPhone support, or browser-independent always-on relay. Its media feature is a reviewed handoff to the phone's default messaging app. The UI must continue to show amber partial coverage honestly.
+- V0.9.4.90 does not provide RCS coverage, automatic direct MMS delivery, complete group/dual-SIM handling, iPhone support, or browser-independent always-on relay. Its media feature is a reviewed handoff to the phone's default messaging app. The UI must continue to show amber partial coverage honestly.
 - The four-digit code is a matching/approval aid, not a standalone password. Pairing also depends on the same authorized Google account and the phone-side approval screen.
 - A compromised Google account, unlocked phone, or already trusted browser remains a serious account compromise. Users must be able to disconnect and forget devices.
 
@@ -76,7 +76,7 @@ The website remains a static browser application. Google Drive enforces file acc
    - Test direct/group Chat, block/mute/admin removal, unread state, key changes, attachments, and calls across two networks.
    - Complete accessibility, privacy, threat-model, and independent security reviews.
 
-## Safe V0.9.4.89 test rules
+## Safe V0.9.4.90 test rules
 
 - Keep Google OAuth in **Testing** and explicitly add every tester.
 - Share the Store folder only with those same tester Google accounts.

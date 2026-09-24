@@ -159,6 +159,7 @@ test('message suggestions retain competing bi-weekly values and label negative c
 test('appointment display helpers enforce MM/DD/YYYY and 12-hour time', () => {
   assert.equal(Hub.parseDisplayDate('09/26/2026'), '2026-09-26');
   assert.equal(Hub.displayDate('2026-09-26'), '09/26/2026');
-  assert.match(Hub.displayTime('12:30'), /12:30\s*p\.?s*m\.?/i);
+  assert.equal(Hub.displayTime('00:05'), '12:05 AM');
+  assert.equal(Hub.displayTime('12:30'), '12:30 PM');
   assert.throws(() => Hub.parseDisplayDate('26/09/2026'), /MM\/DD\/YYYY|valid/);
 });

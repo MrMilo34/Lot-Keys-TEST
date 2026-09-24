@@ -1,12 +1,14 @@
-V0.9.4.89 DEVICE HEADER CARD HOTFIX
-- Places the compact Interested Vehicle and buying summary inside the upper-right Device-chat header beside the customer details.
-- Retains the full Contact and Calendar customer cards without adding a separate full-width row to the conversation.
+V0.9.4.90 COMPACT SCHEDULE CARDS
+- Places the customer category beside the name and the appointment date, AM/PM start–end range and status beside the phone number.
+- Replaces Appointment Duration with optional End Time while preserving calculated ranges for older saved appointments.
+- Moves the Calendar day-view time range above each appointment so the full-width customer card is shorter.
+- Retains the compact Interested Vehicle/buying card inside the upper-right Device-chat header.
 - Makes Cash / Financing a clean two-choice Note field without the text box or keyboard.
 - Repairs 0.5-second hold-and-drag composer shortcuts and auto-closes tap menus after five seconds.
 - Removes the Device composer explanation and simplifies Lock Screen wording to Password.
 - Retains the V0.9.4.88 cards, appointment workflow, smart notes, media composers and Android handoff.
-- Build: 09489.
-- Service worker cache: lotkeys-app-v09489-device-header-card.
+- Build: 09490.
+- Service worker cache: lotkeys-app-v09490-compact-schedule-cards.
 
 V0.9.4.86 HUB CUSTOMER WORKFLOW
 - Keeps the V0.9.4.84 Android phone-source and adaptive-monitoring behavior, plus the screen-recording-enabled V0.9.4.85 TEST APK.

@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09489-device-header-card';
+const CACHE='lotkeys-app-v09490-compact-schedule-cards';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.89",
-  "build": "09489",
-  "release": "device-header-card",
+  "version": "0.9.4.90",
+  "build": "09490",
+  "release": "compact-schedule-cards",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09489-device-header-card",
+  "serviceWorkerCache": "lotkeys-app-v09490-compact-schedule-cards",
   "publishedAt": "2026-09-24",
-  "basedOn": "LotKeys V0.9.4.88 chat polish"
+  "basedOn": "LotKeys V0.9.4.89 device header card"
 }

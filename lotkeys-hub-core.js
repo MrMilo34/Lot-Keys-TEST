@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.89 — pure customer, conversation, reminder and appointment models. */
+/* LotKeys Hub V0.9.4.90 — pure customer, conversation, reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -309,7 +309,8 @@
     const match = text(value).match(/^(\d{1,2}):(\d{2})$/);
     const date = match ? new Date(2000, 0, 1, Number(match[1]), Number(match[2])) : new Date(value);
     if (!Number.isFinite(date.getTime())) return '';
-    return date.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const hour = date.getHours();
+    return (hour % 12 || 12) + ':' + String(date.getMinutes()).padStart(2, '0') + (hour >= 12 ? ' PM' : ' AM');
   }
 
   function agenda(rows, date) {

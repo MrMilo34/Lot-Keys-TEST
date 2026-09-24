@@ -8,8 +8,8 @@ android {
         applicationId 'ca.lotkeys.connector.test'
         minSdk 30
         targetSdk 35
-        versionCode 9489
-        versionName '0.9.4.89-test'
+        versionCode 9490
+        versionName '0.9.4.90-test'
     }
 
     compileOptions {

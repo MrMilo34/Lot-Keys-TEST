@@ -1,15 +1,15 @@
-# LotKeys V0.9.4.89 team-test checklist
+# LotKeys V0.9.4.90 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09489` and confirm **V0.9.4.89 / 09489**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09490` and confirm **V0.9.4.90 / 09490**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.89** and install its `app-debug.apk` on an Android 11+ test phone.
+- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.90** and install its `app-debug.apk` on an Android 11+ test phone.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -47,7 +47,7 @@
 - Delete the LotKeys contact and confirm its number returns to Unsorted while the phone conversation remains.
 - Confirm deleting/clearing a phone conversation does not delete the LotKeys customer folder, notes, or saved documents.
 
-## V0.9.4.89 customer cards and notes
+## V0.9.4.90 customer cards and notes
 
 - In All, confirm LotKeys Chats appears above Device Messages; collapse each independently, reopen Hub, and confirm the state is remembered.
 - Confirm new messages update unread counts without forcing a collapsed group open.
@@ -64,17 +64,20 @@
 - On Android, confirm incoming LotKeys Chat does not play an extra LotKeys sound and normal Device SMS/MMS notifications remain unchanged.
 - Confirm the Hub logo has no dark corner matte, floating controls sit just above mobile navigation, and desktop controls are on the right-side rail.
 
-## V0.9.4.89 appointments
+## V0.9.4.90 appointments
 
-- Confirm New appointment uses this order: Customer/Contact, Interested Vehicle, Booking Status, Date, Time, Duration, Appointment Type, Notes, Location.
+- In the Device conversation list, confirm each Customer category is beside the name and the appointment date, AM/PM start–end range and booking status are beside the phone number.
+- Confirm New appointment uses this order: Customer/Contact, Interested Vehicle, Booking Status, Date, Time, End Time, Appointment Type, Notes, Location.
 - Type an unsaved customer name and create a Tentative appointment without a time. Edit it later, select a saved Contact, and confirm the link is retained.
-- Confirm Date validates MM/DD/YYYY and every visible time choice is 12-hour.
+- Confirm End Time is optional, must be later than the start when supplied, and older duration-based appointments display their calculated end time.
+- Confirm Date validates MM/DD/YYYY and every visible time and message timestamp uses uppercase AM/PM.
 - Confirm Booked, Confirmed and Double Confirm require a time; Tentative permits Time TBD.
 - Confirm types are Consultation, Test Drive, Follow-up Appointment, Vehicle Delivery and Other.
 - Confirm the Hub customer card and Calendar appointment card show the same vehicle and buying information.
-- Confirm the appointment chip beside the customer category shows its date/time and state. Tap it and confirm Calendar opens the correct selected week.
+- Confirm each Calendar day appointment shows its start–end range above a shorter full-width customer/vehicle card.
+- Confirm the appointment chip beside the phone number shows its date, start–end range and state. Tap it and confirm Calendar opens the correct selected week.
 
-## V0.9.4.89 composers and media
+## V0.9.4.90 composers and media
 
 - In Device and LotKeys Chat, tap ＋ and confirm Camera, Images and Documents appear, then disappear after five seconds or an outside tap. Confirm hold-up, hold-up-right and hold-right select those actions after roughly 0.5 seconds.
 - Tap 🎙️ and confirm Voice memo and Talk to text appear, then disappear after five seconds or an outside tap. Confirm hold-right starts Voice memo and hold-left starts Talk to text; dragging back to the centre leaves the tap choices available briefly.
