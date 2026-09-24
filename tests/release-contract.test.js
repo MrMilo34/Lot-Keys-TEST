@@ -106,6 +106,7 @@ test('Android layer keeps the existing messenger and adds a reviewed media hando
   const store = read('android/app/src/main/java/ca/lotkeys/connector/PhoneStore.java');
   const server = read('android/app/src/main/java/ca/lotkeys/connector/LocalApiServer.java');
   const boot = read('android/app/src/main/java/ca/lotkeys/connector/BootReceiver.java');
+  const gradleProperties = read('android/gradle.properties');
   assert.match(manifest, /android\.permission\.READ_SMS/);
   assert.match(manifest, /android\.permission\.SEND_SMS/);
   assert.match(manifest, /android\.permission\.READ_CONTACTS/);
@@ -132,6 +133,7 @@ test('Android layer keeps the existing messenger and adds a reviewed media hando
   assert.match(boot, /ACTION_BOOT_COMPLETED\.equals\(action\)/);
   assert.match(manifest, /dataExtractionRules="@xml\/data_extraction_rules"/);
   assert.match(manifest, /androidx\.core\.content\.FileProvider/);
+  assert.match(gradleProperties, /^android\.useAndroidX=true$/m);
   assert.doesNotMatch(store, /sendMultimediaMessage/);
 });
 
