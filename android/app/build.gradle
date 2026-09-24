@@ -50,6 +50,10 @@ android {
 }
 
 dependencies {
+    // Keep Google's sign-in transitive Kotlin modules on one version. Older
+    // AndroidX constraints otherwise mix kotlin-stdlib 1.8 with the retired
+    // jdk7/jdk8 1.6 split artifacts and fail duplicate-class validation.
+    implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
     implementation 'androidx.core:core:1.15.0'
     implementation 'com.google.android.gms:play-services-auth:21.3.0'
 }
