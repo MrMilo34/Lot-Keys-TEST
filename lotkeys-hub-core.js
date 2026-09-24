@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.90 — pure customer, conversation, reminder and appointment models. */
+/* LotKeys Hub V0.9.4.91 — pure customer, conversation, reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -30,6 +30,13 @@
 
   function validPhone(value) {
     return /^\+?\d{7,15}$/.test(phone(value));
+  }
+
+  function deviceIdentity(title, address, fallback = 'Unknown contact') {
+    const displayTitle = text(title) || text(address) || text(fallback) || 'Unknown contact';
+    const displayPhone = text(address);
+    const phoneOnly = !!phone(displayPhone) && phone(displayTitle) === phone(displayPhone);
+    return { title: displayTitle, phone: phoneOnly ? '' : displayPhone, phoneOnly };
   }
 
   function primary(contact) {
@@ -511,6 +518,7 @@
     color,
     phone,
     validPhone,
+    deviceIdentity,
     primary,
     nextLabel,
     field,

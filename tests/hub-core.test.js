@@ -79,6 +79,24 @@ test('phone matching and contact validation retain the V0.9.4.82 contract', () =
   assert.equal(Hub.matches(contact, '5550123'), true);
 });
 
+test('Device identity keeps a saved name and phone inline without duplicating phone-only rows', () => {
+  assert.deepEqual(Hub.deviceIdentity('John, Loe', '+15879215379'), {
+    title: 'John, Loe',
+    phone: '+15879215379',
+    phoneOnly: false
+  });
+  assert.deepEqual(Hub.deviceIdentity('+1 (780) 994-0229', '+17809940229'), {
+    title: '+1 (780) 994-0229',
+    phone: '',
+    phoneOnly: true
+  });
+  assert.deepEqual(Hub.deviceIdentity('', '+17805569292'), {
+    title: '+17805569292',
+    phone: '',
+    phoneOnly: true
+  });
+});
+
 test('appointment overlap excludes cancelled appointments', () => {
   const candidate = { id: 'a', start: '2026-09-22T16:00:00.000Z', end: '2026-09-22T16:30:00.000Z' };
   const rows = [

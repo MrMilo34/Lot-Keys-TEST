@@ -28,7 +28,7 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_CONTACTS = 42;
     private static final int REQUEST_NOTIFICATIONS = 43;
     private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
-    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=09490";
+    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=09491";
     private LinearLayout body;
 
     @Override public void onCreate(Bundle state) {
@@ -51,7 +51,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.4.90 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.4.91 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();

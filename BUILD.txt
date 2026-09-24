@@ -1,5 +1,8 @@
-V0.9.4.90 COMPACT SCHEDULE CARDS
-- Places the customer category beside the name and the appointment date, AM/PM start–end range and status beside the phone number.
+V0.9.4.91 COMPACT CONTACT ROWS
+- Places a saved name and phone number together on the first line without repeating phone-only identities.
+- Places the customer category beside the appointment date, AM/PM start–end range and status on the second line.
+- Makes the complete Device conversation card open its chat while the appointment chip still opens Calendar.
+- Restores native calendar and clock pickers when establishing a new appointment; editing keeps compact manual/menu controls.
 - Replaces Appointment Duration with optional End Time while preserving calculated ranges for older saved appointments.
 - Moves the Calendar day-view time range above each appointment so the full-width customer card is shorter.
 - Retains the compact Interested Vehicle/buying card inside the upper-right Device-chat header.
@@ -7,8 +10,8 @@ V0.9.4.90 COMPACT SCHEDULE CARDS
 - Repairs 0.5-second hold-and-drag composer shortcuts and auto-closes tap menus after five seconds.
 - Removes the Device composer explanation and simplifies Lock Screen wording to Password.
 - Retains the V0.9.4.88 cards, appointment workflow, smart notes, media composers and Android handoff.
-- Build: 09490.
-- Service worker cache: lotkeys-app-v09490-compact-schedule-cards.
+- Build: 09491.
+- Service worker cache: lotkeys-app-v09491-compact-contact-rows.
 
 V0.9.4.86 HUB CUSTOMER WORKFLOW
 - Keeps the V0.9.4.84 Android phone-source and adaptive-monitoring behavior, plus the screen-recording-enabled V0.9.4.85 TEST APK.
