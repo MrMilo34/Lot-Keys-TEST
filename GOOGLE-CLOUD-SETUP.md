@@ -71,6 +71,21 @@ Create an API key. For testing, enter it into LotKeys Settings.
 
 Before public use, restrict the key to the Google Picker API and to the website origins that are allowed to use it.
 
+## 5A. Register the Android TEST connector
+
+The PC relay runs in the Android foreground service after the phone browser closes. Google therefore requires a separate **Android** OAuth client in the same `lotkeys` Cloud project as the Web client.
+
+Under **Google Auth Platform → Clients → Create client**:
+
+- Application type: **Android**
+- Name: `LotKeys Connector TEST`
+- Package name: `ca.lotkeys.connector.test`
+- SHA-1 certificate fingerprint: `D5:18:A4:69:3A:DA:9F:62:BD:B1:65:17:38:2B:17:4C:52:A5:76:12`
+
+GitHub Actions receives the dedicated stable TEST-only signing certificate from the repository secrets `LOTKEYS_TEST_KEYSTORE_B64` and `LOTKEYS_TEST_KEYSTORE_PASSWORD`; the private key must never be committed. The workflow verifies the expected fingerprint before publishing an APK. This is intentionally not a production signing key and must never be reused for a Play Store or public LotKeys release.
+
+Keep the Android client in this same Cloud project. The web and Android clients are two authenticated components of one LotKeys application and must see the same hidden Drive app-data space for pairing frames.
+
 ## 6. Find Project Number
 
 Google Picker's `setAppId` uses the numeric Cloud Project Number, not the textual Project ID. Copy the Project Number from Google Cloud project information.

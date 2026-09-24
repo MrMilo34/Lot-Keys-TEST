@@ -43,6 +43,32 @@ test('trust windows and coverage states follow the locked rules', () => {
   assert.equal(Phone.coverage({ connected: false, native: false }).level, 'red');
 });
 
+test('remembered pairing reconnects only while phone trust remains valid', () => {
+  const now = 1000;
+  const row = { browserId: 'browser-1', trustMode: '36h', trustExpiresAt: 2000 };
+  assert.equal(Phone.rememberedPairValid(row, 'browser-1', now), true);
+  assert.equal(Phone.rememberedPairValid(row, 'browser-1', 2001), false);
+  assert.equal(Phone.rememberedPairValid({ ...row, trustMode: 'ask' }, 'browser-1', now), false);
+  assert.equal(Phone.rememberedPairValid({ ...row, trustMode: 'until-disconnect', disconnected: false }, 'browser-1', now), true);
+  assert.equal(Phone.rememberedPairValid({ ...row, trustMode: 'until-disconnect', disconnected: true }, 'browser-1', now), false);
+});
+
+test('stored encrypted sessions are bounded to one role and eight days', () => {
+  const now = Date.now();
+  const row = {
+    version: 1,
+    role: 'pc',
+    sessionId: 'abcdefghijklmnop',
+    key: 'A'.repeat(43),
+    browserId: 'abcdefghijklmnop',
+    savedAt: now
+  };
+  assert.equal(Phone.validateStoredSession(row, 'pc', now), true);
+  assert.equal(Phone.validateStoredSession(row, 'phone', now), false);
+  assert.equal(Phone.validateStoredSession({ ...row, key: 'too-short' }, 'pc', now), false);
+  assert.equal(Phone.validateStoredSession({ ...row, savedAt: now - 9 * 24 * 60 * 60 * 1000 }, 'pc', now), false);
+});
+
 test('pair offers require a four-digit unexpired code and P-256 public key', () => {
   const now = Date.now();
   const offer = {

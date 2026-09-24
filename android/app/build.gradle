@@ -4,12 +4,38 @@ android {
     namespace 'ca.lotkeys.connector'
     compileSdk 35
 
+    // A controlled TEST release uses one stable, non-production certificate so
+    // its Android OAuth client can be registered once. The private key is
+    // supplied only by GitHub Actions secrets and is never stored in this repo.
+    def testStorePath = System.getenv('LOTKEYS_TEST_KEYSTORE_PATH') ?: ''
+    def testStorePassword = System.getenv('LOTKEYS_TEST_KEYSTORE_PASSWORD') ?: ''
+    def testStoreAlias = System.getenv('LOTKEYS_TEST_KEY_ALIAS') ?: 'lotkeys-test'
+    def testStore = testStorePath ? file(testStorePath) : null
+    def hasTestSigning = testStore != null && testStore.exists() && !testStorePassword.isEmpty()
+
+    signingConfigs {
+        if (hasTestSigning) {
+            lotkeysTest {
+                storeFile testStore
+                storePassword testStorePassword
+                keyAlias testStoreAlias
+                keyPassword testStorePassword
+            }
+        }
+    }
+
     defaultConfig {
         applicationId 'ca.lotkeys.connector.test'
         minSdk 30
         targetSdk 35
-        versionCode 9491
-        versionName '0.9.4.91-test'
+        versionCode 9492
+        versionName '0.9.4.92-test'
+    }
+
+    buildTypes {
+        debug {
+            if (hasTestSigning) signingConfig signingConfigs.lotkeysTest
+        }
     }
 
     compileOptions {
@@ -25,4 +51,5 @@ android {
 
 dependencies {
     implementation 'androidx.core:core:1.15.0'
+    implementation 'com.google.android.gms:play-services-auth:21.3.0'
 }

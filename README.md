@@ -1,8 +1,18 @@
-# LotKeys V0.9.4.91 — Compact contact rows
+# LotKeys V0.9.4.92 — Reliable PC pairing
 
-This TEST update gives Device conversation cards a cleaner two-line identity and scheduling layout, and makes the complete card open its chat. The phone remains the Device-message source of truth, and every V0.9.4.90 schedule-card repair is retained.
+This TEST update completes the PC-pairing path: a new computer still needs matching four-digit phone approval, trusted computers reconnect safely, refreshes retain the encrypted session, and the Android connector now owns the private relay when the phone browser closes. The phone remains the Device-message source of truth.
 
-## V0.9.4.91 included
+## V0.9.4.92 included
+
+- The Android foreground service polls the same Google account's hidden Drive app-data space, so the paired PC no longer depends on an open phone browser tab.
+- A new PC shows a short-lived matching four-digit code on both screens before Android can approve it.
+- Ask Every Time, 36 Hours, 7 Days and Until Disconnect trust modes are enforced on the phone; expired trust cannot silently reconnect.
+- The active encrypted browser session survives a normal refresh, while session secrets remain tab-scoped and time-bounded.
+- Trusted PCs can reconnect with a fresh ECDH/AES-GCM session, and approving another PC cleanly transfers the one active connection.
+- Connected Devices shows the Android relay account, active PC, last-active/expiry details and controls to disconnect, forget one PC or revoke all PC access.
+- The TEST APK uses a stable TEST-only signing certificate supplied through GitHub Actions secrets, so its Android OAuth registration remains consistent without exposing the private key.
+
+## V0.9.4.91 workflow retained
 
 - A saved customer name and phone number now share the first line of each Device conversation card.
 - Phone-only contacts show their number once instead of repeating it as both the title and subtitle.
@@ -19,7 +29,7 @@ This TEST update gives Device conversation cards a cleaner two-line identity and
 - Sent and received Chat media exposes a deliberate 💾 action to save a separate copy in the private Contact folder. A source key prevents accidental duplicate saves.
 - The conversation action row is Notes, Questions, Call, Booking and Organize. Add to Hub is reduced to Start Chat/Group, Create Contact, Add Note, Upload and Reminder.
 - The Device composer no longer shows the implementation explanation beneath the message box, and the Lock Screen now asks simply for the user's Lock Screen Password.
-- The matching V0.9.4.91 Android connector retains MMS attachment reading and the reviewed default-messaging-app handoff.
+- The matching V0.9.4.92 Android connector retains MMS attachment reading and the reviewed default-messaging-app handoff.
 - V0.9.4.86 grouping, reminders, PC-only LotKeys alert sounds, corrected logo crop and responsive floating controls remain in place.
 
 ## First checkpoint included
@@ -52,38 +62,39 @@ This TEST update gives Device conversation cards a cleaner two-line identity and
 - Device media is a reviewed handoff to the default phone messaging app, not a claim of direct MMS delivery. The user verifies the recipient and presses Send on the phone; LotKeys never retries it automatically.
 - Group conversations are view-only and dual-SIM selection is deferred.
 - One active computer session plus the phone. Several trusted computer records can exist, but simultaneous multi-PC messaging is deferred.
-- Keep LotKeys open on the phone during this first end-to-end test. The Android capability service stays ready in the background, but a permanent always-on internet relay/token-renewal service is not claimed yet.
+- Android keeps the private pairing relay active through its visible low-priority foreground-service notification. Google or Android may still require the connector to be reopened after account revocation, force-stop, battery restrictions or a recoverable authorization prompt.
 - This is private test software using sensitive Android permissions. It is not a Google Play production release and has not completed an independent security review.
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.91`. This web release requires that matching connector for MMS attachment saving and the reviewed media handoff.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.92`. This web release requires that matching connector for background PC pairing, MMS attachment saving and the reviewed media handoff.
 
-The Android setup uses four short screens:
+The Android setup uses five short screens:
 
 1. Confirm the existing messaging app remains the default.
 2. Allow required Messages access.
 3. Optionally allow Contact Names.
-4. Allow the quiet connection-status notification, then open LotKeys from the setup app once to link the browser.
+4. Allow the quiet connection-status notification.
+5. Choose the same LotKeys Google account for private background pairing, then open LotKeys once to link the phone browser.
 
 No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen casting, Accessibility permission or default-messenger switch is used.
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.4.91 Android TEST APK.
-2. Complete its permission screens and tap **Open LotKeys & Link This Phone**.
+1. Install and open the V0.9.4.92 Android TEST APK.
+2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
 5. On the computer, select **Connect phone**.
 6. Confirm the same four digits on the phone, choose the trust position and tap **Approve & Connect**.
-7. Open a Device conversation and send a fictional test SMS. Test media separately and confirm that Android opens the default messaging app for final review.
+7. Close the phone browser, then open a Device conversation on the PC and send a fictional test SMS. Test media separately and confirm that Android opens the default messaging app for final review.
 
 ## TEST deployment
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09491`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09492`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.91 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.92 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

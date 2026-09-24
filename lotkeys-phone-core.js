@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.4.91 — pure identity, trust and conversation helpers. */
+/* LotKeys Phone V0.9.4.92 — pure identity, trust, pairing and conversation helpers. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -92,6 +92,23 @@
     return record.mode === 'until-disconnect' || Number(record.expiresAt) > now;
   }
 
+  function rememberedPairValid(record, browserId, now = Date.now()) {
+    if (!record || text(record.browserId) !== text(browserId)) return false;
+    if (!['36h', '7d', 'until-disconnect'].includes(text(record.trustMode))) return false;
+    if (record.trustMode === 'until-disconnect') return record.disconnected !== true;
+    return Number(record.trustExpiresAt) > now;
+  }
+
+  function validateStoredSession(value, role, now = Date.now()) {
+    if (!value || value.version !== 1 || value.role !== role) return false;
+    if (!/^[A-Za-z0-9_-]{16,80}$/.test(text(value.sessionId))) return false;
+    if (!/^[A-Za-z0-9_-]{40,60}$/.test(text(value.key))) return false;
+    if (!/^[A-Za-z0-9_-]{16,100}$/.test(text(value.browserId))) return false;
+    const savedAt = Number(value.savedAt);
+    if (!savedAt || savedAt > now + 60000 || now - savedAt > 8 * 24 * 60 * 60 * 1000) return false;
+    return true;
+  }
+
   function coverage({ connected = false, native = false, sms = false, rcs = false } = {}) {
     if (!connected && !native) return { level: 'red', label: 'Phone unavailable', detail: 'Device Messages are locked.' };
     if (sms && rcs) return { level: 'green', label: 'Full coverage', detail: 'SMS/MMS and the RCS safety watcher are active.' };
@@ -109,7 +126,7 @@
   }
 
   return {
-    version: '0.9.4.91',
+    version: '0.9.4.92',
     phone,
     contactPhone,
     contactFor,
@@ -119,6 +136,8 @@
     normalizeThreads,
     trustExpiry,
     trustValid,
+    rememberedPairValid,
+    validateStoredSession,
     coverage,
     validatePairOffer
   };

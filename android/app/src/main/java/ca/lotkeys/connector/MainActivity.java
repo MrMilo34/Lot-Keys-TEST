@@ -1,6 +1,8 @@
 package ca.lotkeys.connector;
 
 import android.Manifest;
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -19,17 +21,27 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.google.android.gms.auth.GoogleAuthException;
+import com.google.android.gms.auth.UserRecoverableAuthException;
+import com.google.android.gms.common.AccountPicker;
+
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /** One-time, contextual Android permission setup. The normal messaging interface remains LotKeys. */
 public final class MainActivity extends Activity {
     private static final int REQUEST_MESSAGES = 41;
     private static final int REQUEST_CONTACTS = 42;
     private static final int REQUEST_NOTIFICATIONS = 43;
+    private static final int REQUEST_GOOGLE_ACCOUNT = 44;
+    private static final int REQUEST_GOOGLE_AUTHORIZATION = 45;
     private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
-    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=09491";
+    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=09492";
     private LinearLayout body;
+    private Account pendingGoogleAccount;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -51,7 +63,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.4.91 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.4.92 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();
@@ -59,7 +71,7 @@ public final class MainActivity extends Activity {
         boolean notifications = notificationsGranted();
 
         if (!messages) {
-            step("1 of 4 · Connect Phone Messaging");
+            step("1 of 5 · Connect Phone Messaging");
             text("LotKeys will mirror the SMS/MMS history already on this phone and send only the replies you request. " +
                 store.sourceApp() + " remains your default messaging app. LotKeys will not become the default messenger.", 16, Color.LTGRAY, false);
             button("Continue to Messages access", this::explainMessages, true);
@@ -68,7 +80,7 @@ public final class MainActivity extends Activity {
         }
 
         if (!contacts && !prefs().getBoolean("contactsSkipped", false)) {
-            step("2 of 4 · Contact Names (Optional)");
+            step("2 of 5 · Contact Names (Optional)");
             text("Allow Contacts so a number already saved on this phone keeps its familiar name in LotKeys. " +
                 "Declining does not block messaging; LotKeys will show the phone number instead.", 16, Color.LTGRAY, false);
             button("Allow Contact Names", () -> requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_CONTACTS), true);
@@ -78,7 +90,7 @@ public final class MainActivity extends Activity {
         }
 
         if (!notifications) {
-            step("3 of 4 · Stay Connected");
+            step("3 of 5 · Stay Connected");
             text("Android requires a quiet connection-status notification while the protected phone layer is available. " +
                 "This is not a second customer-message alert and it does not replace your normal messaging notifications.", 16, Color.LTGRAY, false);
             button("Allow Connection Status", () -> requestPermissions(
@@ -87,13 +99,31 @@ public final class MainActivity extends Activity {
             return;
         }
 
-        step("4 of 4 · Pair a Computer");
+        String relayAccount = DriveRelay.account(this);
+        if (!DriveRelay.wasAuthorized(this)) {
+            step("4 of 5 · PC Pairing Account");
+            text("Choose the same Google account already used by LotKeys. Android uses only its private app-data space to discover pairing requests and carry end-to-end encrypted frames while the phone browser is closed. Your password is not shared with LotKeys.", 16, Color.LTGRAY, false);
+            button(relayAccount.isEmpty() ? "Choose LotKeys Google Account" : "Finish Google Pairing Access", this::chooseGoogleAccount, true);
+            if (!relayAccount.isEmpty()) text("Selected: " + relayAccount, 14, Color.rgb(145, 151, 161), false);
+            footer();
+            return;
+        }
+
+        JSONObject pending = DriveRelay.pendingRequest(this);
+        if (pending != null && pending.optLong("expiresAt") > System.currentTimeMillis()) {
+            renderPairRequest(pending);
+            footer();
+            return;
+        }
+
+        step("5 of 5 · Pair a Computer");
         text("Android access is ready. Open LotKeys below to link this phone to the same LotKeys account. " +
-            "A new computer still needs the matching four-digit approval on this phone. Media opens in your default messaging app so you can review the recipient and press Send.", 16, Color.LTGRAY, false);
+            "A new computer still needs the matching four-digit approval on this phone. After approval, the quiet Android connection keeps the paired PC available even when the phone browser is closed. Media opens in your default messaging app so you can review the recipient and press Send.", 16, Color.LTGRAY, false);
         statusLine("Messages", true, "SMS/MMS read, SMS reply, reviewed media handoff");
         statusLine("Contact names", contacts, contacts ? "allowed" : "using phone numbers");
         statusLine("Coverage", false, "SMS/MMS only · RCS watcher comes later");
         statusLine("Messaging app", true, store.sourceApp());
+        statusLine("PC relay", true, "ready · " + relayAccount);
         button("Open LotKeys & Link This Phone", this::openLotKeys, true);
         button("Android App Permissions", this::openAppSettings, false);
         button("Reset Browser Link", () -> new AlertDialog.Builder(this)
@@ -103,6 +133,14 @@ public final class MainActivity extends Activity {
             .setPositiveButton("Reset", (dialog, which) -> {
                 InstallIdentity.rotateToken(this);
                 alert("Link reset. Tap Open LotKeys & Link This Phone when ready.");
+            }).show(), false);
+        button("Change PC Pairing Account", () -> new AlertDialog.Builder(this)
+            .setTitle("Change the PC pairing account?")
+            .setMessage("This disconnects and forgets trusted computers. Phone messages and LotKeys customer records are not deleted.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Change", (dialog, which) -> {
+                DriveRelay.clearAccount(this);
+                chooseGoogleAccount();
             }).show(), false);
         button("Stop Phone Connection", () -> {
             prefs().edit().putBoolean("enabled", false).apply();
@@ -151,6 +189,57 @@ public final class MainActivity extends Activity {
         catch (ActivityNotFoundException error) { alert("No browser is available to open LotKeys."); }
     }
 
+    private void chooseGoogleAccount() {
+        try {
+            Intent picker = AccountPicker.newChooseAccountIntent(
+                null, null, new String[]{"com.google"}, true,
+                "Choose the Google account used by LotKeys", null, null, null);
+            startActivityForResult(picker, REQUEST_GOOGLE_ACCOUNT);
+        } catch (Exception error) {
+            alert("Android could not open the Google account chooser. Update Google Play services and try again.");
+        }
+    }
+
+    private void authorizeGoogleAccount(Account account) {
+        if (account == null) return;
+        pendingGoogleAccount = account;
+        text("Authorizing private PC pairing…", 14, Color.rgb(100, 181, 246), true);
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                DriveRelay.authorizeAccount(this, account);
+                prefs().edit().putBoolean("enabled", true).commit();
+                startForegroundService(new Intent(this, PhoneConnectorService.class));
+                runOnUiThread(() -> { pendingGoogleAccount = null; render(); });
+            } catch (UserRecoverableAuthException recoverable) {
+                runOnUiThread(() -> startActivityForResult(recoverable.getIntent(), REQUEST_GOOGLE_AUTHORIZATION));
+            } catch (GoogleAuthException | java.io.IOException error) {
+                runOnUiThread(() -> alert(error.getMessage() == null ? "Google did not authorize PC pairing." : error.getMessage()));
+            }
+        });
+    }
+
+    private void renderPairRequest(JSONObject request) {
+        step("Computer wants to connect");
+        text(request.optString("pcName", "Computer"), 19, Color.WHITE, true);
+        TextView code = text(request.optString("code"), 38, Color.rgb(100, 181, 246), true);
+        code.setGravity(Gravity.CENTER);
+        text("Approve only when these same four digits are visible on the computer in front of you.", 15, Color.LTGRAY, false);
+        button("Approve · Ask Every Time", () -> pairAction("APPROVE_PAIR", request, "ask"), false);
+        button("Approve · Trust 36 Hours", () -> pairAction("APPROVE_PAIR", request, "36h"), true);
+        button("Approve · Trust 7 Days", () -> pairAction("APPROVE_PAIR", request, "7d"), false);
+        button("Approve · Until I Disconnect", () -> pairAction("APPROVE_PAIR", request, "until-disconnect"), false);
+        button("Decline", () -> pairAction("DECLINE_PAIR", request, ""), false);
+    }
+
+    private void pairAction(String action, JSONObject request, String trustMode) {
+        Intent intent = new Intent(this, PhoneConnectorService.class).setAction(action)
+            .putExtra("sessionId", request.optString("sessionId"));
+        if (!trustMode.isEmpty()) intent.putExtra("trustMode", trustMode);
+        startForegroundService(intent);
+        alert("DECLINE_PAIR".equals(action) ? "Computer connection declined." : "Approval sent. The computer will connect in a moment.");
+        body.postDelayed(this::render, 1200);
+    }
+
     private void openAppSettings() {
         try { startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()))); }
         catch (ActivityNotFoundException error) { alert("Open Android Settings > Apps > LotKeys Connector TEST."); }
@@ -165,6 +254,20 @@ public final class MainActivity extends Activity {
             prefs().edit().putBoolean("contactsSkipped", false).apply();
         }
         render();
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_GOOGLE_ACCOUNT && resultCode == RESULT_OK && data != null) {
+            String name = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+            String type = data.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE);
+            if (name != null && !name.trim().isEmpty()) authorizeGoogleAccount(new Account(name, type == null ? "com.google" : type));
+            return;
+        }
+        if (requestCode == REQUEST_GOOGLE_AUTHORIZATION) {
+            if (resultCode == RESULT_OK && pendingGoogleAccount != null) authorizeGoogleAccount(pendingGoogleAccount);
+            else { pendingGoogleAccount = null; alert("Google pairing access was not approved."); }
+        }
     }
 
     private SharedPreferences prefs() {

@@ -1,19 +1,19 @@
-# LotKeys V0.9.4.91 team-test checklist
+# LotKeys V0.9.4.92 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09491` and confirm **V0.9.4.91 / 09491**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09492` and confirm **V0.9.4.92 / 09492**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.91** and install its `app-debug.apk` on an Android 11+ test phone.
+- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.92** and install its `app-debug.apk` on an Android 11+ test phone.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
-- Approve the quiet connection-status notification, then tap **Open LotKeys & Link This Phone**.
+- Approve the quiet connection-status notification, choose the same LotKeys Google account for PC pairing, then tap **Open LotKeys & Link This Phone**.
 - Confirm LotKeys opens in the browser and shows **SMS/MMS live** in amber—not full/RCS coverage.
 
 ## Pairing
@@ -24,6 +24,10 @@
 - Approve with each trust choice at least once: Ask Every Time, 36 Hours, 7 Days, and Until I Disconnect.
 - Confirm a second computer connection replaces the first active computer session.
 - Confirm **Forget** removes a trusted computer and **Disconnect** locks Device Messages on the computer.
+- Refresh the PC page during an active session and confirm it reconnects without another approval.
+- Close the phone browser completely while leaving the Android connection notification active. Confirm the PC continues to refresh Device Messages and send a fictional SMS.
+- Close and reopen the PC browser, start Connect phone again, and confirm a still-trusted PC is approved automatically while an expired/forgotten PC requires phone approval.
+- Tap **Disconnect & forget all**, then confirm no previously trusted PC reconnects without a new phone approval.
 - Power off or disconnect the phone and confirm the computer changes to red/unavailable rather than showing stale messages as live.
 
 ## Phone conversations and sending
@@ -47,7 +51,7 @@
 - Delete the LotKeys contact and confirm its number returns to Unsorted while the phone conversation remains.
 - Confirm deleting/clearing a phone conversation does not delete the LotKeys customer folder, notes, or saved documents.
 
-## V0.9.4.91 customer cards and notes
+## Retained customer cards and notes
 
 - In All, confirm LotKeys Chats appears above Device Messages; collapse each independently, reopen Hub, and confirm the state is remembered.
 - Confirm new messages update unread counts without forcing a collapsed group open.
@@ -64,7 +68,7 @@
 - On Android, confirm incoming LotKeys Chat does not play an extra LotKeys sound and normal Device SMS/MMS notifications remain unchanged.
 - Confirm the Hub logo has no dark corner matte, floating controls sit just above mobile navigation, and desktop controls are on the right-side rail.
 
-## V0.9.4.91 conversation cards and appointments
+## Retained conversation cards and appointments
 
 - In the Device conversation list, confirm a saved name and phone number share the first line, while Customer category and the appointment date, AM/PM start–end range and booking status share the second line.
 - Confirm a phone-only conversation displays its number once, not again as a subtitle.
@@ -80,7 +84,7 @@
 - Confirm each Calendar day appointment shows its start–end range above a shorter full-width customer/vehicle card.
 - Confirm the appointment chip beside the phone number shows its date, start–end range and state. Tap it and confirm Calendar opens the correct selected week.
 
-## V0.9.4.91 composers and media
+## Retained composers and media
 
 - In Device and LotKeys Chat, tap ＋ and confirm Camera, Images and Documents appear, then disappear after five seconds or an outside tap. Confirm hold-up, hold-up-right and hold-right select those actions after roughly 0.5 seconds.
 - Tap 🎙️ and confirm Voice memo and Talk to text appear, then disappear after five seconds or an outside tap. Confirm hold-right starts Voice memo and hold-left starts Talk to text; dragging back to the centre leaves the tap choices available briefly.
@@ -94,7 +98,7 @@
 ## Known checkpoint boundaries
 
 - RCS watching/sending, automatic direct MMS delivery, complete group/dual-SIM behavior, iPhone support, and phone-conversation deletion are not included. Media uses a reviewed handoff to the existing phone messaging app.
-- Keep LotKeys open on the phone while testing a paired computer. The Android layer stays ready, but this checkpoint does not claim browser-independent always-on internet relay.
+- Keep the Android foreground-service notification active. Force-stop, revoked Google access, lost connectivity or aggressive battery restrictions can require reopening LotKeys Connector TEST.
 - Use test/non-sensitive customer data. This is a controlled TEST build, not a public Play Store release.
 
 ## Automated checks

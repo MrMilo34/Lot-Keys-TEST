@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.91",
-  "build": "09491",
-  "release": "compact-contact-rows",
+  "version": "0.9.4.92",
+  "build": "09492",
+  "release": "pc-pairing-relay",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09491-compact-contact-rows",
+  "serviceWorkerCache": "lotkeys-app-v09492-pc-pairing-relay",
   "publishedAt": "2026-09-24",
-  "basedOn": "LotKeys V0.9.4.90 compact schedule cards"
+  "basedOn": "LotKeys V0.9.4.91 compact contact rows"
 }

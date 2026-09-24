@@ -123,7 +123,11 @@ final class LocalApiServer {
         if (queryAt >= 0) path = target.substring(0, queryAt);
         Map<String, String> query = queryAt < 0 ? new HashMap<>() : query(target.substring(queryAt + 1));
         if ("GET".equals(method) && "/v1/status".equals(path)) {
-            return store.status(PhoneConnectorService.revision(), PORT);
+            JSONObject status = store.status(PhoneConnectorService.revision(), PORT);
+            JSONObject relay = service.relayStatus();
+            status.put("relay", relay);
+            status.getJSONObject("capabilities").put("backgroundRelay", relay.optBoolean("authorized"));
+            return status;
         }
         if ("GET".equals(method) && "/v1/threads".equals(path)) {
             return store.conversations(integer(query.get("offset"), 0));
@@ -142,6 +146,29 @@ final class LocalApiServer {
         }
         if ("GET".equals(method) && "/v1/send-status".equals(path)) {
             return store.sendStatus(query.getOrDefault("requestId", ""));
+        }
+        if ("GET".equals(method) && "/v1/pairings".equals(path)) {
+            return new JSONObject().put("pairings", service.pendingPairings());
+        }
+        if ("POST".equals(method) && "/v1/pairings/approve".equals(path)) {
+            service.approvePair(body.optString("sessionId"), body.optString("trustMode", "36h"));
+            return new JSONObject().put("queued", true);
+        }
+        if ("POST".equals(method) && "/v1/pairings/reject".equals(path)) {
+            service.rejectPair(body.optString("sessionId"));
+            return new JSONObject().put("queued", true);
+        }
+        if ("POST".equals(method) && "/v1/relay/disconnect".equals(path)) {
+            service.disconnectRelay(body.optBoolean("forget"));
+            return new JSONObject().put("queued", true);
+        }
+        if ("POST".equals(method) && "/v1/relay/disconnect-all".equals(path)) {
+            service.disconnectAllRelays();
+            return new JSONObject().put("queued", true);
+        }
+        if ("POST".equals(method) && "/v1/relay/forget".equals(path)) {
+            service.forgetComputer(body.optString("browserId"));
+            return new JSONObject().put("queued", true);
         }
         throw new IllegalArgumentException("Unknown LotKeys phone request.");
     }

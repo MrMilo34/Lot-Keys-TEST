@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09491-compact-contact-rows';
+const CACHE='lotkeys-app-v09492-pc-pairing-relay';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

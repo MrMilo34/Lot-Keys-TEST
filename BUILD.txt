@@ -1,3 +1,13 @@
+V0.9.4.92 RELIABLE PC PAIRING
+- Moves the encrypted PC relay into the Android foreground service so Device Messages can continue after the phone browser closes.
+- Requires matching four-digit phone approval for every new computer and supports Ask, 36-hour, 7-day and Until Disconnect trust.
+- Restores encrypted browser sessions across refresh and creates fresh ECDH/AES-GCM sessions for trusted reconnection.
+- Enforces one active PC, securely transfers the session, and exposes disconnect, individual forget and revoke-all controls.
+- Adds a stable TEST-only Android signing identity and same-project Android OAuth setup for private Drive app-data access.
+- Retains the complete V0.9.4.91 contact-card, appointment, notes, composer, media and Calendar workflow.
+- Build: 09492.
+- Service worker cache: lotkeys-app-v09492-pc-pairing-relay.
+
 V0.9.4.91 COMPACT CONTACT ROWS
 - Places a saved name and phone number together on the first line without repeating phone-only identities.
 - Places the customer category beside the appointment date, AM/PM start–end range and status on the second line.

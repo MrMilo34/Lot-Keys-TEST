@@ -23,13 +23,34 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
+      - name: Prepare stable TEST signing identity
+        env:
+          LOTKEYS_TEST_KEYSTORE_B64: ${{ secrets.LOTKEYS_TEST_KEYSTORE_B64 }}
+          LOTKEYS_TEST_KEYSTORE_PASSWORD: ${{ secrets.LOTKEYS_TEST_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$LOTKEYS_TEST_KEYSTORE_B64" ] && [ -n "$LOTKEYS_TEST_KEYSTORE_PASSWORD" ]; then
+            printf '%s' "$LOTKEYS_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lotkeys-test.keystore"
+            echo "LOTKEYS_TEST_KEYSTORE_PATH=$RUNNER_TEMP/lotkeys-test.keystore" >> "$GITHUB_ENV"
+            echo "LOTKEYS_TEST_KEYSTORE_PASSWORD=$LOTKEYS_TEST_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "LOTKEYS_TEST_KEY_ALIAS=lotkeys-test" >> "$GITHUB_ENV"
+            echo "LOTKEYS_TEST_SIGNED=true" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Stable TEST signing secrets are not configured; CI will validate code but will not publish an APK."
+            echo "LOTKEYS_TEST_SIGNED=false" >> "$GITHUB_ENV"
+          fi
       - name: Build and lint Android test layer
         working-directory: android
         run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+      - name: Verify registered TEST certificate
+        if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
+        run: |
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          "$APKSIGNER" verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | tee "$RUNNER_TEMP/apk-signing.txt"
+          grep -Fqi 'd518a4693ada9f62bdb16517382b174c52a57612' "$RUNNER_TEMP/apk-signing.txt"
       - uses: actions/upload-artifact@v4
-        if: success()
+        if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
         with:
-          name: LotKeys-Android-V0.9.4.91
+          name: LotKeys-Android-V0.9.4.92
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
       - uses: actions/upload-artifact@v4

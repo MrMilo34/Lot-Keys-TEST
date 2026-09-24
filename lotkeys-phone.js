@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.4.91 — Android loopback bridge plus same-account encrypted session transport. */
+/* LotKeys Phone V0.9.4.92 — reliable phone approval, trusted reconnect and encrypted session transport. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -12,6 +12,8 @@
   const TOKEN_KEY = 'lotkeys-phone-native-token-v1';
   const BROWSER_KEY = 'lotkeys-phone-browser-id-v1';
   const TRUST_KEY = 'lotkeys-phone-trusted-pcs-v1';
+  const SESSION_KEY = 'lotkeys-phone-active-session-v1';
+  const REMEMBERED_PAIR_KEY = 'lotkeys-phone-remembered-pair-v1';
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
   const PHONE_POLL_IDLE_MS = 3000;
@@ -30,6 +32,10 @@
     nativeStatus: null,
     nativeError: '',
     nativeRevision: 0,
+    backgroundRelay: false,
+    nativeTrusts: [],
+    relayReady: false,
+    relayIdentity: '',
     session: null,
     pairing: null,
     threads: [],
@@ -40,6 +46,7 @@
   let nativeTimer = 0;
   let offerTimer = 0;
   let pairTimer = 0;
+  let pairBusy = false;
   let frameTimer = 0;
   let heartbeatTimer = 0;
   let frameBusy = false;
@@ -47,6 +54,7 @@
   let heartbeatBusy = false;
   let monitoringWasHeavy = false;
   let monitoringGraceUntil = 0;
+  let automaticPairAttempted = false;
 
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   const text = value => String(value ?? '').trim();
@@ -107,6 +115,37 @@
     const browser = /Edg\//.test(navigator.userAgent) ? 'Edge' : /Firefox\//.test(navigator.userAgent) ? 'Firefox' : /Chrome\//.test(navigator.userAgent) ? 'Chrome' : 'Browser';
     return (browser + ' on ' + platform).slice(0, 80);
   };
+
+  function rememberedPair() {
+    try {
+      const row = JSON.parse(localStorage.getItem(REMEMBERED_PAIR_KEY) || 'null');
+      if (!P.rememberedPairValid(row, browserId())) {
+        localStorage.removeItem(REMEMBERED_PAIR_KEY);
+        return null;
+      }
+      return row;
+    } catch {
+      localStorage.removeItem(REMEMBERED_PAIR_KEY);
+      return null;
+    }
+  }
+
+  function rememberPair(session) {
+    if (session?.role !== 'pc' || !['36h', '7d', 'until-disconnect'].includes(session.trustMode)) return;
+    localStorage.setItem(REMEMBERED_PAIR_KEY, JSON.stringify({
+      version: 1,
+      browserId: browserId(),
+      phoneName: session.peerName || 'Android phone',
+      trustMode: session.trustMode,
+      trustExpiresAt: session.trustExpiresAt || 0,
+      connectedAt: session.connectedAt || now(),
+      disconnected: false
+    }));
+  }
+
+  function forgetRememberedPair() {
+    localStorage.removeItem(REMEMBERED_PAIR_KEY);
+  }
 
   function parseNativeToken() {
     const fragment = new URLSearchParams(location.hash.replace(/^#/, ''));
@@ -169,18 +208,32 @@
   async function nativeTick({ throwOnError = false, userInitiated = false } = {}) {
     if (!state.nativeToken) return;
     try {
+      const wasConnected = connected();
       const previous = state.nativeRevision;
       const native = await nativeCall('/v1/status', { timeout: 2500, diagnose: userInitiated });
       state.nativeStatus = native;
       state.nativeError = '';
       state.nativeRevision = Number(native.revision) || 0;
+      state.backgroundRelay = !!native.relay?.authorized;
+      state.nativeTrusts = Array.isArray(native.relay?.trusts) ? native.relay.trusts : [];
+      if (state.backgroundRelay) {
+        state.relayReady = true;
+        state.relayIdentity = text(native.relay?.account).toLowerCase();
+        if (native.relay?.lastError) state.lastError = text(native.relay.lastError);
+      } else {
+        state.relayReady = !!Drive.connected?.();
+        if (!state.relayReady) state.relayIdentity = '';
+      }
       if (!state.session || state.session.role === 'phone') state.role = 'phone';
       if (previous && previous !== state.nativeRevision) {
         state.threads = [];
         state.threadPage = { hasMore: false, nextOffset: 0, total: 0 };
         event('data', { reason: 'phone-change' });
-        if (state.session?.role === 'phone') sendFrame('pc', { kind: 'event', event: 'invalidate', revision: state.nativeRevision }).catch(() => {});
+        if (state.session?.role === 'phone' && !state.backgroundRelay) sendFrame('pc', { kind: 'event', event: 'invalidate', revision: state.nativeRevision }).catch(() => {});
       }
+      const isConnected = connected();
+      if (!wasConnected && isConnected) event('connected', { deviceName: native.relay?.peerName || '' });
+      else if (wasConnected && !isConnected) event('disconnected');
       event('status');
     } catch (error) {
       const changed = !!state.nativeStatus || state.nativeError !== error.message;
@@ -196,23 +249,67 @@
     if (!state.nativeToken) throw Error('Open LotKeys from the Android setup once to link this phone browser.');
     state.role = 'phone';
     await nativeTick({ throwOnError: true, userInitiated: true });
-    pollOffers().catch(() => {});
     await refreshThreads(0);
     return status();
   }
 
-  async function driveFetch(url, options = {}) {
-    const token = await Drive.authorize(false);
-    const headers = new Headers(options.headers || {});
-    headers.set('Authorization', 'Bearer ' + token);
-    const response = await fetch(url, { ...options, headers, cache: 'no-store' });
-    if (!response.ok) {
-      let message = '';
-      try { message = (await response.json())?.error?.message || ''; } catch {}
-      throw Object.assign(Error(message || 'Phone connection could not reach private Google Drive signaling (' + response.status + ').'), { status: response.status });
+  async function preparePhonePairing() {
+    if (!state.nativeToken) throw Error('Open LotKeys from the Android setup before pairing a computer.');
+    if (!state.nativeStatus) await connectNative();
+    if (state.backgroundRelay) {
+      state.relayReady = true;
+      state.relayIdentity = text(state.nativeStatus?.relay?.account).toLowerCase();
+      state.lastError = '';
+      await pollOffers();
+      scheduleOfferPoll(300);
+      event('pair-ready', { account: state.relayIdentity, background: true });
+      return status();
     }
-    if (response.status === 204) return null;
-    return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.text();
+    await Drive.authorize(false);
+    const identity = await Drive.getGoogleIdentity();
+    state.relayReady = true;
+    state.relayIdentity = text(identity?.email).toLowerCase();
+    state.lastError = '';
+    await pollOffers();
+    scheduleOfferPoll(300);
+    if (state.session) scheduleFramePoll(100);
+    event('pair-ready', { account: state.relayIdentity });
+    return status();
+  }
+
+  async function reconnectTrustedComputer() {
+    if (state.nativeToken || state.session || state.pairing || automaticPairAttempted || document.visibilityState !== 'visible') return false;
+    const remembered = rememberedPair();
+    if (!remembered || !Drive.connected?.()) return false;
+    automaticPairAttempted = true;
+    try {
+      await startPairing({ trustMode: remembered.trustMode, automatic: true });
+      return true;
+    } catch (error) {
+      state.lastError = error.message;
+      event('status');
+      return false;
+    }
+  }
+
+  async function driveFetch(url, options = {}) {
+    try {
+      const token = await Drive.authorize(false);
+      const headers = new Headers(options.headers || {});
+      headers.set('Authorization', 'Bearer ' + token);
+      const response = await fetch(url, { ...options, headers, cache: 'no-store' });
+      if (!response.ok) {
+        let message = '';
+        try { message = (await response.json())?.error?.message || ''; } catch {}
+        throw Object.assign(Error(message || 'Phone connection could not reach private Google Drive signaling (' + response.status + ').'), { status: response.status });
+      }
+      if (state.nativeToken) state.relayReady = true;
+      if (response.status === 204) return null;
+      return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.text();
+    } catch (error) {
+      if (state.nativeToken) state.relayReady = false;
+      throw error;
+    }
   }
 
   async function listFiles(properties = {}) {
@@ -263,7 +360,77 @@
 
   async function sessionKey(privateKey, remoteJwk) {
     const remote = await crypto.subtle.importKey('jwk', remoteJwk, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
-    return crypto.subtle.deriveKey({ name: 'ECDH', public: remote }, privateKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    return crypto.subtle.deriveKey({ name: 'ECDH', public: remote }, privateKey, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  }
+
+  async function persistSession() {
+    const session = state.session;
+    if (!session?.key) return;
+    try {
+      const raw = await crypto.subtle.exportKey('raw', session.key);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        version: 1,
+        role: session.role,
+        sessionId: session.sessionId,
+        key: base64url(raw),
+        browserId: session.browserId,
+        peerName: session.peerName || '',
+        trustMode: session.trustMode || 'ask',
+        trustExpiresAt: Number(session.trustExpiresAt) || 0,
+        connectedAt: Number(session.connectedAt) || now(),
+        lastSeenAt: Number(session.lastSeenAt) || now(),
+        savedAt: now()
+      }));
+    } catch {
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+  }
+
+  async function restoreSession() {
+    let saved;
+    try { saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); }
+    catch { saved = null; }
+    const role = state.nativeToken ? 'phone' : 'pc';
+    if (!P.validateStoredSession(saved, role)) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return false;
+    }
+    if (['36h', '7d'].includes(saved.trustMode) && Number(saved.trustExpiresAt) <= now()) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return false;
+    }
+    if (role === 'phone' && saved.trustMode !== 'ask' && !trusts().some(row => P.trustValid(row, saved.browserId))) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return false;
+    }
+    if (role === 'phone' && !state.nativeStatus) return false;
+    try {
+      const key = await crypto.subtle.importKey('raw', fromBase64url(saved.key), { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
+      state.session = {
+        role,
+        sessionId: saved.sessionId,
+        key,
+        browserId: saved.browserId,
+        peerName: text(saved.peerName) || (role === 'pc' ? 'Android phone' : 'Computer'),
+        trustMode: saved.trustMode || 'ask',
+        trustExpiresAt: Number(saved.trustExpiresAt) || 0,
+        connectedAt: Number(saved.connectedAt) || now(),
+        lastSeenAt: Number(saved.lastSeenAt) || 0
+      };
+      state.role = role;
+      if (role === 'pc') state.lastPhoneSeenAt = Number(saved.lastSeenAt) || 0;
+      beginSession();
+      event('session-restored', { deviceName: state.session.peerName });
+      return true;
+    } catch {
+      sessionStorage.removeItem(SESSION_KEY);
+      state.session = null;
+      return false;
+    }
+  }
+
+  function clearStoredSession() {
+    sessionStorage.removeItem(SESSION_KEY);
   }
 
   async function seal(key, sessionId, frameId, target, payload) {
@@ -283,6 +450,7 @@
   }
 
   function trusts() {
+    if (state.backgroundRelay) return state.nativeTrusts.map(row => ({ ...row }));
     try {
       const value = JSON.parse(localStorage.getItem(TRUST_KEY) || '[]');
       return Array.isArray(value) ? value.filter(item => item?.browserId) : [];
@@ -318,7 +486,7 @@
     }
   }
 
-  async function startPairing({ trustMode = '36h' } = {}) {
+  async function startPairing({ trustMode = '36h', automatic = false } = {}) {
     if (state.nativeToken) {
       if (!state.nativeStatus) throw Error(state.nativeError || 'Reconnect this phone before pairing a computer.');
       throw Error('This is the phone. Start Connect Phone from the computer instead.');
@@ -345,18 +513,31 @@
     const file = await createFile('LotKeys Phone Pair Request ' + sessionId + '.json', offer, {
       lotkeysRole: 'lotkeysPairOffer', sessionId, expiresAt: String(expiresAt)
     });
-    state.pairing = { ...offer, pair, fileId: file.id };
+    state.pairing = { ...offer, pair, fileId: file.id, automatic: !!automatic };
     state.lastError = '';
     event('pairing', { code, sessionId, expiresAt });
-    clearInterval(pairTimer);
-    pairTimer = setInterval(pollPairAnswer, 1600);
-    pollPairAnswer().catch(pairingError);
+    schedulePairPoll(100);
     return { code, sessionId, expiresAt };
   }
 
   function pairingError(error) {
     state.lastError = error.message;
     event('status');
+  }
+
+  function schedulePairPoll(delay = 1600) {
+    clearTimeout(pairTimer);
+    if (!state.pairing) return;
+    pairTimer = setTimeout(async () => {
+      if (!state.pairing || pairBusy) return schedulePairPoll();
+      pairBusy = true;
+      try { await pollPairAnswer(); }
+      catch (error) { pairingError(error); }
+      finally {
+        pairBusy = false;
+        if (state.pairing) schedulePairPoll();
+      }
+    }, Math.max(100, Number(delay) || 1600));
   }
 
   async function pollPairAnswer() {
@@ -395,8 +576,10 @@
     state.role = 'pc';
     state.lastPhoneSeenAt = now();
     state.pairing = null;
-    clearInterval(pairTimer);
+    clearTimeout(pairTimer);
     await Promise.allSettled([deleteFile(answerFile.id), deleteFile(pairing.fileId)]);
+    await persistSession();
+    rememberPair(state.session);
     beginSession();
     event('connected', { deviceName: state.session.peerName });
     await refreshThreads().catch(error => { state.lastError = error.message; event('status'); });
@@ -405,19 +588,33 @@
   async function cancelPairing(reason = '') {
     const pairing = state.pairing;
     state.pairing = null;
-    clearInterval(pairTimer);
+    clearTimeout(pairTimer);
     if (pairing?.fileId) deleteFile(pairing.fileId).catch(() => {});
     if (reason) state.lastError = reason;
     event('pairing-cancelled', { reason });
   }
 
   async function pollOffers() {
-    if (offerBusy || !state.nativeStatus || !Drive.connected?.()) return;
+    if (offerBusy || !state.nativeStatus || !state.relayReady) return;
     offerBusy = true;
     try {
+      if (state.backgroundRelay) {
+        const result = await nativeCall('/v1/pairings', { timeout: 7000 });
+        const rows = Array.isArray(result?.pairings) ? result.pairings : [];
+        const ids = new Set(rows.map(row => text(row.sessionId)));
+        for (const [id, offer] of pendingOffers) if (offer._native && !ids.has(id)) pendingOffers.delete(id);
+        for (const row of rows) {
+          if (!text(row.sessionId) || Number(row.expiresAt) <= now()) continue;
+          const offer = { ...row, version: 1, type: 'offer', _native: true };
+          pendingOffers.set(offer.sessionId, offer);
+          event('pair-request', { offer: publicOffer(offer) });
+        }
+        return;
+      }
       const files = await listFiles({ lotkeysRole: 'lotkeysPairOffer' });
       for (const file of files) {
         if (Number(file.appProperties?.expiresAt || 0) < now()) {
+          pendingOffers.delete(file.appProperties?.sessionId);
           deleteFile(file.id).catch(() => {});
           continue;
         }
@@ -503,15 +700,25 @@
   });
 
   function pendingPairings() {
-    return [...pendingOffers.values()].filter(offer => P.validatePairOffer(offer)).map(publicOffer);
+    return [...pendingOffers.values()].filter(offer => offer._native ? Number(offer.expiresAt) > now() : P.validatePairOffer(offer)).map(publicOffer);
   }
 
   async function approvePair(sessionId, trustMode = '36h', { automatic = false } = {}) {
     const offer = pendingOffers.get(sessionId);
+    if (offer?._native) {
+      if (!['ask', '36h', '7d', 'until-disconnect'].includes(trustMode)) trustMode = '36h';
+      await nativeCall('/v1/pairings/approve', {
+        method: 'POST', body: JSON.stringify({ sessionId, trustMode }), timeout: 15000
+      });
+      pendingOffers.delete(sessionId);
+      state.lastError = '';
+      event('status');
+      return status();
+    }
     if (!offer || !P.validatePairOffer(offer)) throw Error('That pairing request expired. Start again from the computer.');
     if (!state.nativeStatus) throw Error('The Android phone layer is not available.');
     if (!['ask', '36h', '7d', 'until-disconnect'].includes(trustMode)) trustMode = '36h';
-    if (state.session) await disconnect({ notify: true });
+    if (state.session) await disconnect({ notify: true, reason: 'moved', movedTo: offer.pcName });
     const pair = await keyPair();
     const key = await sessionKey(pair.privateKey, offer.publicKey);
     const trust = recordTrust(offer, trustMode);
@@ -546,6 +753,7 @@
     state.role = 'phone';
     pendingOffers.delete(sessionId);
     deleteFile(offer._fileId).catch(() => {});
+    await persistSession();
     beginSession();
     event('connected', { deviceName: offer.pcName, automatic });
     return status();
@@ -554,6 +762,14 @@
   async function rejectPair(sessionId) {
     const offer = pendingOffers.get(sessionId);
     if (!offer) return;
+    if (offer._native) {
+      await nativeCall('/v1/pairings/reject', {
+        method: 'POST', body: JSON.stringify({ sessionId }), timeout: 15000
+      });
+      pendingOffers.delete(sessionId);
+      event('pair-rejected', { sessionId });
+      return;
+    }
     await createFile('LotKeys Phone Pair Declined ' + offer.sessionId + '.json', {
       version: 1, type: 'answer', sessionId: offer.sessionId, code: offer.code, rejected: true, createdAt: now()
     }, { lotkeysRole: 'lotkeysPairAnswer', sessionId: offer.sessionId, expiresAt: String(offer.expiresAt) });
@@ -576,8 +792,7 @@
     event('status');
   }
 
-  async function sendFrame(target, payload) {
-    const session = state.session;
+  async function sendFrame(target, payload, session = state.session) {
     if (!session?.key) throw Error('The phone is not connected.');
     const frameId = randomId(18);
     const expiresAt = now() + 2 * 60 * 1000;
@@ -591,12 +806,13 @@
   }
 
   async function pollFrames() {
-    if (frameBusy || !state.session || !Drive.connected?.()) return;
+    if (frameBusy || !state.session || (state.session.role === 'phone' && !state.relayReady)) return;
     frameBusy = true;
     const session = state.session;
     const target = session.role;
     try {
       const files = await listFiles({ lotkeysRole: 'lotkeysPhoneFrame', sessionId: session.sessionId, target });
+      if (state.session !== session) return;
       for (const file of files) {
         const frameId = file.appProperties?.frameId || '';
         if (!frameId || processedFrames.has(frameId)) {
@@ -614,8 +830,9 @@
           if (processedFrames.size > 1000) processedFrames.delete(processedFrames.values().next().value);
           session.lastSeenAt = now();
           state.lastPhoneSeenAt = now();
-          if (target === 'phone') await handlePhonePayload(payload);
-          else handlePcPayload(payload);
+          if (state.session !== session) return;
+          if (target === 'phone') await handlePhonePayload(payload, session);
+          else handlePcPayload(payload, session);
         } finally {
           deleteFile(file.id).catch(() => {});
         }
@@ -625,9 +842,10 @@
     }
   }
 
-  async function handlePhonePayload(payload) {
+  async function handlePhonePayload(payload, session) {
+    if (state.session !== session) return;
     if (payload.kind === 'event' && payload.event === 'disconnect') {
-      await disconnect({ notify: false });
+      await disconnect({ notify: false, reason: payload.reason || '', movedTo: payload.movedTo || '' });
       return;
     }
     if (payload.kind !== 'request' || !/^[A-Za-z0-9_-]{8,100}$/.test(text(payload.id))) return;
@@ -649,16 +867,16 @@
       } else if (payload.op === 'attachment') {
         data = await nativeCall('/v1/attachment?partId=' + encodeURIComponent(text(payload.payload?.partId)), { timeout: 45000 });
       } else if (payload.op === 'foreground') {
-        renewTrust(payload.sender);
-        data = { ok: true };
+        data = { ok: true, trustExpiresAt: renewTrust() };
       } else throw Error('Unsupported phone request.');
-      await sendFrame('pc', { kind: 'response', requestId: payload.id, ok: true, data });
+      await sendFrame('pc', { kind: 'response', requestId: payload.id, ok: true, data }, session);
     } catch (error) {
-      await sendFrame('pc', { kind: 'response', requestId: payload.id, ok: false, error: error.message || 'Phone request failed.' });
+      await sendFrame('pc', { kind: 'response', requestId: payload.id, ok: false, error: error.message || 'Phone request failed.' }, session);
     }
   }
 
-  function handlePcPayload(payload) {
+  function handlePcPayload(payload, session) {
+    if (state.session !== session) return;
     if (payload.kind === 'event') {
       if (payload.event === 'invalidate') {
         state.threads = [];
@@ -666,7 +884,7 @@
         event('data', { reason: 'phone-change' });
         refreshThreads().catch(sessionError);
       }
-      if (payload.event === 'disconnect') disconnect({ notify: false }).catch(() => {});
+      if (payload.event === 'disconnect') disconnect({ notify: false, reason: payload.reason || '', movedTo: payload.movedTo || '' }).catch(() => {});
       return;
     }
     if (payload.kind !== 'response') return;
@@ -715,7 +933,12 @@
       state.session.phoneStatus = result;
       state.lastError = '';
       event('status');
-      if (document.visibilityState === 'visible') request('foreground', {}, 18000).catch(() => {});
+      if (document.visibilityState === 'visible') request('foreground', {}, 18000).then(result => {
+        if (!result?.trustExpiresAt || state.session?.role !== 'pc') return;
+        state.session.trustExpiresAt = Number(result.trustExpiresAt) || state.session.trustExpiresAt;
+        rememberPair(state.session);
+        persistSession();
+      }).catch(() => {});
     } catch (error) {
       state.lastError = error.message;
       event('status');
@@ -725,14 +948,20 @@
   }
 
   function renewTrust() {
-    if (state.session?.role !== 'phone') return;
+    if (state.session?.role !== 'phone') return 0;
     const rows = trusts();
     const row = rows.find(item => item.browserId === state.session.browserId);
-    if (!row || !['36h', '7d'].includes(row.mode)) return;
-    row.expiresAt = P.trustExpiry(row.mode);
+    if (!row) return Number(state.session.trustExpiresAt) || 0;
     row.lastConnectedAt = now();
+    if (!['36h', '7d'].includes(row.mode)) {
+      saveTrusts(rows);
+      return Number(state.session.trustExpiresAt) || 0;
+    }
+    row.expiresAt = P.trustExpiry(row.mode);
     saveTrusts(rows);
     state.session.trustExpiresAt = row.expiresAt;
+    persistSession();
+    return row.expiresAt;
   }
 
   async function refreshThreads(offset = 0) {
@@ -807,20 +1036,34 @@
   }
 
   function connected() {
+    if (state.nativeToken && state.backgroundRelay) return !!state.nativeStatus?.relay?.connected;
     if (!state.session) return false;
-    if (state.session.role === 'phone') return !!state.nativeStatus;
-    const staleAfter = monitoringState().heavy || now() < monitoringGraceUntil ? 75000 : 22000;
+    const staleAfter = monitoringState().heavy || now() < monitoringGraceUntil ? 90000 : state.session.role === 'phone' ? 35000 : 22000;
+    if (state.session.role === 'phone' && (!state.nativeStatus || !state.relayReady)) return false;
     return now() - Math.max(state.session.lastSeenAt || 0, state.lastPhoneSeenAt || 0) < staleAfter;
   }
 
-  async function disconnect({ notify = true, forget = false } = {}) {
+  async function disconnect({ notify = true, forget = false, reason = '', movedTo = '', keepRemembered = false } = {}) {
+    if (state.nativeToken && state.backgroundRelay && !state.session) {
+      await nativeCall('/v1/relay/disconnect', {
+        method: 'POST', body: JSON.stringify({ forget: !!forget }), timeout: 15000
+      });
+      await wait(500);
+      await nativeTick().catch(() => {});
+      event('disconnected', { reason, movedTo });
+      return;
+    }
     const session = state.session;
-    if (notify && session) await sendFrame(session.role === 'pc' ? 'phone' : 'pc', { kind: 'event', event: 'disconnect' }).catch(() => {});
+    if (notify && session) await sendFrame(session.role === 'pc' ? 'phone' : 'pc', {
+      kind: 'event', event: 'disconnect', reason: text(reason), movedTo: text(movedTo)
+    }, session).catch(() => {});
     if (forget && session?.role === 'phone') saveTrusts(trusts().filter(row => row.browserId !== session.browserId));
     if (session?.trustMode === 'until-disconnect' && session.role === 'phone') {
       saveTrusts(trusts().filter(row => row.browserId !== session.browserId));
     }
     state.session = null;
+    clearStoredSession();
+    if (session?.role === 'pc' && !keepRemembered) forgetRememberedPair();
     state.threads = [];
     state.threadPage = { hasMore: false, nextOffset: 0, total: 0 };
     state.lastPhoneSeenAt = 0;
@@ -832,34 +1075,59 @@
       pendingRpc.delete(id);
     }
     if (state.nativeStatus) state.role = 'phone';
-    event('disconnected');
+    if (reason === 'moved') state.lastError = movedTo ? `Messaging moved to ${movedTo}.` : 'Messaging moved to another computer.';
+    event('disconnected', { reason, movedTo });
   }
 
   function forgetDevice(browser) {
+    if (state.nativeToken && state.backgroundRelay) {
+      state.nativeTrusts = state.nativeTrusts.filter(row => row.browserId !== browser);
+      return nativeCall('/v1/relay/forget', {
+        method: 'POST', body: JSON.stringify({ browserId: browser }), timeout: 15000
+      }).then(() => nativeTick()).catch(error => { state.lastError = error.message; event('status'); });
+    }
     saveTrusts(trusts().filter(row => row.browserId !== browser));
     if (state.session?.browserId === browser) return disconnect({ notify: true, forget: true });
+  }
+
+  async function disconnectAll() {
+    if (state.nativeToken && state.backgroundRelay) {
+      await nativeCall('/v1/relay/disconnect-all', { method: 'POST', body: '{}', timeout: 15000 });
+      state.nativeTrusts = [];
+      await wait(500);
+      await nativeTick().catch(() => {});
+      event('trust');
+      return;
+    }
+    saveTrusts([]);
+    pendingOffers.clear();
+    await disconnect({ notify: true, forget: true });
+    event('trust');
   }
 
   function status() {
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.4.91',
+      version: '0.9.4.92',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
       nativeError: state.nativeError,
+      relayReady: !!state.relayReady,
+      relayIdentity: state.relayIdentity,
       connected: connected(),
-      pairing: state.pairing ? { code: state.pairing.code, sessionId: state.pairing.sessionId, expiresAt: state.pairing.expiresAt } : null,
+      pairing: state.pairing ? { code: state.pairing.code, sessionId: state.pairing.sessionId, expiresAt: state.pairing.expiresAt, automatic: !!state.pairing.automatic } : null,
       deviceName: state.nativeStatus?.deviceName || state.session?.peerName || '',
       sourceApp: state.nativeStatus?.sourceApp || state.session?.phoneStatus?.sourceApp || '',
-      peerName: state.session?.peerName || '',
-      trustMode: state.session?.trustMode || '',
-      trustExpiresAt: state.session?.trustExpiresAt || 0,
+      peerName: state.nativeStatus?.relay?.peerName || state.session?.peerName || '',
+      trustMode: state.nativeStatus?.relay?.trustMode || state.session?.trustMode || '',
+      trustExpiresAt: Number(state.nativeStatus?.relay?.trustExpiresAt) || state.session?.trustExpiresAt || 0,
       coverage,
       capabilities: state.nativeStatus?.capabilities || state.session?.phoneStatus?.capabilities || {},
       lastError: state.lastError,
       pendingPairings: pendingPairings(),
+      rememberedPair: rememberedPair(),
       threadCount: state.threads.length,
       threadPage: { ...state.threadPage }
     };
@@ -872,8 +1140,15 @@
 
   async function init() {
     parseNativeToken();
-    await Drive.restoreSessionAuthorization?.().catch(() => false);
+    const driveRestored = await Drive.restoreSessionAuthorization?.().catch(() => false);
     await nativeTick();
+    state.relayReady = !!(state.backgroundRelay || (state.nativeStatus && (driveRestored || Drive.connected?.())));
+    if (state.relayReady) {
+      state.relayIdentity = state.backgroundRelay
+        ? text(state.nativeStatus?.relay?.account).toLowerCase()
+        : text((await Drive.getGoogleIdentity().catch(() => null))?.email).toLowerCase();
+    }
+    await restoreSession();
     monitoringWasHeavy = !!monitoringState().heavy;
     scheduleNativeTick(phonePollDelay());
     scheduleOfferPoll(phonePollDelay());
@@ -883,15 +1158,27 @@
       refreshThreads().catch(() => {});
     }
     cleanupStale().catch(() => {});
+    if (!state.nativeToken && !state.session) setTimeout(() => reconnectTrustedComputer().catch(() => {}), 500);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        if (state.nativeStatus && state.relayReady) {
+          pollOffers().catch(() => {});
+          if (state.session) scheduleFramePoll(100);
+        } else if (!state.nativeToken && !state.session) reconnectTrustedComputer().catch(() => {});
+      } else if (state.session) persistSession();
+    });
+    window.addEventListener('pagehide', () => { if (state.session) persistSession(); });
     event('ready');
   }
 
   window.LotKeysPhone = {
-    version: '0.9.4.91',
+    version: '0.9.4.92',
     init,
     status,
     subscribe,
     connectNative,
+    preparePhonePairing,
+    reconnectTrustedComputer,
     startPairing,
     cancelPairing,
     pendingPairings,
@@ -907,7 +1194,8 @@
     disconnect,
     trusts,
     forgetDevice,
-    clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; state.role = 'pc'; event('status'); }
+    disconnectAll,
+    clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; state.relayReady = false; state.relayIdentity = ''; state.role = 'pc'; clearStoredSession(); event('status'); }
   };
 
   function initAfterBase() {
