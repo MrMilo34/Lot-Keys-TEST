@@ -1,8 +1,8 @@
-# LotKeys V0.9.4.84 team-test checklist
+# LotKeys V0.9.4.86 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09484` and confirm **V0.9.4.84 / 09484**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09486` and confirm **V0.9.4.86 / 09486**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
@@ -46,6 +46,19 @@
 - Rename the LotKeys contact and confirm the custom name overrides the Android contact name.
 - Delete the LotKeys contact and confirm its number returns to Unsorted while the phone conversation remains.
 - Confirm deleting/clearing a phone conversation does not delete the LotKeys customer folder, notes, or saved documents.
+
+## V0.9.4.86 Hub workflow
+
+- In All, confirm LotKeys Chats appears above Device Messages; collapse each independently, reopen Hub, and confirm the state is remembered.
+- Confirm new messages update unread counts without forcing a collapsed group open.
+- Open a Device conversation and confirm no duplicate profile photo appears. Confirm the customer action buttons remain above message history.
+- Link one and then multiple interested Vehicle Profiles. Confirm the primary compact card shows stock, odometer and price, `+N more` appears, and the card opens the live Vehicle Profile.
+- Search the Add Note topic list, save a note, then save another with an all-day reminder and one with a time.
+- Create a Reminder directly from Calendar; confirm all-day reminders sort above appointments and `.ics` export uses a date-only event.
+- Open Questions after a conversation mentions financing or a vehicle feature. Confirm answered topics are excluded and selecting a question only fills the Device draft.
+- On PC, choose and preview each built-in notification sound, Silent and a short custom clip. Confirm an incoming LotKeys Chat plays only the selected PC sound.
+- On Android, confirm incoming LotKeys Chat does not play an extra LotKeys sound and normal Device SMS/MMS notifications remain unchanged.
+- Confirm the Hub logo has no dark corner matte, floating controls sit just above mobile navigation, and desktop controls are on the right-side rail.
 
 ## Known checkpoint boundaries
 

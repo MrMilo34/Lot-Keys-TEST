@@ -16,6 +16,12 @@ test('legacy categoryId becomes the multi-category model', () => {
   assert.equal('categoryId' in contact, false);
 });
 
+test('contact normalization keeps unique vehicle links with the primary first', () => {
+  const contact = Hub.normalizeContact({ primaryVehicleId: 'v2', vehicleIds: ['v1', 'v1'] });
+  assert.deepEqual(contact.vehicleIds, ['v2', 'v1']);
+  assert.equal(contact.primaryVehicleId, 'v2');
+});
+
 test('category normalization keeps only one nested level', () => {
   const rows = Hub.normalizeCategories([
     ...categories,
@@ -80,4 +86,37 @@ test('appointment overlap excludes cancelled appointments', () => {
     { id: 'c', start: '2026-09-22T16:00:00.000Z', end: '2026-09-22T17:00:00.000Z', status: 'Cancelled' }
   ];
   assert.deepEqual(Hub.overlap(rows, candidate).map(row => row.id), ['b']);
+});
+
+test('all-day reminders sort first and never create appointment collisions', () => {
+  const at = (hour, minute = 0) => new Date(2026, 8, 24, hour, minute).toISOString();
+  const rows = [
+    { id: 'appt', kind: 'Test drive', start: at(16), end: at(16, 30) },
+    { id: 'rem', kind: 'Reminder', allDay: true, start: at(12), end: new Date(2026, 8, 25, 12).toISOString() }
+  ];
+  assert.deepEqual(Hub.agenda(rows, '2026-09-24').map(row => row.id), ['rem', 'appt']);
+  assert.deepEqual(Hub.overlap(rows, rows[1]), []);
+});
+
+test('all-day reminder calendar export uses date values', () => {
+  const output = Hub.ics({
+    id: 'reminder',
+    title: 'Talk to Finance about John',
+    kind: 'Reminder',
+    allDay: true,
+    start: '2026-09-24T12:00:00.000Z',
+    end: '2026-09-25T12:00:00.000Z'
+  });
+  assert.match(output, /DTSTART;VALUE=DATE:20260924/);
+  assert.match(output, /DTEND;VALUE=DATE:20260925/);
+  assert.doesNotMatch(output, /DTSTART:\d+T/);
+});
+
+test('question recommendations prioritize context and omit answered topics', () => {
+  const contact = { notes: [{ key: 'budget', text: '$500 monthly' }] };
+  const rows = Hub.recommendQuestions(contact, 'I want to finance a vehicle and need AWD.');
+  assert.equal(rows.some(row => row.key === 'budget'), false);
+  assert.equal(rows.some(row => row.key === 'purchaseMethod'), false, 'recognized financing answer is omitted');
+  assert.equal(rows[0].key, 'downPayment');
+  assert.ok(rows.findIndex(row => row.key === 'features') < rows.findIndex(row => row.key === 'dealType'));
 });

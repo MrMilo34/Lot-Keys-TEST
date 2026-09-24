@@ -8,15 +8,15 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.84', () => {
+test('release metadata is consistently V0.9.4.86', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.84');
-  assert.equal(version.build, '09484');
+  assert.equal(version.version, '0.9.4.86');
+  assert.equal(version.build, '09486');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09484-adaptive-monitor-hotfix4');
-  assert.match(read('index.html'), /V0\.9\.4\.84/);
-  assert.match(read('manifest.webmanifest'), /build=09484/);
-  assert.match(read('sw.js'), /lotkeys-app-v09484-adaptive-monitor-hotfix4/);
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09486-hub-workflow');
+  assert.match(read('index.html'), /V0\.9\.4\.86/);
+  assert.match(read('manifest.webmanifest'), /build=09486/);
+  assert.match(read('sw.js'), /lotkeys-app-v09486-hub-workflow/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -93,7 +93,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09484h4/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09486/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -132,8 +132,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09484h4/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09484h4/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09486/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09486/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -213,4 +213,54 @@ test('Device is driven by real phone availability and never simulates connectivi
   assert.match(hub, /selectedCategories/);
   assert.match(hub, /Subcategory/);
   assert.doesNotMatch(hub, /simulated|fake conversation/i);
+});
+
+test('Hub All groups LotKeys first and remembers independent collapse state', () => {
+  const hub = read('lotkeys-hub.js');
+  const lotkeys = hub.indexOf("section('lotkeys','LotKeys Chats'");
+  const device = hub.indexOf("section('device','Device Messages'");
+  assert.ok(lotkeys >= 0 && device > lotkeys);
+  assert.match(hub, /GROUP_STATE_KEY='lotkeys-hub-group-state-v1'/);
+  assert.match(hub, /data-toggle-group/);
+  assert.match(hub, /saveGroupState/);
+});
+
+test('current Device conversation layout omits avatar and exposes customer actions', () => {
+  const hub = read('lotkeys-hub.js');
+  const current = hub.slice(hub.lastIndexOf('async function openDeviceConversation'), hub.indexOf('function appointmentCard', hub.lastIndexOf('async function openDeviceConversation')));
+  assert.doesNotMatch(current, /hub-device-avatar/);
+  for (const id of ['hub-device-contact', 'hub-device-appointment', 'hub-device-note', 'hub-device-questions', 'hub-device-files']) {
+    assert.match(current, new RegExp(id));
+  }
+  assert.match(current, /Use in message|questionsDialog/);
+});
+
+test('contacts support interested vehicles, searchable notes and reminders', () => {
+  const hub = read('lotkeys-hub.js');
+  assert.match(hub, /primaryVehicleId/);
+  assert.match(hub, /Interested vehicles/);
+  assert.match(hub, /data-contact-vehicle/);
+  assert.match(hub, /id="hub-note-topic-search"/);
+  assert.match(hub, /id="hub-note-reminder"/);
+  assert.match(hub, /kind:'Reminder'/);
+  assert.match(hub, /id="hub-cal-reminder"/);
+  assert.match(read('lotkeys-hub-core.js'), /DTSTART;VALUE=DATE/);
+});
+
+test('PC notification sounds never add a second Android alert', () => {
+  const html = read('index.html');
+  const messaging = read('lotkeys-messaging.js');
+  assert.match(html, /PC Notification Sound/);
+  assert.match(html, /Android phone stays silent/);
+  assert.match(html, /lotkeysNotificationCustomSound/);
+  assert.match(messaging, /if\(!preview&&isPhoneNotificationDevice\(\)\)return false/);
+  assert.match(messaging, /notificationSounds/);
+  assert.match(messaging, /playNotificationSound\(\)\.catch/);
+});
+
+test('Hub logo and floating actions use the corrected responsive layout', () => {
+  const css = read('lotkeys-hub.css');
+  assert.match(css, /\.hub-brand img\{border-radius:22%;clip-path:inset\(0 round 22%\)\}/);
+  assert.match(css, /\.hub-actions\{right:12px;bottom:12px\}/);
+  assert.match(css, /@media\(min-width:980px\).*\.hub-actions\{top:50%;bottom:auto/s);
 });

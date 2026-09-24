@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.84",
-  "build": "09484",
-  "release": "android-phone-source-checkpoint",
+  "version": "0.9.4.86",
+  "build": "09486",
+  "release": "hub-customer-workflow",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09484-adaptive-monitor-hotfix4",
-  "publishedAt": "2026-09-23",
-  "basedOn": "LotKeys V0.9.4.83 clean rebuild"
+  "serviceWorkerCache": "lotkeys-app-v09486-hub-workflow",
+  "publishedAt": "2026-09-24",
+  "basedOn": "LotKeys V0.9.4.84 Android phone-source checkpoint"
 }

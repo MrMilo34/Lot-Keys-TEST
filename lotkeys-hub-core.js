@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.84 — pure models for contacts, organization and appointments. */
+/* LotKeys Hub V0.9.4.86 — pure models for contacts, organization, reminders and appointments. */
 (function (root) {
   'use strict';
 
@@ -74,7 +74,10 @@
   }
 
   function normalizeContact(contact) {
-    const clean = { ...(contact || {}), categoryIds: categoryIds(contact) };
+    const vehicleIds = [...new Set((Array.isArray(contact?.vehicleIds) ? contact.vehicleIds : []).map(text).filter(Boolean))];
+    const primaryVehicleId = text(contact?.primaryVehicleId);
+    if (primaryVehicleId && !vehicleIds.includes(primaryVehicleId)) vehicleIds.unshift(primaryVehicleId);
+    const clean = { ...(contact || {}), categoryIds: categoryIds(contact), vehicleIds, primaryVehicleId };
     delete clean.categoryId;
     return clean;
   }
@@ -211,13 +214,16 @@
 
   function agenda(rows, date) {
     return rows.filter(item => localDay(item.start) === date && !item.deleted)
-      .sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+      .sort((a, b) => Number(!a.allDay) - Number(!b.allDay) || Date.parse(a.start) - Date.parse(b.start));
   }
 
   function overlap(rows, appointment) {
+    if (appointment.allDay || appointment.kind === 'Reminder') return [];
     return rows.filter(item =>
       item.id !== appointment.id &&
       !item.deleted &&
+      !item.allDay &&
+      item.kind !== 'Reminder' &&
       !['Cancelled', 'Completed', 'No show'].includes(item.status) &&
       Date.parse(appointment.start) < Date.parse(item.end) &&
       Date.parse(appointment.end) > Date.parse(item.start)
@@ -242,6 +248,12 @@
       .replace(/;/g, '\\;')
       .replace(/,/g, '\\,');
     const stamp = value => new Date(value).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+    const dayStamp = value => localDay(value).replace(/-/g, '');
+    const nextDayStamp = value => {
+      const date = new Date(localDay(value) + 'T12:00:00');
+      date.setDate(date.getDate() + 1);
+      return localDay(date).replace(/-/g, '');
+    };
     const encoder = new TextEncoder();
     const fold = line => {
       let output = '';
@@ -266,11 +278,11 @@
       'BEGIN:VEVENT',
       'UID:' + String(appointment.id || 'appointment').replace(/[^A-Za-z0-9_-]/g, '_') + '@lot-keys.ca',
       'DTSTAMP:' + stamp(new Date()),
-      'DTSTART:' + stamp(appointment.start),
-      'DTEND:' + stamp(appointment.end),
+      appointment.allDay ? 'DTSTART;VALUE=DATE:' + dayStamp(appointment.start) : 'DTSTART:' + stamp(appointment.start),
+      appointment.allDay ? 'DTEND;VALUE=DATE:' + nextDayStamp(appointment.start) : 'DTEND:' + stamp(appointment.end),
       'SUMMARY:' + clean(appointment.title),
       'LOCATION:' + clean(appointment.location),
-      'DESCRIPTION:' + clean(appointment.vehicleLabel || ''),
+      'DESCRIPTION:' + clean(appointment.notes || appointment.vehicleLabel || ''),
       'END:VEVENT',
       'END:VCALENDAR',
       ''
@@ -313,6 +325,38 @@
     return output.filter((item, index) => output.findIndex(other => other.key === item.key) === index);
   }
 
+  // Conversation-aware coaching only. Answers already captured in notes or confidently
+  // recognized in the visible conversation are intentionally removed from the prompt list.
+  function recommendQuestions(contact = {}, input = '') {
+    const answered = new Set((contact.notes || []).map(note => text(note.key)).filter(Boolean));
+    for (const suggestion of suggestNotes(input)) answered.add(suggestion.key);
+    const source = text(input).toLowerCase();
+    const score = key => {
+      const finance = /\b(?:financ(?:e|ing)?|payment|credit|loan|down payment|cash)\b/.test(source);
+      const trade = /\b(?:trade|current vehicle|replace|owe|lien)\b/.test(source);
+      const vehicle = /\b(?:vehicle|car|truck|suv|sedan|model|feature|seat|awd|4x4)\b/.test(source);
+      const timing = /\b(?:today|tomorrow|week|month|soon|when|timeframe)\b/.test(source);
+      const weights = {
+        purchaseMethod: finance ? 100 : 72,
+        budget: finance ? 98 : 70,
+        downPayment: finance ? 96 : 48,
+        coApplicant: finance ? 82 : 24,
+        trade: trade ? 100 : 64,
+        features: vehicle ? 92 : 60,
+        reason: vehicle ? 84 : 58,
+        timeframe: timing ? 96 : 68,
+        searchDuration: 50,
+        decisionMakers: 46,
+        dealType: 42
+      };
+      return weights[key] || 0;
+    };
+    return questions
+      .filter(([key]) => !answered.has(key))
+      .map(question => ({ key: question[0], label: question[1], question: question[2], score: score(question[0]) }))
+      .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
+  }
+
   const api = {
     uid,
     text,
@@ -338,7 +382,8 @@
     monthCells,
     ics,
     questions,
-    suggestNotes
+    suggestNotes,
+    recommendQuestions
   };
 
   root.LotKeysHubCore = api;

@@ -1,6 +1,17 @@
-# LotKeys V0.9.4.84 — Android phone-source checkpoint
+# LotKeys V0.9.4.86 — Hub customer workflow update
 
-This TEST release keeps the clean **V0.9.4.83** rebuild intact and adds the first deliberately small Android phone connection. The phone remains the message source of truth; LotKeys supplies the existing interface, organization and contact overlay.
+This TEST release keeps the **V0.9.4.84** Android phone-source checkpoint intact and improves the Hub customer workflow. The phone remains the Device-message source of truth; LotKeys supplies the shared interface, organization and private contact overlay.
+
+## V0.9.4.86 included
+
+- All keeps **LotKeys Chats** above **Device Messages**. Each group has an expanded/collapsed arrow and remembers its state on that browser.
+- Device conversation headers no longer repeat an account/contact photo. Contact, Call, Appointment, Add Note, Questions and Photo/document actions sit together above message history.
+- Contacts can link one or more live Vehicle Profiles. The primary interested vehicle shows year, make, model, stock, odometer and price, and opens the current Vehicle Profile when selected.
+- Add Note has a searchable field picker and can create an all-day or timed private Calendar reminder in the same save.
+- Calendar can create reminders directly, shows all-day reminders before timed appointments and exports reminders as valid all-day `.ics` events.
+- Questions prioritizes unanswered topics using the visible conversation context. Selecting a question places it into a Device message draft; it never auto-sends.
+- Account includes a local **PC Notification Sound** picker with built-in tones, Silent and short custom audio. Automatic LotKeys Chat sounds are suppressed on Android; SMS/MMS remains governed by Android's native notification settings.
+- The Hub logo crop removes the unwanted dark corner matte, mobile floating actions sit above the app navigation, and desktop controls return to a right-side rail.
 
 ## First checkpoint included
 
@@ -37,7 +48,7 @@ This TEST release keeps the clean **V0.9.4.83** rebuild intact and adds the firs
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the current screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.85`. The connected web checkpoint remains V0.9.4.84 because this Android-only hotfix does not change its messaging logic or stored data.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the current screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.85`. The connected web application is V0.9.4.86; this release does not require a new APK.
 
 The Android setup uses four short screens:
 
@@ -62,8 +73,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09484`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09486`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.84 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.86 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

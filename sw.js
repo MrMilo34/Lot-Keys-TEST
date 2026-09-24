@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09484-adaptive-monitor-hotfix4';
+const CACHE='lotkeys-app-v09486-hub-workflow';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
