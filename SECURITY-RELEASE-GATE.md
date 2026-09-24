@@ -2,7 +2,7 @@
 
 ## Current status: team testing
 
-V0.9.4.86 is suitable for controlled testing with approved Google accounts, an explicitly installed Android test APK, and non-sensitive dealership test data. It is **not yet the public-production security finish line**.
+V0.9.4.87 is suitable for controlled testing with approved Google accounts, the matching explicitly installed Android test APK, and non-sensitive dealership test data. It is **not yet the public-production security finish line**.
 
 The website remains a static browser application. Google Drive enforces file access, and the installed Store Processor is the trusted writer for the current Inventory test model; a production service is still required as the final authority for multi-Store Creator/Admin roles, global contact discovery, cross-Store message delivery, abuse controls, and long-lived authorization secrets.
 
@@ -22,7 +22,7 @@ The website remains a static browser application. Google Drive enforces file acc
 - Public source contains no Google client secret, Drive access token, user password, or customer financial record.
 - The Android bridge listens only on `127.0.0.1`, requires a random install token, accepts only approved LotKeys web origins, and removes the token from the URL fragment immediately after linking.
 - Phone pairing uses a matching four-digit approval plus ephemeral P-256 ECDH keys. Session frames are AES-GCM encrypted, placed only in the signed-in account's hidden Drive app-data space, expire after two minutes, and are deleted after processing.
-- The Android checkpoint reads SMS/MMS history and sends an SMS only after an explicit Send/Retry action. Its send ledger stores receipt state—not message text or recipient numbers—and it does not become the default messenger.
+- The Android checkpoint reads SMS/MMS history and selected MMS attachment bytes, and sends an SMS only after an explicit Send/Retry action. Device media is restricted by type/size, written to a private temporary cache and opened in the existing default messaging app for final review and Send. Its ledgers store request/receipt state—not message text or recipient numbers—and it does not become the default messenger.
 - PC tabs do not retain a second transcript. Customer organization and explicitly saved records remain in the user's private LotKeys Account storage.
 - Privacy, Terms, install, domain, and team-test guidance are included in the release.
 
@@ -37,7 +37,7 @@ The website remains a static browser application. Google Drive enforces file acc
 - The bundled Apps Script processor is a controlled-test management boundary, not a general public backend. Protect the Admin Level 2 Google account and Apps Script project, limit editors on that project, and replace it with a production-reviewed service if LotKeys becomes public or multi-dealership.
 - End-to-end encryption, key changes, recovery, attachments, group membership changes, and multi-device behavior require an independent security review before sensitive use.
 - SMS access is highly sensitive. The TEST APK is for controlled sideload testing; any public app-store distribution requires a separate permission-policy, privacy, disclosure, and security review.
-- V0.9.4.86 does not provide RCS coverage, MMS/file sending, complete group/dual-SIM handling, iPhone support, or browser-independent always-on relay. The UI must continue to show amber partial coverage honestly.
+- V0.9.4.87 does not provide RCS coverage, automatic direct MMS delivery, complete group/dual-SIM handling, iPhone support, or browser-independent always-on relay. Its media feature is a reviewed handoff to the phone's default messaging app. The UI must continue to show amber partial coverage honestly.
 - The four-digit code is a matching/approval aid, not a standalone password. Pairing also depends on the same authorized Google account and the phone-side approval screen.
 - A compromised Google account, unlocked phone, or already trusted browser remains a serious account compromise. Users must be able to disconnect and forget devices.
 
@@ -76,7 +76,7 @@ The website remains a static browser application. Google Drive enforces file acc
    - Test direct/group Chat, block/mute/admin removal, unread state, key changes, attachments, and calls across two networks.
    - Complete accessibility, privacy, threat-model, and independent security reviews.
 
-## Safe V0.9.4.86 test rules
+## Safe V0.9.4.87 test rules
 
 - Keep Google OAuth in **Testing** and explicitly add every tester.
 - Share the Store folder only with those same tester Google accounts.
@@ -87,5 +87,5 @@ The website remains a static browser application. Google Drive enforces file acc
 - Do not advertise Chat/calls as production-secure or always-on while the app is closed.
 - Install the Android APK only on an approved test phone, verify its source/checksum, and use test SMS conversations until the phone-source behavior has been reviewed.
 - Keep LotKeys open on the phone during paired-PC testing. Treat a red indicator as disconnected and amber as SMS/MMS-only coverage.
-- Never describe this checkpoint as RCS-complete, attachment-complete, or Play Store approved.
+- Never describe this checkpoint as RCS-complete, direct-MMS-complete, independently audited, or Play Store approved.
 - Do not distribute an EXE that modifies Chrome policy or silently installs the extension. Use the reviewed ZIP during testing and the Chrome Web Store for public release.

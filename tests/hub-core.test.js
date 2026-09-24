@@ -117,6 +117,48 @@ test('question recommendations prioritize context and omit answered topics', () 
   const rows = Hub.recommendQuestions(contact, 'I want to finance a vehicle and need AWD.');
   assert.equal(rows.some(row => row.key === 'budget'), false);
   assert.equal(rows.some(row => row.key === 'purchaseMethod'), false, 'recognized financing answer is omitted');
-  assert.equal(rows[0].key, 'downPayment');
+  assert.equal(rows[0].key, 'biweeklyPayment');
   assert.ok(rows.findIndex(row => row.key === 'features') < rows.findIndex(row => row.key === 'dealType'));
+});
+
+test('buying details normalize and render in the shared compact order', () => {
+  const contact = Hub.normalizeContact({
+    buying: {
+      method: 'Financing',
+      totalBudget: '$45,000',
+      biweeklyPayment: '400',
+      downPayment: '2,000',
+      tradeStatus: 'Trade',
+      expectedTradeValue: '20,000'
+    }
+  });
+  assert.deepEqual(Hub.buyingSummary(contact), [
+    'Financing', '$45,000 Total', '$400 Bi-W', '$2,000 Dwn', 'Trade', '$20,000 Expected'
+  ]);
+});
+
+test('structured note choices update contact fields without creating a second vehicle concept', () => {
+  let contact = Hub.applyContactField({ name: 'John', fields: [] }, 'biweeklyPayment', '$400');
+  contact = Hub.applyContactField(contact, 'tradeStatus', 'No Trade');
+  contact = Hub.applyContactField(contact, 'interestedVehicle', 'Honda Civic Type R');
+  assert.equal(contact.buying.biweeklyPayment, 400);
+  assert.equal(contact.buying.tradeStatus, 'No Trade');
+  assert.equal(contact.interestedVehicleText, 'Honda Civic Type R');
+  assert.equal('wantedVehicle' in contact, false);
+});
+
+test('message suggestions retain competing bi-weekly values and label negative context', () => {
+  const suggestions = Hub.suggestNotes('Make $400 bi-weekly work. $567 bi-weekly would never really work because it is too high.');
+  const payments = suggestions.filter(item => item.key === 'biweeklyPayment');
+  assert.deepEqual(payments.map(item => item.value), ['$400', '$567']);
+  assert.equal(payments[0].meaning, 'likely goal');
+  assert.equal(payments[1].meaning, 'mentioned as too high');
+  assert.equal(suggestions.some(item => item.key === 'interestedVehicle'), false);
+});
+
+test('appointment display helpers enforce MM/DD/YYYY and 12-hour time', () => {
+  assert.equal(Hub.parseDisplayDate('09/26/2026'), '2026-09-26');
+  assert.equal(Hub.displayDate('2026-09-26'), '09/26/2026');
+  assert.match(Hub.displayTime('12:30'), /12:30\s*p\.?s*m\.?/i);
+  assert.throws(() => Hub.parseDisplayDate('26/09/2026'), /MM\/DD\/YYYY|valid/);
 });

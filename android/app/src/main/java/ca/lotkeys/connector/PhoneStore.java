@@ -13,11 +13,16 @@ import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
 import android.telephony.SubscriptionManager;
+import android.util.Base64;
+
+import androidx.core.content.FileProvider;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -30,7 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** Read-only access to Android's SMS/MMS provider plus explicit, user-initiated SMS sending. */
+/** Read-only SMS/MMS access, explicit SMS sending, and reviewed native media handoff. */
 final class PhoneStore {
     static final int PAGE_SIZE = 40;
     private static final long SEND_LEDGER_MAX_AGE = 7L * 24 * 60 * 60 * 1000;
@@ -71,7 +76,7 @@ final class PhoneStore {
 
     JSONObject status(long revision, int port) throws Exception {
         return new JSONObject()
-            .put("version", "0.9.4.85")
+            .put("version", "0.9.4.87")
             .put("deviceId", InstallIdentity.id(context))
             .put("deviceName", android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL)
             .put("sourceApp", sourceApp())
@@ -86,7 +91,8 @@ final class PhoneStore {
                 .put("mmsHistory", canReadMessages())
                 .put("smsSend", canSendMessages())
                 .put("mmsSend", false)
-                .put("attachments", false)
+                .put("mediaHandoff", true)
+                .put("attachments", canReadMessages())
                 .put("rcs", false)
                 .put("contactNames", canReadContacts()));
     }
@@ -183,6 +189,7 @@ final class PhoneStore {
                     .put("state", type == 130 ? "waiting" : "sent");
                 if (!older(message, before)) continue;
                 message.put("text", mmsText(id, string(cursor, "sub")));
+                message.put("attachments", mmsAttachments(id));
                 messages.add(message);
                 count++;
             }
@@ -289,6 +296,110 @@ final class PhoneStore {
         String raw = context.getSharedPreferences("lotkeys-sends", Context.MODE_PRIVATE).getString(requestId, "");
         if (raw.isEmpty()) throw new IOException("The phone no longer has this send receipt.");
         return publicReceipt(new JSONObject(raw));
+    }
+
+    JSONObject mediaHandoff(JSONObject request) throws Exception {
+        String requestId = request.optString("requestId");
+        if (!requestId.matches("[A-Za-z0-9_-]{8,120}")) throw new IllegalArgumentException("Invalid media handoff request.");
+        SharedPreferences ledger = context.getSharedPreferences("lotkeys-media-handoffs", Context.MODE_PRIVATE);
+        synchronized (PhoneStore.class) {
+            String previous = ledger.getString(requestId, "");
+            if (!previous.isEmpty()) return new JSONObject(previous);
+            pruneLedger(ledger);
+            requireRead();
+            JSONObject thread = details(request.optString("threadId"));
+            String address = compactAddress(thread.optString("address"));
+            if (thread.optBoolean("group") || !thread.optBoolean("canReply") || !sendable(address)) {
+                throw new IllegalArgumentException("Use the phone's messaging app directly for this group or unsupported recipient.");
+            }
+            if (!address.equals(compactAddress(request.optString("address")))) {
+                throw new IllegalArgumentException("The phone recipient changed. Refresh the conversation before sharing media.");
+            }
+            JSONArray input = request.optJSONArray("files");
+            if (input == null || input.length() < 1 || input.length() > 5) {
+                throw new IllegalArgumentException("Choose between one and five media items.");
+            }
+            File folder = new File(context.getCacheDir(), "lotkeys-handoff/" + requestId);
+            if (!folder.mkdirs() && !folder.isDirectory()) throw new IOException("The phone could not prepare temporary media.");
+            ArrayList<Uri> uris = new ArrayList<>();
+            String commonType = "";
+            long total = 0;
+            for (int index = 0; index < input.length(); index++) {
+                JSONObject item = input.getJSONObject(index);
+                String requestedName = item.optString("name", "LotKeys media " + (index + 1));
+                String type = item.optString("type", "application/octet-stream");
+                if (!allowedHandoff(requestedName, type)) {
+                    throw new IllegalArgumentException("Choose a photo, voice memo, PDF, or standard office document.");
+                }
+                byte[] bytes;
+                try { bytes = Base64.decode(item.optString("data"), Base64.DEFAULT); }
+                catch (IllegalArgumentException error) { throw new IllegalArgumentException("An attachment was not encoded correctly."); }
+                total += bytes.length;
+                if (bytes.length < 1 || bytes.length > 8L * 1024 * 1024 || total > 12L * 1024 * 1024) {
+                    throw new IllegalArgumentException("Keep each attachment under 8 MB and the handoff under 12 MB total.");
+                }
+                String name = safeName(requestedName);
+                File output = new File(folder, index + "-" + name);
+                try (FileOutputStream stream = new FileOutputStream(output)) { stream.write(bytes); }
+                Uri uri = FileProvider.getUriForFile(context, context.getPackageName() + ".files", output);
+                uris.add(uri);
+                commonType = index == 0 ? type : commonType.equals(type) ? commonType : "*/*";
+            }
+            String packageName = Telephony.Sms.getDefaultSmsPackage(context);
+            Intent intent = new Intent(uris.size() == 1 ? Intent.ACTION_SEND : Intent.ACTION_SEND_MULTIPLE)
+                .setType(commonType.isEmpty() ? "*/*" : commonType)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                .putExtra("address", address)
+                .putExtra("sms_body", request.optString("text"))
+                .putExtra(Intent.EXTRA_TEXT, request.optString("text"));
+            if (uris.size() == 1) intent.putExtra(Intent.EXTRA_STREAM, uris.get(0));
+            else intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+            if (packageName != null && !packageName.isEmpty()) intent.setPackage(packageName);
+            JSONObject result = new JSONObject()
+                .put("requestId", requestId)
+                .put("phase", "handoff")
+                .put("createdAt", System.currentTimeMillis())
+                .put("updatedAt", System.currentTimeMillis())
+                .put("detail", "Opened in the phone's messaging app for final review and Send.");
+            if (!ledger.edit().putString(requestId, result.toString()).commit()) {
+                throw new IllegalStateException("The phone could not reserve this media handoff safely.");
+            }
+            try { context.startActivity(intent); }
+            catch (Exception error) {
+                result.put("phase", "failed").put("error", "Open the phone's messaging app and attach the media there.");
+                ledger.edit().putString(requestId, result.toString()).commit();
+            }
+            PhoneConnectorService.nudge();
+            return result;
+        }
+    }
+
+    JSONObject attachment(String partId) throws Exception {
+        requireRead();
+        if (partId == null || !partId.matches("mms-part-[0-9]{1,18}")) throw new IllegalArgumentException("Invalid MMS attachment.");
+        long id = Long.parseLong(partId.substring(9));
+        try (Cursor cursor = resolver.query(
+            Uri.parse("content://mms/part/" + id), new String[]{"_id", "ct", "name", "fn"}, null, null, null)) {
+            if (cursor == null || !cursor.moveToFirst()) throw new IOException("This MMS attachment is no longer on the phone.");
+            String type = string(cursor, "ct");
+            if ("text/plain".equals(type) || "application/smil".equals(type)) throw new IllegalArgumentException("That MMS part is not saveable media.");
+            try (InputStream input = resolver.openInputStream(Uri.parse("content://mms/part/" + id))) {
+                if (input == null) throw new IOException("Android could not open this MMS attachment.");
+                ByteArrayOutputStream output = new ByteArrayOutputStream();
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = input.read(buffer)) > 0) {
+                    if (output.size() + read > 12 * 1024 * 1024) throw new IOException("This MMS attachment is larger than the 12 MB save limit.");
+                    output.write(buffer, 0, read);
+                }
+                return new JSONObject()
+                    .put("id", partId)
+                    .put("name", partName(cursor, id, type))
+                    .put("type", type.isEmpty() ? "application/octet-stream" : type)
+                    .put("size", output.size())
+                    .put("data", Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP));
+            }
+        }
     }
 
     private static JSONObject publicReceipt(JSONObject row) throws Exception {
@@ -414,8 +525,52 @@ final class PhoneStore {
             }
         }
         if (!subject.isEmpty() && !"null".equals(subject)) text.insert(0, clip(subject, 300) + "\n");
-        if (attachments > 0) text.append("\n[").append(attachments).append(" MMS attachment(s) — open on phone]");
-        return text.length() == 0 ? "[MMS — open on phone]" : clip(text.toString(), 16000);
+        if (attachments > 0) text.append("\n[").append(attachments).append(" MMS attachment(s)]");
+        return text.length() == 0 ? "[MMS]" : clip(text.toString(), 16000);
+    }
+
+    private JSONArray mmsAttachments(long messageId) throws Exception {
+        JSONArray result = new JSONArray();
+        try (Cursor parts = resolver.query(
+            Uri.parse("content://mms/part"), new String[]{"_id", "ct", "name", "fn"},
+            "mid = ?", new String[]{String.valueOf(messageId)}, "seq ASC")) {
+            if (parts == null) throw new IOException("MMS parts could not be read.");
+            while (parts.moveToNext()) {
+                String type = string(parts, "ct");
+                if ("text/plain".equals(type) || "application/smil".equals(type)) continue;
+                long id = number(parts, "_id");
+                result.put(new JSONObject()
+                    .put("id", "mms-part-" + id)
+                    .put("name", partName(parts, id, type))
+                    .put("type", type.isEmpty() ? "application/octet-stream" : type));
+            }
+        }
+        return result;
+    }
+
+    private static String partName(Cursor cursor, long id, String type) {
+        String name = string(cursor, "name");
+        if (name.isEmpty()) name = string(cursor, "fn");
+        if (!name.isEmpty()) return safeName(name);
+        String extension = "application/pdf".equals(type) ? "pdf" :
+            type.startsWith("image/") ? type.substring(6) :
+            type.startsWith("audio/") ? type.substring(6) :
+            type.startsWith("video/") ? type.substring(6) : "bin";
+        extension = extension.replaceAll("[^A-Za-z0-9]", "");
+        return "MMS attachment " + id + "." + (extension.isEmpty() ? "bin" : extension);
+    }
+
+    private static String safeName(String value) {
+        String name = value == null ? "LotKeys media" : value.replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]", "-").trim();
+        if (name.isEmpty()) name = "LotKeys media";
+        return name.length() > 150 ? name.substring(0, 150) : name;
+    }
+
+    private static boolean allowedHandoff(String name, String type) {
+        String lowerName = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        String lowerType = type == null ? "" : type.toLowerCase(Locale.ROOT);
+        if (lowerType.startsWith("image/") || lowerType.startsWith("audio/")) return true;
+        return lowerName.matches(".*\\.(?:jpe?g|png|gif|webp|heic|heif|pdf|docx?|xlsx?|txt|csv|rtf|mp3|m4a|wav|ogg|webm)$");
     }
 
     static boolean sendable(String address) {

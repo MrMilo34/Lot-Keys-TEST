@@ -8,15 +8,15 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.86', () => {
+test('release metadata is consistently V0.9.4.87', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.86');
-  assert.equal(version.build, '09486');
+  assert.equal(version.version, '0.9.4.87');
+  assert.equal(version.build, '09487');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09486-hub-workflow');
-  assert.match(read('index.html'), /V0\.9\.4\.86/);
-  assert.match(read('manifest.webmanifest'), /build=09486/);
-  assert.match(read('sw.js'), /lotkeys-app-v09486-hub-workflow/);
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09487-smart-customer-chat');
+  assert.match(read('index.html'), /V0\.9\.4\.87/);
+  assert.match(read('manifest.webmanifest'), /build=09487/);
+  assert.match(read('sw.js'), /lotkeys-app-v09487-smart-customer-chat/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -93,14 +93,14 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09486/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09487/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
   assert.match(read('sw.js'), /lotkeys-phone\.js/);
 });
 
-test('Android layer keeps the existing messenger and requests only checkpoint capabilities', () => {
+test('Android layer keeps the existing messenger and adds a reviewed media handoff', () => {
   const manifest = read('android/app/src/main/AndroidManifest.xml');
   const activity = read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java');
   const store = read('android/app/src/main/java/ca/lotkeys/connector/PhoneStore.java');
@@ -118,11 +118,21 @@ test('Android layer keeps the existing messenger and requests only checkpoint ca
   assert.match(store, /Telephony\.Threads/);
   assert.match(store, /sendTextMessage|sendMultipartTextMessage/);
   assert.match(store, /The phone recipient changed/);
+  assert.match(store, /mediaHandoff/);
+  assert.match(store, /Intent\.ACTION_SEND_MULTIPLE/);
+  assert.match(store, /FileProvider\.getUriForFile/);
+  assert.match(store, /Opened in the phone's messaging app for final review and Send/);
+  assert.match(store, /mmsAttachments/);
+  assert.match(store, /allowedHandoff/);
   assert.match(server, /127\.0\.0\.1/);
   assert.match(server, /Bearer /);
   assert.match(server, /allowedOrigin/);
+  assert.match(server, /\/v1\/media-handoff/);
+  assert.match(server, /\/v1\/attachment/);
   assert.match(boot, /ACTION_BOOT_COMPLETED\.equals\(action\)/);
   assert.match(manifest, /dataExtractionRules="@xml\/data_extraction_rules"/);
+  assert.match(manifest, /androidx\.core\.content\.FileProvider/);
+  assert.doesNotMatch(store, /sendMultimediaMessage/);
 });
 
 test('internal LotKeys chat remains wired into Hub', () => {
@@ -132,8 +142,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09486/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09486/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09487/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09487/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -225,26 +235,92 @@ test('Hub All groups LotKeys first and remembers independent collapse state', ()
   assert.match(hub, /saveGroupState/);
 });
 
-test('current Device conversation layout omits avatar and exposes customer actions', () => {
+test('current Device conversation layout omits avatar and uses the five requested actions', () => {
   const hub = read('lotkeys-hub.js');
-  const current = hub.slice(hub.lastIndexOf('async function openDeviceConversation'), hub.indexOf('function appointmentCard', hub.lastIndexOf('async function openDeviceConversation')));
+  const start = hub.lastIndexOf('async function openDeviceConversation');
+  const current = hub.slice(start, hub.indexOf("document.addEventListener('click'", start));
   assert.doesNotMatch(current, /hub-device-avatar/);
-  for (const id of ['hub-device-contact', 'hub-device-appointment', 'hub-device-note', 'hub-device-questions', 'hub-device-files']) {
+  for (const id of ['hub-device-customer', 'hub-device-note', 'hub-device-questions', 'hub-device-appointment', 'hub-device-organize']) {
     assert.match(current, new RegExp(id));
   }
-  assert.match(current, /Use in message|questionsDialog/);
+  assert.doesNotMatch(current, /hub-device-contact|hub-device-files/);
+  assert.match(current, /<small>Notes<\/small>.*<small>Questions<\/small>.*<small>Call<\/small>.*<small>Booking<\/small>.*<small>Organize<\/small>/s);
+  assert.match(current, /hub-device-plus/);
+  assert.match(current, /hub-device-mic/);
+  assert.match(current, /P\.sendMedia/);
+  assert.match(current, /questionsDialog/);
 });
 
-test('contacts support interested vehicles, searchable notes and reminders', () => {
+test('contacts share Interested Vehicle, buying details, appointment chips and reminders', () => {
   const hub = read('lotkeys-hub.js');
+  const core = read('lotkeys-hub-core.js');
   assert.match(hub, /primaryVehicleId/);
-  assert.match(hub, /Interested vehicles/);
+  assert.match(hub, /Interested Vehicle/);
   assert.match(hub, /data-contact-vehicle/);
+  assert.match(hub, /hub-buying-summary/);
+  assert.match(hub, /hub-next-appointment/);
+  assert.match(hub, /data-calendar-day/);
   assert.match(hub, /id="hub-note-topic-search"/);
   assert.match(hub, /id="hub-note-reminder"/);
   assert.match(hub, /kind:'Reminder'/);
   assert.match(hub, /id="hub-cal-reminder"/);
-  assert.match(read('lotkeys-hub-core.js'), /DTSTART;VALUE=DATE/);
+  for (const field of ['totalBudget', 'biweeklyPayment', 'downPayment', 'tradeStatus', 'expectedTradeValue', 'interestedVehicleText']) {
+    assert.match(core, new RegExp(field));
+  }
+  assert.match(core, /DTSTART;VALUE=DATE/);
+});
+
+test('appointment form follows the agreed order and display rules', () => {
+  const hub = read('lotkeys-hub.js');
+  const start = hub.lastIndexOf('async function editAppointment');
+  const current = hub.slice(start, hub.indexOf('const structuredNoteKeys', start));
+  const ids = ['hub-appt-contact', 'hub-appt-vehicle', 'hub-appt-status', 'hub-appt-date', 'hub-appt-time', 'hub-appt-duration', 'hub-appt-kind', 'hub-appt-notes', 'hub-appt-location'];
+  let previous = -1;
+  for (const id of ids) {
+    const position = current.indexOf(id);
+    assert.ok(position > previous, `${id} must follow the requested field order`);
+    previous = position;
+  }
+  for (const status of ['Tentative', 'Booked', 'Confirmed', 'Double Confirm']) assert.match(current, new RegExp(status));
+  for (const kind of ['Consultation', 'Test Drive', 'Follow-up Appointment', 'Vehicle Delivery', 'Other']) assert.match(current, new RegExp(kind));
+  assert.match(current, /MM\/DD\/YYYY/);
+  assert.match(current, /A typed name can be linked/);
+  assert.match(current, /Optional while Tentative/);
+});
+
+test('smart-note choices stay local, recent and explicitly approved', () => {
+  const hub = read('lotkeys-hub.js');
+  const core = read('lotkeys-hub-core.js');
+  assert.match(hub, /SMART_MESSAGE_LIMIT=5/);
+  assert.match(hub, /setTimeout\(\(\)=>options\.hidden=true,5000\)/);
+  assert.match(hub, /saveSuggestedField/);
+  assert.match(hub, /Nothing is saved until you choose it/);
+  assert.match(hub, /recentNodes=.*slice\(-SMART_MESSAGE_LIMIT\)/);
+  assert.match(core, /Vehicle names are deliberately excluded/);
+  assert.doesNotMatch(core.slice(core.indexOf('function suggestNotes'), core.indexOf('function recommendQuestions')), /add\('interestedVehicle'|vehicle(?:Year|Make|Model)/i);
+});
+
+test('both chat composers expose tap and hold media/voice controls', () => {
+  const hub = read('lotkeys-hub.js');
+  const messaging = read('lotkeys-messaging.js');
+  assert.match(hub, /setTimeout\(\(\)=>\{active=true;suppress=true;menu=gestureMenu\(button,items,onChoose\).*\},500\)/);
+  for (const item of ['Camera', 'Images', 'Documents', 'Voice memo', 'Talk to text']) assert.match(hub, new RegExp(item));
+  assert.match(hub, /navigator\.vibrate/);
+  assert.match(hub, /SpeechRecognition|webkitSpeechRecognition/);
+  assert.match(hub, /MediaRecorder/);
+  assert.match(hub, /setupInternalComposer/);
+  assert.match(messaging, /async function sendFile/);
+  assert.match(messaging, /data-lkmsg-save-media/);
+  assert.match(messaging, /async function mediaFile/);
+});
+
+test('Add to Hub contains exactly the five primary actions', () => {
+  const hub = read('lotkeys-hub.js');
+  const start = hub.lastIndexOf('function plusMenu');
+  const current = hub.slice(start, hub.indexOf('function setupInternalComposer', start));
+  assert.deepEqual([...current.matchAll(/data-add="([^"]+)"/g)].map(match => match[1]), ['chat', 'contact', 'note', 'file', 'reminder']);
+  for (const label of ['Start new', 'LotKeys Chat / Group', 'Create new', 'Customer / Contact Note', 'Photo / Document', 'a Reminder']) assert.match(current, new RegExp(label));
+  assert.doesNotMatch(current, /data-add="appointment"|data-add="category"/);
 });
 
 test('PC notification sounds never add a second Android alert', () => {

@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.4.86 — Android loopback bridge plus same-account encrypted session transport. */
+/* LotKeys Phone V0.9.4.87 — Android loopback bridge plus same-account encrypted session transport. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -78,6 +78,20 @@
     const padded = String(value).replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((String(value).length + 3) % 4);
     const binary = atob(padded);
     return Uint8Array.from(binary, character => character.charCodeAt(0));
+  };
+  const standardBase64 = bytes => {
+    const view = new Uint8Array(bytes);
+    let binary = '';
+    for (let offset = 0; offset < view.length; offset += 0x8000) {
+      binary += String.fromCharCode(...view.subarray(offset, Math.min(view.length, offset + 0x8000)));
+    }
+    return btoa(binary);
+  };
+  const standardBytes = value => {
+    const binary = atob(String(value || ''));
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+    return bytes;
   };
   const escapeQuery = value => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   const browserId = () => {
@@ -630,6 +644,10 @@
       } else if (payload.op === 'send') {
         data = await nativeCall('/v1/send', { method: 'POST', body: JSON.stringify(payload.payload || {}) });
         data = await waitForSendReceipt(data.requestId);
+      } else if (payload.op === 'media') {
+        data = await nativeCall('/v1/media-handoff', { method: 'POST', body: JSON.stringify(payload.payload || {}), timeout: 60000 });
+      } else if (payload.op === 'attachment') {
+        data = await nativeCall('/v1/attachment?partId=' + encodeURIComponent(text(payload.payload?.partId)), { timeout: 45000 });
       } else if (payload.op === 'foreground') {
         renewTrust(payload.sender);
         data = { ok: true };
@@ -756,6 +774,38 @@
     return receipt;
   }
 
+  async function sendMedia({ threadId, address, text: body = '', files = [] }) {
+    if (!Array.isArray(files) || !files.length || files.length > 5) throw Error('Choose between one and five media items.');
+    const total = files.reduce((sum, file) => sum + Number(file?.size || 0), 0);
+    const limit = state.nativeStatus ? 12 * 1024 * 1024 : 3 * 1024 * 1024;
+    if (!total || total > limit) throw Error(state.nativeStatus ? 'Keep this media handoff under 12 MB.' : 'Computer-to-phone media is limited to 3 MB in this TEST connection.');
+    const payload = {
+      requestId: randomId(18), threadId, address, text: String(body || '').slice(0, 16000), transport: 'media',
+      files: await Promise.all(files.map(async file => ({
+        name: String(file.name || 'LotKeys media').replace(/[\\/]/g, '-').slice(0, 150),
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        data: standardBase64(await file.arrayBuffer())
+      })))
+    };
+    let receipt;
+    if (state.nativeStatus) receipt = await nativeCall('/v1/media-handoff', { method: 'POST', body: JSON.stringify(payload), timeout: 60000 });
+    else if (connected()) receipt = await request('media', payload, 120000);
+    else throw Error('The phone disconnected. No media was handed off.');
+    event('send-state', { receipt, threadId });
+    return receipt;
+  }
+
+  async function attachment(partId) {
+    let result;
+    if (state.nativeStatus) result = await nativeCall('/v1/attachment?partId=' + encodeURIComponent(text(partId)), { timeout: 45000 });
+    else if (connected()) result = await request('attachment', { partId }, 90000);
+    else throw Error('The phone disconnected before the MMS attachment could be read.');
+    if (!result?.data) throw Error('The phone did not return this MMS attachment.');
+    const blob = new Blob([standardBytes(result.data)], { type: result.type || 'application/octet-stream' });
+    return new File([blob], String(result.name || 'MMS attachment').replace(/[\\/]/g, '-').slice(0, 150), { type: blob.type });
+  }
+
   function connected() {
     if (!state.session) return false;
     if (state.session.role === 'phone') return !!state.nativeStatus;
@@ -794,7 +844,7 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.4.86',
+      version: '0.9.4.87',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -807,6 +857,7 @@
       trustMode: state.session?.trustMode || '',
       trustExpiresAt: state.session?.trustExpiresAt || 0,
       coverage,
+      capabilities: state.nativeStatus?.capabilities || state.session?.phoneStatus?.capabilities || {},
       lastError: state.lastError,
       pendingPairings: pendingPairings(),
       threadCount: state.threads.length,
@@ -836,7 +887,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.4.86',
+    version: '0.9.4.87',
     init,
     status,
     subscribe,
@@ -851,6 +902,8 @@
     threadPage: () => ({ ...state.threadPage }),
     history,
     send,
+    sendMedia,
+    attachment,
     disconnect,
     trusts,
     forgetDevice,

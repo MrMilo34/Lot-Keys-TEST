@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.86",
-  "build": "09486",
-  "release": "hub-customer-workflow",
+  "version": "0.9.4.87",
+  "build": "09487",
+  "release": "smart-customer-chat",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09486-hub-workflow",
+  "serviceWorkerCache": "lotkeys-app-v09487-smart-customer-chat",
   "publishedAt": "2026-09-24",
-  "basedOn": "LotKeys V0.9.4.84 Android phone-source checkpoint"
+  "basedOn": "LotKeys V0.9.4.86 Hub customer workflow"
 }

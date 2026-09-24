@@ -20,7 +20,8 @@ import java.util.concurrent.Executors;
 /** A token-protected, loopback-only bridge between the LotKeys web UI and Android APIs. */
 final class LocalApiServer {
     static final int PORT = 39483;
-    private static final int MAX_BODY = 256 * 1024;
+    // Loopback-only, bearer-protected media handoffs are capped again inside PhoneStore.
+    private static final int MAX_BODY = 18 * 1024 * 1024;
     private final PhoneConnectorService service;
     private final PhoneStore store;
     private final ExecutorService clients = Executors.newFixedThreadPool(4);
@@ -135,6 +136,10 @@ final class LocalApiServer {
             return store.history(query.getOrDefault("threadId", ""), before);
         }
         if ("POST".equals(method) && "/v1/send".equals(path)) return store.send(body);
+        if ("POST".equals(method) && "/v1/media-handoff".equals(path)) return store.mediaHandoff(body);
+        if ("GET".equals(method) && "/v1/attachment".equals(path)) {
+            return store.attachment(query.getOrDefault("partId", ""));
+        }
         if ("GET".equals(method) && "/v1/send-status".equals(path)) {
             return store.sendStatus(query.getOrDefault("requestId", ""));
         }

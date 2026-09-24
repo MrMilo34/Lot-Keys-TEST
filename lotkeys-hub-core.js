@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.86 — pure models for contacts, organization, reminders and appointments. */
+/* LotKeys Hub V0.9.4.87 — pure customer, conversation, reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -77,9 +77,82 @@
     const vehicleIds = [...new Set((Array.isArray(contact?.vehicleIds) ? contact.vehicleIds : []).map(text).filter(Boolean))];
     const primaryVehicleId = text(contact?.primaryVehicleId);
     if (primaryVehicleId && !vehicleIds.includes(primaryVehicleId)) vehicleIds.unshift(primaryVehicleId);
-    const clean = { ...(contact || {}), categoryIds: categoryIds(contact), vehicleIds, primaryVehicleId };
+    const sourceBuying = contact?.buying && typeof contact.buying === 'object' ? contact.buying : {};
+    const method = ['Cash', 'Financing'].includes(text(sourceBuying.method)) ? text(sourceBuying.method) : '';
+    const tradeStatus = ['Trade', 'No Trade'].includes(text(sourceBuying.tradeStatus)) ? text(sourceBuying.tradeStatus) : '';
+    const cleanMoney = value => {
+      const raw = text(value).replace(/[$,\s]/g, '');
+      if (!raw) return '';
+      const number = Number(raw);
+      return Number.isFinite(number) && number >= 0 ? Math.round(number * 100) / 100 : '';
+    };
+    const buying = {
+      method,
+      totalBudget: cleanMoney(sourceBuying.totalBudget ?? contact?.totalBudget),
+      biweeklyPayment: cleanMoney(sourceBuying.biweeklyPayment ?? contact?.biweeklyPayment),
+      downPayment: cleanMoney(sourceBuying.downPayment ?? contact?.downPayment),
+      tradeStatus,
+      expectedTradeValue: tradeStatus === 'Trade'
+        ? cleanMoney(sourceBuying.expectedTradeValue ?? contact?.expectedTradeValue)
+        : ''
+    };
+    const clean = {
+      ...(contact || {}),
+      categoryIds: categoryIds(contact),
+      vehicleIds,
+      primaryVehicleId,
+      interestedVehicleText: text(contact?.interestedVehicleText).slice(0, 300),
+      buying
+    };
     delete clean.categoryId;
+    delete clean.totalBudget;
+    delete clean.biweeklyPayment;
+    delete clean.downPayment;
+    delete clean.expectedTradeValue;
     return clean;
+  }
+
+  function money(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < 0) return '';
+    return '$' + number.toLocaleString('en-CA', {
+      minimumFractionDigits: Number.isInteger(number) ? 0 : 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function buyingSummary(contact) {
+    const buying = normalizeContact(contact).buying;
+    const values = [];
+    if (buying.method) values.push(buying.method);
+    if (buying.totalBudget !== '') values.push(money(buying.totalBudget) + ' Total');
+    if (buying.biweeklyPayment !== '') values.push(money(buying.biweeklyPayment) + ' Bi-W');
+    if (buying.downPayment !== '') values.push(money(buying.downPayment) + ' Dwn');
+    if (buying.tradeStatus) values.push(buying.tradeStatus);
+    if (buying.tradeStatus === 'Trade' && buying.expectedTradeValue !== '') {
+      values.push(money(buying.expectedTradeValue) + ' Expected');
+    }
+    return values;
+  }
+
+  function applyContactField(contact, key, value) {
+    const next = normalizeContact(contact);
+    const amount = input => {
+      const match = text(input).replace(/,/g, '').match(/\$?\s*(\d+(?:\.\d{1,2})?)/);
+      return match ? Number(match[1]) : '';
+    };
+    if (key === 'purchaseMethod') next.buying.method = /financ/i.test(value) ? 'Financing' : /cash/i.test(value) ? 'Cash' : '';
+    else if (key === 'budget') next.buying.totalBudget = amount(value);
+    else if (key === 'biweeklyPayment') next.buying.biweeklyPayment = amount(value);
+    else if (key === 'downPayment') next.buying.downPayment = amount(value);
+    else if (key === 'tradeStatus') {
+      next.buying.tradeStatus = /no\s*trade/i.test(value) ? 'No Trade' : /trade/i.test(value) ? 'Trade' : '';
+      if (next.buying.tradeStatus !== 'Trade') next.buying.expectedTradeValue = '';
+    } else if (key === 'expectedTradeValue') {
+      next.buying.tradeStatus = 'Trade';
+      next.buying.expectedTradeValue = amount(value);
+    } else if (key === 'interestedVehicle') next.interestedVehicleText = text(value).slice(0, 300);
+    return normalizeContact(next);
   }
 
   function normalizeCategories(items) {
@@ -212,6 +285,33 @@
     return value.toISOString();
   }
 
+  function displayDate(value) {
+    const day = value instanceof Date ? localDay(value) : /^\d{4}-\d{2}-\d{2}$/.test(text(value)) ? text(value) : localDay(value);
+    const [year, month, date] = day.split('-');
+    return month + '/' + date + '/' + year;
+  }
+
+  function parseDisplayDate(value) {
+    const match = text(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!match) throw Error('Enter the date as MM/DD/YYYY.');
+    const month = Number(match[1]);
+    const date = Number(match[2]);
+    const year = Number(match[3]);
+    const candidate = new Date(year, month - 1, date, 12);
+    if (candidate.getFullYear() !== year || candidate.getMonth() !== month - 1 || candidate.getDate() !== date) {
+      throw Error('Enter a valid appointment date.');
+    }
+    return localDay(candidate);
+  }
+
+  function displayTime(value) {
+    if (!value) return '';
+    const match = text(value).match(/^(\d{1,2}):(\d{2})$/);
+    const date = match ? new Date(2000, 0, 1, Number(match[1]), Number(match[2])) : new Date(value);
+    if (!Number.isFinite(date.getTime())) return '';
+    return date.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+
   function agenda(rows, date) {
     return rows.filter(item => localDay(item.start) === date && !item.deleted)
       .sort((a, b) => Number(!a.allDay) - Number(!b.allDay) || Date.parse(a.start) - Date.parse(b.start));
@@ -291,12 +391,15 @@
 
   const questions = [
     ['purchaseMethod', 'Cash or financing', 'Are you planning to pay cash, or would you like financing options?'],
-    ['budget', 'Budget / payment target', 'What price range or payment range would feel comfortable for you?'],
+    ['budget', 'Total Budget', 'What total, all-in price would feel comfortable for you?'],
+    ['biweeklyPayment', 'Bi-weekly Payment Goal', 'What bi-weekly payment would feel comfortable for you?'],
     ['downPayment', 'Down payment', 'Have you thought about an amount you would like to put down?'],
+    ['tradeStatus', 'Trade involved', 'Will you have a vehicle to trade, or no trade?'],
+    ['expectedTradeValue', 'Expected Trade Value', 'What value are you expecting for your trade?'],
+    ['interestedVehicle', 'Interested Vehicle', 'What vehicle are you interested in?'],
     ['reason', 'Reason for buying', 'What would you like your next vehicle to do better than your current one?'],
     ['timeframe', 'Purchase timeframe', 'When would you ideally like to have the next vehicle?'],
     ['searchDuration', 'Time spent searching', 'How long have you been looking, and what have you already tried?'],
-    ['trade', 'Trade-in & details', 'Are you replacing a vehicle? What is the year, make, model and mileage?'],
     ['decisionMakers', 'People involved', 'Will anyone else want to see or discuss the vehicle before you decide?'],
     ['dealType', 'In person or remote', 'Would you prefer to visit us or work through the details by phone?'],
     ['coApplicant', 'Co-applicant discussion', 'Would anyone else be applying for financing with you?'],
@@ -304,31 +407,71 @@
   ];
 
   // Conservative local suggestions only. They never make credit decisions or write CRM data automatically.
+  // Vehicle names are deliberately excluded because broad vehicle language produces noisy matches.
   function suggestNotes(input) {
     const source = text(input).slice(0, 12000);
     if (/\b(?:SIN|social insurance|social security|licen[cs]e\s*(?:number|#))\b/i.test(source)) return [];
     const output = [];
-    const add = (key, value, match) => {
-      if (match && !/\b(?:not|don't|won't|no longer|maybe|if|isn't|wasn't|without)\b/i.test(
-        source.slice(Math.max(0, match.index - 50), match.index + match[0].length)
-      )) output.push({ key, value, source: match[0].slice(0, 160) });
+    const contextFor = match => {
+      const from = Math.max(0, match.index || 0);
+      const to = from + match[0].length;
+      const before = source.slice(0, from);
+      const after = source.slice(to);
+      const leftBoundary = Math.max(before.lastIndexOf('\n'), before.lastIndexOf('.'), before.lastIndexOf('!'), before.lastIndexOf('?'));
+      const rightOffsets = [after.indexOf('\n'), after.indexOf('.'), after.indexOf('!'), after.indexOf('?')].filter(index => index >= 0);
+      const left = Math.max(leftBoundary + 1, from - 48);
+      const right = Math.min(source.length, rightOffsets.length ? to + Math.min(...rightOffsets) : to + 48);
+      return source.slice(left, right);
+    };
+    const add = (key, value, match, defaultMeaning = 'mentioned') => {
+      if (!match || !value) return;
+      const context = contextFor(match);
+      const rejected = /\b(?:never|too high|too much|would(?:n't| not)|won't|cannot|can't|doesn't work|not work|unaffordable|no way)\b/i.test(context);
+      const likely = /\b(?:want|need|goal|target|make|comfortable|works?|can do|looking for|budget)\b/i.test(context);
+      output.push({
+        key,
+        value,
+        source: match[0].slice(0, 160),
+        meaning: rejected ? 'mentioned as too high' : likely ? 'likely goal' : defaultMeaning,
+        confidence: rejected ? 0.58 : likely ? 0.9 : 0.72
+      });
     };
     let match = source.match(/\b(?:pay(?:ing)?|buy(?:ing)?|purchase)\s+(?:with |in |by )?cash\b/i);
-    add('purchaseMethod', 'Cash', match);
+    add('purchaseMethod', 'Cash', match, 'likely choice');
     match = source.match(/\b(?:want|need|using|use|choose|interested in)\s+(?:to |the )?financ(?:ing|e)\b/i);
-    add('purchaseMethod', 'Financing', match);
+    add('purchaseMethod', 'Financing', match, 'likely choice');
     match = source.match(/\b(?:down payment|money down|put down)\s*(?:is |of |about |would be )?\$?([\d,]+(?:\.\d{1,2})?)\b/i) ||
       source.match(/\$([\d,]+(?:\.\d{1,2})?)\s*(?:as a )?down payment\b/i);
     add('downPayment', match ? '$' + match[1] : '', match);
-    match = source.match(/\b(?:my |our )?budget\s*(?:is|of|around|about|:)\s*\$?([\d,]+(?:\.\d{1,2})?)\b/i);
+    match = source.match(/\b(?:my |our )?(?:total |all[- ]?in )?budget\s*(?:is|of|around|about|:)\s*\$?([\d,]+(?:\.\d{1,2})?)\b/i);
     add('budget', match ? '$' + match[1] : '', match);
-    return output.filter((item, index) => output.findIndex(other => other.key === item.key) === index);
+    for (const candidate of source.matchAll(/(?:\$\s*)?([\d,]+(?:\.\d{1,2})?)\s*(?:bi[\s-]?weekly|\/\s*bi[\s-]?week|every two weeks)/gi)) {
+      add('biweeklyPayment', '$' + candidate[1], candidate);
+    }
+    match = source.match(/\b(?:no\s+trade|without\s+(?:a\s+)?trade)\b/i);
+    if (match) add('tradeStatus', 'No Trade', match, 'likely choice');
+    else {
+      match = source.match(/\b(?:have|with|bringing|using)\s+(?:a\s+)?trade(?:-?in)?\b/i);
+      add('tradeStatus', 'Trade', match, 'likely choice');
+    }
+    match = source.match(/\b(?:expect|want|need|hoping|get)\w*\s+(?:about\s+|around\s+)?\$?([\d,]+(?:\.\d{1,2})?)\s+(?:for|on)\s+(?:my|the|our)\s+trade\b/i) ||
+      source.match(/\btrade(?:-?in)?\s+(?:value|worth)\s*(?:is|of|around|about|:)\s*\$?([\d,]+(?:\.\d{1,2})?)\b/i);
+    add('expectedTradeValue', match ? '$' + match[1] : '', match);
+    return output.filter((item, index) => output.findIndex(other => other.key === item.key && other.value === item.value) === index);
   }
 
   // Conversation-aware coaching only. Answers already captured in notes or confidently
   // recognized in the visible conversation are intentionally removed from the prompt list.
   function recommendQuestions(contact = {}, input = '') {
     const answered = new Set((contact.notes || []).map(note => text(note.key)).filter(Boolean));
+    const normalized = normalizeContact(contact);
+    if (normalized.buying.method) answered.add('purchaseMethod');
+    if (normalized.buying.totalBudget !== '') answered.add('budget');
+    if (normalized.buying.biweeklyPayment !== '') answered.add('biweeklyPayment');
+    if (normalized.buying.downPayment !== '') answered.add('downPayment');
+    if (normalized.buying.tradeStatus) answered.add('tradeStatus');
+    if (normalized.buying.tradeStatus === 'No Trade' || normalized.buying.expectedTradeValue !== '') answered.add('expectedTradeValue');
+    if (normalized.vehicleIds.length || normalized.interestedVehicleText) answered.add('interestedVehicle');
     for (const suggestion of suggestNotes(input)) answered.add(suggestion.key);
     const source = text(input).toLowerCase();
     const score = key => {
@@ -341,7 +484,10 @@
         budget: finance ? 98 : 70,
         downPayment: finance ? 96 : 48,
         coApplicant: finance ? 82 : 24,
-        trade: trade ? 100 : 64,
+        tradeStatus: trade ? 100 : 64,
+        expectedTradeValue: trade ? 92 : 34,
+        biweeklyPayment: finance ? 99 : 68,
+        interestedVehicle: vehicle ? 94 : 62,
         features: vehicle ? 92 : 60,
         reason: vehicle ? 84 : 58,
         timeframe: timing ? 96 : 68,
@@ -369,6 +515,9 @@
     field,
     categoryIds,
     normalizeContact,
+    money,
+    buyingSummary,
+    applyContactField,
     normalizeCategories,
     categoryClosure,
     categoryPath,
@@ -377,6 +526,9 @@
     filtered,
     localDay,
     atLocal,
+    displayDate,
+    parseDisplayDate,
+    displayTime,
     agenda,
     overlap,
     monthCells,

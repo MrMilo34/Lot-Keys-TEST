@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09486-hub-workflow';
+const CACHE='lotkeys-app-v09487-smart-customer-chat';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

@@ -1,3 +1,12 @@
+V0.9.4.87 SMART CUSTOMER CHAT
+- Shared customer cards combine Interested Vehicle, buying goals, trade details and next appointment.
+- Adds the ordered nine-field appointment workflow and four booking states.
+- Adds five-message, user-approved smart-note suggestions without broad vehicle extraction.
+- Adds matching Device and LotKeys Chat media/voice composers plus Save to Contact.
+- Adds the V0.9.4.87 Android MMS attachment reader and reviewed native media handoff.
+- Build: 09487.
+- Service worker cache: lotkeys-app-v09487-smart-customer-chat.
+
 V0.9.4.86 HUB CUSTOMER WORKFLOW
 - Keeps the V0.9.4.84 Android phone-source and adaptive-monitoring behavior, plus the screen-recording-enabled V0.9.4.85 TEST APK.
 - Groups All conversations with LotKeys Chats first and Device Messages second; each section has a persistent expand/collapse control and unread counts.

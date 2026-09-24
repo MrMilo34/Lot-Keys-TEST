@@ -8,8 +8,8 @@ android {
         applicationId 'ca.lotkeys.connector.test'
         minSdk 30
         targetSdk 35
-        versionCode 9485
-        versionName '0.9.4.85-test'
+        versionCode 9487
+        versionName '0.9.4.87-test'
     }
 
     compileOptions {
@@ -21,4 +21,8 @@ android {
         warningsAsErrors false
         disable 'BatteryLife'
     }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.15.0'
 }

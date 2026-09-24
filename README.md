@@ -1,17 +1,18 @@
-# LotKeys V0.9.4.86 — Hub customer workflow update
+# LotKeys V0.9.4.87 — Smart customer chat update
 
-This TEST release keeps the **V0.9.4.84** Android phone-source checkpoint intact and improves the Hub customer workflow. The phone remains the Device-message source of truth; LotKeys supplies the shared interface, organization and private contact overlay.
+This TEST release builds on the V0.9.4.86 Hub workflow with one reusable customer card, structured buying details, the revised appointment form, smart-note suggestions, and matching Device/LotKeys chat composers. The phone remains the Device-message source of truth.
 
-## V0.9.4.86 included
+## V0.9.4.87 included
 
-- All keeps **LotKeys Chats** above **Device Messages**. Each group has an expanded/collapsed arrow and remembers its state on that browser.
-- Device conversation headers no longer repeat an account/contact photo. Contact, Call, Appointment, Add Note, Questions and Photo/document actions sit together above message history.
-- Contacts can link one or more live Vehicle Profiles. The primary interested vehicle shows year, make, model, stock, odometer and price, and opens the current Vehicle Profile when selected.
-- Add Note has a searchable field picker and can create an all-day or timed private Calendar reminder in the same save.
-- Calendar can create reminders directly, shows all-day reminders before timed appointments and exports reminders as valid all-day `.ics` events.
-- Questions prioritizes unanswered topics using the visible conversation context. Selecting a question places it into a Device message draft; it never auto-sends.
-- Account includes a local **PC Notification Sound** picker with built-in tones, Silent and short custom audio. Automatic LotKeys Chat sounds are suppressed on Android; SMS/MMS remains governed by Android's native notification settings.
-- The Hub logo crop removes the unwanted dark corner matte, mobile floating actions sit above the app navigation, and desktop controls return to a right-side rail.
+- Customer cards reuse the primary Interested Vehicle, stock, odometer, price, Cash/Financing goals, trade details and next appointment across Hub, Contact and Calendar.
+- Add Note has searchable structured fields for purchase method, total budget, bi-weekly goal, down payment, trade/no trade, expected trade value and Interested Vehicle.
+- Recent incoming messages can show a temporary ⤴️ suggestion for a narrow contact field. Only the newest five messages qualify; a user must choose every value before it is retained.
+- Appointment entry follows the nine-field workflow, accepts a free typed customer name, uses Tentative/Booked/Confirmed/Double Confirm states, and displays MM/DD/YYYY plus 12-hour times.
+- Device and LotKeys Chat use the same ＋ Camera/Images/Documents and 🎙️ Voice memo/Talk to text composer. Tap opens choices; a 0.5-second hold enables directional shortcuts.
+- Sent and received Chat media exposes a deliberate 💾 action to save a separate copy in the private Contact folder. A source key prevents accidental duplicate saves.
+- The conversation action row is Notes, Questions, Call, Booking and Organize. Add to Hub is reduced to Start Chat/Group, Create Contact, Add Note, Upload and Reminder.
+- The V0.9.4.87 Android connector reads MMS attachment metadata/content and prepares Device media in the phone's default messaging app for final review and Send.
+- V0.9.4.86 grouping, reminders, PC-only LotKeys alert sounds, corrected logo crop and responsive floating controls remain in place.
 
 ## First checkpoint included
 
@@ -39,8 +40,8 @@ This TEST release keeps the **V0.9.4.84** Android phone-source checkpoint intact
 ## Intentional checkpoint limits
 
 - Android first; no iPhone connection yet.
-- SMS/MMS history plus plain SMS sending only. Existing private RCS history, RCS send and the RCS Notification Safety Watcher are not included.
-- MMS attachment bodies are represented in history but are not transferred or sent in this checkpoint.
+- SMS/MMS history and direct plain-SMS sending are included. Existing private RCS history, RCS send and the RCS Notification Safety Watcher are not included.
+- Device media is a reviewed handoff to the default phone messaging app, not a claim of direct MMS delivery. The user verifies the recipient and presses Send on the phone; LotKeys never retries it automatically.
 - Group conversations are view-only and dual-SIM selection is deferred.
 - One active computer session plus the phone. Several trusted computer records can exist, but simultaneous multi-PC messaging is deferred.
 - Keep LotKeys open on the phone during this first end-to-end test. The Android capability service stays ready in the background, but a permanent always-on internet relay/token-renewal service is not claimed yet.
@@ -48,7 +49,7 @@ This TEST release keeps the **V0.9.4.84** Android phone-source checkpoint intact
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the current screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.85`. The connected web application is V0.9.4.86; this release does not require a new APK.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.87`. This web release requires that matching connector for MMS attachment saving and the reviewed media handoff.
 
 The Android setup uses four short screens:
 
@@ -61,20 +62,20 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.4.85 Android TEST APK.
+1. Install and open the V0.9.4.87 Android TEST APK.
 2. Complete its permission screens and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
 5. On the computer, select **Connect phone**.
 6. Confirm the same four digits on the phone, choose the trust position and tap **Approve & Connect**.
-7. Open a Device conversation and send a fictional test SMS.
+7. Open a Device conversation and send a fictional test SMS. Test media separately and confirm that Android opens the default messaging app for final review.
 
 ## TEST deployment
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09486`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09487`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.86 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.87 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

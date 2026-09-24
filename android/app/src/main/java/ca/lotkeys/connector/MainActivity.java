@@ -28,7 +28,7 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_CONTACTS = 42;
     private static final int REQUEST_NOTIFICATIONS = 43;
     private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
-    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=09484";
+    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=09487";
     private LinearLayout body;
 
     @Override public void onCreate(Bundle state) {
@@ -51,7 +51,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.4.85 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.4.87 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();
@@ -89,8 +89,8 @@ public final class MainActivity extends Activity {
 
         step("4 of 4 · Pair a Computer");
         text("Android access is ready. Open LotKeys below to link this phone to the same LotKeys account. " +
-            "A new computer still needs the matching four-digit approval on this phone.", 16, Color.LTGRAY, false);
-        statusLine("Messages", true, "SMS/MMS read and SMS reply");
+            "A new computer still needs the matching four-digit approval on this phone. Media opens in your default messaging app so you can review the recipient and press Send.", 16, Color.LTGRAY, false);
+        statusLine("Messages", true, "SMS/MMS read, SMS reply, reviewed media handoff");
         statusLine("Contact names", contacts, contacts ? "allowed" : "using phone numbers");
         statusLine("Coverage", false, "SMS/MMS only · RCS watcher comes later");
         statusLine("Messaging app", true, store.sourceApp());
