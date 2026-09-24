@@ -1,11 +1,12 @@
-V0.9.4.88 CHAT POLISH
-- Keeps the Interested Vehicle and buying summary at the top of Contact while removing its duplicate from Device chat.
+V0.9.4.89 DEVICE HEADER CARD HOTFIX
+- Places the compact Interested Vehicle and buying summary inside the upper-right Device-chat header beside the customer details.
+- Retains the full Contact and Calendar customer cards without adding a separate full-width row to the conversation.
 - Makes Cash / Financing a clean two-choice Note field without the text box or keyboard.
 - Repairs 0.5-second hold-and-drag composer shortcuts and auto-closes tap menus after five seconds.
 - Removes the Device composer explanation and simplifies Lock Screen wording to Password.
-- Retains the V0.9.4.87 cards, appointment workflow, smart notes, media composers and Android handoff.
-- Build: 09488.
-- Service worker cache: lotkeys-app-v09488-chat-polish.
+- Retains the V0.9.4.88 cards, appointment workflow, smart notes, media composers and Android handoff.
+- Build: 09489.
+- Service worker cache: lotkeys-app-v09489-device-header-card.
 
 V0.9.4.86 HUB CUSTOMER WORKFLOW
 - Keeps the V0.9.4.84 Android phone-source and adaptive-monitoring behavior, plus the screen-recording-enabled V0.9.4.85 TEST APK.

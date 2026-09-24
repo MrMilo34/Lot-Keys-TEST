@@ -8,15 +8,16 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.88', () => {
+test('release metadata is consistently V0.9.4.89', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.88');
-  assert.equal(version.build, '09488');
+  assert.equal(version.version, '0.9.4.89');
+  assert.equal(version.build, '09489');
   assert.equal(version.channel, 'test');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09488-chat-polish');
-  assert.match(read('index.html'), /V0\.9\.4\.88/);
-  assert.match(read('manifest.webmanifest'), /build=09488/);
-  assert.match(read('sw.js'), /lotkeys-app-v09488-chat-polish/);
+  assert.equal(version.release, 'device-header-card');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09489-device-header-card');
+  assert.match(read('index.html'), /V0\.9\.4\.89/);
+  assert.match(read('manifest.webmanifest'), /build=09489/);
+  assert.match(read('sw.js'), /lotkeys-app-v09489-device-header-card/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -93,7 +94,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09488/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09489/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -144,8 +145,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09488/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09488/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09489/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09489/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -237,7 +238,7 @@ test('Hub All groups LotKeys first and remembers independent collapse state', ()
   assert.match(hub, /saveGroupState/);
 });
 
-test('current Device conversation layout omits avatar and uses the five requested actions', () => {
+test('current Device conversation keeps the compact customer card inside the header', () => {
   const hub = read('lotkeys-hub.js');
   const start = hub.lastIndexOf('async function openDeviceConversation');
   const current = hub.slice(start, hub.indexOf("document.addEventListener('click'", start));
@@ -251,8 +252,18 @@ test('current Device conversation layout omits avatar and uses the five requeste
   assert.match(current, /hub-device-mic/);
   assert.match(current, /P\.sendMedia/);
   assert.match(current, /questionsDialog/);
-  assert.doesNotMatch(current, /interestedVehicleMarkup|vehicleCard|hub-interest-card/);
+  assert.match(current, /headerCard=row\.savedContact\?interestedVehicleMarkup\(row\.savedContact,\{compact:true,header:true\}\):''/);
+  assert.match(current, /<header class="hub-device-chat-head \$\{headerCard\?'has-interest':''\}">.*\$\{headerCard\}<\/header><div class="hub-device-tools hub-five-actions">/s);
+  assert.match(current, /bindInterestedVehicles\(root\)/);
+  assert.doesNotMatch(current, /<\/header>\$\{headerCard\}/);
   assert.doesNotMatch(current, /hub-device-foot|Text sends directly|reviewed native handoff/);
+});
+
+test('Device header customer card has responsive space-saving styles', () => {
+  const css = read('lotkeys-hub.css');
+  assert.match(css, /\.hub-device-chat-head\.has-interest\{grid-template-columns:auto minmax\(150px,1fr\) minmax\(280px,520px\)/);
+  assert.match(css, /\.hub-interest-card\.header-card\{[^}]*margin:0[^}]*grid-template-columns:42px minmax\(0,1fr\) auto/);
+  assert.match(css, /@media\(max-width:620px\).*\.hub-device-chat-head\.has-interest\{grid-template-columns:auto minmax\(84px,\.64fr\) minmax\(0,1\.36fr\)/s);
 });
 
 test('contacts share Interested Vehicle, buying details, appointment chips and reminders', () => {

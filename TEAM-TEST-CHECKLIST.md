@@ -1,15 +1,15 @@
-# LotKeys V0.9.4.88 team-test checklist
+# LotKeys V0.9.4.89 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09488` and confirm **V0.9.4.88 / 09488**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09489` and confirm **V0.9.4.89 / 09489**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.88** and install its `app-debug.apk` on an Android 11+ test phone.
+- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.89** and install its `app-debug.apk` on an Android 11+ test phone.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -47,11 +47,11 @@
 - Delete the LotKeys contact and confirm its number returns to Unsorted while the phone conversation remains.
 - Confirm deleting/clearing a phone conversation does not delete the LotKeys customer folder, notes, or saved documents.
 
-## V0.9.4.88 customer cards and notes
+## V0.9.4.89 customer cards and notes
 
 - In All, confirm LotKeys Chats appears above Device Messages; collapse each independently, reopen Hub, and confirm the state is remembered.
 - Confirm new messages update unread counts without forcing a collapsed group open.
-- Open a Device conversation and confirm no profile photo or Interested Vehicle/buying card appears. Confirm Notes, Questions, Call, Booking and Organize fit in one row.
+- Open a saved-customer Device conversation and confirm its compact Interested Vehicle/buying card appears inside the upper-right header beside the customer details—not as a separate full-width row. Confirm the card shows photo, vehicle facts and buying summary, opens the live Vehicle Profile, and Notes, Questions, Call, Booking and Organize still fit in one row.
 - Open Contact and confirm the primary Interested Vehicle/buying card is its first section. Link multiple profiles and confirm year/make/model, stock, odometer, price and `+N more` appear and the card opens the live Vehicle Profile.
 - In Add Note, choose Cash or Financing using only the two buttons; confirm no text box or keyboard appears for that field. Save total budget, bi-weekly payment, down payment, Trade/No Trade and expected trade value and confirm the summary updates.
 - Confirm a manual Interested Vehicle description and a linked Vehicle Profile use the same field/workflow.
@@ -64,7 +64,7 @@
 - On Android, confirm incoming LotKeys Chat does not play an extra LotKeys sound and normal Device SMS/MMS notifications remain unchanged.
 - Confirm the Hub logo has no dark corner matte, floating controls sit just above mobile navigation, and desktop controls are on the right-side rail.
 
-## V0.9.4.88 appointments
+## V0.9.4.89 appointments
 
 - Confirm New appointment uses this order: Customer/Contact, Interested Vehicle, Booking Status, Date, Time, Duration, Appointment Type, Notes, Location.
 - Type an unsaved customer name and create a Tentative appointment without a time. Edit it later, select a saved Contact, and confirm the link is retained.
@@ -74,7 +74,7 @@
 - Confirm the Hub customer card and Calendar appointment card show the same vehicle and buying information.
 - Confirm the appointment chip beside the customer category shows its date/time and state. Tap it and confirm Calendar opens the correct selected week.
 
-## V0.9.4.88 composers and media
+## V0.9.4.89 composers and media
 
 - In Device and LotKeys Chat, tap ＋ and confirm Camera, Images and Documents appear, then disappear after five seconds or an outside tap. Confirm hold-up, hold-up-right and hold-right select those actions after roughly 0.5 seconds.
 - Tap 🎙️ and confirm Voice memo and Talk to text appear, then disappear after five seconds or an outside tap. Confirm hold-right starts Voice memo and hold-left starts Talk to text; dragging back to the centre leaves the tap choices available briefly.
