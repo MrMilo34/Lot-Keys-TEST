@@ -1,3 +1,11 @@
+V0.9.4.95 REMINDER BELL STATE HOTFIX
+- Restores the main-header bell's hidden state after the final active reminder is completed.
+- Keeps the Android-safe separate bell and urgency-mark layout while explicitly overriding its grid display when hidden.
+- Shows "Synced [time]" in the phone header instead of an unexplained time by itself.
+- Retains every V0.9.4.94 reminder, navigation, sync-time and deletion repaint fix.
+- Build: 09495.
+- Service worker cache: lotkeys-app-v09495-reminder-bell-state-hotfix.
+
 V0.9.4.94 REMINDERS + NAVIGATION HOTFIX
 - Keeps the active Home, Inventory, Listings, Account, or Garage page when Chrome restores LotKeys after Google approval work.
 - Shows the newest successful Inventory or Listings refresh time in full in the main header, including on phones.
