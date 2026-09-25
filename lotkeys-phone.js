@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.4.97 — reliable phone approval, trusted reconnect and encrypted session transport. */
+/* LotKeys Phone V0.9.4.98 — reliable phone approval, trusted reconnect and encrypted session transport. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -55,6 +55,7 @@
   let monitoringWasHeavy = false;
   let monitoringGraceUntil = 0;
   let automaticPairAttempted = false;
+  let lastStatusEventSignature = '';
 
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   const text = value => String(value ?? '').trim();
@@ -71,10 +72,16 @@
   const heartbeatDelay = () => monitoringState().heavy ? HEARTBEAT_HEAVY_MS : HEARTBEAT_IDLE_MS;
   const event = (type, detail = {}) => {
     const snapshot = status();
+    if (type === 'status') {
+      const signature = JSON.stringify(snapshot);
+      if (signature === lastStatusEventSignature) return false;
+      lastStatusEventSignature = signature;
+    }
     for (const listener of listeners) {
       try { listener(type, detail, snapshot); } catch {}
     }
     window.dispatchEvent(new CustomEvent('lotkeys-phone-' + type, { detail: { ...detail, status: snapshot } }));
+    return true;
   };
   const randomId = (bytes = 18) => base64url(crypto.getRandomValues(new Uint8Array(bytes)));
   const base64url = bytes => {
@@ -226,9 +233,7 @@
       }
       if (!state.session || state.session.role === 'phone') state.role = 'phone';
       if (previous && previous !== state.nativeRevision) {
-        state.threads = [];
-        state.threadPage = { hasMore: false, nextOffset: 0, total: 0 };
-        event('data', { reason: 'phone-change' });
+        await refreshThreads(0).catch(error => { state.lastError = error.message; event('status'); });
         if (state.session?.role === 'phone' && !state.backgroundRelay) sendFrame('pc', { kind: 'event', event: 'invalidate', revision: state.nativeRevision }).catch(() => {});
       }
       const isConnected = connected();
@@ -879,9 +884,6 @@
     if (state.session !== session) return;
     if (payload.kind === 'event') {
       if (payload.event === 'invalidate') {
-        state.threads = [];
-        state.threadPage = { hasMore: false, nextOffset: 0, total: 0 };
-        event('data', { reason: 'phone-change' });
         refreshThreads().catch(sessionError);
       }
       if (payload.event === 'disconnect') disconnect({ notify: false, reason: payload.reason || '', movedTo: payload.movedTo || '' }).catch(() => {});
@@ -970,14 +972,17 @@
     else if (connected()) page = await request('threads', { offset });
     else throw Error('Connect the phone before opening Device Messages.');
     const rows = Array.isArray(page.threads) ? page.threads : [];
-    state.threads = offset ? [...state.threads, ...rows] : rows;
-    state.threadPage = {
+    const nextThreads = offset ? [...state.threads, ...rows] : rows;
+    const nextThreadPage = {
       hasMore: !!page.hasMore,
-      nextOffset: Math.max(0, Number(page.nextOffset) || state.threads.length),
-      total: Math.max(state.threads.length, Number(page.total) || 0)
+      nextOffset: Math.max(0, Number(page.nextOffset) || nextThreads.length),
+      total: Math.max(nextThreads.length, Number(page.total) || 0)
     };
+    const changed = JSON.stringify([state.threads, state.threadPage]) !== JSON.stringify([nextThreads, nextThreadPage]);
+    state.threads = nextThreads;
+    state.threadPage = nextThreadPage;
     state.lastError = '';
-    event('data', { reason: 'threads', page });
+    if (changed) event('data', { reason: 'threads', page });
     return { ...page, threads: rows };
   }
 
@@ -1109,7 +1114,7 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.4.97',
+      version: '0.9.4.98',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1172,7 +1177,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.4.97',
+    version: '0.9.4.98',
     init,
     status,
     subscribe,

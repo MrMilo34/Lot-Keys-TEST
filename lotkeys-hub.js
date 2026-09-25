@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.97. Device-list Vehicle Profile thumbnail hotfix. */
+/* LotKeys Hub V0.9.4.98. Change-aware phone monitoring and stable Device-list rendering. */
 (()=>{'use strict';
 const H=window.LotKeysHubCore,S=window.LotKeysHubStore,M=window.LotKeysMessaging,Core=window.LotKeysMessagingBridge,P=window.LotKeysPhone,PC=window.LotKeysPhoneCore;
 if(!H||!S||!M||!P||!PC)return;
@@ -376,12 +376,12 @@ async function openDeviceConversation(threadId){
 
 document.addEventListener('click',event=>{if(!event.target.closest?.('.hub-smart-note-options,.hub-smart-note-trigger'))$$('.hub-smart-note-options').forEach(node=>node.hidden=true);if(!event.target.closest?.('.hub-gesture-menu,.hub-gesture-anchor'))closeGestureMenu();const target=event.target.closest?.('[data-calendar-day]');if(!target)return;event.preventDefault();event.stopPropagation();calendar(target.dataset.calendarDay,'week');});
 async function publicReminderBellState(){await S.identity();const [stored,legacyAppointments]=await Promise.all([S.list('reminder'),S.list('appointment')]),known=new Set(stored.map(reminder=>reminder.id)),rows=[...stored,...legacyAppointments.filter(appointment=>appointment.kind==='Reminder'&&!known.has(appointment.id)).map(H.legacyAppointmentToReminder)];if(legacyAppointments.some(appointment=>appointment.kind==='Reminder'))scheduleLegacyReminderMigration();return H.reminderBellState(rows,new Date());}
-window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,calendar,plus:plusMenu,openDeviceConversation,pending:S.pending,openReminders,newReminder:options=>editReminder(null,options||{}),reminderBellState:publicReminderBellState,version:'0.9.4.97'};
+window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,calendar,plus:plusMenu,openDeviceConversation,pending:S.pending,openReminders,newReminder:options=>editReminder(null,options||{}),reminderBellState:publicReminderBellState,version:'0.9.4.98'};
 window.addEventListener('lotkeys-hub-data',scheduleRefresh);
 window.addEventListener('lotkeys-hub-internal',scheduleRefresh);
 window.addEventListener('lotkeys-phone-pair-request',event=>showPairRequest(event.detail?.offer));
 window.addEventListener('lotkeys-phone-data',scheduleRefresh);
-window.addEventListener('lotkeys-phone-status',()=>{if(home()){paintStatus();paintRows();}});
+window.addEventListener('lotkeys-phone-status',()=>{if(home())paintStatus();});
 window.addEventListener('lotkeys-phone-connected',()=>{if(home()){paintStatus();P.refreshThreads().then(scheduleRefresh).catch(()=>{});}});
 window.addEventListener('lotkeys-phone-disconnected',()=>{if(home()){paintStatus();paintRows();}});
 window.addEventListener('lotkeys-hub-identity',()=>{contacts=[];phoneSorting=[];appointments=[];reminders=[];categories=[];internal=[];selectedCategories=[];clearTimeout(legacyMigrationTimer);legacyMigrationTimer=null;clearThumbs();$$('dialog.hub-dialog').forEach(d=>d.close());if(home())open({refresh:false});});

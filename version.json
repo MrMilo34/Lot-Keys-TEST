@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.97",
-  "build": "09497",
-  "release": "hub-vehicle-thumbnail-hotfix",
+  "version": "0.9.4.98",
+  "build": "09498",
+  "release": "hub-refresh-change-detection-hotfix",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09497-hub-vehicle-thumbnail-hotfix",
+  "serviceWorkerCache": "lotkeys-app-v09498-hub-refresh-change-detection-hotfix",
   "publishedAt": "2026-09-25",
-  "basedOn": "LotKeys V0.9.4.96 reminder additional-fields hotfix"
+  "basedOn": "LotKeys V0.9.4.97 Hub vehicle-thumbnail hotfix"
 }

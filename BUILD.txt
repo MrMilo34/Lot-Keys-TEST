@@ -1,3 +1,11 @@
+V0.9.4.98 HUB REFRESH CHANGE-DETECTION HOTFIX
+- Keeps the three-second phone connection check but suppresses unchanged status events before they reach the UI.
+- Updates only the connection indicator for status changes instead of rebuilding every Device conversation card.
+- Compares thread snapshots before notifying Hub and refreshes real phone changes without first clearing the visible list.
+- Retains every V0.9.4.97 linked Vehicle Profile thumbnail and manual-vehicle fallback fix.
+- Build: 09498.
+- Service worker cache: lotkeys-app-v09498-hub-refresh-change-detection-hotfix.
+
 V0.9.4.97 HUB VEHICLE-THUMBNAIL HOTFIX
 - Restores cached Vehicle Profile cover photos on linked Interested Vehicle cards in the Hub Device conversation list.
 - Reuses the working chat-header thumbnail painter after every Hub list repaint and cleans up replaced object URLs.
