@@ -132,7 +132,7 @@ test('deleting a standalone reminder preserves its linked Contact note', async (
     noteId: 'NOTE-1'
   });
 
-  assert.equal(await store.removeReminder('REM-1'), false, 'offline sync is deferred');
+  assert.equal(await store.removeReminder('REM-1'), true, 'local deletion completes before deferred Drive sync');
   assert.equal(await store.get('reminder', 'REM-1'), null);
   const contact = await store.get('contact', 'CUST-1');
   assert.equal(contact.notes.length, 1);

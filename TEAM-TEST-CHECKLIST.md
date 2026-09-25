@@ -1,15 +1,15 @@
-# LotKeys V0.9.4.93 team-test checklist
+# LotKeys V0.9.4.94 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09493` and confirm **V0.9.4.93 / 09493**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09494` and confirm **V0.9.4.94 / 09494**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.93** and install its `app-debug.apk` on an Android 11+ test phone.
+- If the stable TEST signing secrets are configured, download **LotKeys-Android-V0.9.4.94** and install its `app-debug.apk` on an Android 11+ test phone. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -62,7 +62,7 @@
 - Search the Add Note topic list, save a general note, then save another with an all-day reminder and one with a time.
 - Put `400 bi weekly` and `567 bi weekly would never work; too high` in recent incoming test messages. Confirm both ⤴️ choices appear with different context labels and neither is saved until tapped.
 - Add six newer messages and confirm the oldest message's ⤴️ action disappears. Confirm a suggestion bubble closes after five seconds and after tapping elsewhere.
-- Create a Reminder directly from Calendar; confirm the selected date is prefilled and the reminder appears as a lightweight bell/check row rather than an appointment or `.ics` event.
+- Tap **＋ Reminder** in Calendar and confirm it opens **All reminders**. Tap the plus there, create a dated reminder, and confirm it appears as a lightweight bell/check row rather than an appointment or `.ics` event.
 - Open Questions after a conversation mentions financing or a vehicle feature. Confirm answered topics are excluded and selecting a question only fills the Device draft.
 - On PC, choose and preview each built-in notification sound, Silent and a short custom clip. Confirm an incoming LotKeys Chat plays only the selected PC sound.
 - On Android, confirm incoming LotKeys Chat does not play an extra LotKeys sound and normal Device SMS/MMS notifications remain unchanged.
@@ -73,14 +73,20 @@
 - On Home, Inventory, Listings, Garage and Account, open the top-right Create menu and confirm **🔔 Reminder** is available. Confirm Hub keeps Reminder in its own Add menu.
 - Create an undated reminder and confirm the plain bell appears in the main header and directly above Calendar in Hub, but no Calendar row is created.
 - Create reminders due 8, 7, 3 and 0 Edmonton calendar days away. Confirm the shared bells show plain, one mark, two marks and two marks respectively; confirm overdue also shows two marks.
+- On Android, confirm the main-header one-mark bell uses a compact `!` badge rather than a stretched emoji; confirm the two-mark bell remains compact.
 - Complete the final open one-time reminder and confirm both bells disappear without refreshing the page. Mark it open again from the reminder list.
 - Create a Daily reminder, complete it, and confirm it is complete only for today. After the Edmonton day changes, confirm it becomes open and both bells re-evaluate automatically.
 - Confirm Daily and undated reminders do not populate Calendar. Confirm a completed dated reminder stays on its due date with completed styling but does not keep either bell active.
-- Open reminder details from both All reminders and Calendar. Test Edit, Delete, Complete/Open, All/Open/Completed/Daily filters, optional Contact, raw phone, Call, linked note and Vehicle Profile actions.
+- Open reminder details from both All reminders and Calendar. Delete one and confirm the detail closes immediately, the previous view returns, its visible count/list update before Drive finishes, and both shared bells repaint. Test Edit, Complete/Open, All/Open/Completed/Daily filters, optional Contact, raw phone, Call, linked note and Vehicle Profile actions.
 - From a Contact note, enable **Add a reminder**, optionally select a date/time, save, and confirm the note retains its reminder link. Delete the reminder and confirm the note remains.
 - Delete a Contact with a linked reminder and confirm the standalone task remains with its saved name/phone and cleared Contact link.
-- With a V0.9.4.92 reminder present, open V0.9.4.93 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
+- With a V0.9.4.92 reminder present, open V0.9.4.94 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
 - Create a phone-only appointment and confirm its number appears once. Create a named appointment and confirm it shows **Name · Phone** once.
+
+## Navigation and sync header hotfix
+
+- Open Inventory, switch to the Google approval/test-user tab, then return after Chrome restores or reloads LotKeys. Confirm Inventory remains selected instead of jumping to Home. Repeat once from Garage.
+- Refresh Inventory and then Listings at different times. On Home, confirm the Sync label shows the newest successful refresh time; Inventory and Listings still show their own relevant refresh times.
 
 ## Retained conversation cards and appointments
 

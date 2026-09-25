@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.93",
-  "build": "09493",
-  "release": "standalone-reminders",
+  "version": "0.9.4.94",
+  "build": "09494",
+  "release": "reminders-navigation-hotfix",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09493-standalone-reminders",
+  "serviceWorkerCache": "lotkeys-app-v09494-reminders-navigation-hotfix",
   "publishedAt": "2026-09-25",
-  "basedOn": "LotKeys V0.9.4.92 reliable PC pairing"
+  "basedOn": "LotKeys V0.9.4.93 standalone reminders"
 }

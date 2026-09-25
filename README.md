@@ -1,8 +1,16 @@
-# LotKeys V0.9.4.93 — Standalone reminders
+# LotKeys V0.9.4.94 — Reminders and navigation hotfix
 
-This TEST update turns reminders into private, local-first task records rather than disguised appointments. The main header and Hub share one Edmonton-day urgency model, dated reminders appear as lightweight Calendar rows, daily reminders reset each local day, and existing V0.9.4.92 reminders migrate safely by stable ID. Reliable PC pairing remains intact.
+This focused TEST hotfix keeps the active page through Chrome/Google tab restoration, displays the newest successful sync time, stabilizes the main-header reminder marks on Android, makes reminder deletion repaint immediately, and routes Calendar's + Reminder shortcut to All reminders. The complete V0.9.4.93 standalone-reminder model and reliable PC pairing remain intact.
 
-## V0.9.4.93 included
+## V0.9.4.94 included
+
+- Preserve the active Home, Inventory, Listings, Account, or Garage page in session storage so a browser-tab restore does not jump to Home.
+- Display the newest successful Inventory or Listings refresh time on Home instead of the older timestamp, with the full time visible in the phone header.
+- Render the header bell and its one/two urgency marks as separate elements for reliable Android sizing.
+- Apply reminder deletion locally before Drive synchronization, immediately return to the previous list or Calendar, and repaint the filtered count and shared bells.
+- Make Calendar's **＋ Reminder** button open **All reminders**; use the plus button there to create a reminder.
+
+## V0.9.4.93 retained
 
 - Add a Reminder from the top-right Create menu on every main application tab, the Hub action menu, Calendar, or a Contact note.
 - Use one standalone reminder record with optional notes, due time/date, Contact, raw phone number, Vehicle Profile, and Daily Repeat.
@@ -41,7 +49,7 @@ This TEST update turns reminders into private, local-first task records rather t
 - Sent and received Chat media exposes a deliberate 💾 action to save a separate copy in the private Contact folder. A source key prevents accidental duplicate saves.
 - The conversation action row is Notes, Questions, Call, Booking and Organize. Add to Hub is reduced to Start Chat/Group, Create Contact, Add Note, Upload and Reminder.
 - The Device composer no longer shows the implementation explanation beneath the message box, and the Lock Screen now asks simply for the user's Lock Screen Password.
-- The matching V0.9.4.93 Android connector retains MMS attachment reading and the reviewed default-messaging-app handoff.
+- The matching V0.9.4.94 Android connector retains MMS attachment reading and the reviewed default-messaging-app handoff.
 - V0.9.4.86 grouping, reminders, PC-only LotKeys alert sounds, corrected logo crop and responsive floating controls remain in place.
 
 ## First checkpoint included
@@ -79,7 +87,7 @@ This TEST update turns reminders into private, local-first task records rather t
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.93`. This web release requires that matching connector for background PC pairing, MMS attachment saving and the reviewed media handoff.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.94` when the stable TEST signing secrets are configured. This web release requires that matching connector for background PC pairing, MMS attachment saving and the reviewed media handoff.
 
 The Android setup uses five short screens:
 
@@ -93,7 +101,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.4.93 Android TEST APK.
+1. Install and open the V0.9.4.94 Android TEST APK.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -105,8 +113,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09493`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09494`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.93 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.94 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

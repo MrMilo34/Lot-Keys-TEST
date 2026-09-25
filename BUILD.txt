@@ -1,3 +1,13 @@
+V0.9.4.94 REMINDERS + NAVIGATION HOTFIX
+- Keeps the active Home, Inventory, Listings, Account, or Garage page when Chrome restores LotKeys after Google approval work.
+- Shows the newest successful Inventory or Listings refresh time in full in the main header, including on phones.
+- Separates the main-header reminder bell and urgency mark so Android renders one-mark and two-mark states consistently.
+- Deletes reminders locally first, returns to the prior list or Calendar immediately, refreshes its count, and queues Drive cleanup.
+- Changes Calendar's + Reminder shortcut to open All reminders; the plus inside that view still creates a new reminder.
+- Retains every V0.9.4.93 standalone reminder, migration, Calendar, appointment-identity and Android relay behavior.
+- Build: 09494.
+- Service worker cache: lotkeys-app-v09494-reminders-navigation-hotfix.
+
 V0.9.4.93 STANDALONE REMINDERS
 - Replaces appointment-shaped reminders with private, local-first reminder records in a dedicated Hub/Reminders Drive folder.
 - Adds the shared main-header and Hub bells with inclusive 7-day/3-day America/Edmonton urgency rules.
