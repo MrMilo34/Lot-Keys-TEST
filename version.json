@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.96",
-  "build": "09496",
-  "release": "reminder-additional-fields-hotfix",
+  "version": "0.9.4.97",
+  "build": "09497",
+  "release": "hub-vehicle-thumbnail-hotfix",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09496-reminder-additional-fields-hotfix",
+  "serviceWorkerCache": "lotkeys-app-v09497-hub-vehicle-thumbnail-hotfix",
   "publishedAt": "2026-09-25",
-  "basedOn": "LotKeys V0.9.4.95 reminder bell state hotfix"
+  "basedOn": "LotKeys V0.9.4.96 reminder additional-fields hotfix"
 }

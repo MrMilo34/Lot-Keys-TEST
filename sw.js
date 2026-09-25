@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09496-reminder-additional-fields-hotfix';
+const CACHE='lotkeys-app-v09497-hub-vehicle-thumbnail-hotfix';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

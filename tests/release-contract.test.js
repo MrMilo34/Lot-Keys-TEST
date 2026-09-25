@@ -8,19 +8,19 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.96', () => {
+test('release metadata is consistently V0.9.4.97', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.96');
-  assert.equal(version.build, '09496');
+  assert.equal(version.version, '0.9.4.97');
+  assert.equal(version.build, '09497');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'reminder-additional-fields-hotfix');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09496-reminder-additional-fields-hotfix');
-  assert.match(read('index.html'), /V0\.9\.4\.96/);
-  assert.match(read('manifest.webmanifest'), /build=09496/);
-  assert.match(read('sw.js'), /lotkeys-app-v09496-reminder-additional-fields-hotfix/);
+  assert.equal(version.release, 'hub-vehicle-thumbnail-hotfix');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09497-hub-vehicle-thumbnail-hotfix');
+  assert.match(read('index.html'), /V0\.9\.4\.97/);
+  assert.match(read('manifest.webmanifest'), /build=09497/);
+  assert.match(read('sw.js'), /lotkeys-app-v09497-hub-vehicle-thumbnail-hotfix/);
 });
 
-test('V0.9.4.96 preserves the active page and labels the newest successful sync', () => {
+test('V0.9.4.97 preserves the active page and labels the newest successful sync', () => {
   const html = read('index.html');
   assert.match(html, /ACTIVE_ROUTE_KEY='lotkeys-active-route-v1'/);
   assert.match(html, /APP_ROUTES\.has\(saved\)\?saved:'home'/);
@@ -33,7 +33,7 @@ test('V0.9.4.96 preserves the active page and labels the newest successful sync'
   assert.doesNotMatch(html, /Math\.min\(inv,lis\)/);
 });
 
-test('V0.9.4.96 reminder controls repaint locally and hide the stable header bell', () => {
+test('V0.9.4.97 reminder controls repaint locally and hide the stable header bell', () => {
   const html = read('index.html');
   const hub = read('lotkeys-hub.js');
   const store = read('lotkeys-hub-store.js');
@@ -50,7 +50,7 @@ test('V0.9.4.96 reminder controls repaint locally and hide the stable header bel
   assert.match(store, /sync\(\{pull:false\}\)\.catch\(\(\)=>\{\}\);return true/);
 });
 
-test('V0.9.4.96 keeps optional reminder links inside Additional fields', () => {
+test('V0.9.4.97 keeps optional reminder links inside Additional fields', () => {
   const hub = read('lotkeys-hub.js');
   const css = read('lotkeys-hub.css');
   const sectionStart = hub.indexOf('<section class="hub-reminder-additional-fields full"');
@@ -139,7 +139,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09496/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09497/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -214,8 +214,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09496/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09496/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09497/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09497/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -333,6 +333,17 @@ test('Device header customer card has responsive space-saving styles', () => {
   assert.match(css, /\.hub-device-chat-head\.has-interest\{grid-template-columns:auto minmax\(150px,1fr\) minmax\(280px,520px\)/);
   assert.match(css, /\.hub-interest-card\.header-card\{[^}]*margin:0[^}]*grid-template-columns:42px minmax\(0,1fr\) auto/);
   assert.match(css, /@media\(max-width:620px\).*\.hub-device-chat-head\.has-interest\{grid-template-columns:auto minmax\(84px,\.64fr\) minmax\(0,1\.36fr\)/s);
+});
+
+test('V0.9.4.97 Hub Device rows paint linked Vehicle Profile thumbnails', () => {
+  const hub = read('lotkeys-hub.js');
+  const start = hub.indexOf('function paintRows()');
+  const current = hub.slice(start, hub.indexOf('async function open(', start));
+  assert.match(hub, /interestedVehicleMarkup\(contact,\{compact:true,interactive:false\}\)/);
+  assert.match(current, /M\.hubHydrate\(box\);bindInterestedVehicles\(panel\(\)\);updateBadge\(\)/);
+  assert.match(hub, /function bindInterestedVehicles\(root\)\{if\(root===panel\(\)\)clearThumbs\(\);/);
+  assert.match(hub, /blob instanceof Blob[\s\S]*Vehicle thumbnail[\s\S]*vehicle-placeholder\.webp/);
+  assert.match(hub, /class="hub-interest-card[^`]*\$\{vehicle\?'linked':'manual'\}/);
 });
 
 test('contacts share Interested Vehicle, buying details, appointment chips and reminder-linked notes', () => {

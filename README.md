@@ -1,8 +1,14 @@
-# LotKeys V0.9.4.96 — Reminder additional-fields hotfix
+# LotKeys V0.9.4.97 — Hub vehicle-thumbnail hotfix
 
-This focused TEST follow-up keeps Customer / Contact, Phone number, and Interested Vehicle / Vehicle Profile collapsed inside the reminder form's **Additional fields** section until a user opens it. Editing a reminder that already contains one of those values still opens the section automatically. All V0.9.4.95 reminder-bell and sync-label fixes remain intact.
+This focused TEST follow-up restores the real Vehicle Profile thumbnail on linked Interested Vehicle cards in the Hub Device conversation list. The same cached thumbnail painter already used by the working chat header now runs after every Hub list repaint. Manually entered vehicles that are not linked to Inventory keep the standard missing-vehicle image. All V0.9.4.96 reminder-form fixes remain intact.
 
-## V0.9.4.96 included
+## V0.9.4.97 included
+
+- Paint cached Vehicle Profile cover photos in linked Hub Device-list cards.
+- Reuse the existing chat-header thumbnail path and clean up replaced object URLs during Hub list refreshes.
+- Preserve the standard missing-vehicle image for manually entered, unlinked interested vehicles.
+
+## V0.9.4.96 retained
 
 - Enforce the optional reminder section's hidden state even though its expanded layout uses `display: grid`.
 - Keep Customer / Contact, Phone number, and Interested Vehicle / Vehicle Profile together inside **Additional fields**.
@@ -61,7 +67,7 @@ This focused TEST follow-up keeps Customer / Contact, Phone number, and Interest
 - Sent and received Chat media exposes a deliberate 💾 action to save a separate copy in the private Contact folder. A source key prevents accidental duplicate saves.
 - The conversation action row is Notes, Questions, Call, Booking and Organize. Add to Hub is reduced to Start Chat/Group, Create Contact, Add Note, Upload and Reminder.
 - The Device composer no longer shows the implementation explanation beneath the message box, and the Lock Screen now asks simply for the user's Lock Screen Password.
-- The matching V0.9.4.96 Android connector retains MMS attachment reading and the reviewed default-messaging-app handoff.
+- The matching V0.9.4.97 Android connector retains MMS attachment reading and the reviewed default-messaging-app handoff.
 - V0.9.4.86 grouping, reminders, PC-only LotKeys alert sounds, corrected logo crop and responsive floating controls remain in place.
 
 ## First checkpoint included
@@ -99,7 +105,7 @@ This focused TEST follow-up keeps Customer / Contact, Phone number, and Interest
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.96` when the stable TEST signing secrets are configured. This web release requires that matching connector for background PC pairing, MMS attachment saving and the reviewed media handoff.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.97` when the stable TEST signing secrets are configured. This web release requires that matching connector for background PC pairing, MMS attachment saving and the reviewed media handoff.
 
 The Android setup uses five short screens:
 
@@ -113,7 +119,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.4.96 Android TEST APK.
+1. Install and open the V0.9.4.97 Android TEST APK.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -125,8 +131,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09496`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=09497`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.96 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.97 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
