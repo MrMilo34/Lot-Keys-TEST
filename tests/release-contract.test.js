@@ -8,16 +8,16 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.92', () => {
+test('release metadata is consistently V0.9.4.93', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.92');
-  assert.equal(version.build, '09492');
+  assert.equal(version.version, '0.9.4.93');
+  assert.equal(version.build, '09493');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'pc-pairing-relay');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09492-pc-pairing-relay');
-  assert.match(read('index.html'), /V0\.9\.4\.92/);
-  assert.match(read('manifest.webmanifest'), /build=09492/);
-  assert.match(read('sw.js'), /lotkeys-app-v09492-pc-pairing-relay/);
+  assert.equal(version.release, 'standalone-reminders');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09493-standalone-reminders');
+  assert.match(read('index.html'), /V0\.9\.4\.93/);
+  assert.match(read('manifest.webmanifest'), /build=09493/);
+  assert.match(read('sw.js'), /lotkeys-app-v09493-standalone-reminders/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -95,7 +95,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09492/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09493/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -170,8 +170,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09492/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09492/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09493/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09493/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -291,7 +291,7 @@ test('Device header customer card has responsive space-saving styles', () => {
   assert.match(css, /@media\(max-width:620px\).*\.hub-device-chat-head\.has-interest\{grid-template-columns:auto minmax\(84px,\.64fr\) minmax\(0,1\.36fr\)/s);
 });
 
-test('contacts share Interested Vehicle, buying details, appointment chips and reminders', () => {
+test('contacts share Interested Vehicle, buying details, appointment chips and reminder-linked notes', () => {
   const hub = read('lotkeys-hub.js');
   const core = read('lotkeys-hub-core.js');
   assert.match(hub, /primaryVehicleId/);
@@ -302,7 +302,8 @@ test('contacts share Interested Vehicle, buying details, appointment chips and r
   assert.match(hub, /data-calendar-day/);
   assert.match(hub, /id="hub-note-topic-search"/);
   assert.match(hub, /id="hub-note-reminder"/);
-  assert.match(hub, /kind:'Reminder'/);
+  assert.match(hub, /note\.reminderId=reminder\.id/);
+  assert.match(hub, /S\.save\('reminder',reminder\)/);
   assert.match(hub, /id="hub-cal-reminder"/);
   for (const field of ['totalBudget', 'biweeklyPayment', 'downPayment', 'tradeStatus', 'expectedTradeValue', 'interestedVehicleText']) {
     assert.match(core, new RegExp(field));
@@ -315,6 +316,51 @@ test('contacts share Interested Vehicle, buying details, appointment chips and r
   assert.match(hub, /valueField\.hidden=choiceOnly/);
   assert.match(hub, /choiceOnly=selectedKey==='purchaseMethod'/);
   assert.match(hub, /aria-label="Cash or financing"/);
+});
+
+test('standalone reminders have one private local-first record and shared list, bell and Calendar UI', () => {
+  const html = read('index.html');
+  const hub = read('lotkeys-hub.js');
+  const store = read('lotkeys-hub-store.js');
+  const core = read('lotkeys-hub-core.js');
+  const css = read('lotkeys-hub.css');
+
+  assert.match(html, /id="sync-readiness"[^>]*><\/button>\s*<button class="header-reminder-btn" id="header-reminders"[\s\S]*?id="quick-add"/);
+  assert.match(html, /id="c-reminder">🔔 Reminder<\/button>/);
+  assert.match(html, /LotKeysHub\?\.openReminders/);
+  assert.match(html, /setInterval\(scheduleHeaderReminderBell,60000\)/);
+
+  assert.match(store, /\['contact','appointment','reminder','categories','phoneSorting'\]/);
+  assert.match(store, /folder\(hub,'Reminders','reminders'\)/);
+  assert.match(store, /row\.type==='reminder'\?r\.reminders/);
+  assert.match(store, /children\(r\.reminders\)/);
+  assert.match(store, /\['contact','appointment','reminder'\]\.includes\(t\.type\)/);
+  assert.match(store, /async function removeReminder/);
+  assert.match(store, /async function migrateLegacyReminders/);
+  assert.match(store, /await save\('reminder',H\.legacyAppointmentToReminder\(appointment\)\)/);
+  assert.match(store, /reminderRow\.dirty\|\|reminderRow\.data\.deleted/);
+  assert.match(store, /await save\('appointment',\{\.\.\.appointment,deleted:true,migratedToReminder:true\}\)/);
+
+  assert.match(hub, /appointments=\[\],reminders=\[\]/);
+  assert.match(hub, /S\.list\('reminder'\)/);
+  assert.match(hub, /id="hub-reminders"[\s\S]*?id="hub-calendar"/);
+  assert.match(hub, /async function openReminders/);
+  for (const filter of ['all', 'open', 'completed', 'daily']) assert.match(hub, new RegExp(`option value="${filter}"`));
+  for (const id of ['hub-reminder-title', 'hub-reminder-notes', 'hub-reminder-time', 'hub-reminder-date', 'hub-reminder-additional', 'hub-reminder-daily']) assert.match(hub, new RegExp(`id="${id}"`));
+  assert.match(hub, /S\.save\('reminder',reminder\)/);
+  assert.doesNotMatch(hub, /S\.save\('appointment',[\s\S]{0,500}kind:'Reminder'/);
+  assert.match(hub, /H\.remindersForDay\(reminders/);
+  assert.match(hub, /reminderCalendarCard/);
+  assert.match(hub, /newReminder:options=>editReminder/);
+  assert.match(hub, /reminderBellState:publicReminderBellState/);
+  assert.match(hub, /if\(home\(\)\)[^{]*\{[^}]*paintReminderFab\(\)/);
+
+  assert.match(core, /const REMINDER_TIME_ZONE = 'America\/Edmonton'/);
+  assert.match(core, /function reminderBellState/);
+  assert.match(core, /function remindersForDay/);
+  assert.match(core, /function legacyAppointmentToReminder/);
+  assert.match(css, /\.hub-reminder-row/);
+  assert.match(css, /\.hub-reminder-calendar/);
 });
 
 test('appointment form follows the agreed order and display rules', () => {
@@ -360,6 +406,7 @@ test('customer rows and Calendar cards use compact schedule placement', () => {
   const cardStart = hub.lastIndexOf('function appointmentCard');
   const card = hub.slice(cardStart, hub.indexOf('function appointmentTimeOptions', cardStart));
   assert.match(card, /hub-appointment-entry.*hub-calendar-time-range.*hub-appointment customer-card/s);
+  assert.match(card, /H\.appointmentIdentity\(appointment,contact\)/);
   assert.doesNotMatch(card, /durationMinutes| min<\/small>/);
   assert.match(css, /\.hub-device-card-top\{[^}]*grid-template-areas:"identity timestamp" "schedule schedule"/);
   assert.match(css, /\.hub-device-schedule-row\{[^}]*grid-template-columns:max-content minmax\(0,1fr\)/);

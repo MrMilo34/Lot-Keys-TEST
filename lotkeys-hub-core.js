@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.92 — pure customer, conversation, reminder and appointment models. */
+/* LotKeys Hub V0.9.4.93 — pure customer, conversation, standalone reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -283,6 +283,164 @@
     ].join('-');
   }
 
+  const REMINDER_TIME_ZONE = 'America/Edmonton';
+
+  function zonedDay(value = new Date(), timeZone = REMINDER_TIME_ZONE) {
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const date = value instanceof Date ? value : new Date(value);
+    if (!Number.isFinite(date.getTime())) return '';
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+
+  function zonedTime(value, timeZone = REMINDER_TIME_ZONE) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (!Number.isFinite(date.getTime())) return '';
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      hourCycle: 'h23',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).formatToParts(date).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+    return `${parts.hour}:${parts.minute}`;
+  }
+
+  function validCalendarDay(value) {
+    const match = text(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return false;
+    const candidate = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+    return candidate.getUTCFullYear() === Number(match[1]) &&
+      candidate.getUTCMonth() === Number(match[2]) - 1 &&
+      candidate.getUTCDate() === Number(match[3]);
+  }
+
+  function validClockTime(value) {
+    const match = text(value).match(/^(\d{2}):(\d{2})$/);
+    return !!match && Number(match[1]) < 24 && Number(match[2]) < 60;
+  }
+
+  function dayOrdinal(value) {
+    if (!validCalendarDay(value)) return NaN;
+    const [year, month, day] = value.split('-').map(Number);
+    return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+  }
+
+  function normalizeReminder(reminder = {}) {
+    const dailyRepeat = reminder.dailyRepeat === true;
+    const dueDate = !dailyRepeat && validCalendarDay(reminder.dueDate) ? text(reminder.dueDate) : '';
+    const dueTime = validClockTime(reminder.dueTime) ? text(reminder.dueTime) : '';
+    return {
+      ...reminder,
+      id: text(reminder.id),
+      title: text(reminder.title).slice(0, 180),
+      notes: text(reminder.notes).slice(0, 6000),
+      dueDate,
+      dueTime,
+      dailyRepeat,
+      contactId: text(reminder.contactId),
+      customerName: text(reminder.customerName).slice(0, 150),
+      phone: text(reminder.phone).slice(0, 40),
+      vehicleId: text(reminder.vehicleId),
+      vehicleLabel: text(reminder.vehicleLabel).slice(0, 300),
+      noteId: text(reminder.noteId),
+      completedAt: dailyRepeat ? '' : text(reminder.completedAt),
+      lastCompletedDay: dailyRepeat && validCalendarDay(reminder.lastCompletedDay) ? text(reminder.lastCompletedDay) : ''
+    };
+  }
+
+  function reminderComplete(reminder, value = new Date()) {
+    const row = normalizeReminder(reminder);
+    return row.dailyRepeat ? row.lastCompletedDay === zonedDay(value) : !!row.completedAt;
+  }
+
+  function toggleReminder(reminder, value = new Date()) {
+    const row = normalizeReminder(reminder);
+    if (row.dailyRepeat) {
+      const today = zonedDay(value);
+      return { ...row, lastCompletedDay: row.lastCompletedDay === today ? '' : today, completedAt: '' };
+    }
+    return { ...row, completedAt: row.completedAt ? '' : new Date(value).toISOString(), lastCompletedDay: '' };
+  }
+
+  function reminderUrgency(reminder, value = new Date()) {
+    const row = normalizeReminder(reminder);
+    if (reminderComplete(row, value)) return null;
+    if (row.dailyRepeat || !row.dueDate) return 0;
+    const difference = dayOrdinal(row.dueDate) - dayOrdinal(zonedDay(value));
+    if (!Number.isFinite(difference)) return 0;
+    if (difference <= 3) return 2;
+    if (difference <= 7) return 1;
+    return 0;
+  }
+
+  function reminderBellState(reminders, value = new Date()) {
+    const active = (Array.isArray(reminders) ? reminders : []).filter(reminder => !reminder?.deleted && !reminderComplete(reminder, value));
+    const urgency = active.reduce((highest, reminder) => Math.max(highest, reminderUrgency(reminder, value) ?? 0), 0);
+    return {
+      visible: active.length > 0,
+      urgency,
+      count: active.length,
+      symbol: urgency === 2 ? '🔔‼️' : urgency === 1 ? '🔔❗' : '🔔'
+    };
+  }
+
+  function remindersForDay(reminders, day) {
+    return (Array.isArray(reminders) ? reminders : [])
+      .map(normalizeReminder)
+      .filter(reminder => !reminder.deleted && !reminder.dailyRepeat && reminder.dueDate === day)
+      .sort((a, b) => Number(!!a.dueTime) - Number(!!b.dueTime) || a.dueTime.localeCompare(b.dueTime) || a.title.localeCompare(b.title));
+  }
+
+  function legacyAppointmentToReminder(appointment = {}) {
+    const allDay = appointment.allDay === true;
+    return normalizeReminder({
+      id: text(appointment.id),
+      title: text(appointment.title) || 'Reminder',
+      notes: text(appointment.notes),
+      dueDate: appointment.start ? zonedDay(appointment.start) : '',
+      dueTime: !allDay && appointment.start ? zonedTime(appointment.start) : '',
+      dailyRepeat: false,
+      contactId: text(appointment.contactId),
+      customerName: text(appointment.customerName),
+      phone: text(appointment.phone || appointment.phoneNumber),
+      vehicleId: text(appointment.vehicleId),
+      vehicleLabel: text(appointment.vehicleLabel),
+      noteId: text(appointment.noteId),
+      completedAt: appointment.status === 'Completed'
+        ? text(appointment.completedAt || appointment.updatedAt || appointment.end || appointment.start || new Date().toISOString())
+        : '',
+      createdAt: appointment.createdAt,
+      updatedAt: appointment.updatedAt,
+      migratedFromAppointment: true
+    });
+  }
+
+  function appointmentIdentity(appointment = {}, contact = null) {
+    const contactName = text(contact?.name);
+    const savedPhone = text(primary(contact)?.value);
+    const rawTitle = text(appointment.title);
+    const suffixes = [appointment.appointmentType, appointment.kind].map(text).filter(Boolean);
+    let titleName = rawTitle;
+    for (const suffix of suffixes) if (titleName.toLowerCase().endsWith((' · ' + suffix).toLowerCase())) titleName = titleName.slice(0, -(suffix.length + 3)).trim();
+    const genericTitles = new Set(['appointment', ...suffixes.map(value => value.toLowerCase())]);
+    const fallbackName = text(appointment.customerName) || (genericTitles.has(titleName.toLowerCase()) ? '' : titleName);
+    const suppliedPhone = text(savedPhone || appointment.phone || appointment.phoneNumber || appointment.customerPhone);
+    const candidate = contactName || fallbackName;
+    const candidatePhone = phone(candidate);
+    const normalizedPhone = phone(suppliedPhone);
+    const candidateIsPhone = validPhone(candidate) || (!!candidatePhone && !!normalizedPhone && candidatePhone === normalizedPhone);
+    const realName = candidate && !candidateIsPhone ? candidate : '';
+    const displayPhone = suppliedPhone || (candidateIsPhone ? candidate : '');
+    if (realName) return { primary: realName, phone: displayPhone && phone(realName) !== phone(displayPhone) ? displayPhone : '' };
+    if (displayPhone) return { primary: displayPhone, phone: '' };
+    return { primary: 'Unnamed appointment', phone: '' };
+  }
+
   function atLocal(date, time) {
     const value = new Date(date + 'T' + time + ':00');
     const actual = String(value.getHours()).padStart(2, '0') + ':' + String(value.getMinutes()).padStart(2, '0');
@@ -534,6 +692,20 @@
     matches,
     filtered,
     localDay,
+    REMINDER_TIME_ZONE,
+    zonedDay,
+    zonedTime,
+    validCalendarDay,
+    validClockTime,
+    dayOrdinal,
+    normalizeReminder,
+    reminderComplete,
+    toggleReminder,
+    reminderUrgency,
+    reminderBellState,
+    remindersForDay,
+    legacyAppointmentToReminder,
+    appointmentIdentity,
     atLocal,
     displayDate,
     parseDisplayDate,

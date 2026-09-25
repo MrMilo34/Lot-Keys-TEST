@@ -97,6 +97,89 @@ test('Device identity keeps a saved name and phone inline without duplicating ph
   });
 });
 
+test('appointment identity shows a phone-only customer exactly once', () => {
+  assert.deepEqual(Hub.appointmentIdentity({
+    customerName: '+1 (780) 872-1598',
+    phoneNumber: '+17808721598',
+    title: '+1 (780) 872-1598 · Test Drive',
+    appointmentType: 'Test Drive'
+  }), { primary: '+17808721598', phone: '' });
+  assert.deepEqual(Hub.appointmentIdentity({ customerName: '', title: 'Appointment', kind: 'Appointment' }), {
+    primary: 'Unnamed appointment',
+    phone: ''
+  });
+});
+
+test('appointment identity keeps a real name and one normalized phone companion', () => {
+  const contact = {
+    name: 'Mariana',
+    fields: [{ kind: 'phone', value: '+1 (780) 555-0199', primary: true }]
+  };
+  assert.deepEqual(Hub.appointmentIdentity({ customerName: 'Mariana' }, contact), {
+    primary: 'Mariana',
+    phone: '+1 (780) 555-0199'
+  });
+});
+
+test('standalone reminder completion and daily reset use the Edmonton calendar day', () => {
+  const morning = '2026-09-25T08:00:00-06:00';
+  const evening = '2026-09-25T22:00:00-06:00';
+  const tomorrow = '2026-09-26T08:00:00-06:00';
+  const daily = Hub.toggleReminder({ id: 'daily', title: 'Check leads', dailyRepeat: true }, morning);
+  assert.equal(daily.lastCompletedDay, '2026-09-25');
+  assert.equal(Hub.reminderComplete(daily, evening), true);
+  assert.equal(Hub.reminderComplete(daily, tomorrow), false);
+  assert.equal(Hub.toggleReminder(daily, evening).lastCompletedDay, '');
+  const oneTime = Hub.toggleReminder({ id: 'one', title: 'Call customer' }, morning);
+  assert.ok(oneTime.completedAt);
+  assert.equal(Hub.reminderComplete(oneTime, tomorrow), true);
+  assert.equal(Hub.toggleReminder(oneTime, tomorrow).completedAt, '');
+});
+
+test('reminder bell urgency uses inclusive 7-day and 3-day calendar boundaries', () => {
+  const now = '2026-09-25T23:30:00-06:00';
+  assert.equal(Hub.reminderUrgency({ title: 'Eight', dueDate: '2026-10-03' }, now), 0);
+  assert.equal(Hub.reminderUrgency({ title: 'Seven', dueDate: '2026-10-02' }, now), 1);
+  assert.equal(Hub.reminderUrgency({ title: 'Four', dueDate: '2026-09-29' }, now), 1);
+  assert.equal(Hub.reminderUrgency({ title: 'Three', dueDate: '2026-09-28' }, now), 2);
+  assert.equal(Hub.reminderUrgency({ title: 'Today', dueDate: '2026-09-25' }, now), 2);
+  assert.equal(Hub.reminderUrgency({ title: 'Overdue', dueDate: '2026-09-20' }, now), 2);
+  assert.equal(Hub.reminderBellState([{ title: 'Daily', dailyRepeat: true }], now).symbol, '🔔');
+  assert.equal(Hub.reminderBellState([{ title: 'Done', completedAt: now }], now).visible, false);
+});
+
+test('daily and undated reminders stay out of Calendar while completed dated reminders remain', () => {
+  const rows = [
+    { id: 'dated', title: 'Dated', dueDate: '2026-09-25', dueTime: '14:15', completedAt: '2026-09-24T18:00:00.000Z' },
+    { id: 'daily', title: 'Daily', dailyRepeat: true },
+    { id: 'undated', title: 'Undated' }
+  ];
+  assert.deepEqual(Hub.remindersForDay(rows, '2026-09-25').map(row => row.id), ['dated']);
+});
+
+test('legacy appointment reminders normalize to one stable standalone record', () => {
+  const reminder = Hub.legacyAppointmentToReminder({
+    id: 'REM-stable',
+    kind: 'Reminder',
+    title: 'Follow up',
+    notes: 'About financing',
+    contactId: 'CUST-1',
+    customerName: 'John',
+    noteId: 'N-1',
+    start: '2026-09-25T20:30:00.000Z',
+    end: '2026-09-25T21:00:00.000Z',
+    status: 'Completed',
+    createdAt: '2026-09-20T12:00:00.000Z',
+    updatedAt: '2026-09-25T21:00:00.000Z'
+  });
+  assert.equal(reminder.id, 'REM-stable');
+  assert.equal(reminder.dueDate, '2026-09-25');
+  assert.equal(reminder.dueTime, '14:30');
+  assert.equal(reminder.contactId, 'CUST-1');
+  assert.equal(reminder.noteId, 'N-1');
+  assert.equal(reminder.completedAt, '2026-09-25T21:00:00.000Z');
+});
+
 test('appointment overlap excludes cancelled appointments', () => {
   const candidate = { id: 'a', start: '2026-09-22T16:00:00.000Z', end: '2026-09-22T16:30:00.000Z' };
   const rows = [

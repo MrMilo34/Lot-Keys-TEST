@@ -1,15 +1,15 @@
-# LotKeys V0.9.4.92 team-test checklist
+# LotKeys V0.9.4.93 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09492` and confirm **V0.9.4.92 / 09492**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09493` and confirm **V0.9.4.93 / 09493**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.92** and install its `app-debug.apk` on an Android 11+ test phone.
+- Download the GitHub Actions artifact named **LotKeys-Android-V0.9.4.93** and install its `app-debug.apk` on an Android 11+ test phone.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -62,11 +62,25 @@
 - Search the Add Note topic list, save a general note, then save another with an all-day reminder and one with a time.
 - Put `400 bi weekly` and `567 bi weekly would never work; too high` in recent incoming test messages. Confirm both ⤴️ choices appear with different context labels and neither is saved until tapped.
 - Add six newer messages and confirm the oldest message's ⤴️ action disappears. Confirm a suggestion bubble closes after five seconds and after tapping elsewhere.
-- Create a Reminder directly from Calendar; confirm all-day reminders sort above appointments and `.ics` export uses a date-only event.
+- Create a Reminder directly from Calendar; confirm the selected date is prefilled and the reminder appears as a lightweight bell/check row rather than an appointment or `.ics` event.
 - Open Questions after a conversation mentions financing or a vehicle feature. Confirm answered topics are excluded and selecting a question only fills the Device draft.
 - On PC, choose and preview each built-in notification sound, Silent and a short custom clip. Confirm an incoming LotKeys Chat plays only the selected PC sound.
 - On Android, confirm incoming LotKeys Chat does not play an extra LotKeys sound and normal Device SMS/MMS notifications remain unchanged.
 - Confirm the Hub logo has no dark corner matte, floating controls sit just above mobile navigation, and desktop controls are on the right-side rail.
+
+## Standalone reminders
+
+- On Home, Inventory, Listings, Garage and Account, open the top-right Create menu and confirm **🔔 Reminder** is available. Confirm Hub keeps Reminder in its own Add menu.
+- Create an undated reminder and confirm the plain bell appears in the main header and directly above Calendar in Hub, but no Calendar row is created.
+- Create reminders due 8, 7, 3 and 0 Edmonton calendar days away. Confirm the shared bells show plain, one mark, two marks and two marks respectively; confirm overdue also shows two marks.
+- Complete the final open one-time reminder and confirm both bells disappear without refreshing the page. Mark it open again from the reminder list.
+- Create a Daily reminder, complete it, and confirm it is complete only for today. After the Edmonton day changes, confirm it becomes open and both bells re-evaluate automatically.
+- Confirm Daily and undated reminders do not populate Calendar. Confirm a completed dated reminder stays on its due date with completed styling but does not keep either bell active.
+- Open reminder details from both All reminders and Calendar. Test Edit, Delete, Complete/Open, All/Open/Completed/Daily filters, optional Contact, raw phone, Call, linked note and Vehicle Profile actions.
+- From a Contact note, enable **Add a reminder**, optionally select a date/time, save, and confirm the note retains its reminder link. Delete the reminder and confirm the note remains.
+- Delete a Contact with a linked reminder and confirm the standalone task remains with its saved name/phone and cleared Contact link.
+- With a V0.9.4.92 reminder present, open V0.9.4.93 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
+- Create a phone-only appointment and confirm its number appears once. Create a named appointment and confirm it shows **Name · Phone** once.
 
 ## Retained conversation cards and appointments
 

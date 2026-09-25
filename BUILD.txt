@@ -1,3 +1,15 @@
+V0.9.4.93 STANDALONE REMINDERS
+- Replaces appointment-shaped reminders with private, local-first reminder records in a dedicated Hub/Reminders Drive folder.
+- Adds the shared main-header and Hub bells with inclusive 7-day/3-day America/Edmonton urgency rules.
+- Adds compact All/Open/Completed/Daily task views, optional Contact/raw-phone/Vehicle links, and daily completion reset.
+- Shows dated one-time reminders as lightweight Calendar rows without appointment collision, status, duration, or type behavior.
+- Migrates legacy kind: Reminder appointments safely and idempotently by stable ID before tombstoning the old record.
+- Preserves linked notes and standalone tasks across reminder or Contact deletion.
+- Fixes phone-only appointment identities so the number is displayed exactly once.
+- Retains the V0.9.4.92 Android PC relay, trust, refresh recovery and device controls.
+- Build: 09493.
+- Service worker cache: lotkeys-app-v09493-standalone-reminders.
+
 V0.9.4.92 RELIABLE PC PAIRING
 - Moves the encrypted PC relay into the Android foreground service so Device Messages can continue after the phone browser closes.
 - Requires matching four-digit phone approval for every new computer and supports Ask, 36-hour, 7-day and Until Disconnect trust.

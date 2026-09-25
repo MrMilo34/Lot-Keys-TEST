@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09492-pc-pairing-relay';
+const CACHE='lotkeys-app-v09493-standalone-reminders';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
