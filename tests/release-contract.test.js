@@ -8,16 +8,16 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.98', () => {
+test('release metadata is consistently V0.9.4.99', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.98');
-  assert.equal(version.build, '09498');
+  assert.equal(version.version, '0.9.4.99');
+  assert.equal(version.build, '09499');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'hub-refresh-change-detection-hotfix');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09498-hub-refresh-change-detection-hotfix');
-  assert.match(read('index.html'), /V0\.9\.4\.98/);
-  assert.match(read('manifest.webmanifest'), /build=09498/);
-  assert.match(read('sw.js'), /lotkeys-app-v09498-hub-refresh-change-detection-hotfix/);
+  assert.equal(version.release, 'category-listing-reorder-hotfix');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09499-category-listing-reorder-hotfix');
+  assert.match(read('index.html'), /V0\.9\.4\.99/);
+  assert.match(read('manifest.webmanifest'), /build=09499/);
+  assert.match(read('sw.js'), /lotkeys-app-v09499-category-listing-reorder-hotfix/);
 });
 
 test('V0.9.4.98 preserves the active page and labels the newest successful sync', () => {
@@ -139,7 +139,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09498/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09499/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -214,8 +214,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09498/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09498/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09499/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09499/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -357,6 +357,27 @@ test('V0.9.4.98 repaints Hub Device rows only when monitored data changes', () =
   assert.doesNotMatch(phone, /payload\.event === 'invalidate'[\s\S]{0,180}state\.threads = \[\]/);
   assert.match(hub, /window\.addEventListener\('lotkeys-phone-status',\(\)=>\{if\(home\(\)\)paintStatus\(\);\}\)/);
   assert.doesNotMatch(hub, /lotkeys-phone-status[^\n]*paintRows/);
+});
+
+test('V0.9.4.99 category and Listing reordering share the responsive physical-drag contract', () => {
+  const hub = read('lotkeys-hub.js');
+  const css = read('lotkeys-hub.css');
+  const index = read('index.html');
+  const touchStart = hub.indexOf('async function editCategories()');
+  const touch = hub.slice(touchStart, hub.indexOf('function readGroupState()', touchStart));
+  assert.match(hub, /action\(\$\('#hub-organize',p\),editCategories\)/);
+  assert.match(hub, /function bindCategoryReorder\(container,onMove\)/);
+  assert.match(hub, /document\.addEventListener\('pointermove',move,\{capture:true,passive:false\}\)/);
+  assert.match(touch, /class="hub-category-handle"[^>]*>☰<\/button>/);
+  assert.match(touch, /rows=H\.reorderCategories\(rows,from,to\)/);
+  assert.doesNotMatch(touch, /draggable="true"/);
+  assert.match(css, /\.hub-category-handle\{position:absolute;left:10px;bottom:9px/);
+  assert.match(css, /\.hub-category-drag-ghost\{position:fixed!important/);
+  assert.match(index, /gridEl\.classList\.add\('vehicle-master-photo-grid'\)/);
+  assert.match(index, /markListingPhotoOrderDirty\(\{preserveScroll:false\}\)/);
+  assert.match(index, /selectedPos===0\?'1 · Cover':String\(selectedPos\+1\)/);
+  assert.match(index, /'Not selected'/);
+  assert.match(index, /Maximum \$\{LISTING_PHOTO_LIMIT\} selected/);
 });
 
 test('contacts share Interested Vehicle, buying details, appointment chips and reminder-linked notes', () => {

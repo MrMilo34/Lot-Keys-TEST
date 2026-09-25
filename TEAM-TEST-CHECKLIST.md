@@ -1,15 +1,15 @@
-# LotKeys V0.9.4.98 team-test checklist
+# LotKeys V0.9.4.99 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09498` and confirm **V0.9.4.98 / 09498**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09499` and confirm **V0.9.4.99 / 09499**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- If the stable TEST signing secrets are configured, download **LotKeys-Android-V0.9.4.98** and install its `app-debug.apk` on an Android 11+ test phone. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
+- If the stable TEST signing secrets are configured, download **LotKeys-Android-V0.9.4.99** and install its `app-debug.apk` on an Android 11+ test phone. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -43,6 +43,9 @@
 
 ## Organization and customer records
 
+- Open Hub → Device → Organize on Android. Confirm every category card has a physical ☰ grip at the bottom-left and that holding it produces a moving card preview rather than page scrolling.
+- Drag a category above and below other rows, save, close, and reopen Organize. Confirm the new order remains. Repeat once with the ↑/↓ fallback buttons.
+- Confirm category names, parent/subcategory choices and colours remain editable after dragging, and removing a category still moves its subcategories to the top level without deleting contacts.
 - Sort an unknown number into multiple categories/subcategories without creating a LotKeys contact.
 - Confirm parent filters include conversations assigned to their subcategories and multiple selected filters combine results.
 - Confirm **Unsorted** contains only numbers without a category path.
@@ -50,6 +53,13 @@
 - Rename the LotKeys contact and confirm the custom name overrides the Android contact name.
 - Delete the LotKeys contact and confirm its number returns to Unsorted while the phone conversation remains.
 - Confirm deleting/clearing a phone conversation does not delete the LotKeys customer folder, notes, or saved documents.
+
+## Listing photo order
+
+- Edit a Marketplace Listing and confirm its photo tile size and centered ☰ handle match Inventory's photo reorder surface.
+- Drag selected and unselected Listing photos in several directions. Confirm the moving preview and drop cue respond as smoothly as Inventory and the saved order remains after reopening the Listing.
+- Tap a selected photo off and back on. Confirm the tile never relocates, unselected photos remain grey and labelled **Not selected**, and selected photos are renumbered in selected order around skipped tiles.
+- Confirm the first selected photo reads **1 · Cover**, the count reflects selected photos only, and LotKeys never permits more than 20 selected photos.
 
 ## Retained customer cards and notes
 
@@ -83,7 +93,7 @@
 - Leave the Hub Device list open for at least 15 seconds. Confirm the three-second phone checks do not flash, blank, or rebuild unchanged cards or Vehicle Profile thumbnails; then receive a test SMS and confirm the changed conversation refreshes once.
 - From a Contact note, enable **Add a reminder**, optionally select a date/time, save, and confirm the note retains its reminder link. Delete the reminder and confirm the note remains.
 - Delete a Contact with a linked reminder and confirm the standalone task remains with its saved name/phone and cleared Contact link.
-- With a V0.9.4.92 reminder present, open V0.9.4.98 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
+- With a V0.9.4.92 reminder present, open V0.9.4.99 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
 - Create a phone-only appointment and confirm its number appears once. Create a named appointment and confirm it shows **Name · Phone** once.
 
 ## Navigation and sync header hotfix

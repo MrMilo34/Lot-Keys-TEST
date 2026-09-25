@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.98 — pure customer, conversation, standalone reminder and appointment models. */
+/* LotKeys Hub V0.9.4.99 — pure customer, conversation, standalone reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -183,6 +183,19 @@
     return rows
       .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
       .map((item, order) => ({ ...item, order }));
+  }
+
+  function reorderCategories(items, from, to) {
+    const rows = (Array.isArray(items) ? items : []).map(item => ({ ...item }));
+    const start = Number(from);
+    const end = Number(to);
+    if (!Number.isInteger(start) || !Number.isInteger(end) ||
+        start < 0 || end < 0 || start >= rows.length || end >= rows.length || start === end) {
+      return rows;
+    }
+    const [moved] = rows.splice(start, 1);
+    rows.splice(end, 0, moved);
+    return rows.map((item, order) => ({ ...item, order }));
   }
 
   function categoryClosure(contact, items) {
@@ -686,6 +699,7 @@
     buyingSummary,
     applyContactField,
     normalizeCategories,
+    reorderCategories,
     categoryClosure,
     categoryPath,
     validateContact,

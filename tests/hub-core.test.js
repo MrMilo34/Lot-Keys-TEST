@@ -30,6 +30,14 @@ test('category normalization keeps only one nested level', () => {
   assert.equal(rows.find(row => row.id === 'deep').parentId, 'customers');
 });
 
+test('category reordering persists the physical row order', () => {
+  const rows = Hub.reorderCategories(categories, 2, 0);
+  assert.deepEqual(rows.map(row => row.id), ['personal', 'customers', 'follow-up']);
+  assert.deepEqual(rows.map(row => row.order), [0, 1, 2]);
+  assert.equal(rows.find(row => row.id === 'follow-up').parentId, 'customers');
+  assert.equal(Hub.reorderCategories([{ id: 'draft', name: '', order: 0 }, categories[0]], 0, 1).length, 2);
+});
+
 test('a subcategory contact also matches its parent', () => {
   const closure = Hub.categoryClosure({ categoryIds: ['follow-up'] }, categories);
   assert.deepEqual(new Set(closure), new Set(['follow-up', 'customers']));

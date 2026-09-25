@@ -1,3 +1,12 @@
+V0.9.4.99 CATEGORY + LISTING REORDER HOTFIX
+- Gives every Hub category row a bottom-left physical drag grip with pointer-driven mouse/touch movement and clear drop cues.
+- Persists category order numbers after drag or arrow movement instead of normalizing rows back to their previous positions.
+- Reuses Inventory's immediate tile/handle layout in Listings and avoids the extra scroll-restoration frame after photo drag.
+- Retains Listing tap-to-toggle without tile movement, grey unselected photos, selected-only Cover/sequential numbering and the 20-photo cap.
+- Retains every V0.9.4.98 change-aware Hub refresh and stable Vehicle Profile thumbnail behavior.
+- Build: 09499.
+- Service worker cache: lotkeys-app-v09499-category-listing-reorder-hotfix.
+
 V0.9.4.98 HUB REFRESH CHANGE-DETECTION HOTFIX
 - Keeps the three-second phone connection check but suppresses unchanged status events before they reach the UI.
 - Updates only the connection indicator for status changes instead of rebuilding every Device conversation card.
