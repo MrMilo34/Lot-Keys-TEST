@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.95 — pure customer, conversation, standalone reminder and appointment models. */
+/* LotKeys Hub V0.9.4.96 — pure customer, conversation, standalone reminder and appointment models. */
 (function (root) {
   'use strict';
 

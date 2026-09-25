@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.95",
-  "build": "09495",
-  "release": "reminder-bell-state-hotfix",
+  "version": "0.9.4.96",
+  "build": "09496",
+  "release": "reminder-additional-fields-hotfix",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09495-reminder-bell-state-hotfix",
+  "serviceWorkerCache": "lotkeys-app-v09496-reminder-additional-fields-hotfix",
   "publishedAt": "2026-09-25",
-  "basedOn": "LotKeys V0.9.4.94 reminders and navigation hotfix"
+  "basedOn": "LotKeys V0.9.4.95 reminder bell state hotfix"
 }

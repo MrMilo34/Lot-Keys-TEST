@@ -1,3 +1,10 @@
+V0.9.4.96 REMINDER ADDITIONAL-FIELDS HOTFIX
+- Keeps Customer / Contact, Phone number, and Interested Vehicle / Vehicle Profile collapsed inside Additional fields until opened.
+- Automatically opens Additional fields when editing a reminder that already contains one of those values.
+- Retains every V0.9.4.95 reminder-bell, sync-label, navigation and deletion-repaint fix.
+- Build: 09496.
+- Service worker cache: lotkeys-app-v09496-reminder-additional-fields-hotfix.
+
 V0.9.4.95 REMINDER BELL STATE HOTFIX
 - Restores the main-header bell's hidden state after the final active reminder is completed.
 - Keeps the Android-safe separate bell and urgency-mark layout while explicitly overriding its grid display when hidden.

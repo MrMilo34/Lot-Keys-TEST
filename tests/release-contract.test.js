@@ -8,19 +8,19 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.95', () => {
+test('release metadata is consistently V0.9.4.96', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.95');
-  assert.equal(version.build, '09495');
+  assert.equal(version.version, '0.9.4.96');
+  assert.equal(version.build, '09496');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'reminder-bell-state-hotfix');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09495-reminder-bell-state-hotfix');
-  assert.match(read('index.html'), /V0\.9\.4\.95/);
-  assert.match(read('manifest.webmanifest'), /build=09495/);
-  assert.match(read('sw.js'), /lotkeys-app-v09495-reminder-bell-state-hotfix/);
+  assert.equal(version.release, 'reminder-additional-fields-hotfix');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v09496-reminder-additional-fields-hotfix');
+  assert.match(read('index.html'), /V0\.9\.4\.96/);
+  assert.match(read('manifest.webmanifest'), /build=09496/);
+  assert.match(read('sw.js'), /lotkeys-app-v09496-reminder-additional-fields-hotfix/);
 });
 
-test('V0.9.4.95 preserves the active page and labels the newest successful sync', () => {
+test('V0.9.4.96 preserves the active page and labels the newest successful sync', () => {
   const html = read('index.html');
   assert.match(html, /ACTIVE_ROUTE_KEY='lotkeys-active-route-v1'/);
   assert.match(html, /APP_ROUTES\.has\(saved\)\?saved:'home'/);
@@ -33,7 +33,7 @@ test('V0.9.4.95 preserves the active page and labels the newest successful sync'
   assert.doesNotMatch(html, /Math\.min\(inv,lis\)/);
 });
 
-test('V0.9.4.95 reminder controls repaint locally and hide the stable header bell', () => {
+test('V0.9.4.96 reminder controls repaint locally and hide the stable header bell', () => {
   const html = read('index.html');
   const hub = read('lotkeys-hub.js');
   const store = read('lotkeys-hub-store.js');
@@ -48,6 +48,20 @@ test('V0.9.4.95 reminder controls repaint locally and hide the stable header bel
   assert.match(hub, /Reminder deleted; Drive sync queued/);
   assert.match(hub, /id="hub-cal-reminder"[\s\S]*?d\.close\(\);return openReminders\(\{filter:'all'\}\)/);
   assert.match(store, /sync\(\{pull:false\}\)\.catch\(\(\)=>\{\}\);return true/);
+});
+
+test('V0.9.4.96 keeps optional reminder links inside Additional fields', () => {
+  const hub = read('lotkeys-hub.js');
+  const css = read('lotkeys-hub.css');
+  const sectionStart = hub.indexOf('<section class="hub-reminder-additional-fields full"');
+  const sectionEnd = hub.indexOf('</section>', sectionStart);
+  assert.ok(sectionStart >= 0 && sectionEnd > sectionStart, 'Additional fields section must exist');
+  const additionalFields = hub.slice(sectionStart, sectionEnd);
+  assert.match(additionalFields, /id="hub-reminder-contact"/);
+  assert.match(additionalFields, /id="hub-reminder-phone"/);
+  assert.match(additionalFields, /id="hub-reminder-vehicle"/);
+  assert.match(css, /\.hub-reminder-additional-fields\[hidden\]\{display:none!important\}/);
+  assert.match(hub, /const extraOpen=!!\(chosenContact\|\|old\?\.phone\|\|chosenVehicle\|\|old\?\.vehicleLabel\)/);
 });
 
 test('TEST Google browser configuration has complete safe fallbacks', () => {
@@ -125,7 +139,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09495/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=09496/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -200,8 +214,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09495/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09495/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=09496/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=09496/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {

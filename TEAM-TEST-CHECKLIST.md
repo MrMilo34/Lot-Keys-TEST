@@ -1,15 +1,15 @@
-# LotKeys V0.9.4.95 team-test checklist
+# LotKeys V0.9.4.96 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09495` and confirm **V0.9.4.95 / 09495**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=09496` and confirm **V0.9.4.96 / 09496**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- If the stable TEST signing secrets are configured, download **LotKeys-Android-V0.9.4.95** and install its `app-debug.apk` on an Android 11+ test phone. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
+- If the stable TEST signing secrets are configured, download **LotKeys-Android-V0.9.4.96** and install its `app-debug.apk` on an Android 11+ test phone. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -78,9 +78,10 @@
 - Create a Daily reminder, complete it, and confirm it is complete only for today. After the Edmonton day changes, confirm it becomes open and both bells re-evaluate automatically.
 - Confirm Daily and undated reminders do not populate Calendar. Confirm a completed dated reminder stays on its due date with completed styling but does not keep either bell active.
 - Open reminder details from both All reminders and Calendar. Delete one and confirm the detail closes immediately, the previous view returns, its visible count/list update before Drive finishes, and both shared bells repaint. Test Edit, Complete/Open, All/Open/Completed/Daily filters, optional Contact, raw phone, Call, linked note and Vehicle Profile actions.
+- Create a reminder and confirm Customer / Contact, Phone number, and Interested Vehicle / Vehicle Profile remain hidden beneath **Additional fields** until it is opened. Edit a reminder containing one of those values and confirm the section opens automatically.
 - From a Contact note, enable **Add a reminder**, optionally select a date/time, save, and confirm the note retains its reminder link. Delete the reminder and confirm the note remains.
 - Delete a Contact with a linked reminder and confirm the standalone task remains with its saved name/phone and cleared Contact link.
-- With a V0.9.4.92 reminder present, open V0.9.4.95 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
+- With a V0.9.4.92 reminder present, open V0.9.4.96 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
 - Create a phone-only appointment and confirm its number appears once. Create a named appointment and confirm it shows **Name · Phone** once.
 
 ## Navigation and sync header hotfix
