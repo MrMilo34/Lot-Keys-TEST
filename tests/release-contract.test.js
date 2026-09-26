@@ -8,16 +8,16 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.4.100', () => {
+test('release metadata is consistently V0.9.4.101', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.4.100');
-  assert.equal(version.build, '094100');
+  assert.equal(version.version, '0.9.4.101');
+  assert.equal(version.build, '094101');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'important-alerts-pairing-scope');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v094100-important-alerts-pairing-scope');
-  assert.match(read('index.html'), /V0\.9\.4\.100/);
-  assert.match(read('manifest.webmanifest'), /build=094100/);
-  assert.match(read('sw.js'), /lotkeys-app-v094100-important-alerts-pairing-scope/);
+  assert.equal(version.release, 'category-unread-count-badges');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v094101-category-unread-count-badges');
+  assert.match(read('index.html'), /V0\.9\.4\.101/);
+  assert.match(read('manifest.webmanifest'), /build=094101/);
+  assert.match(read('sw.js'), /lotkeys-app-v094101-category-unread-count-badges/);
 });
 
 test('V0.9.4.98 preserves the active page and labels the newest successful sync', () => {
@@ -139,7 +139,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=094100/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=094101/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -214,8 +214,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=094100/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=094100/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=094101/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=094101/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -380,7 +380,7 @@ test('V0.9.4.99 category and Listing reordering share the responsive physical-dr
   assert.match(index, /Maximum \$\{LISTING_PHOTO_LIMIT\} selected/);
 });
 
-test('V0.9.4.100 adds three Important Device-category unread alerts and a prominent Organize control', () => {
+test('V0.9.4.101 keeps numbered category badges independent from Important Hub alerts', () => {
   const core = read('lotkeys-hub-core.js');
   const hub = read('lotkeys-hub.js');
   const css = read('lotkeys-hub.css');
@@ -390,17 +390,19 @@ test('V0.9.4.100 adds three Important Device-category unread alerts and a promin
   assert.match(hub, /aria-pressed="\$\{category\.important\?'true':'false'\}"/);
   assert.match(hub, /Choose up to three Important categories\. Unstar one first\./);
   assert.match(hub, /important:false/);
-  assert.match(hub, /function categoryUnreadCounts\(\)/);
+  assert.match(hub, /function categoryUnreadCounts\(options\)/);
   assert.match(hub, /async function loadBadgeData\(\)/);
   assert.match(hub, /if\(!visible\)\{await loadBadgeData\(\);updateBadge\(\);return;\}/);
-  assert.match(hub, /row\.live\?Math\.max\(0,Number\(row\.unread\)\|\|0\):0/);
-  assert.match(hub, /H\.categoryClosure\(organization,categories\)/);
+  assert.match(core, /row\?\.live === true \? Math\.max\(0, Number\(row\.unread\) \|\| 0\) : 0/);
+  assert.match(core, /categoryClosure\(organization, categories\)/);
   assert.match(hub, /class="hub-category-alert"/);
+  assert.match(hub, /categoryUnreadCounts\(\{importantOnly:true\}\)/);
+  assert.match(hub, /count>99\?'99\+':count/);
   assert.match(hub, /className='hub-important-alerts'/);
   assert.match(hub, /className='hub-important-alert-dot'/);
   assert.match(hub, /class="hub-chip hub-organize-button"[^>]*>🗂️ Organize<\/button>/);
-  assert.match(css, /\.hub-category-alert\{[^}]*background:#111827/);
-  assert.match(css, /body\[data-theme="dark"\] \.hub-category-alert\{background:#fff/);
+  assert.match(css, /\.hub-category-alert\{[^}]*min-width:18px[^}]*background:#111827[^}]*color:#fff/);
+  assert.match(css, /body\[data-theme="dark"\] \.hub-category-alert\{background:#fff;color:#111/);
   assert.match(css, /\.hub-organize-button\{background:#111!important;color:#fff!important/);
   assert.match(css, /body\[data-theme="dark"\] \.hub-organize-button\{background:#fff!important;color:#111!important/);
   assert.match(css, /\.hub-important-alerts\{[^}]*flex-direction:column/);

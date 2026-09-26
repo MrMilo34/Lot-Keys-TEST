@@ -56,6 +56,26 @@ test('a subcategory contact also matches its parent', () => {
   assert.deepEqual(new Set(closure), new Set(['follow-up', 'customers']));
 });
 
+test('category unread totals cover every category while Important totals remain starred-only', () => {
+  const categoryRows = categories.map(category => ({
+    ...category,
+    important: category.id === 'customers'
+  }));
+  const rows = [
+    { live: true, unread: 2, organization: { categoryIds: ['follow-up'] } },
+    { live: true, unread: 4, organization: { categoryIds: ['personal'] } },
+    { live: false, unread: 99, contact: { categoryIds: ['customers'] } }
+  ];
+  const all = Hub.categoryUnreadCounts(categoryRows, rows);
+  assert.deepEqual(Object.fromEntries(all.map(item => [item.category.id, item.count])), {
+    customers: 2,
+    'follow-up': 2,
+    personal: 4
+  });
+  const important = Hub.categoryUnreadCounts(categoryRows, rows, { importantOnly: true });
+  assert.deepEqual(important.map(item => [item.category.id, item.count]), [['customers', 2]]);
+});
+
 test('multiple Device filters combine without leaking LotKeys chat rows', () => {
   const rows = [
     { id: 'chat', source: 'lotkeys', title: 'Internal', unread: 1, at: 3 },

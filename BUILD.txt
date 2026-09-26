@@ -1,3 +1,12 @@
+V0.9.4.101 NUMBERED CATEGORY UNREAD BADGES
+- Shows a high-contrast numbered unread badge on every Device category chip with live unread messages, whether or not it is starred Important.
+- Caps the visible chip count at 99+ and keeps the exact unread total in the chip's accessible label and tooltip.
+- Keeps the Hub tab's category-coloured dots limited to the up-to-three starred Important categories.
+- Retains parent/subcategory closure, multi-category counting, and zero unread contribution from saved contacts without a live thread.
+- Retains every V0.9.4.100 pairing-scope, Organize contrast, reminder, message, Store and Android relay behavior.
+- Build: 094101.
+- Service worker cache: lotkeys-app-v094101-category-unread-count-badges.
+
 V0.9.4.100 IMPORTANT HUB ALERTS + PAIRING SCOPE REPAIR
 - Adds a ⭐ Important selector to every Device category/subcategory and preserves the first three selections in saved category order.
 - Keeps the existing all-unread Hub badge and adds up to three vertically stacked category-coloured unread dots for live Device messages.

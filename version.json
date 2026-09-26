@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.100",
-  "build": "094100",
-  "release": "important-alerts-pairing-scope",
+  "version": "0.9.4.101",
+  "build": "094101",
+  "release": "category-unread-count-badges",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v094100-important-alerts-pairing-scope",
+  "serviceWorkerCache": "lotkeys-app-v094101-category-unread-count-badges",
   "publishedAt": "2026-09-25",
-  "basedOn": "LotKeys V0.9.4.99 category and Listing reorder hotfix"
+  "basedOn": "LotKeys V0.9.4.100 Important Hub alerts and pairing scope repair"
 }

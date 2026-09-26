@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v094100-important-alerts-pairing-scope';
+const CACHE='lotkeys-app-v094101-category-unread-count-badges';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
