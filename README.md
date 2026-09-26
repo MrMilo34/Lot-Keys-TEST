@@ -1,8 +1,8 @@
-# LotKeys V0.9.4.101 — Numbered category unread badges
+# LotKeys V0.9.5.01 — Numbered category unread badges
 
 This TEST hotfix keeps unread status visible on every Device category chip, whether or not the category is one of the three starred Important choices. The chip badge now contains its unread count; the separate category-coloured Hub-tab dots remain Important-only.
 
-## V0.9.4.101 included
+## V0.9.5.01 included
 
 - Show a black numbered unread badge on every matching Device category chip in light theme and a white numbered badge in dark theme.
 - Keep each chip badge independent from the category's ⭐ Important selection and visible while the chip is selected or unselected.
@@ -97,7 +97,7 @@ This TEST hotfix keeps unread status visible on every Device category chip, whet
 - Sent and received Chat media exposes a deliberate 💾 action to save a separate copy in the private Contact folder. A source key prevents accidental duplicate saves.
 - The conversation action row is Notes, Questions, Call, Booking and Organize. Add to Hub is reduced to Start Chat/Group, Create Contact, Add Note, Upload and Reminder.
 - The Device composer no longer shows the implementation explanation beneath the message box, and the Lock Screen now asks simply for the user's Lock Screen Password.
-- The matching V0.9.4.101 Android connector retains MMS attachment reading and the reviewed default-messaging-app handoff.
+- The matching V0.9.5.01 Android connector retains MMS attachment reading and the reviewed default-messaging-app handoff.
 - V0.9.4.86 grouping, reminders, PC-only LotKeys alert sounds, corrected logo crop and responsive floating controls remain in place.
 
 ## First checkpoint included
@@ -135,7 +135,7 @@ This TEST hotfix keeps unread status visible on every Device category chip, whet
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.4.101` when the stable TEST signing secrets are configured. This web release requires that matching connector for background PC pairing, MMS attachment saving and the reviewed media handoff.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.01` when the stable TEST signing secrets are configured. This web release requires that matching connector for background PC pairing, MMS attachment saving and the reviewed media handoff.
 
 The Android setup uses five short screens:
 
@@ -149,7 +149,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.4.101 Android TEST APK.
+1. Install and open the V0.9.5.01 Android TEST APK.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -161,8 +161,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=094101`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095001`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.4.101 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.01 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

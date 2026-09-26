@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.101",
-  "build": "094101",
+  "version": "0.9.5.01",
+  "build": "095001",
   "release": "category-unread-count-badges",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v094101-category-unread-count-badges",
+  "serviceWorkerCache": "lotkeys-app-v095001-category-unread-count-badges",
   "publishedAt": "2026-09-25",
   "basedOn": "LotKeys V0.9.4.100 Important Hub alerts and pairing scope repair"
 }

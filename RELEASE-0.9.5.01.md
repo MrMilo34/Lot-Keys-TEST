@@ -1,6 +1,6 @@
-# LotKeys V0.9.4.101 — Numbered category unread badges
+# LotKeys V0.9.5.01 — Numbered category unread badges
 
-Released: 2026-09-25 21:59 MDT
+Released: 2026-09-25 22:10 MDT
 
 ## Included
 
@@ -23,12 +23,12 @@ Released: 2026-09-25 21:59 MDT
 
 ## Release identity
 
-- Version: `0.9.4.101`
-- Build: `094101`
-- Android version code: `94101`
-- Android version name: `0.9.4.101-test`
+- Version: `0.9.5.01`
+- Build: `095001`
+- Android version code: `95001`
+- Android version name: `0.9.5.01-test`
 - Channel: `test`
-- Service worker cache: `lotkeys-app-v094101-category-unread-count-badges`
+- Service worker cache: `lotkeys-app-v095001-category-unread-count-badges`
 - Base: LotKeys V0.9.4.100 Important Hub alerts and pairing scope repair
 
 Production `lot-keys.ca` is not changed by this TEST release.

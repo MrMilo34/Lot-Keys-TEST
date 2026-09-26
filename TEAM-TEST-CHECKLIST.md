@@ -1,15 +1,15 @@
-# LotKeys V0.9.4.101 team-test checklist
+# LotKeys V0.9.5.01 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=094101` and confirm **V0.9.4.101 / 094101**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095001` and confirm **V0.9.5.01 / 095001**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- If the stable TEST signing secrets are configured, download **LotKeys-Android-V0.9.4.101** and install its `app-debug.apk` on an Android 11+ test phone. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
+- If the stable TEST signing secrets are configured, download **LotKeys-Android-V0.9.5.01** and install its `app-debug.apk` on an Android 11+ test phone. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -107,7 +107,7 @@
 - Leave the Hub Device list open for at least 15 seconds. Confirm the three-second phone checks do not flash, blank, or rebuild unchanged cards or Vehicle Profile thumbnails; then receive a test SMS and confirm the changed conversation refreshes once.
 - From a Contact note, enable **Add a reminder**, optionally select a date/time, save, and confirm the note retains its reminder link. Delete the reminder and confirm the note remains.
 - Delete a Contact with a linked reminder and confirm the standalone task remains with its saved name/phone and cleared Contact link.
-- With a V0.9.4.92 reminder present, open V0.9.4.101 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
+- With a V0.9.4.92 reminder present, open V0.9.5.01 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
 - Create a phone-only appointment and confirm its number appears once. Create a named appointment and confirm it shows **Name · Phone** once.
 
 ## Navigation and sync header hotfix
