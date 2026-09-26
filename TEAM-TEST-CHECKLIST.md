@@ -1,15 +1,15 @@
-# LotKeys V0.9.5.03 team-test checklist
+# LotKeys V0.9.5.04 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095003` and confirm **V0.9.5.03 / 095003**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095004` and confirm **V0.9.5.04 / 095004**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- If the stable TEST signing secrets are configured, download **LotKeys-Android-V0.9.5.03** and install its `app-debug.apk` on an Android 11+ test phone. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
+- If the stable TEST signing secrets are configured, download **LotKeys-Android-V0.9.5.04** and install its `app-debug.apk` on an Android 11+ test phone. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -61,6 +61,8 @@
 - Confirm **Unsorted** is directly after **All Device** in the organization row and no longer appears in the lower filter row.
 - Confirm **📵 Blocked** replaces **Saved contacts**. Block one saved Contact and one unsaved number, then confirm both appear there and nowhere in All, Unread, Unsorted, category views, the Hub total, numbered category alerts, or starred Important dots.
 - Confirm the new/edit Contact screen and saved Contact details both show **📵 Block Number / Unblock Number**. Unblock from Contact details and from the unsaved-number Blocked card, then confirm each conversation returns to its normal organization view without losing phone history or categories.
+- Open a saved Contact and confirm **📵 Block Number / Unblock Number** sits beside its primary number instead of on a separate row below it, including on a narrow phone screen.
+- Open a Device thread from a numeric SMS short code such as `66000`. Confirm the new/edit Contact screen can block it, **📵 Blocked** lists it, and unblocking restores it without enabling the **Call** action or accepting it as a full Contact phone number.
 - Confirm LotKeys explains that its Blocked state affects Hub views/alerts while Android's messaging app still controls phone-level blocking and notifications.
 - Open Hub → Device → Organize on Android. Confirm every category card has a physical ☰ grip at the bottom-left and that holding it produces a moving card preview rather than page scrolling.
 - Drag a category above and below other rows, save, close, and reopen Organize. Confirm the new order remains. Repeat once with the ↑/↓ fallback buttons.
@@ -114,7 +116,7 @@
 - Leave the Hub Device list open for at least 15 seconds. Confirm the three-second phone checks do not flash, blank, or rebuild unchanged cards or Vehicle Profile thumbnails; then receive a test SMS and confirm the changed conversation refreshes once.
 - From a Contact note, enable **Add a reminder**, optionally select a date/time, save, and confirm the note retains its reminder link. Delete the reminder and confirm the note remains.
 - Delete a Contact with a linked reminder and confirm the standalone task remains with its saved name/phone and cleared Contact link.
-- With a V0.9.4.92 reminder present, open V0.9.5.03 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
+- With a V0.9.4.92 reminder present, open V0.9.5.04 online and confirm it appears once, keeps its title/note/date/time/link/completion state, and no longer participates in appointment collisions after safe sync.
 - Create a phone-only appointment and confirm its number appears once. Create a named appointment and confirm it shows **Name · Phone** once.
 
 ## Navigation and sync header hotfix

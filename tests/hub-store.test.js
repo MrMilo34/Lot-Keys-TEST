@@ -142,6 +142,17 @@ test('phone sorting retains app-level block state while categories change', asyn
   assert.deepEqual(Array.from(row.categoryIds), ['follow-up']);
 });
 
+test('phone sorting accepts numeric SMS short codes without treating them as callable numbers', async () => {
+  const { store } = loadStore();
+  await store.upsertPhoneSorting('66000', {
+    blocked: true,
+    blockedAt: '2026-09-26T18:00:00.000Z'
+  });
+  const [row] = await store.phoneSorting();
+  assert.equal(row.phone, '66000');
+  assert.equal(row.blocked, true);
+});
+
 test('deleting a standalone reminder preserves its linked Contact note', async () => {
   const { store } = loadStore();
   await store.save('contact', {

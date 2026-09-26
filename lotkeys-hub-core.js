@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.5.03 — pure customer, conversation, standalone reminder and appointment models. */
+/* LotKeys Hub V0.9.5.04 — pure customer, conversation, standalone reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -30,6 +30,10 @@
 
   function validPhone(value) {
     return /^\+?\d{7,15}$/.test(phone(value));
+  }
+
+  function validMessageAddress(value) {
+    return /^\+?\d{3,15}$/.test(phone(value));
   }
 
   function deviceIdentity(title, address, fallback = 'Unknown contact') {
@@ -718,6 +722,7 @@
     color,
     phone,
     validPhone,
+    validMessageAddress,
     deviceIdentity,
     primary,
     nextLabel,

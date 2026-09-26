@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095003-hub-blocking-vehicle-shortcuts';
+const CACHE='lotkeys-app-v095004-inline-block-short-codes';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

@@ -1,3 +1,11 @@
+V0.9.5.04 INLINE BLOCKING + SMS SHORT CODES
+- Keeps 📵 Block Number / Unblock Number beside the primary number in saved Contact details.
+- Accepts numeric SMS short codes such as 66000 for LotKeys blocking and Device organization without treating them as callable phone numbers.
+- Keeps normal Contact validation and Call actions limited to full valid phone numbers.
+- Retains all V0.9.5.03 Blocked, Unsorted, Interested Vehicle, and unread-alert behavior.
+- Build: 095004.
+- Service worker cache: lotkeys-app-v095004-inline-block-short-codes.
+
 V0.9.5.03 HUB BLOCKING + INTERESTED VEHICLE SHORTCUTS
 - Moves Unsorted beside All Device as the first organization choice and replaces Saved contacts with 📵 Blocked.
 - Blocks or unblocks saved Contacts and unsaved phone numbers while preserving each number's categories and phone history.

@@ -1,8 +1,15 @@
-# LotKeys V0.9.5.03 — Hub blocking and Interested Vehicle shortcuts
+# LotKeys V0.9.5.04 — Inline number blocking and SMS short codes
 
-This TEST release reorganizes the Device Hub, adds a private LotKeys blocked-number list for saved Contacts and unsaved numbers, and makes Interested Vehicle linking available directly from an empty Device-chat header.
+This TEST release places the saved Contact blocking control beside the primary number and lets LotKeys block numeric SMS short codes such as `66000` without treating them as callable phone numbers.
 
-## V0.9.5.03 included
+## V0.9.5.04 included
+
+- Keep **📵 Block Number / Unblock Number** inline with a saved Contact's primary messaging number.
+- Accept numeric SMS short codes from three to fifteen digits for LotKeys blocking and Device organization.
+- Keep Contact saving and **Call** actions restricted to full valid phone numbers.
+- Retain every V0.9.5.03 Blocked, Unsorted, Interested Vehicle, and unread-alert behavior.
+
+## V0.9.5.03 retained
 
 - Move **Unsorted** beside **All Device** as the first organization choice.
 - Replace **Saved contacts** with **📵 Blocked**, covering saved Contacts and unsaved Device numbers.
@@ -154,7 +161,7 @@ This TEST release reorganizes the Device Hub, adds a private LotKeys blocked-num
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.03` when the stable TEST signing secrets are configured. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.04` when the stable TEST signing secrets are configured. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
 
 The Android setup uses five short screens:
 
@@ -168,7 +175,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.5.03 Android TEST APK.
+1. Install and open the V0.9.5.04 Android TEST APK.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -180,8 +187,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095003`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095004`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.03 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.04 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

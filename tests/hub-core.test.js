@@ -132,6 +132,9 @@ test('phone matching and contact validation retain the V0.9.4.82 contract', () =
   assert.doesNotThrow(() => Hub.validateContact(contact));
   assert.equal(Hub.phone('780-555-0123'), '+17805550123');
   assert.equal(Hub.matches(contact, '5550123'), true);
+  assert.equal(Hub.validPhone('66000'), false);
+  assert.equal(Hub.validMessageAddress('66000'), true);
+  assert.equal(Hub.validMessageAddress('12'), false);
 });
 
 test('Device identity keeps a saved name and phone inline without duplicating phone-only rows', () => {
