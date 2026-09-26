@@ -8,16 +8,17 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.05', () => {
+test('release metadata is consistently V0.9.5.06', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.05');
-  assert.equal(version.build, '095005');
+  assert.equal(version.version, '0.9.5.06');
+  assert.equal(version.build, '095006');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'pairing-relay-recovery');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095005-pairing-relay-recovery');
-  assert.match(read('index.html'), /V0\.9\.5\.05/);
-  assert.match(read('manifest.webmanifest'), /build=095005/);
-  assert.match(read('sw.js'), /lotkeys-app-v095005-pairing-relay-recovery/);
+  assert.equal(version.release, 'pairing-browser-route-recovery');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095006-pairing-browser-route-recovery');
+  assert.match(read('index.html'), /V0\.9\.5\.06/);
+  assert.match(read('manifest.webmanifest'), /build=095006/);
+  assert.match(read('sw.js'), /lotkeys-app-v095006-pairing-browser-route-recovery/);
+  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.06/);
 });
 
 test('V0.9.4.98 preserves the active page and labels the newest successful sync', () => {
@@ -139,7 +140,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095005/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095006/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -214,8 +215,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095005/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095005/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095006/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095006/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -458,23 +459,34 @@ test('V0.9.5.04 retains Hub organization and adds inline short-code blocking', (
   assert.match(privacy, /Android's messaging app remains responsible for phone-level blocking and notifications/);
 });
 
-test('V0.9.5.05 validates and repairs private Drive pairing access before creating an offer', () => {
+test('V0.9.5.06 recovers PC pairing across browser routes and a fresh Google account choice', () => {
   const html = read('index.html');
   const phone = read('lotkeys-phone.js');
   const hub = read('lotkeys-hub.js');
   assert.match(html, /const DRIVE_APPDATA_SCOPE = 'https:\/\/www\.googleapis\.com\/auth\/drive\.appdata'/);
   assert.match(html, /const DRIVE_SCOPE = `openid email \$\{DRIVE_WRITE_SCOPE\} \$\{DRIVE_APPDATA_SCOPE\}`/);
   assert.match(html, /!grantedScopes\.has\(DRIVE_WRITE_SCOPE\)\|\|!grantedScopes\.has\(DRIVE_APPDATA_SCOPE\)/);
-  assert.match(html, /clearSessionAuthorization\(\);return reject\(new Error\('LotKeys needs Store Drive access plus its private phone-pairing permission\./);
-  assert.match(html, /async function renewAuthorization\(forcePrompt=true\)/);
+  assert.match(html, /clearSessionAuthorization\(\);return finish\(reject,new Error\('LotKeys needs Store Drive access plus its private phone-pairing permission\./);
+  assert.match(html, /async function renewAuthorization\(forcePrompt=true,options=\{\}\)/);
+  assert.match(html, /async function renewPairingAuthorization\(\)\{return renewAuthorization\(true,\{chooseAccount:true\}\)\}/);
+  assert.match(html, /chooseAccount\?'select_account':'consent'/);
+  assert.match(html, /c\.accountEmail&&!chooseAccount/);
+  assert.match(html, /async function apiClientRequest\(url,opts=\{\},token=''\)/);
+  assert.match(html, /gapi\.client\.init\(c\.apiKey\?\{apiKey:c\.apiKey\}:\{\}\)/);
+  assert.match(html, /openidconnect\.googleapis\.com\/v1\/userinfo/);
   assert.match(phone, /function friendlyPairingDriveError\(error\)/);
   assert.match(phone, /granted scopes do not give access\|requested spaces\|appdatafolder/);
   assert.match(phone, /function relayXhr\(url, options, headers\)/);
+  assert.match(phone, /https:\/\/content\.googleapis\.com\//);
+  assert.match(phone, /Drive\.apiClientRequest\(url, options, token\)/);
+  assert.match(phone, /google-api-client/);
   assert.match(phone, /async function repairPairingAccess\(\)/);
+  assert.match(phone, /Drive\.renewPairingAuthorization\(\)/);
   assert.match(phone, /lotkeysRole: 'lotkeysPairProbe'/);
   assert.match(phone, /PAIRING_DRIVE_NETWORK/);
   assert.match(phone, /converted\.cause = error/);
-  assert.match(hub, /Reconnect pairing access/);
+  assert.match(hub, /Choose Google account/);
+  assert.match(hub, /Try Google routes again/);
   assert.match(hub, /Technical detail/);
 });
 

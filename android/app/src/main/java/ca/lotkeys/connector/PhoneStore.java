@@ -76,7 +76,7 @@ final class PhoneStore {
 
     JSONObject status(long revision, int port) throws Exception {
         return new JSONObject()
-            .put("version", "0.9.5.05")
+            .put("version", "0.9.5.06")
             .put("deviceId", InstallIdentity.id(context))
             .put("deviceName", android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL)
             .put("sourceApp", sourceApp())

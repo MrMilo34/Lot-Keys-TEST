@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.05",
-  "build": "095005",
-  "release": "pairing-relay-recovery",
+  "version": "0.9.5.06",
+  "build": "095006",
+  "release": "pairing-browser-route-recovery",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095005-pairing-relay-recovery",
+  "serviceWorkerCache": "lotkeys-app-v095006-pairing-browser-route-recovery",
   "publishedAt": "2026-09-26",
   "basedOn": "LotKeys V0.9.5.04 inline number blocking and SMS short codes"
 }

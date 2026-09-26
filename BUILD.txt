@@ -1,10 +1,11 @@
-V0.9.5.05 PC PAIRING RELAY RECOVERY
-- Adds a PC-side Reconnect pairing access action that renews only temporary Google authorization.
-- Verifies private Drive app-data access with a short-lived create/read/delete probe before retrying pairing.
-- Falls back from Fetch to XMLHttpRequest for browser relay calls and reports the exact Google or network failure.
+V0.9.5.06 PC BROWSER-ROUTE PAIRING RECOVERY
+- Adds a fresh Google account chooser that does not reuse the account hint which produced Google's error page.
+- Verifies both the selected identity and private Drive app-data access before retrying pairing.
+- Tries primary and alternate Google API endpoints with Fetch/XMLHttpRequest, then the official Google API JavaScript client.
+- Reports route-specific Google or browser-network failures when no transport can create the pairing offer.
 - Keeps Store connection, LotKeys data and Android relay trust unchanged during repair.
-- Build: 095005.
-- Service worker cache: lotkeys-app-v095005-pairing-relay-recovery.
+- Build: 095006.
+- Service worker cache: lotkeys-app-v095006-pairing-browser-route-recovery.
 
 V0.9.5.04 INLINE BLOCKING + SMS SHORT CODES
 - Keeps 📵 Block Number / Unblock Number beside the primary number in saved Contact details.

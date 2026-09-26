@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.05 — pairing-only Google recovery with dual browser transports. */
+/* LotKeys Phone V0.9.5.06 — resilient PC pairing across Google browser routes. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -357,9 +357,9 @@
     const message = String(error?.message || error || '');
     let friendly = '';
     if (/granted scopes do not give access|requested spaces|appdatafolder|insufficient[_ -]?(?:authentication[_ -]?)?scopes?/i.test(message)) {
-      friendly = 'LotKeys phone pairing needs renewed Google permission. Use Reconnect pairing access, approve both Drive permissions, then LotKeys will test the private relay before trying again.';
+      friendly = 'LotKeys phone pairing needs renewed Google permission. Use Choose Google account, select the same account as the phone, then approve the private pairing permission.';
     } else if (error?.code === 'PAIRING_DRIVE_NETWORK' || /failed to fetch|networkerror|network request failed|load failed|xmlhttprequest/i.test(message)) {
-      friendly = 'The PC browser could not complete the private Google Drive relay request. Use Reconnect pairing access below; LotKeys will renew permission and test a second browser transport.';
+      friendly = 'The PC browser could not complete the private Google Drive relay request through any available Google route. Use Choose Google account below to renew pairing access without reusing the failed account hint.';
     }
     if (!friendly) return error;
     const converted = new Error(friendly);
@@ -395,39 +395,71 @@
     });
   }
 
-  async function relayRequest(url, options, token) {
-    const headers = new Headers(options.headers || {});
-    headers.set('Authorization', 'Bearer ' + token);
+  function alternateDriveUrl(url) {
+    const value = String(url || '');
+    if (value.startsWith('https://www.googleapis.com/')) return value.replace('https://www.googleapis.com/', 'https://content.googleapis.com/');
+    if (value.startsWith('https://content.googleapis.com/')) return value.replace('https://content.googleapis.com/', 'https://www.googleapis.com/');
+    return '';
+  }
+
+  async function relayBrowserRequest(url, options, headers, route) {
     try {
       const response = await fetch(url, { ...options, headers, cache: 'no-store' });
-      const result = {
+      return {
         ok: response.ok,
         status: response.status,
         contentType: response.headers.get('content-type') || '',
-        body: response.status === 204 ? '' : await response.text()
+        body: response.status === 204 ? '' : await response.text(),
+        transport: route + '-fetch'
       };
-      state.relayTransport = 'fetch';
-      return result;
     } catch (fetchError) {
       try {
         const result = await relayXhr(url, options, headers);
-        state.relayTransport = 'xhr';
-        return result;
+        return { ...result, transport: route + '-xhr' };
       } catch (xhrError) {
-        const error = new Error('Fetch: ' + String(fetchError?.message || fetchError) + ' · fallback: ' + String(xhrError?.message || xhrError));
+        const error = new Error(route + ' fetch: ' + String(fetchError?.message || fetchError) + ' · ' + route + ' XHR: ' + String(xhrError?.message || xhrError));
         error.code = 'PAIRING_DRIVE_NETWORK';
-        error.detail = error.message;
         throw error;
       }
     }
   }
 
+  async function relayRequest(url, options, token) {
+    const headers = new Headers(options.headers || {});
+    headers.set('Authorization', 'Bearer ' + token);
+    const attempts = [];
+    for (const [route, candidate] of [['primary', String(url)], ['alternate', alternateDriveUrl(url)]]) {
+      if (!candidate || attempts.some(row => row.url === candidate)) continue;
+      try {
+        const result = await relayBrowserRequest(candidate, options, headers, route);
+        state.relayTransport = result.transport;
+        return result;
+      } catch (error) {
+        attempts.push({ url: candidate, detail: String(error?.message || error) });
+      }
+    }
+    if (typeof Drive.apiClientRequest === 'function') {
+      try {
+        const result = await Drive.apiClientRequest(url, options, token);
+        state.relayTransport = 'google-api-client';
+        return result;
+      } catch (error) {
+        attempts.push({ url: 'google-api-client', detail: String(error?.message || error) });
+      }
+    }
+    const error = new Error(attempts.map(row => row.detail).join(' · ') || 'Every Google Drive browser route failed.');
+    error.code = 'PAIRING_DRIVE_NETWORK';
+    error.detail = error.message;
+    throw error;
+  }
+
   function relayPayload(result) {
     if (!result?.body) return null;
-    if (String(result.contentType).includes('application/json')) {
-      try { return JSON.parse(result.body); } catch {}
+    const body = String(result.body);
+    if (String(result.contentType).includes('application/json') || /^[\[{]/.test(body.trim())) {
+      try { return JSON.parse(body); } catch {}
     }
-    return result.body;
+    return body;
   }
 
   async function driveFetch(url, options = {}) {
@@ -494,12 +526,12 @@
   }
 
   async function repairPairingAccess() {
-    if (state.nativeToken) throw Error('Reconnect pairing access from the computer, not the phone.');
+    if (state.nativeToken) throw Error('Choose the Google account from the computer, not the phone.');
     let probe = null;
     const probeId = randomId(18);
     try {
-      if (typeof Drive.renewAuthorization !== 'function') throw Error('Reload LotKeys before reconnecting pairing access.');
-      await Drive.renewAuthorization(true);
+      if (typeof Drive.renewPairingAuthorization !== 'function') throw Error('Reload LotKeys before reconnecting pairing access.');
+      await Drive.renewPairingAuthorization();
       const identity = await Drive.getGoogleIdentity();
       const account = text(identity?.email).toLowerCase();
       if (!account) throw Error('LotKeys could not verify the Google account used for pairing.');
@@ -520,7 +552,7 @@
       state.lastErrorCode = '';
       state.relayDiagnostic = '';
       event('status');
-      return { account, transport: state.relayTransport || 'fetch', verified: true };
+      return { account, transport: state.relayTransport || 'primary-fetch', verified: true };
     } catch (error) {
       const converted = friendlyPairingDriveError(error);
       state.lastError = converted?.message || String(error?.message || error);
@@ -1358,7 +1390,7 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.5.05',
+      version: '0.9.5.06',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1424,7 +1456,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.05',
+    version: '0.9.5.06',
     init,
     status,
     subscribe,

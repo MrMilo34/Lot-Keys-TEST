@@ -1,14 +1,15 @@
-# LotKeys V0.9.5.05 — PC pairing relay recovery
+# LotKeys V0.9.5.06 — PC browser-route pairing recovery
 
-This TEST release repairs the PC side of phone pairing with a focused Google-permission renewal, a private relay probe, a second browser transport, and actionable failure details.
+This TEST release addresses the PC browser failure that prevented a pairing offer from reaching an already-prepared phone. It adds independent Google API routes, a fresh account chooser, and an end-to-end private relay probe.
 
-## V0.9.5.05 included
+## V0.9.5.06 included
 
-- Add **Reconnect pairing access** on the PC without signing out, clearing LotKeys data, or changing the Store connection.
-- Renew the temporary Google authorization and verify the exact Google account used by the PC.
+- Add **Choose Google account** on the PC without signing out, clearing LotKeys data, or changing the Store connection.
+- Open a fresh Google account chooser without reusing the account hint that produced the Google error page.
+- Verify the selected Google identity through more than one browser route.
 - Create, read, and delete a short-lived probe in Google Drive's private app-data space before retrying the real pairing offer.
-- Retry failed browser relay traffic through `XMLHttpRequest` when the normal `fetch` transport is blocked.
-- Show the specific Google HTTP or browser-network detail when pairing still cannot create an offer.
+- Try the primary Drive endpoint, an alternate Google API endpoint, and the official Google API JavaScript client; each direct endpoint can use both `fetch` and `XMLHttpRequest`.
+- Show the exact route and Google or browser-network detail if no route can create the offer.
 
 ## V0.9.5.04 retained
 
@@ -169,7 +170,7 @@ This TEST release repairs the PC side of phone pairing with a focused Google-per
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.05` when the stable TEST signing secrets are configured. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.06` when the stable TEST signing secrets are configured. The installed V0.9.5.05 connector remains protocol-compatible with this PC web fix, so the phone APK does not need to be reinstalled for this test. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
 
 The Android setup uses five short screens:
 
@@ -183,7 +184,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.5.05 Android TEST APK.
+1. Open the installed V0.9.5.05-or-newer Android TEST connector. Installing V0.9.5.06 is optional for this web-transport test.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -195,8 +196,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095005`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095006`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.05 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.06 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
