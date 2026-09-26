@@ -1,8 +1,14 @@
-# LotKeys V0.9.5.06 — PC browser-route pairing recovery
+# LotKeys V0.9.5.07 — PC pairing upload correction
 
-This TEST release addresses the PC browser failure that prevented a pairing offer from reaching an already-prepared phone. It adds independent Google API routes, a fresh account chooser, and an end-to-end private relay probe.
+This TEST release corrects the private Google Drive multipart upload used by the pairing test and offer. A browser-normalized `Content-Type` boundary could differ from the actual body delimiter, causing Google's “0 mime parts” error.
 
-## V0.9.5.06 included
+## V0.9.5.07 included
+
+- Send the exact multipart boundary in the request header and body across the primary, alternate, XHR, and Google API client routes.
+- Keep the short-lived private pairing probe and the V0.9.5.06 account-choice recovery. The phone connector protocol is unchanged; the installed V0.9.5.05 or V0.9.5.06 APK remains compatible.
+- Verify mixed-case boundaries in an automated regression test.
+
+## V0.9.5.06 retained
 
 - Add **Choose Google account** on the PC without signing out, clearing LotKeys data, or changing the Store connection.
 - Open a fresh Google account chooser without reusing the account hint that produced the Google error page.
@@ -170,7 +176,7 @@ This TEST release addresses the PC browser failure that prevented a pairing offe
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.06` when the stable TEST signing secrets are configured. The installed V0.9.5.05 connector remains protocol-compatible with this PC web fix, so the phone APK does not need to be reinstalled for this test. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.07` when the stable TEST signing secrets are configured. The installed V0.9.5.05 connector remains protocol-compatible with this PC web fix, so the phone APK does not need to be reinstalled for this test. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
 
 The Android setup uses five short screens:
 
@@ -184,7 +190,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Open the installed V0.9.5.05-or-newer Android TEST connector. Installing V0.9.5.06 is optional for this web-transport test.
+1. Open the installed V0.9.5.05-or-newer Android TEST connector. Installing V0.9.5.07 is optional for this web-transport test.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -196,8 +202,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095006`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095007`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.06 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.07 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095006-pairing-browser-route-recovery';
+const CACHE='lotkeys-app-v095007-pairing-multipart-boundary-fix';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

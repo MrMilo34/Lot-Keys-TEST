@@ -11,6 +11,24 @@ const contacts = [{
   categoryIds: ['clients']
 }];
 
+test('pairing upload keeps a mixed-case multipart boundary intact across browser transports', async () => {
+  const boundary = 'lotkeys_AbC12_xYz';
+  const metadata = { name: 'Pairing probe.json', parents: ['appDataFolder'], mimeType: 'application/json' };
+  const data = { type: 'probe', probeId: 'test-123' };
+  const upload = Phone.buildMultipartJsonUpload(boundary, metadata, data);
+  assert.equal(upload.contentType, `multipart/related; boundary=${boundary}`);
+  assert.equal(upload.body.type, '');
+  const request = new Request('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST', headers: { 'Content-Type': upload.contentType }, body: upload.body
+  });
+  assert.equal(request.headers.get('content-type'), upload.contentType);
+  const segments = (await request.text()).split(`--${boundary}`);
+  assert.equal(segments.length, 4);
+  assert.deepEqual(JSON.parse(segments[1].split('\r\n\r\n')[1].trim()), metadata);
+  assert.deepEqual(JSON.parse(segments[2].split('\r\n\r\n')[1].trim()), data);
+  assert.equal(segments[3], '--');
+});
+
 test('custom LotKeys name wins over Android name and number', () => {
   const thread = { id: 'smsmms-1', address: '+17805550123', title: '+17805550123', phoneContactName: 'Android Name' };
   assert.equal(Phone.displayName(thread, contacts), 'LotKeys Custom Name');

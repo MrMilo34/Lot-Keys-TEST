@@ -1,3 +1,10 @@
+V0.9.5.07 PC PAIRING MULTIPART UPLOAD CORRECTION
+- Sends the exact mixed-case boundary in the multipart header and body for private pairing probes and offers.
+- Fixes Google's “Invalid multipart request with 0 mime parts” response observed on the PC in V0.9.5.06.
+- Retains the account chooser, route fallbacks, Store connection, LotKeys data, and compatible phone connector.
+- Build: 095007.
+- Service worker cache: lotkeys-app-v095007-pairing-multipart-boundary-fix.
+
 V0.9.5.06 PC BROWSER-ROUTE PAIRING RECOVERY
 - Adds a fresh Google account chooser that does not reuse the account hint which produced Google's error page.
 - Verifies both the selected identity and private Drive app-data access before retrying pairing.

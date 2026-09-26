@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.06 — resilient PC pairing across Google browser routes. */
+/* LotKeys Phone V0.9.5.07 — exact multipart boundary for PC pairing uploads. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -508,13 +508,9 @@
   async function createFile(name, data, appProperties) {
     const boundary = 'lotkeys_' + randomId(9);
     const metadata = { name, parents: ['appDataFolder'], mimeType: 'application/json', appProperties };
-    const body = new Blob([
-      '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n', JSON.stringify(metadata),
-      '\r\n--' + boundary + '\r\nContent-Type: application/json\r\n\r\n', JSON.stringify(data),
-      '\r\n--' + boundary + '--'
-    ], { type: 'multipart/related; boundary=' + boundary });
+    const { body, contentType } = P.buildMultipartJsonUpload(boundary, metadata, data);
     return driveFetch(DRIVE_UPLOAD + '?uploadType=multipart&fields=id,name,createdTime,appProperties', {
-      method: 'POST', headers: { 'Content-Type': body.type }, body
+      method: 'POST', headers: { 'Content-Type': contentType }, body
     });
   }
 
@@ -1390,7 +1386,7 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.5.06',
+      version: '0.9.5.07',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1456,7 +1452,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.06',
+    version: '0.9.5.07',
     init,
     status,
     subscribe,

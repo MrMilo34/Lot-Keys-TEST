@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.06 — pure identity, trust, pairing and conversation helpers. */
+/* LotKeys Phone V0.9.5.07 — pure identity, trust, pairing and conversation helpers. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -7,6 +7,17 @@
   'use strict';
 
   const text = value => String(value ?? '').trim();
+
+  function buildMultipartJsonUpload(boundary, metadata, data) {
+    if (!/^[A-Za-z0-9_-]+$/.test(boundary)) throw new Error('Invalid Drive upload boundary.');
+    const contentType = 'multipart/related; boundary=' + boundary;
+    const body = new Blob([
+      '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n', JSON.stringify(metadata),
+      '\r\n--' + boundary + '\r\nContent-Type: application/json\r\n\r\n', JSON.stringify(data),
+      '\r\n--' + boundary + '--'
+    ]);
+    return { contentType, body };
+  }
 
   function phone(value) {
     let normalized = text(value)
@@ -168,7 +179,8 @@
   }
 
   return {
-    version: '0.9.5.06',
+    version: '0.9.5.07',
+    buildMultipartJsonUpload,
     phone,
     contactPhone,
     contactFor,
