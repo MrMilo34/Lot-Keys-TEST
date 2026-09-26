@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095002-unread-alert-read-receipts';
+const CACHE='lotkeys-app-v095003-hub-blocking-vehicle-shortcuts';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

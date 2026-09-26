@@ -1,6 +1,16 @@
-# LotKeys V0.9.5.02 — Unread alert read receipts
+# LotKeys V0.9.5.03 — Hub blocking and Interested Vehicle shortcuts
 
-This TEST hotfix clears LotKeys unread alerts after the user successfully opens the matching Device conversation. It does not write to Android's SMS/MMS database; a bounded local receipt distinguishes the message already viewed in LotKeys from a genuinely newer incoming message.
+This TEST release reorganizes the Device Hub, adds a private LotKeys blocked-number list for saved Contacts and unsaved numbers, and makes Interested Vehicle linking available directly from an empty Device-chat header.
+
+## V0.9.5.03 included
+
+- Move **Unsorted** beside **All Device** as the first organization choice.
+- Replace **Saved contacts** with **📵 Blocked**, covering saved Contacts and unsaved Device numbers.
+- Add **📵 Block Number / Unblock Number** controls to the Contact editor and saved Contact details.
+- Exclude blocked numbers from normal Hub views, Hub unread totals, numbered category badges and starred Important-category dots without deleting phone history.
+- Keep **Interested Vehicle**, **💾 Media** and **💬 Chat** together on one Contact shortcut row.
+- Show **+ Interested Vehicle** in an empty Device-chat header; search Vehicle Profiles by year, make, model, stock or VIN, or save a custom typed vehicle.
+- Retain every V0.9.5.02 unread acknowledgement rule.
 
 ## V0.9.5.02 included
 
@@ -144,7 +154,7 @@ This TEST hotfix clears LotKeys unread alerts after the user successfully opens 
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.02` when the stable TEST signing secrets are configured. The V0.9.5.02 web read-receipt change remains compatible with the V0.9.5.01 connector, so this hotfix alone does not require an APK reinstall.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.03` when the stable TEST signing secrets are configured. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
 
 The Android setup uses five short screens:
 
@@ -158,7 +168,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.5.02 Android TEST APK.
+1. Install and open the V0.9.5.03 Android TEST APK.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -170,8 +180,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095002`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095003`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.02 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.03 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

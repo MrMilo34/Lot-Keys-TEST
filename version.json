@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.02",
-  "build": "095002",
-  "release": "unread-alert-read-receipts",
+  "version": "0.9.5.03",
+  "build": "095003",
+  "release": "hub-blocking-and-vehicle-shortcuts",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095002-unread-alert-read-receipts",
-  "publishedAt": "2026-09-25",
-  "basedOn": "LotKeys V0.9.5.01 numbered category unread badges"
+  "serviceWorkerCache": "lotkeys-app-v095003-hub-blocking-vehicle-shortcuts",
+  "publishedAt": "2026-09-26",
+  "basedOn": "LotKeys V0.9.5.02 unread alert read receipts"
 }

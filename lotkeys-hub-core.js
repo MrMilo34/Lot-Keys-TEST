@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.5.02 — pure customer, conversation, standalone reminder and appointment models. */
+/* LotKeys Hub V0.9.5.03 — pure customer, conversation, standalone reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -232,6 +232,7 @@
     const counts = new Map(targets.map(category => [category.id, 0]));
     if (!counts.size) return [];
     for (const row of Array.isArray(deviceRows) ? deviceRows : []) {
+      if (row?.blocked === true) continue;
       const unread = row?.live === true ? Math.max(0, Number(row.unread) || 0) : 0;
       if (!unread) continue;
       const organization = row.organization || row.contact || {};
@@ -298,6 +299,10 @@
     const wanted = [...new Set((selectedCategories || []).map(text).filter(Boolean))];
     return rows.filter(row => {
       if (scope !== 'all' && row.source !== scope) return false;
+      const blocked = row.source === 'device' && row.blocked === true;
+      if (filter === 'blocked') {
+        if (!blocked) return false;
+      } else if (blocked) return false;
       if (wanted.length) {
         if (row.source !== 'device') return false;
         const assigned = categoryClosure(row.organization || row.contact, categoryRows);

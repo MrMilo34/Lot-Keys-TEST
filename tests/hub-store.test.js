@@ -116,6 +116,32 @@ test('standalone reminders are isolated by signed-in account', async () => {
   assert.ok(harness.events.includes('lotkeys-hub-identity'));
 });
 
+test('phone sorting retains app-level block state while categories change', async () => {
+  const { store } = loadStore();
+  const blockedAt = '2026-09-26T12:00:00.000Z';
+  await store.upsertPhoneSorting('780-555-0123', {
+    categoryIds: ['customers'],
+    primaryCategoryId: 'customers',
+    blocked: true,
+    blockedAt
+  });
+  await store.upsertPhoneSorting('+1 780 555 0123', {
+    categoryIds: ['follow-up'],
+    primaryCategoryId: 'follow-up'
+  });
+  let [row] = await store.phoneSorting();
+  assert.equal(row.phone, '+17805550123');
+  assert.equal(row.blocked, true);
+  assert.equal(row.blockedAt, blockedAt);
+  assert.deepEqual(Array.from(row.categoryIds), ['follow-up']);
+
+  await store.upsertPhoneSorting(row.phone, { blocked: false, blockedAt: '' });
+  [row] = await store.phoneSorting();
+  assert.equal(row.blocked, false);
+  assert.equal(row.blockedAt, '');
+  assert.deepEqual(Array.from(row.categoryIds), ['follow-up']);
+});
+
 test('deleting a standalone reminder preserves its linked Contact note', async () => {
   const { store } = loadStore();
   await store.save('contact', {

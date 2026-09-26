@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.02 — reliable phone approval, trusted reconnect and unread acknowledgements. */
+/* LotKeys Phone V0.9.5.03 — reliable phone approval, trusted reconnect and unread acknowledgements. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -1238,7 +1238,7 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.5.02',
+      version: '0.9.5.03',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1301,7 +1301,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.02',
+    version: '0.9.5.03',
     init,
     status,
     subscribe,

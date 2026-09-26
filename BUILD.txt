@@ -1,3 +1,13 @@
+V0.9.5.03 HUB BLOCKING + INTERESTED VEHICLE SHORTCUTS
+- Moves Unsorted beside All Device as the first organization choice and replaces Saved contacts with 📵 Blocked.
+- Blocks or unblocks saved Contacts and unsaved phone numbers while preserving each number's categories and phone history.
+- Keeps blocked numbers out of normal Hub views, unread totals, numbered category badges and Important-category alert dots.
+- Keeps Interested Vehicle, Media and Chat on one Contact shortcut row.
+- Adds a + Interested Vehicle card to empty Device-chat headers with Vehicle Profile search and custom typed entries.
+- Retains the V0.9.5.02 unread acknowledgement behavior.
+- Build: 095003.
+- Service worker cache: lotkeys-app-v095003-hub-blocking-vehicle-shortcuts.
+
 V0.9.5.02 UNREAD ALERT READ RECEIPTS
 - Clears a Device conversation's LotKeys unread row, numbered category badge, total Hub badge, and Important-category dot after its history opens successfully.
 - Restores those alerts only for a newer incoming message; outgoing replies and harmless Android thread refreshes stay acknowledged.

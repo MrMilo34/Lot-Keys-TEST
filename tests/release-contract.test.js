@@ -8,16 +8,16 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.02', () => {
+test('release metadata is consistently V0.9.5.03', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.02');
-  assert.equal(version.build, '095002');
+  assert.equal(version.version, '0.9.5.03');
+  assert.equal(version.build, '095003');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'unread-alert-read-receipts');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095002-unread-alert-read-receipts');
-  assert.match(read('index.html'), /V0\.9\.5\.02/);
-  assert.match(read('manifest.webmanifest'), /build=095002/);
-  assert.match(read('sw.js'), /lotkeys-app-v095002-unread-alert-read-receipts/);
+  assert.equal(version.release, 'hub-blocking-and-vehicle-shortcuts');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095003-hub-blocking-vehicle-shortcuts');
+  assert.match(read('index.html'), /V0\.9\.5\.03/);
+  assert.match(read('manifest.webmanifest'), /build=095003/);
+  assert.match(read('sw.js'), /lotkeys-app-v095003-hub-blocking-vehicle-shortcuts/);
 });
 
 test('V0.9.4.98 preserves the active page and labels the newest successful sync', () => {
@@ -139,7 +139,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095002/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095003/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -214,8 +214,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095002/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095002/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095003/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095003/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -309,7 +309,7 @@ test('Hub All groups LotKeys first and remembers independent collapse state', ()
 
 test('current Device conversation keeps the compact customer card inside the header', () => {
   const hub = read('lotkeys-hub.js');
-  const start = hub.lastIndexOf('async function openDeviceConversation');
+  const start = hub.lastIndexOf('async function openDeviceConversation(threadId)');
   const current = hub.slice(start, hub.indexOf("document.addEventListener('click'", start));
   assert.doesNotMatch(current, /hub-device-avatar/);
   for (const id of ['hub-device-customer', 'hub-device-note', 'hub-device-questions', 'hub-device-appointment', 'hub-device-organize']) {
@@ -343,7 +343,7 @@ test('V0.9.4.98 Hub Device rows paint linked Vehicle Profile thumbnails', () => 
   assert.match(current, /M\.hubHydrate\(box\);bindInterestedVehicles\(panel\(\)\);updateBadge\(\)/);
   assert.match(hub, /function bindInterestedVehicles\(root\)\{if\(root===panel\(\)\)clearThumbs\(\);/);
   assert.match(hub, /blob instanceof Blob[\s\S]*Vehicle thumbnail[\s\S]*vehicle-placeholder\.webp/);
-  assert.match(hub, /class="hub-interest-card[^`]*\$\{vehicle\?'linked':'manual'\}/);
+  assert.match(hub, /class="hub-interest-card[^`]*\$\{vehicle\?'linked':addOnly\?'add':'manual'\}/);
 });
 
 test('V0.9.4.98 repaints Hub Device rows only when monitored data changes', () => {
@@ -425,6 +425,33 @@ test('V0.9.5.02 clears acknowledged alerts and restores them for newer incoming 
   assert.match(phoneCore, /acknowledged \? 0 : rawUnread/);
   assert.match(hub, /P\.acknowledgeUnread\?\.\(threadId,page\.messages\|\|\[\]\)/);
   assert.doesNotMatch(androidStore, /resolver\.(?:update|delete)\([^;]*Telephony\.(?:Sms|Mms)/s);
+});
+
+test('V0.9.5.03 adds Blocked management, moves Unsorted and exposes quick Interested Vehicle entry', () => {
+  const hub = read('lotkeys-hub.js');
+  const core = read('lotkeys-hub-core.js');
+  const store = read('lotkeys-hub-store.js');
+  const css = read('lotkeys-hub.css');
+  const privacy = read('privacy.html');
+  assert.match(hub, /scope==='device'\?\[\['all','All'\],\['unread','Unread'\],\['blocked','📵 Blocked'\]\]/);
+  assert.doesNotMatch(hub, /\['contacts','Saved contacts'\]/);
+  assert.match(hub, /data-category-all="true">All Device<\/button><button[^>]*data-category-unsorted="true">Unsorted<\/button>/);
+  assert.match(hub, /data-category-unsorted/);
+  assert.match(core, /filter === 'blocked'/);
+  assert.match(core, /else if \(blocked\) return false/);
+  assert.match(core, /if \(row\?\.blocked === true\) continue/);
+  assert.match(store, /blocked=item\?\.blocked===true/);
+  assert.match(store, /x\.blocked\?\[\{\.\.\.x,categoryIds:\[\],primaryCategoryId:''\}\]:\[\]/);
+  assert.match(hub, /id="hub-contact-block"[^>]*>📵 Block Number<\/button>/);
+  assert.match(hub, /id="hub-contact-number-block"/);
+  assert.match(hub, /Blocked contacts & numbers/);
+  assert.match(hub, /Interested Vehicle<\/button><button[^>]*>💾 Media<\/button><button[^>]*>💬 Chat<\/button>/);
+  assert.match(css, /\.hub-contact-shortcuts\{display:grid;grid-template-columns:/);
+  assert.match(hub, /\+ Interested Vehicle/);
+  assert.match(hub, /Search Vehicle Profiles or type any vehicle/);
+  assert.match(hub, /Save as a custom Interested Vehicle/);
+  assert.match(hub, /openDeviceConversationWithInterestedVehicle/);
+  assert.match(privacy, /Android's messaging app remains responsible for phone-level blocking and notifications/);
 });
 
 test('V0.9.4.100 requests and validates the private Drive app-data permission for phone pairing', () => {

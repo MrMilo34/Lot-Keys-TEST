@@ -64,6 +64,7 @@ test('category unread totals cover every category while Important totals remain 
   const rows = [
     { live: true, unread: 2, organization: { categoryIds: ['follow-up'] } },
     { live: true, unread: 4, organization: { categoryIds: ['personal'] } },
+    { live: true, unread: 8, blocked: true, organization: { categoryIds: ['customers'] } },
     { live: false, unread: 99, contact: { categoryIds: ['customers'] } }
   ];
   const all = Hub.categoryUnreadCounts(categoryRows, rows);
@@ -108,6 +109,19 @@ test('Unsorted includes only Device conversations without category paths', () =>
     { id: 'chat', source: 'lotkeys', title: 'Internal' }
   ];
   assert.deepEqual(Hub.filtered(rows, { filter: 'unsorted', categoryRows: categories }).map(row => row.id), ['unknown']);
+});
+
+test('blocked Device numbers stay out of normal and unread views and appear only in Blocked', () => {
+  const rows = [
+    { id: 'open', source: 'device', title: 'Open', unread: 1, organization: { categoryIds: [] }, at: 3 },
+    { id: 'blocked-contact', source: 'device', title: 'Blocked contact', unread: 4, blocked: true, savedContact: { name: 'Blocked contact', fields: [] }, at: 2 },
+    { id: 'blocked-number', source: 'device', title: '+17805550123', blocked: true, organization: { categoryIds: [] }, at: 1 },
+    { id: 'chat', source: 'lotkeys', title: 'Internal', unread: 2, at: 4 }
+  ];
+  assert.deepEqual(Hub.filtered(rows).map(row => row.id), ['chat', 'open']);
+  assert.deepEqual(Hub.filtered(rows, { scope: 'device', filter: 'unread' }).map(row => row.id), ['open']);
+  assert.deepEqual(Hub.filtered(rows, { scope: 'device', filter: 'blocked' }).map(row => row.id), ['blocked-contact', 'blocked-number']);
+  assert.deepEqual(Hub.filtered(rows, { scope: 'device', filter: 'unsorted' }).map(row => row.id), ['open']);
 });
 
 test('phone matching and contact validation retain the V0.9.4.82 contract', () => {
