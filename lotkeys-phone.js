@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.01 — reliable phone approval, trusted reconnect and encrypted session transport. */
+/* LotKeys Phone V0.9.5.02 — reliable phone approval, trusted reconnect and unread acknowledgements. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -14,6 +14,8 @@
   const TRUST_KEY = 'lotkeys-phone-trusted-pcs-v1';
   const SESSION_KEY = 'lotkeys-phone-active-session-v1';
   const REMEMBERED_PAIR_KEY = 'lotkeys-phone-remembered-pair-v1';
+  const READ_RECEIPTS_KEY = 'lotkeys-phone-read-receipts-v1';
+  const READ_RECEIPT_MAX_AGE = 180 * 24 * 60 * 60 * 1000;
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
   const PHONE_POLL_IDLE_MS = 3000;
@@ -26,6 +28,7 @@
   const pendingRpc = new Map();
   const pendingOffers = new Map();
   const processedFrames = new Set();
+  const receiptChecks = new Map();
   const state = {
     role: 'pc',
     nativeToken: '',
@@ -56,6 +59,7 @@
   let monitoringGraceUntil = 0;
   let automaticPairAttempted = false;
   let lastStatusEventSignature = '';
+  let readReceipts = loadReadReceipts();
 
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   const text = value => String(value ?? '').trim();
@@ -117,6 +121,49 @@
     }
     return id;
   };
+
+  function loadReadReceipts() {
+    try {
+      const value = JSON.parse(localStorage.getItem(READ_RECEIPTS_KEY) || '{}');
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+      const cutoff = Date.now() - READ_RECEIPT_MAX_AGE;
+      return Object.fromEntries(Object.entries(value)
+        .filter(([key, receipt]) => key.length <= 500 && receipt && typeof receipt === 'object' && Number(receipt.seenAt) >= cutoff)
+        .sort((left, right) => Number(right[1].seenAt) - Number(left[1].seenAt))
+        .slice(0, 500));
+    } catch {
+      return {};
+    }
+  }
+
+  function saveReadReceipts() {
+    try {
+      const cutoff = now() - READ_RECEIPT_MAX_AGE;
+      readReceipts = Object.fromEntries(Object.entries(readReceipts)
+        .filter(([, receipt]) => Number(receipt?.seenAt) >= cutoff)
+        .sort((left, right) => Number(right[1].seenAt) - Number(left[1].seenAt))
+        .slice(0, 500));
+      localStorage.setItem(READ_RECEIPTS_KEY, JSON.stringify(readReceipts));
+    } catch {}
+  }
+
+  function readReceiptDevice() {
+    if (state.nativeStatus) return 'native:' + text(state.nativeStatus.deviceId || state.nativeStatus.deviceName || 'phone');
+    return 'pc:' + text(state.session?.peerName || 'phone');
+  }
+
+  function readReceiptKey(threadId) {
+    return readReceiptDevice() + '|' + text(threadId);
+  }
+
+  function receiptsFor(rows) {
+    const result = {};
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const receipt = readReceipts[readReceiptKey(row?.id)];
+      if (receipt) result[text(row.id)] = receipt;
+    }
+    return result;
+  }
   const computerName = () => {
     const platform = text(navigator.userAgentData?.platform || navigator.platform || 'Computer');
     const browser = /Edg\//.test(navigator.userAgent) ? 'Edge' : /Firefox\//.test(navigator.userAgent) ? 'Firefox' : /Chrome\//.test(navigator.userAgent) ? 'Chrome' : 'Browser';
@@ -981,12 +1028,74 @@
     return row.expiresAt;
   }
 
+  async function receiptHistory(threadId) {
+    const id = text(threadId);
+    const key = readReceiptKey(id);
+    if (receiptChecks.has(key)) return receiptChecks.get(key);
+    const check = history(id).then(page => Array.isArray(page?.messages) ? page.messages : [])
+      .finally(() => receiptChecks.delete(key));
+    receiptChecks.set(key, check);
+    return check;
+  }
+
+  async function reconcileThreadReadReceipts(rows) {
+    const rawRows = (Array.isArray(rows) ? rows : []).map(row => ({
+      ...row,
+      rawUnread: Math.max(0, Number(row?.unread) || 0)
+    }));
+    let changed = false;
+    await Promise.all(rawRows.map(async row => {
+      const key = readReceiptKey(row.id);
+      const receipt = readReceipts[key];
+      if (!row.rawUnread) {
+        if (receipt) { delete readReceipts[key]; changed = true; }
+        return;
+      }
+      if (!receipt) return;
+      const signature = P.threadAlertSignature(row);
+      if (receipt.signature === signature || receipt.alertSignature === signature) return;
+      try {
+        const messages = await receiptHistory(row.id);
+        if (P.receiptHasNewIncoming(receipt, messages)) receipt.alertSignature = signature;
+        else {
+          receipt.signature = signature;
+          receipt.incomingMarker = P.latestIncomingMarker(messages) || receipt.incomingMarker || '';
+          delete receipt.alertSignature;
+        }
+      } catch {
+        receipt.alertSignature = signature;
+      }
+      receipt.checkedAt = now();
+      changed = true;
+    }));
+    if (changed) saveReadReceipts();
+    return P.applyThreadReadReceipts(rawRows, receiptsFor(rawRows));
+  }
+
+  function acknowledgeUnread(threadId, messages = []) {
+    const id = text(threadId);
+    const index = state.threads.findIndex(row => text(row.id) === id);
+    if (index < 0) return false;
+    const current = state.threads[index];
+    const rawUnread = Math.max(0, Number(current.rawUnread ?? current.unread) || 0);
+    if (!rawUnread) return false;
+    const source = { ...current, unread: rawUnread, rawUnread };
+    const receipt = P.makeThreadReadReceipt(source, messages, now());
+    readReceipts[readReceiptKey(id)] = receipt;
+    saveReadReceipts();
+    const [next] = P.applyThreadReadReceipts([source], { [id]: receipt });
+    const changed = Number(current.unread) !== Number(next.unread);
+    state.threads[index] = next;
+    if (changed) event('data', { reason: 'read', threadId: id });
+    return changed;
+  }
+
   async function refreshThreads(offset = 0) {
     let page;
     if (state.nativeStatus) page = await nativeCall('/v1/threads?offset=' + Math.max(0, Number(offset) || 0));
     else if (connected()) page = await request('threads', { offset });
     else throw Error('Connect the phone before opening Device Messages.');
-    const rows = Array.isArray(page.threads) ? page.threads : [];
+    const rows = await reconcileThreadReadReceipts(Array.isArray(page.threads) ? page.threads : []);
     const nextThreads = offset ? [...state.threads, ...rows] : rows;
     const nextThreadPage = {
       hasMore: !!page.hasMore,
@@ -1129,7 +1238,7 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.5.01',
+      version: '0.9.5.02',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1192,7 +1301,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.01',
+    version: '0.9.5.02',
     init,
     status,
     subscribe,
@@ -1208,6 +1317,7 @@
     threads: () => state.threads.slice(),
     threadPage: () => ({ ...state.threadPage }),
     history,
+    acknowledgeUnread,
     send,
     sendMedia,
     attachment,

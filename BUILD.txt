@@ -1,3 +1,12 @@
+V0.9.5.02 UNREAD ALERT READ RECEIPTS
+- Clears a Device conversation's LotKeys unread row, numbered category badge, total Hub badge, and Important-category dot after its history opens successfully.
+- Restores those alerts only for a newer incoming message; outgoing replies and harmless Android thread refreshes stay acknowledged.
+- Keeps the Android SMS/MMS provider read-only by storing a bounded, device-scoped LotKeys receipt containing only thread/message markers.
+- Remains protocol-compatible with the V0.9.5.01 Android connector; this web alert fix does not require an APK reinstall.
+- Retains every V0.9.5.01 numbered-category and Important Hub alert rule.
+- Build: 095002.
+- Service worker cache: lotkeys-app-v095002-unread-alert-read-receipts.
+
 V0.9.5.01 NUMBERED CATEGORY UNREAD BADGES
 - Shows a high-contrast numbered unread badge on every Device category chip with live unread messages, whether or not it is starred Important.
 - Caps the visible chip count at 99+ and keeps the exact unread total in the chip's accessible label and tooltip.

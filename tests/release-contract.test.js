@@ -8,16 +8,16 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.01', () => {
+test('release metadata is consistently V0.9.5.02', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.01');
-  assert.equal(version.build, '095001');
+  assert.equal(version.version, '0.9.5.02');
+  assert.equal(version.build, '095002');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'category-unread-count-badges');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095001-category-unread-count-badges');
-  assert.match(read('index.html'), /V0\.9\.5\.01/);
-  assert.match(read('manifest.webmanifest'), /build=095001/);
-  assert.match(read('sw.js'), /lotkeys-app-v095001-category-unread-count-badges/);
+  assert.equal(version.release, 'unread-alert-read-receipts');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095002-unread-alert-read-receipts');
+  assert.match(read('index.html'), /V0\.9\.5\.02/);
+  assert.match(read('manifest.webmanifest'), /build=095002/);
+  assert.match(read('sw.js'), /lotkeys-app-v095002-unread-alert-read-receipts/);
 });
 
 test('V0.9.4.98 preserves the active page and labels the newest successful sync', () => {
@@ -139,7 +139,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095001/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095002/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -214,8 +214,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095001/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095001/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095002/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095002/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -406,6 +406,25 @@ test('V0.9.5.01 keeps numbered category badges independent from Important Hub al
   assert.match(css, /\.hub-organize-button\{background:#111!important;color:#fff!important/);
   assert.match(css, /body\[data-theme="dark"\] \.hub-organize-button\{background:#fff!important;color:#111!important/);
   assert.match(css, /\.hub-important-alerts\{[^}]*flex-direction:column/);
+});
+
+test('V0.9.5.02 clears acknowledged alerts and restores them for newer incoming messages', () => {
+  const phone = read('lotkeys-phone.js');
+  const phoneCore = read('lotkeys-phone-core.js');
+  const hub = read('lotkeys-hub.js');
+  const androidStore = read('android/app/src/main/java/ca/lotkeys/connector/PhoneStore.java');
+  assert.match(phone, /const READ_RECEIPTS_KEY = 'lotkeys-phone-read-receipts-v1'/);
+  assert.match(phone, /const READ_RECEIPT_MAX_AGE = 180 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(phone, /async function reconcileThreadReadReceipts\(rows\)/);
+  assert.match(phone, /P\.receiptHasNewIncoming\(receipt, messages\)/);
+  assert.match(phone, /receipt\.alertSignature = signature/);
+  assert.match(phone, /function acknowledgeUnread\(threadId, messages = \[\]\)/);
+  assert.match(phone, /return P\.applyThreadReadReceipts\(rawRows, receiptsFor\(rawRows\)\)/);
+  assert.match(phoneCore, /function threadAlertSignature\(thread\)/);
+  assert.match(phoneCore, /function latestIncomingMarker\(messages\)/);
+  assert.match(phoneCore, /acknowledged \? 0 : rawUnread/);
+  assert.match(hub, /P\.acknowledgeUnread\?\.\(threadId,page\.messages\|\|\[\]\)/);
+  assert.doesNotMatch(androidStore, /resolver\.(?:update|delete)\([^;]*Telephony\.(?:Sms|Mms)/s);
 });
 
 test('V0.9.4.100 requests and validates the private Drive app-data permission for phone pairing', () => {

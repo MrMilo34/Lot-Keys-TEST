@@ -25,6 +25,28 @@ test('conversation identity and sorting are keyed by normalized phone number', (
   assert.equal(rows[0].organization.primaryCategoryId, 'hot');
 });
 
+test('opening Device history clears only the current unread alert signature', () => {
+  const thread = { id: 'smsmms-8', at: 100, count: 4, preview: 'Thank you', unread: 1 };
+  const messages = [
+    { id: 'sms-4', at: 100, outgoing: true, text: 'No problem' },
+    { id: 'sms-3', at: 90, outgoing: false, text: 'Thank you' }
+  ];
+  const receipt = Phone.makeThreadReadReceipt(thread, messages, 1000);
+  const acknowledged = Phone.applyThreadReadReceipts([thread], { [thread.id]: receipt })[0];
+  assert.equal(acknowledged.rawUnread, 1);
+  assert.equal(acknowledged.unread, 0);
+
+  const outgoingOnly = [...messages, { id: 'sms-5', at: 120, outgoing: true, text: 'Following up' }];
+  assert.equal(Phone.receiptHasNewIncoming(receipt, outgoingOnly), false);
+
+  const newer = { ...thread, at: 130, count: 6, preview: 'One more question' };
+  const restored = Phone.applyThreadReadReceipts([newer], { [thread.id]: receipt })[0];
+  assert.equal(restored.unread, 1);
+  assert.equal(Phone.receiptHasNewIncoming(receipt, [...outgoingOnly, {
+    id: 'sms-6', at: 130, outgoing: false, text: 'One more question'
+  }]), true);
+});
+
 test('unknown numbers can be sorted without a contact folder', () => {
   const rows = Phone.normalizeThreads([
     { id: 'smsmms-3', address: '7805550999', title: '7805550999', at: 5, canReply: true }

@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.01 — pure identity, trust, pairing and conversation helpers. */
+/* LotKeys Phone V0.9.5.02 — pure identity, trust, pairing and conversation helpers. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -80,6 +80,48 @@
       .sort((left, right) => right.at - left.at || left.title.localeCompare(right.title));
   }
 
+  function threadAlertSignature(thread) {
+    return JSON.stringify([
+      text(thread?.id),
+      Math.max(0, Number(thread?.at) || 0),
+      Math.max(0, Number(thread?.count) || 0),
+      text(thread?.preview).slice(0, 350)
+    ]);
+  }
+
+  function latestIncomingMarker(messages) {
+    let latest = null;
+    for (const message of Array.isArray(messages) ? messages : []) {
+      if (!message || message.outgoing) continue;
+      const candidate = { at: Math.max(0, Number(message.at) || 0), id: text(message.id) };
+      if (!latest || candidate.at > latest.at || (candidate.at === latest.at && candidate.id > latest.id)) latest = candidate;
+    }
+    return latest ? JSON.stringify([latest.at, latest.id]) : '';
+  }
+
+  function makeThreadReadReceipt(thread, messages, seenAt = Date.now()) {
+    return {
+      signature: threadAlertSignature(thread),
+      incomingMarker: latestIncomingMarker(messages),
+      seenAt: Math.max(0, Number(seenAt) || 0)
+    };
+  }
+
+  function applyThreadReadReceipts(rows, receipts = {}) {
+    const source = receipts && typeof receipts === 'object' ? receipts : {};
+    return (Array.isArray(rows) ? rows : []).map(thread => {
+      const rawUnread = Math.max(0, Number(thread?.rawUnread ?? thread?.unread) || 0);
+      const receipt = source[text(thread?.id)];
+      const acknowledged = rawUnread > 0 && text(receipt?.signature) === threadAlertSignature(thread);
+      return { ...thread, rawUnread, unread: acknowledged ? 0 : rawUnread };
+    });
+  }
+
+  function receiptHasNewIncoming(receipt, messages) {
+    const latest = latestIncomingMarker(messages);
+    return !latest || !text(receipt?.incomingMarker) || latest !== text(receipt.incomingMarker);
+  }
+
   function trustExpiry(mode, now = Date.now()) {
     if (mode === '36h') return now + 36 * 60 * 60 * 1000;
     if (mode === '7d') return now + 7 * 24 * 60 * 60 * 1000;
@@ -126,7 +168,7 @@
   }
 
   return {
-    version: '0.9.5.01',
+    version: '0.9.5.02',
     phone,
     contactPhone,
     contactFor,
@@ -134,6 +176,11 @@
     displayName,
     decorateThread,
     normalizeThreads,
+    threadAlertSignature,
+    latestIncomingMarker,
+    makeThreadReadReceipt,
+    applyThreadReadReceipts,
+    receiptHasNewIncoming,
     trustExpiry,
     trustValid,
     rememberedPairValid,
