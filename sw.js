@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v09499-category-listing-reorder-hotfix';
+const CACHE='lotkeys-app-v094100-important-alerts-pairing-scope';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.4.99",
-  "build": "09499",
-  "release": "category-listing-reorder-hotfix",
+  "version": "0.9.4.100",
+  "build": "094100",
+  "release": "important-alerts-pairing-scope",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v09499-category-listing-reorder-hotfix",
+  "serviceWorkerCache": "lotkeys-app-v094100-important-alerts-pairing-scope",
   "publishedAt": "2026-09-25",
-  "basedOn": "LotKeys V0.9.4.98 Hub refresh change-detection hotfix"
+  "basedOn": "LotKeys V0.9.4.99 category and Listing reorder hotfix"
 }

@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.4.99 — pure customer, conversation, standalone reminder and appointment models. */
+/* LotKeys Hub V0.9.4.100 — pure customer, conversation, standalone reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -169,6 +169,7 @@
         name: text(item?.name).slice(0, 40),
         color: color(item?.color) || '#2563eb',
         parentId: text(item?.parentId),
+        important: !!item?.important,
         order: Number.isFinite(Number(item?.order)) ? Number(item.order) : index
       }))
       .filter(item => item.name);
@@ -180,9 +181,14 @@
       const parent = byId.get(item.parentId);
       if (parent?.parentId) item.parentId = parent.parentId;
     }
+    let importantCount = 0;
     return rows
       .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
-      .map((item, order) => ({ ...item, order }));
+      .map((item, order) => {
+        const important = item.important && importantCount < 3;
+        if (important) importantCount += 1;
+        return { ...item, important, order };
+      });
   }
 
   function reorderCategories(items, from, to) {

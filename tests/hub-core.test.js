@@ -30,6 +30,19 @@ test('category normalization keeps only one nested level', () => {
   assert.equal(rows.find(row => row.id === 'deep').parentId, 'customers');
 });
 
+test('category normalization preserves only the first three ordered Important choices', () => {
+  const rows = Hub.normalizeCategories([
+    { id: 'fourth', name: 'Fourth', color: '#444444', important: true, order: 3 },
+    { id: 'first', name: 'First', color: '#111111', important: true, order: 0 },
+    { id: 'second', name: 'Second', color: '#222222', important: true, order: 1 },
+    { id: 'third', name: 'Third', color: '#333333', important: true, order: 2 },
+    { id: 'ordinary', name: 'Ordinary', color: '#555555', important: false, order: 4 }
+  ]);
+  assert.deepEqual(rows.filter(row => row.important).map(row => row.id), ['first', 'second', 'third']);
+  assert.equal(rows.find(row => row.id === 'fourth').important, false);
+  assert.equal(rows.find(row => row.id === 'ordinary').important, false);
+});
+
 test('category reordering persists the physical row order', () => {
   const rows = Hub.reorderCategories(categories, 2, 0);
   assert.deepEqual(rows.map(row => row.id), ['personal', 'customers', 'follow-up']);

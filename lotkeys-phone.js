@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.4.99 — reliable phone approval, trusted reconnect and encrypted session transport. */
+/* LotKeys Phone V0.9.4.100 — reliable phone approval, trusted reconnect and encrypted session transport. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -297,6 +297,21 @@
     }
   }
 
+  function friendlyPairingDriveError(error) {
+    const message = String(error?.message || error || '');
+    let friendly = '';
+    if (/granted scopes do not give access|requested spaces|appdatafolder|insufficient[_ -]?(?:authentication[_ -]?)?scopes?/i.test(message)) {
+      friendly = 'LotKeys phone pairing needs Store Drive access plus its private phone-pairing permission. Reconnect Google, approve both requested Drive permissions, then try Prepare PC pairing again.';
+    } else if (/failed to fetch|networkerror|network request failed|load failed/i.test(message)) {
+      friendly = 'Phone pairing could not reach its private Google Drive relay. Check the internet connection, then reconnect and try Prepare PC pairing again.';
+    }
+    if (!friendly) return error;
+    const converted = new Error(friendly);
+    converted.cause = error;
+    if (Number.isFinite(Number(error?.status))) converted.status = Number(error.status);
+    return converted;
+  }
+
   async function driveFetch(url, options = {}) {
     try {
       const token = await Drive.authorize(false);
@@ -313,7 +328,7 @@
       return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.text();
     } catch (error) {
       if (state.nativeToken) state.relayReady = false;
-      throw error;
+      throw friendlyPairingDriveError(error);
     }
   }
 
@@ -1114,7 +1129,7 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.4.99',
+      version: '0.9.4.100',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1177,7 +1192,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.4.99',
+    version: '0.9.4.100',
     init,
     status,
     subscribe,

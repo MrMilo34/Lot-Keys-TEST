@@ -1,3 +1,14 @@
+V0.9.4.100 IMPORTANT HUB ALERTS + PAIRING SCOPE REPAIR
+- Adds a ⭐ Important selector to every Device category/subcategory and preserves the first three selections in saved category order.
+- Keeps the existing all-unread Hub badge and adds up to three vertically stacked category-coloured unread dots for live Device messages.
+- Shows black/white high-contrast unread dots on Important category chips while retaining parent/subcategory closure.
+- Renames the filter action to 🗂️ Organize with opposite black/white contrast across light and dark themes.
+- Requests and validates both Store Drive and private drive.appdata permissions required by phone-to-PC pairing.
+- Replaces raw requested-space, insufficient-scope and relay network failures with useful recovery instructions.
+- Retains every V0.9.4.99 category-ordering, Listing photo-movement, reminder, message, Store and Android relay behavior.
+- Build: 094100.
+- Service worker cache: lotkeys-app-v094100-important-alerts-pairing-scope.
+
 V0.9.4.99 CATEGORY + LISTING REORDER HOTFIX
 - Gives every Hub category row a bottom-left physical drag grip with pointer-driven mouse/touch movement and clear drop cues.
 - Persists category order numbers after drag or arrow movement instead of normalizing rows back to their previous positions.
