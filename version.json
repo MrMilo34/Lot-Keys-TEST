@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.04",
-  "build": "095004",
-  "release": "inline-blocking-and-short-codes",
+  "version": "0.9.5.05",
+  "build": "095005",
+  "release": "pairing-relay-recovery",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095004-inline-block-short-codes",
+  "serviceWorkerCache": "lotkeys-app-v095005-pairing-relay-recovery",
   "publishedAt": "2026-09-26",
-  "basedOn": "LotKeys V0.9.5.03 Hub blocking and Interested Vehicle shortcuts"
+  "basedOn": "LotKeys V0.9.5.04 inline number blocking and SMS short codes"
 }

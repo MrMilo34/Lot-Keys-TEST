@@ -8,16 +8,16 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.04', () => {
+test('release metadata is consistently V0.9.5.05', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.04');
-  assert.equal(version.build, '095004');
+  assert.equal(version.version, '0.9.5.05');
+  assert.equal(version.build, '095005');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'inline-blocking-and-short-codes');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095004-inline-block-short-codes');
-  assert.match(read('index.html'), /V0\.9\.5\.04/);
-  assert.match(read('manifest.webmanifest'), /build=095004/);
-  assert.match(read('sw.js'), /lotkeys-app-v095004-inline-block-short-codes/);
+  assert.equal(version.release, 'pairing-relay-recovery');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095005-pairing-relay-recovery');
+  assert.match(read('index.html'), /V0\.9\.5\.05/);
+  assert.match(read('manifest.webmanifest'), /build=095005/);
+  assert.match(read('sw.js'), /lotkeys-app-v095005-pairing-relay-recovery/);
 });
 
 test('V0.9.4.98 preserves the active page and labels the newest successful sync', () => {
@@ -139,7 +139,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095004/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095005/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -214,8 +214,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095004/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095004/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095005/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095005/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -458,17 +458,24 @@ test('V0.9.5.04 retains Hub organization and adds inline short-code blocking', (
   assert.match(privacy, /Android's messaging app remains responsible for phone-level blocking and notifications/);
 });
 
-test('V0.9.4.100 requests and validates the private Drive app-data permission for phone pairing', () => {
+test('V0.9.5.05 validates and repairs private Drive pairing access before creating an offer', () => {
   const html = read('index.html');
   const phone = read('lotkeys-phone.js');
+  const hub = read('lotkeys-hub.js');
   assert.match(html, /const DRIVE_APPDATA_SCOPE = 'https:\/\/www\.googleapis\.com\/auth\/drive\.appdata'/);
   assert.match(html, /const DRIVE_SCOPE = `openid email \$\{DRIVE_WRITE_SCOPE\} \$\{DRIVE_APPDATA_SCOPE\}`/);
   assert.match(html, /!grantedScopes\.has\(DRIVE_WRITE_SCOPE\)\|\|!grantedScopes\.has\(DRIVE_APPDATA_SCOPE\)/);
   assert.match(html, /clearSessionAuthorization\(\);return reject\(new Error\('LotKeys needs Store Drive access plus its private phone-pairing permission\./);
+  assert.match(html, /async function renewAuthorization\(forcePrompt=true\)/);
   assert.match(phone, /function friendlyPairingDriveError\(error\)/);
   assert.match(phone, /granted scopes do not give access\|requested spaces\|appdatafolder/);
-  assert.match(phone, /Phone pairing could not reach its private Google Drive relay/);
+  assert.match(phone, /function relayXhr\(url, options, headers\)/);
+  assert.match(phone, /async function repairPairingAccess\(\)/);
+  assert.match(phone, /lotkeysRole: 'lotkeysPairProbe'/);
+  assert.match(phone, /PAIRING_DRIVE_NETWORK/);
   assert.match(phone, /converted\.cause = error/);
+  assert.match(hub, /Reconnect pairing access/);
+  assert.match(hub, /Technical detail/);
 });
 
 test('contacts share Interested Vehicle, buying details, appointment chips and reminder-linked notes', () => {

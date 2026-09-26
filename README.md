@@ -1,8 +1,16 @@
-# LotKeys V0.9.5.04 — Inline number blocking and SMS short codes
+# LotKeys V0.9.5.05 — PC pairing relay recovery
 
-This TEST release places the saved Contact blocking control beside the primary number and lets LotKeys block numeric SMS short codes such as `66000` without treating them as callable phone numbers.
+This TEST release repairs the PC side of phone pairing with a focused Google-permission renewal, a private relay probe, a second browser transport, and actionable failure details.
 
-## V0.9.5.04 included
+## V0.9.5.05 included
+
+- Add **Reconnect pairing access** on the PC without signing out, clearing LotKeys data, or changing the Store connection.
+- Renew the temporary Google authorization and verify the exact Google account used by the PC.
+- Create, read, and delete a short-lived probe in Google Drive's private app-data space before retrying the real pairing offer.
+- Retry failed browser relay traffic through `XMLHttpRequest` when the normal `fetch` transport is blocked.
+- Show the specific Google HTTP or browser-network detail when pairing still cannot create an offer.
+
+## V0.9.5.04 retained
 
 - Keep **📵 Block Number / Unblock Number** inline with a saved Contact's primary messaging number.
 - Accept numeric SMS short codes from three to fifteen digits for LotKeys blocking and Device organization.
@@ -161,7 +169,7 @@ This TEST release places the saved Contact blocking control beside the primary n
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.04` when the stable TEST signing secrets are configured. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.05` when the stable TEST signing secrets are configured. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
 
 The Android setup uses five short screens:
 
@@ -175,7 +183,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.5.04 Android TEST APK.
+1. Install and open the V0.9.5.05 Android TEST APK.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -187,8 +195,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095004`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095005`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.04 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.05 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

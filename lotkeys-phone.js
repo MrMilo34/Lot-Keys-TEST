@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.04 — reliable phone approval, trusted reconnect and unread acknowledgements. */
+/* LotKeys Phone V0.9.5.05 — pairing-only Google recovery with dual browser transports. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -39,11 +39,14 @@
     nativeTrusts: [],
     relayReady: false,
     relayIdentity: '',
+    relayTransport: '',
+    relayDiagnostic: '',
     session: null,
     pairing: null,
     threads: [],
     threadPage: { hasMore: false, nextOffset: 0, total: 0 },
     lastError: '',
+    lastErrorCode: '',
     lastPhoneSeenAt: 0
   };
   let nativeTimer = 0;
@@ -312,6 +315,8 @@
       state.relayReady = true;
       state.relayIdentity = text(state.nativeStatus?.relay?.account).toLowerCase();
       state.lastError = '';
+      state.lastErrorCode = '';
+      state.relayDiagnostic = '';
       await pollOffers();
       scheduleOfferPoll(300);
       event('pair-ready', { account: state.relayIdentity, background: true });
@@ -322,6 +327,8 @@
     state.relayReady = true;
     state.relayIdentity = text(identity?.email).toLowerCase();
     state.lastError = '';
+    state.lastErrorCode = '';
+    state.relayDiagnostic = '';
     await pollOffers();
     scheduleOfferPoll(300);
     if (state.session) scheduleFramePoll(100);
@@ -339,6 +346,8 @@
       return true;
     } catch (error) {
       state.lastError = error.message;
+      state.lastErrorCode = error?.code || '';
+      state.relayDiagnostic = String(error?.detail || error?.message || error).slice(0, 500);
       event('status');
       return false;
     }
@@ -348,34 +357,101 @@
     const message = String(error?.message || error || '');
     let friendly = '';
     if (/granted scopes do not give access|requested spaces|appdatafolder|insufficient[_ -]?(?:authentication[_ -]?)?scopes?/i.test(message)) {
-      friendly = 'LotKeys phone pairing needs Store Drive access plus its private phone-pairing permission. Reconnect Google, approve both requested Drive permissions, then try Prepare PC pairing again.';
-    } else if (/failed to fetch|networkerror|network request failed|load failed/i.test(message)) {
-      friendly = 'Phone pairing could not reach its private Google Drive relay. Check the internet connection, then reconnect and try Prepare PC pairing again.';
+      friendly = 'LotKeys phone pairing needs renewed Google permission. Use Reconnect pairing access, approve both Drive permissions, then LotKeys will test the private relay before trying again.';
+    } else if (error?.code === 'PAIRING_DRIVE_NETWORK' || /failed to fetch|networkerror|network request failed|load failed|xmlhttprequest/i.test(message)) {
+      friendly = 'The PC browser could not complete the private Google Drive relay request. Use Reconnect pairing access below; LotKeys will renew permission and test a second browser transport.';
     }
     if (!friendly) return error;
     const converted = new Error(friendly);
     converted.cause = error;
+    converted.code = error?.code || (/scope|appdatafolder|requested spaces/i.test(message) ? 'PAIRING_AUTH_REQUIRED' : 'PAIRING_DRIVE_NETWORK');
+    converted.detail = String(error?.detail || message).slice(0, 500);
     if (Number.isFinite(Number(error?.status))) converted.status = Number(error.status);
     return converted;
+  }
+
+  function relayXhr(url, options, headers) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(options.method || 'GET', url, true);
+      xhr.timeout = 45000;
+      headers.forEach((value, key) => xhr.setRequestHeader(key, value));
+      xhr.onload = () => resolve({
+        ok: xhr.status >= 200 && xhr.status < 300,
+        status: xhr.status,
+        contentType: xhr.getResponseHeader('content-type') || '',
+        body: xhr.responseText || ''
+      });
+      const fail = kind => {
+        const error = new Error('Google Drive XMLHttpRequest ' + kind + '.');
+        error.code = 'PAIRING_DRIVE_NETWORK';
+        error.detail = kind;
+        reject(error);
+      };
+      xhr.onerror = () => fail('was blocked or could not reach the service');
+      xhr.onabort = () => fail('was cancelled');
+      xhr.ontimeout = () => fail('timed out');
+      xhr.send(options.body ?? null);
+    });
+  }
+
+  async function relayRequest(url, options, token) {
+    const headers = new Headers(options.headers || {});
+    headers.set('Authorization', 'Bearer ' + token);
+    try {
+      const response = await fetch(url, { ...options, headers, cache: 'no-store' });
+      const result = {
+        ok: response.ok,
+        status: response.status,
+        contentType: response.headers.get('content-type') || '',
+        body: response.status === 204 ? '' : await response.text()
+      };
+      state.relayTransport = 'fetch';
+      return result;
+    } catch (fetchError) {
+      try {
+        const result = await relayXhr(url, options, headers);
+        state.relayTransport = 'xhr';
+        return result;
+      } catch (xhrError) {
+        const error = new Error('Fetch: ' + String(fetchError?.message || fetchError) + ' · fallback: ' + String(xhrError?.message || xhrError));
+        error.code = 'PAIRING_DRIVE_NETWORK';
+        error.detail = error.message;
+        throw error;
+      }
+    }
+  }
+
+  function relayPayload(result) {
+    if (!result?.body) return null;
+    if (String(result.contentType).includes('application/json')) {
+      try { return JSON.parse(result.body); } catch {}
+    }
+    return result.body;
   }
 
   async function driveFetch(url, options = {}) {
     try {
       const token = await Drive.authorize(false);
-      const headers = new Headers(options.headers || {});
-      headers.set('Authorization', 'Bearer ' + token);
-      const response = await fetch(url, { ...options, headers, cache: 'no-store' });
-      if (!response.ok) {
-        let message = '';
-        try { message = (await response.json())?.error?.message || ''; } catch {}
-        throw Object.assign(Error(message || 'Phone connection could not reach private Google Drive signaling (' + response.status + ').'), { status: response.status });
+      const result = await relayRequest(url, options, token);
+      if (!result.ok) {
+        const payload = relayPayload(result);
+        const message = payload?.error?.message || (typeof payload === 'string' ? payload : '');
+        const error = new Error(message || 'Phone connection could not reach private Google Drive signaling (' + result.status + ').');
+        error.status = result.status;
+        error.code = result.status === 401 || result.status === 403 ? 'PAIRING_AUTH_REQUIRED' : 'PAIRING_DRIVE_HTTP';
+        error.detail = message || 'HTTP ' + result.status;
+        throw error;
       }
+      state.relayDiagnostic = '';
       if (state.nativeToken) state.relayReady = true;
-      if (response.status === 204) return null;
-      return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.text();
+      return relayPayload(result);
     } catch (error) {
+      const converted = friendlyPairingDriveError(error);
+      state.lastErrorCode = converted?.code || error?.code || '';
+      state.relayDiagnostic = String(converted?.detail || error?.detail || error?.message || error).slice(0, 500);
       if (state.nativeToken) state.relayReady = false;
-      throw friendlyPairingDriveError(error);
+      throw converted;
     }
   }
 
@@ -415,6 +491,46 @@
     await driveFetch(DRIVE_FILES + '/' + encodeURIComponent(id), { method: 'DELETE' }).catch(error => {
       if (error.status !== 404) throw error;
     });
+  }
+
+  async function repairPairingAccess() {
+    if (state.nativeToken) throw Error('Reconnect pairing access from the computer, not the phone.');
+    let probe = null;
+    const probeId = randomId(18);
+    try {
+      if (typeof Drive.renewAuthorization !== 'function') throw Error('Reload LotKeys before reconnecting pairing access.');
+      await Drive.renewAuthorization(true);
+      const identity = await Drive.getGoogleIdentity();
+      const account = text(identity?.email).toLowerCase();
+      if (!account) throw Error('LotKeys could not verify the Google account used for pairing.');
+      state.relayIdentity = account;
+      const expiresAt = now() + 2 * 60 * 1000;
+      probe = await createFile('LotKeys Pairing Access Test ' + probeId + '.json', {
+        version: 1,
+        type: 'probe',
+        probeId,
+        createdAt: now(),
+        expiresAt
+      }, { lotkeysRole: 'lotkeysPairProbe', probeId, expiresAt: String(expiresAt) });
+      const saved = probe?.id ? await readFile(probe.id) : null;
+      if (saved?.type !== 'probe' || saved?.probeId !== probeId) throw Error('Google Drive created the pairing test but could not read it back.');
+      state.relayReady = true;
+      state.relayIdentity = account;
+      state.lastError = '';
+      state.lastErrorCode = '';
+      state.relayDiagnostic = '';
+      event('status');
+      return { account, transport: state.relayTransport || 'fetch', verified: true };
+    } catch (error) {
+      const converted = friendlyPairingDriveError(error);
+      state.lastError = converted?.message || String(error?.message || error);
+      state.lastErrorCode = converted?.code || error?.code || 'PAIRING_REPAIR_FAILED';
+      state.relayDiagnostic = String(converted?.detail || error?.detail || error?.message || error).slice(0, 500);
+      event('status');
+      throw converted;
+    } finally {
+      if (probe?.id) await deleteFile(probe.id).catch(() => {});
+    }
   }
 
   async function keyPair() {
@@ -544,7 +660,7 @@
 
   async function cleanupStale() {
     if (!Drive.connected?.()) return;
-    for (const role of ['lotkeysPairOffer', 'lotkeysPairAnswer', 'lotkeysPhoneFrame']) {
+    for (const role of ['lotkeysPairOffer', 'lotkeysPairAnswer', 'lotkeysPhoneFrame', 'lotkeysPairProbe']) {
       const files = await listFiles({ lotkeysRole: role }).catch(() => []);
       for (const file of files) {
         const expires = Number(file.appProperties?.expiresAt || 0);
@@ -582,6 +698,8 @@
     });
     state.pairing = { ...offer, pair, fileId: file.id, automatic: !!automatic };
     state.lastError = '';
+    state.lastErrorCode = '';
+    state.relayDiagnostic = '';
     event('pairing', { code, sessionId, expiresAt });
     schedulePairPoll(100);
     return { code, sessionId, expiresAt };
@@ -589,6 +707,8 @@
 
   function pairingError(error) {
     state.lastError = error.message;
+    state.lastErrorCode = error?.code || '';
+    state.relayDiagnostic = String(error?.detail || error?.message || error).slice(0, 500);
     event('status');
   }
 
@@ -1238,13 +1358,15 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     return {
-      version: '0.9.5.04',
+      version: '0.9.5.05',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
       nativeError: state.nativeError,
       relayReady: !!state.relayReady,
       relayIdentity: state.relayIdentity,
+      relayTransport: state.relayTransport,
+      relayDiagnostic: state.relayDiagnostic,
       connected: connected(),
       pairing: state.pairing ? { code: state.pairing.code, sessionId: state.pairing.sessionId, expiresAt: state.pairing.expiresAt, automatic: !!state.pairing.automatic } : null,
       deviceName: state.nativeStatus?.deviceName || state.session?.peerName || '',
@@ -1255,6 +1377,7 @@
       coverage,
       capabilities: state.nativeStatus?.capabilities || state.session?.phoneStatus?.capabilities || {},
       lastError: state.lastError,
+      lastErrorCode: state.lastErrorCode,
       pendingPairings: pendingPairings(),
       rememberedPair: rememberedPair(),
       threadCount: state.threads.length,
@@ -1301,12 +1424,13 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.04',
+    version: '0.9.5.05',
     init,
     status,
     subscribe,
     connectNative,
     preparePhonePairing,
+    repairPairingAccess,
     reconnectTrustedComputer,
     startPairing,
     cancelPairing,

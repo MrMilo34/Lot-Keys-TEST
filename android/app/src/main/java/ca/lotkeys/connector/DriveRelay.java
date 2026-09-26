@@ -634,7 +634,7 @@ final class DriveRelay {
     }
 
     private void cleanupStale() throws Exception {
-        for (String role : new String[]{"lotkeysPairOffer", "lotkeysPairAnswer", "lotkeysPhoneFrame"}) {
+        for (String role : new String[]{"lotkeysPairOffer", "lotkeysPairAnswer", "lotkeysPhoneFrame", "lotkeysPairProbe"}) {
             JSONArray files = listFiles(map("lotkeysRole", role));
             for (int i = 0; i < files.length(); i++) {
                 JSONObject file = files.getJSONObject(i);
