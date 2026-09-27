@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.13",
-  "build": "095013",
-  "release": "device-chat-live-refresh",
+  "version": "0.9.5.14",
+  "build": "095014",
+  "release": "device-chat-progressive-history",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095013-device-chat-live-refresh",
+  "serviceWorkerCache": "lotkeys-app-v095014-device-chat-progressive-history",
   "publishedAt": "2026-09-27",
-  "basedOn": "LotKeys V0.9.5.12 Android account relay recovery",
+  "basedOn": "LotKeys V0.9.5.13 open Device chat live refresh",
   "androidConnectorVersion": "0.9.5.12"
 }

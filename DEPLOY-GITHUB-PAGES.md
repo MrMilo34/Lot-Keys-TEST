@@ -27,9 +27,9 @@ LotKeys needs a normal HTTPS origin for Google browser OAuth. Opening `index.htm
 8. Wait for GitHub to publish the page, then use the HTTPS URL GitHub provides.
 9. Open that URL in Chrome on Android.
 
-## V0.9.5.13 web hotfix
+## V0.9.5.14 web update
 
-Deploy the complete website snapshot and then fully close and reopen the installed LotKeys web app once so cache `lotkeys-app-v095013-device-chat-live-refresh` takes control. Keep the working V0.9.5.12 Android connector installed: this release changes only the web conversation view, so there is no APK reinstall or Google-account re-selection.
+Deploy the complete website snapshot and then fully close and reopen the installed LotKeys web app once so cache `lotkeys-app-v095014-device-chat-progressive-history` takes control. Keep the working V0.9.5.12 Android connector installed: this release changes only the web conversation-loading view, so there is no APK reinstall or Google-account re-selection.
 
 ## Compatible V0.9.5.12 Android connector
 

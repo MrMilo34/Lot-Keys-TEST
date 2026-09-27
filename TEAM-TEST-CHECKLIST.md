@@ -1,9 +1,9 @@
-# LotKeys V0.9.5.13 team-test checklist
+# LotKeys V0.9.5.14 team-test checklist
 
-## V0.9.5.13 baseline
+## V0.9.5.14 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095013` and confirm **V0.9.5.13 / 095013**.
-- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.13 is a web-only hotfix; do not reinstall the APK or reselect the account.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095014` and confirm **V0.9.5.14 / 095014**.
+- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.14 is a web-only update; do not reinstall the APK or reselect the account.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
@@ -70,6 +70,9 @@
 - Confirm Device lists the phone's newest SMS/MMS conversations first and loads only 40 at a time.
 - Use **Load older conversations** and confirm additional threads append without duplicates.
 - Open a conversation and confirm older messages are above newer messages; use **Load older messages** for history.
+- Confirm a warm/recent conversation initially renders only its newest six messages. Tap **Load older messages** and confirm the next 20 closest older messages appear immediately without gaps or duplicates; continue until a new Android history page is required.
+- Return to Hub, reopen the same chat within five minutes, and confirm it paints from volatile memory without another initial wait. Disconnect the phone, reconnect, and confirm stale cached history is not reused.
+- On a completely cold PC chat, confirm the conversation-list preview appears immediately while the encrypted relay fetch is pending. Record the cold and warmed open times separately; the cold round trip remains transport-dependent.
 - Leave that Device conversation open and receive a fictional SMS reply. Confirm the new bubble appears automatically on both the phone and paired PC without backing out or reopening the chat.
 - Repeat while an unsent draft and queued attachment are in the composer; both must remain. Scroll up before another reply and confirm the reading position stays fixed, then return to the bottom and confirm a later reply follows automatically.
 - Send an SMS from the open conversation and confirm the locally rendered outgoing bubble is replaced by, rather than duplicated beside, the phone-confirmed copy.

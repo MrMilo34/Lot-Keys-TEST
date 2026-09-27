@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.5.13 — pure customer, conversation, standalone reminder and appointment models. */
+/* LotKeys Hub V0.9.5.14 — pure customer, conversation, standalone reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -69,6 +69,32 @@
       if (match) confirmedLocal.add(match.id);
     }
     return sortDeviceMessages([...existing.filter(message => !confirmedLocal.has(message?.id)), ...fresh]);
+  }
+
+  function splitDeviceHistory(rows, visibleCount = 6) {
+    const sorted = sortDeviceMessages(rows);
+    const count = Math.max(1, Math.floor(Number(visibleCount) || 6));
+    const splitAt = Math.max(0, sorted.length - count);
+    return {
+      buffered: sorted.slice(0, splitAt),
+      visible: sorted.slice(splitAt)
+    };
+  }
+
+  function revealDeviceHistory(buffered, chunkSize = 20) {
+    const sorted = sortDeviceMessages(buffered);
+    const count = Math.max(1, Math.floor(Number(chunkSize) || 20));
+    const splitAt = Math.max(0, sorted.length - count);
+    return {
+      buffered: sorted.slice(0, splitAt),
+      revealed: sorted.slice(splitAt)
+    };
+  }
+
+  function unseenDeviceMessages(current, buffered, incoming) {
+    const known = new Set([...sortDeviceMessages(current), ...sortDeviceMessages(buffered)]
+      .map(message => String(message?.id ?? '')));
+    return sortDeviceMessages(incoming).filter(message => !known.has(String(message?.id ?? '')));
   }
 
   function primary(contact) {
@@ -754,6 +780,9 @@
     deviceIdentity,
     sortDeviceMessages,
     mergeDeviceMessages,
+    splitDeviceHistory,
+    revealDeviceHistory,
+    unseenDeviceMessages,
     primary,
     nextLabel,
     field,

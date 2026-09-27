@@ -171,6 +171,28 @@ test('live Device history keeps older rows and reconciles local sends one for on
   assert.equal(merged.filter(message => message.text === 'Same reply').length, 3);
 });
 
+test('Device history opens with six messages and reveals the buffered past in nearest-first chunks', () => {
+  const newestFirst = Array.from({ length: 40 }, (_, index) => ({
+    id: String(40 - index),
+    at: 40 - index
+  }));
+  const first = Hub.splitDeviceHistory(newestFirst, 6);
+  assert.deepEqual(first.visible.map(message => message.id), ['35', '36', '37', '38', '39', '40']);
+  assert.equal(first.buffered.length, 34);
+
+  const next = Hub.revealDeviceHistory(first.buffered, 20);
+  assert.deepEqual(next.revealed.map(message => message.id), Array.from({ length: 20 }, (_, index) => String(index + 15)));
+  assert.deepEqual(next.buffered.map(message => message.id), Array.from({ length: 14 }, (_, index) => String(index + 1)));
+  assert.equal(newestFirst[0].id, '40');
+});
+
+test('a burst of live Device replies cannot hide the seventh new message in the older buffer', () => {
+  const current = Array.from({ length: 6 }, (_, index) => ({ id: String(index + 35), at: index + 35 }));
+  const buffered = Array.from({ length: 34 }, (_, index) => ({ id: String(index + 1), at: index + 1 }));
+  const refreshed = Array.from({ length: 40 }, (_, index) => ({ id: String(index + 8), at: index + 8 }));
+  assert.deepEqual(Hub.unseenDeviceMessages(current, buffered, refreshed).map(message => message.id), ['41', '42', '43', '44', '45', '46', '47']);
+});
+
 test('appointment identity shows a phone-only customer exactly once', () => {
   assert.deepEqual(Hub.appointmentIdentity({
     customerName: '+1 (780) 872-1598',

@@ -1,8 +1,19 @@
-# LotKeys V0.9.5.13 — open Device chat live refresh
+# LotKeys V0.9.5.14 — progressive Device history
 
-This TEST web hotfix keeps an open Device SMS/MMS conversation synchronized with the phone. Previously the incoming reply updated the Hub list and unread badge, but the visible chat did not show it until the user backed out and reopened the conversation.
+This TEST web update makes recent Device SMS/MMS conversations feel quicker without changing the proven V0.9.5.13 connection and live-refresh path. It renders the newest six messages first, reveals older history in local chunks, and warms the most recent conversation while the Hub list is open.
 
-## V0.9.5.13 included
+## V0.9.5.14 included
+
+- Render only the newest six messages when a Device conversation first opens.
+- Reveal the already-fetched older messages 20 at a time before requesting the next Android history page.
+- Quietly prefetch the newest Device conversation and reuse recently viewed first pages from an eight-entry, five-minute in-memory cache.
+- Show the existing conversation preview immediately while a completely cold PC request crosses the encrypted Drive relay.
+- Clear volatile history on expiry, disconnect, or tab close; no message body is added to `localStorage`, IndexedDB, Hub records, or Google Drive.
+- Keep the V0.9.5.13 live-refresh/reconnection behavior and the working V0.9.5.12 Android connector. No APK reinstall is required.
+
+A completely cold paired-PC history fetch still depends on the encrypted Drive relay round trip. This release improves the common warm/recent path and perceived cold-load response without claiming that the browser can make the unchanged Android connector return a smaller native page.
+
+## V0.9.5.13 retained
 
 - Refresh the visible Device history when the Android connector or paired-PC relay reports changed message data.
 - Show incoming replies without leaving and reopening the conversation on either the phone or paired PC.

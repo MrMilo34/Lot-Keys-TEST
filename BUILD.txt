@@ -1,3 +1,13 @@
+V0.9.5.14 DEVICE CHAT PROGRESSIVE HISTORY
+- Opens Device chats with the newest six messages and reveals older history in 20-message chunks.
+- Warms the newest conversation from the Hub list and reuses up to eight recent first pages in volatile memory for five minutes.
+- Shows the existing thread preview immediately while a cold paired-PC request crosses the encrypted Drive relay.
+- Clears the warm cache on expiry, disconnect, or tab close and never writes cached message bodies to browser storage.
+- Retains V0.9.5.13 live conversation refresh and the compatible V0.9.5.12 Android connector.
+- Build: 095014.
+- Android connector: V0.9.5.12, version code 95012 (unchanged).
+- Service worker cache: lotkeys-app-v095014-device-chat-progressive-history.
+
 V0.9.5.13 OPEN DEVICE CHAT LIVE REFRESH
 - Refreshes the visible Device SMS/MMS history when Android or the paired-PC relay reports changed phone data.
 - Shows incoming replies without backing out of and reopening the conversation on either phone or PC.
