@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.10",
-  "build": "095010",
-  "release": "android-relay-required-pairing-code",
+  "version": "0.9.5.11",
+  "build": "095011",
+  "release": "trusted-phone-auto-reconnect",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095010-android-relay-required-pairing-code",
+  "serviceWorkerCache": "lotkeys-app-v095011-trusted-phone-auto-reconnect",
   "publishedAt": "2026-09-27",
-  "basedOn": "LotKeys V0.9.5.09 phone reconnection and connection dialog"
+  "basedOn": "LotKeys V0.9.5.10 Android relay required pairing"
 }

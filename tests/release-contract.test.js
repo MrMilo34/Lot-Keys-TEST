@@ -8,17 +8,19 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.10', () => {
+test('release metadata is consistently V0.9.5.11', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.10');
-  assert.equal(version.build, '095010');
+  assert.equal(version.version, '0.9.5.11');
+  assert.equal(version.build, '095011');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'android-relay-required-pairing-code');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095010-android-relay-required-pairing-code');
-  assert.match(read('index.html'), /V0\.9\.5\.10/);
-  assert.match(read('manifest.webmanifest'), /build=095010/);
-  assert.match(read('sw.js'), /lotkeys-app-v095010-android-relay-required-pairing-code/);
-  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.09/);
+  assert.equal(version.release, 'trusted-phone-auto-reconnect');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095011-trusted-phone-auto-reconnect');
+  assert.match(read('index.html'), /V0\.9\.5\.11/);
+  assert.match(read('manifest.webmanifest'), /build=095011/);
+  assert.match(read('sw.js'), /lotkeys-app-v095011-trusted-phone-auto-reconnect/);
+  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.11/);
+  assert.match(read('android/app/build.gradle'), /versionCode 95011/);
+  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.11 TEST/);
 });
 
 test('paired phone UI shows the trusted PC and can forget it', () => {
@@ -39,9 +41,15 @@ test('trusted reconnection and local phone revocation survive an idle browser', 
   const relay = read('android/app/src/main/java/ca/lotkeys/connector/DriveRelay.java');
   const setup = read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java');
   assert.match(phone, /if \(pairing\?\.automatic && reason\.startsWith\('Pairing expired'\)\) scheduleTrustedReconnect\(1000\)/);
-  assert.match(phone, /heartbeatFailures >= 2 && now\(\) - state\.lastPhoneSeenAt > 90000/);
-  assert.match(phone, /disconnect\(\{ notify: false, keepRemembered: true, reason: 'stale' \}\)/);
+  assert.match(phone, /heartbeatFailures >= 2 && now\(\) - state\.lastPhoneSeenAt > STALE_SESSION_RECOVERY_MS/);
+  assert.match(phone, /recoverStaleSession\(sessionId\)/);
+  assert.match(phone, /reconnectTrustedComputer\(\{ force: true \}\)/);
+  assert.doesNotMatch(phone, /reconnectTrustedComputer\(\)[\s\S]{0,160}document\.visibilityState !== 'visible'/);
   assert.ok(relay.indexOf('pollFrames();') < relay.indexOf('pollOffers();'), 'active frames should be processed before offers');
+  assert.match(relay, /Pick only the newest trusted offer/);
+  assert.match(relay, /sameBrowserRecovery/);
+  assert.match(relay, /targetDeviceId/);
+  assert.match(phone, /targetDeviceId: automatic \? text\(rememberedPair\(\)\?\.deviceId\) : ''/);
   assert.match(relay, /if \(revoked != null\) prefs\.edit\(\)\.remove\(SESSION\)\.commit\(\)/);
   assert.match(setup, /Locked-Phone Battery Settings/);
 });
@@ -165,7 +173,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095010/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095011/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -240,8 +248,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095010/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095010/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095011/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095011/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {

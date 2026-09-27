@@ -40,7 +40,7 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_GOOGLE_ACCOUNT = 44;
     private static final int REQUEST_GOOGLE_AUTHORIZATION = 45;
     private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
-    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095009";
+    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095011";
     private LinearLayout body;
     private Account pendingGoogleAccount;
 
@@ -64,7 +64,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.5.09 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.5.11 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();
@@ -119,7 +119,7 @@ public final class MainActivity extends Activity {
 
         step("5 of 5 · Pair a Computer");
         text("Android access is ready. Open LotKeys below to link this phone to the same LotKeys account. " +
-            "A new computer still needs the matching four-digit approval on this phone. After approval, the quiet Android connection keeps the paired PC available even when the phone browser is closed. Media opens in your default messaging app so you can review the recipient and press Send.", 16, Color.LTGRAY, false);
+            "A new computer still needs the matching four-digit approval on this phone. After you trust it, the quiet Android connection automatically rediscovers and reconnects that PC even when the phone browser is closed. Media opens in your default messaging app so you can review the recipient and press Send.", 16, Color.LTGRAY, false);
         statusLine("Messages", true, "SMS/MMS read, SMS reply, reviewed media handoff");
         statusLine("Contact names", contacts, contacts ? "allowed" : "using phone numbers");
         statusLine("Coverage", false, "SMS/MMS only · RCS watcher comes later");

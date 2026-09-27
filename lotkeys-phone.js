@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.10 — exact multipart boundary for PC pairing uploads. */
+/* LotKeys Phone V0.9.5.11 — trusted phones recover PC sessions automatically. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -24,6 +24,10 @@
   const FRAME_POLL_HEAVY_MS = 10000;
   const HEARTBEAT_IDLE_MS = 6500;
   const HEARTBEAT_HEAVY_MS = 30000;
+  const AUTO_RECONNECT_MIN_INTERVAL_MS = 10000;
+  const AUTO_RECONNECT_RETRY_MS = 15000;
+  const STALE_SESSION_RECOVERY_MS = 30000;
+  const RESTORED_SESSION_PROBE_MS = 12000;
   const listeners = new Set();
   const pendingRpc = new Map();
   const pendingOffers = new Map();
@@ -195,6 +199,7 @@
     localStorage.setItem(REMEMBERED_PAIR_KEY, JSON.stringify({
       version: 1,
       browserId: browserId(),
+      deviceId: text(session.deviceId),
       phoneName: session.peerName || 'Android phone',
       trustMode: session.trustMode,
       trustExpiresAt: session.trustExpiresAt || 0,
@@ -329,11 +334,18 @@
     throw Error('The Android PC relay needs Google authorization. Open LotKeys Connector TEST, finish PC Pairing Account with the same Google account, then return here and tap Check PC relay. Pairing in this browser alone would disconnect when you leave LotKeys.');
   }
 
-  async function reconnectTrustedComputer() {
-    if (state.nativeToken || state.session || state.pairing || document.visibilityState !== 'visible') return false;
+  async function reconnectTrustedComputer({ force = false } = {}) {
     const remembered = rememberedPair();
-    if (!remembered || !Drive.connected?.()) return false;
-    if (now() - lastAutomaticPairAttemptAt < 60000) return false;
+    if (!P.automaticReconnectReady({
+      nativeToken: !!state.nativeToken,
+      session: !!state.session,
+      pairing: !!state.pairing,
+      remembered: !!remembered,
+      driveConnected: !!Drive.connected?.(),
+      lastAttemptAt: lastAutomaticPairAttemptAt,
+      now: now(),
+      minimumInterval: force ? 0 : AUTO_RECONNECT_MIN_INTERVAL_MS
+    })) return false;
     lastAutomaticPairAttemptAt = now();
     try {
       await startPairing({ trustMode: remembered.trustMode, automatic: true });
@@ -348,13 +360,20 @@
     }
   }
 
-  function scheduleTrustedReconnect(delay = 60000) {
+  function scheduleTrustedReconnect(delay = AUTO_RECONNECT_RETRY_MS) {
     clearTimeout(automaticReconnectTimer);
     if (state.nativeToken || state.session || state.pairing || !rememberedPair()) return;
     automaticReconnectTimer = setTimeout(() => {
       automaticReconnectTimer = 0;
       reconnectTrustedComputer().catch(sessionError);
     }, delay);
+  }
+
+  async function recoverStaleSession(sessionId = state.session?.sessionId) {
+    if (!sessionId || state.session?.sessionId !== sessionId || state.session.role !== 'pc') return false;
+    if (!rememberedPair() || !Drive.connected?.()) return false;
+    await disconnect({ notify: false, keepRemembered: true, reason: 'stale' });
+    return reconnectTrustedComputer({ force: true });
   }
 
   function friendlyPairingDriveError(error) {
@@ -587,6 +606,7 @@
         sessionId: session.sessionId,
         key: base64url(raw),
         browserId: session.browserId,
+        deviceId: text(session.deviceId),
         peerName: session.peerName || '',
         trustMode: session.trustMode || 'ask',
         trustExpiresAt: Number(session.trustExpiresAt) || 0,
@@ -630,6 +650,7 @@
         sessionId: saved.sessionId,
         key,
         browserId: saved.browserId,
+        deviceId: text(saved.deviceId),
         peerName: text(saved.peerName) || (role === 'pc' ? 'Android phone' : 'Computer'),
         trustMode: saved.trustMode || 'ask',
         trustExpiresAt: Number(saved.trustExpiresAt) || 0,
@@ -640,6 +661,16 @@
       if (role === 'pc') state.lastPhoneSeenAt = Number(saved.lastSeenAt) || 0;
       beginSession();
       event('session-restored', { deviceName: state.session.peerName });
+      if (role === 'pc') {
+        const restoredSessionId = state.session.sessionId;
+        setTimeout(async () => {
+          if (state.session?.sessionId !== restoredSessionId) return;
+          const live = await reconnectExistingSession({ forceProbe: true });
+          if (!live && state.session?.sessionId === restoredSessionId) {
+            await recoverStaleSession(restoredSessionId).catch(sessionError);
+          }
+        }, 250);
+      }
       return true;
     } catch {
       sessionStorage.removeItem(SESSION_KEY);
@@ -724,13 +755,16 @@
       code,
       browserId: browserId(),
       pcName: computerName(),
+      targetDeviceId: automatic ? text(rememberedPair()?.deviceId) : '',
       requestedTrustMode: ['ask', '36h', '7d', 'until-disconnect'].includes(trustMode) ? trustMode : '36h',
       publicKey: await publicJwk(pair),
+      reconnect: !!automatic,
       createdAt: now(),
       expiresAt
     };
     const file = await createFile('LotKeys Phone Pair Request ' + sessionId + '.json', offer, {
-      lotkeysRole: 'lotkeysPairOffer', sessionId, expiresAt: String(expiresAt)
+      lotkeysRole: 'lotkeysPairOffer', sessionId, browserId: offer.browserId,
+      reconnect: automatic ? 'true' : 'false', expiresAt: String(expiresAt)
     });
     state.pairing = { ...offer, pair, fileId: file.id, automatic: !!automatic };
     state.lastError = '';
@@ -790,6 +824,7 @@
       sessionId: pairing.sessionId,
       key,
       browserId: pairing.browserId,
+      deviceId: text(answer.deviceId),
       peerName: text(answer.deviceName) || 'Android phone',
       trustMode: answer.trustMode || 'ask',
       trustExpiresAt: Number(answer.trustExpiresAt) || 0,
@@ -806,7 +841,7 @@
     await persistSession();
     rememberPair(state.session);
     beginSession();
-    event('connected', { deviceName: state.session.peerName });
+    event('connected', { deviceName: state.session.peerName, automatic: !!pairing.automatic });
     await refreshThreads().catch(error => { state.lastError = error.message; event('status'); });
   }
 
@@ -971,6 +1006,7 @@
       sessionId: offer.sessionId,
       key,
       browserId: offer.browserId,
+      deviceId: text(state.nativeStatus.deviceId),
       peerName: offer.pcName,
       trustMode,
       trustExpiresAt: trust?.expiresAt || 0,
@@ -1175,11 +1211,10 @@
         heartbeatFailures++;
         // A restored session can outlive the phone's relay process. Give temporary
         // network loss time to recover, then ask the still-trusted phone for a new key.
-        if (heartbeatFailures >= 2 && now() - state.lastPhoneSeenAt > 90000 &&
+        if (heartbeatFailures >= 2 && now() - state.lastPhoneSeenAt > STALE_SESSION_RECOVERY_MS &&
             state.session?.role === 'pc' && !pendingRpc.size &&
-            document.visibilityState === 'visible' && Drive.connected?.() && rememberedPair()) {
-          await disconnect({ notify: false, keepRemembered: true, reason: 'stale' });
-          reconnectTrustedComputer().catch(sessionError);
+            Drive.connected?.() && rememberedPair()) {
+          await recoverStaleSession(sessionId);
         }
         return false;
       }
@@ -1187,10 +1222,10 @@
     return heartbeatJob;
   }
 
-  async function reconnectExistingSession() {
+  async function reconnectExistingSession({ forceProbe = false } = {}) {
     if (state.session?.role !== 'pc') return false;
-    if (connected()) return true;
-    return Promise.race([heartbeat(12000), wait(12000).then(() => false)]);
+    if (connected() && !forceProbe) return true;
+    return Promise.race([heartbeat(RESTORED_SESSION_PROBE_MS), wait(RESTORED_SESSION_PROBE_MS).then(() => false)]);
   }
 
   function renewTrust() {
@@ -1423,7 +1458,7 @@
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
     return {
-      version: '0.9.5.10',
+      version: '0.9.5.11',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1491,7 +1526,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.10',
+    version: '0.9.5.11',
     init,
     status,
     subscribe,

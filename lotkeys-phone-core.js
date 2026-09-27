@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.10 — pure identity, trust, pairing and conversation helpers. */
+/* LotKeys Phone V0.9.5.11 — pure identity, trust, pairing and conversation helpers. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -152,6 +152,20 @@
     return Number(record.trustExpiresAt) > now;
   }
 
+  function automaticReconnectReady({
+    nativeToken = false,
+    session = false,
+    pairing = false,
+    remembered = false,
+    driveConnected = false,
+    lastAttemptAt = 0,
+    now = Date.now(),
+    minimumInterval = 10000
+  } = {}) {
+    if (nativeToken || session || pairing || !remembered || !driveConnected) return false;
+    return Number(now) - Number(lastAttemptAt || 0) >= Math.max(0, Number(minimumInterval) || 0);
+  }
+
   function validateStoredSession(value, role, now = Date.now()) {
     if (!value || value.version !== 1 || value.role !== role) return false;
     if (!/^[A-Za-z0-9_-]{16,80}$/.test(text(value.sessionId))) return false;
@@ -179,7 +193,7 @@
   }
 
   return {
-    version: '0.9.5.10',
+    version: '0.9.5.11',
     buildMultipartJsonUpload,
     phone,
     contactPhone,
@@ -196,6 +210,7 @@
     trustExpiry,
     trustValid,
     rememberedPairValid,
+    automaticReconnectReady,
     validateStoredSession,
     coverage,
     validatePairOffer

@@ -1,6 +1,16 @@
-# LotKeys V0.9.5.10 — Android relay required for PC pairing
+# LotKeys V0.9.5.11 — trusted-phone automatic reconnect
 
-This web TEST release keeps PC pairing on the Android background relay. It exposes a missing Android authorization or relay error instead of offering a browser-only connection that stops when the phone leaves the LotKeys page.
+This TEST release moves reconnection onto the updated Android foreground relay. Once a computer has been approved with a trust window, LotKeys can rediscover the same phone and negotiate a fresh encrypted session without asking the user to press Reconnect or keep the phone website open.
+
+## V0.9.5.11 included
+
+- Probe a restored PC session immediately and automatically replace it when the Android relay no longer recognizes the old key.
+- Keep the reconnect attempt running when the PC tab is backgrounded; browser throttling may delay it, but returning to LotKeys does not require a manual Reconnect tap.
+- Let the Android connector approve a fresh offer automatically only when the same browser ID is still trusted and its trust window remains valid.
+- Remember the Android install ID after pairing so automatic recovery targets the same phone rather than any connector using the account.
+- Ignore older trusted offers and accept only the newest reconnect request, preventing stale pairing files from repeatedly moving the active session.
+- Keep the automatic matching code quiet for eight seconds. It appears only as a fallback when Android no longer holds the saved trust and manual approval is genuinely required.
+- Include V0.9.5.11 Android connector source and build metadata. The V0.9.4.85 connector seen in physical testing predates the Android-owned Drive relay and must be updated for browser-independent reconnection.
 
 ## V0.9.5.10 included
 
@@ -200,7 +210,7 @@ This web TEST release keeps PC pairing on the Android background relay. It expos
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.09` when the stable TEST signing secrets are configured. The V0.9.5.08 Android connector already includes the locked-phone battery settings entry and active-frame priority; it remains compatible with this web update. Earlier V0.9.5.07 connectors remain protocol-compatible with the web pairing changes. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled APK artifact as `LotKeys-Android-V0.9.5.11` when the stable TEST signing secrets are configured. Install that artifact over the existing connector so its signing identity and Android permissions are preserved. V0.9.4.85 is not sufficient for this background-reconnect test. Blocking remains enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
 
 The Android setup uses five short screens:
 
@@ -214,7 +224,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open a compatible Android TEST connector (V0.9.5.08 if available) to test background messaging.
+1. Build and install the V0.9.5.11 Android TEST connector from the GitHub Actions artifact. Confirm the setup heading reads **Phone Connection · V0.9.5.11 TEST**.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -226,8 +236,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095010`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095011`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.10 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.11 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

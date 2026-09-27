@@ -106,7 +106,10 @@ public final class PhoneConnectorService extends Service {
                 org.json.JSONObject request = value.optJSONArray("pendingPairings").optJSONObject(0);
                 status = "Pairing request " + (request == null ? "" : request.optString("code"));
             } else if (value != null && value.optBoolean("authorized")) {
-                status = "Ready for PC pairing · SMS/MMS coverage";
+                org.json.JSONArray trusts = value.optJSONArray("trusts");
+                status = trusts != null && trusts.length() > 0
+                    ? "Trusted PC auto-reconnect ready · SMS/MMS coverage"
+                    : "Ready for PC pairing · SMS/MMS coverage";
             } else {
                 status = "SMS/MMS ready · finish PC pairing setup";
             }

@@ -93,6 +93,25 @@ test('remembered pairing reconnects only while phone trust remains valid', () =>
   assert.equal(Phone.rememberedPairValid({ ...row, trustMode: 'until-disconnect', disconnected: true }, 'browser-1', now), false);
 });
 
+test('automatic reconnect needs saved trust and rate-limits repeated offers', () => {
+  const base = {
+    nativeToken: false,
+    session: false,
+    pairing: false,
+    remembered: true,
+    driveConnected: true,
+    lastAttemptAt: 1000,
+    now: 12000,
+    minimumInterval: 10000
+  };
+  assert.equal(Phone.automaticReconnectReady(base), true);
+  assert.equal(Phone.automaticReconnectReady({ ...base, now: 9000 }), false);
+  assert.equal(Phone.automaticReconnectReady({ ...base, session: true }), false);
+  assert.equal(Phone.automaticReconnectReady({ ...base, pairing: true }), false);
+  assert.equal(Phone.automaticReconnectReady({ ...base, remembered: false }), false);
+  assert.equal(Phone.automaticReconnectReady({ ...base, driveConnected: false }), false);
+});
+
 test('stored encrypted sessions are bounded to one role and eight days', () => {
   const now = Date.now();
   const row = {

@@ -295,13 +295,41 @@ final class DriveRelay {
                 offer.put("_fileId", id);
                 pendingOffers.put(sessionId, offer);
             }
-            JSONObject trusted = trustedComputer(offer.optString("browserId"));
-            if (trusted != null) approveNow(sessionId, trusted.optString("mode"), true);
+            String targetDeviceId = offer.optString("targetDeviceId");
+            if (!targetDeviceId.isEmpty() && !InstallIdentity.id(service).equals(targetDeviceId)) {
+                pendingOffers.remove(sessionId, offer);
+                continue;
+            }
         }
         for (Map.Entry<String, JSONObject> row : pendingOffers.entrySet()) {
             if (!present.contains(row.getKey()) || row.getValue().optLong("expiresAt") < now()) {
                 pendingOffers.remove(row.getKey(), row.getValue());
             }
+        }
+        // A trusted browser may leave an old offer behind when a tab is suspended
+        // or the network changes. Pick only the newest trusted offer so stale
+        // requests cannot repeatedly replace the recovered session.
+        JSONObject newest = null;
+        JSONObject newestTrust = null;
+        for (JSONObject offer : pendingOffers.values()) {
+            JSONObject trusted = trustedComputer(offer.optString("browserId"));
+            if (trusted == null) continue;
+            long offerTime = offer.optLong("createdAt", offer.optLong("expiresAt"));
+            long newestTime = newest == null ? Long.MIN_VALUE : newest.optLong("createdAt", newest.optLong("expiresAt"));
+            if (newest == null || offerTime >= newestTime) {
+                newest = offer;
+                newestTrust = trusted;
+            }
+        }
+        if (newest != null && newestTrust != null) {
+            String selectedSession = newest.optString("sessionId");
+            for (Map.Entry<String, JSONObject> row : new HashMap<>(pendingOffers).entrySet()) {
+                JSONObject offer = row.getValue();
+                if (selectedSession.equals(row.getKey()) || trustedComputer(offer.optString("browserId")) == null) continue;
+                try { deleteFile(offer.optString("_fileId")); } catch (Exception ignored) {}
+                pendingOffers.remove(row.getKey(), offer);
+            }
+            approveNow(selectedSession, newestTrust.optString("mode"), true);
         }
         updatePendingPreference();
     }
@@ -311,7 +339,10 @@ final class DriveRelay {
         if (offer == null || !validOffer(offer)) throw new IllegalArgumentException("That pairing request expired. Start again from the computer.");
         if (!validTrustMode(trustMode)) trustMode = "36h";
         JSONObject previous = session();
-        if (previous != null) disconnectNow(true, false, "moved", offer.optString("pcName"));
+        boolean sameBrowserRecovery = previous != null &&
+            offer.optString("browserId").equals(previous.optString("browserId"));
+        if (previous != null) disconnectNow(!sameBrowserRecovery, false,
+            sameBrowserRecovery ? "stale" : "moved", offer.optString("pcName"));
 
         KeyPairGenerator generator = KeyPairGenerator.getInstance("EC");
         generator.initialize(new ECGenParameterSpec("secp256r1"));
@@ -635,9 +666,11 @@ final class DriveRelay {
     private boolean validOffer(JSONObject offer) {
         if (offer == null || offer.optInt("version") != 1 || !"offer".equals(offer.optString("type"))) return false;
         JSONObject key = offer.optJSONObject("publicKey");
+        String targetDeviceId = offer.optString("targetDeviceId");
         return offer.optString("sessionId").matches("[A-Za-z0-9_-]{16,80}") &&
             offer.optString("code").matches("[0-9]{4}") &&
             offer.optString("browserId").matches("[A-Za-z0-9_-]{16,100}") &&
+            (targetDeviceId.isEmpty() || targetDeviceId.matches("[A-Za-z0-9_-]{16,100}")) &&
             key != null && "EC".equals(key.optString("kty")) && "P-256".equals(key.optString("crv")) &&
             offer.optLong("expiresAt") > now() && offer.optLong("expiresAt") <= now() + 15 * 60 * 1000L;
     }
