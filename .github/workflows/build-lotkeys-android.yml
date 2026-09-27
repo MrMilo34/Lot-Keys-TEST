@@ -46,7 +46,7 @@ jobs:
         run: |
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
           "$APKSIGNER" verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | tee "$RUNNER_TEMP/apk-signing.txt"
-          grep -Fqi 'd518a4693ada9f62bdb16517382b174c52a57612' "$RUNNER_TEMP/apk-signing.txt"
+          grep -Fqi '6cae202927d7884907c25147fe7fa0e11d87b741' "$RUNNER_TEMP/apk-signing.txt"
       - uses: actions/upload-artifact@v4
         if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
         with:
