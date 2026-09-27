@@ -1,6 +1,14 @@
-# LotKeys V0.9.5.08 — paired PC and background recovery
+# LotKeys V0.9.5.09 — phone reconnection and connection dialog
 
-This TEST release shows the Android connector's trusted PC state in Hub, retries a PC connection after a long idle period, and adds a path to Android battery settings for locked-phone messaging.
+This TEST release checks the saved PC session before starting a new pairing request, keeps all three phone connection actions in one row, and separates phone relay errors from Hub record-sync errors.
+
+## V0.9.5.09 included
+
+- When the PC has a saved phone session that looks offline, **Reconnect phone** probes that session first. If it responds, messaging resumes without a new code; otherwise a fresh pairing offer is created.
+- On the phone, **🖥️ Connected**, **Sync records**, and **Pair a computer** share one row in the connection dialog.
+- Phone connection warnings show phone relay errors only. Hub record sync reports its own failure when that action is used.
+- The pairing dialog tells testers to open the Android connector and check its relay account if the matching code does not appear.
+- The V0.9.5.08 Android connector remains compatible; installing a new APK is not required for these web changes.
 
 ## V0.9.5.08 included
 
@@ -184,7 +192,7 @@ This TEST release shows the Android connector's trusted PC state in Hub, retries
 
 ## Android build
 
-The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.08` when the stable TEST signing secrets are configured. Install the V0.9.5.08 Android connector to get its locked-phone battery settings entry and active-frame priority. Earlier V0.9.5.07 connectors remain protocol-compatible with the web pairing changes. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
+The source is under `android/`. GitHub Actions builds and lints it through **Build LotKeys Android Layer** and publishes the screen-recording-enabled debug APK artifact as `LotKeys-Android-V0.9.5.09` when the stable TEST signing secrets are configured. The V0.9.5.08 Android connector already includes the locked-phone battery settings entry and active-frame priority; it remains compatible with this web update. Earlier V0.9.5.07 connectors remain protocol-compatible with the web pairing changes. Blocking is enforced inside LotKeys Hub; Android's existing messaging app remains responsible for phone-level blocking and notifications.
 
 The Android setup uses five short screens:
 
@@ -198,7 +206,7 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 ## TEST pairing walkthrough
 
-1. Install and open the V0.9.5.08 Android TEST connector to test background messaging.
+1. Install and open a compatible Android TEST connector (V0.9.5.08 if available) to test background messaging.
 2. Complete its permission screens, choose the same LotKeys Google account, and tap **Open LotKeys & Link This Phone**.
 3. Sign into the same LotKeys Google account on phone and computer.
 4. Open Hub on both devices.
@@ -210,8 +218,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095008`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095009`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.08 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.09 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

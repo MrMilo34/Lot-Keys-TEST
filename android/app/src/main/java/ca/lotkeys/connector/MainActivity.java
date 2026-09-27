@@ -40,7 +40,7 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_GOOGLE_ACCOUNT = 44;
     private static final int REQUEST_GOOGLE_AUTHORIZATION = 45;
     private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
-    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095008";
+    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095009";
     private LinearLayout body;
     private Account pendingGoogleAccount;
 
@@ -64,7 +64,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.5.08 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.5.09 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();

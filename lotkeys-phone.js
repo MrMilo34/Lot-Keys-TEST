@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.08 — exact multipart boundary for PC pairing uploads. */
+/* LotKeys Phone V0.9.5.09 — exact multipart boundary for PC pairing uploads. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -57,7 +57,7 @@
   let heartbeatTimer = 0;
   let frameBusy = false;
   let offerBusy = false;
-  let heartbeatBusy = false;
+  let heartbeatJob = null;
   let monitoringWasHeavy = false;
   let monitoringGraceUntil = 0;
   let lastAutomaticPairAttemptAt = 0;
@@ -1151,38 +1151,50 @@
     return { ...receipt, phase: 'unconfirmed', error: 'The phone has not confirmed this SMS yet. Check the phone before retrying.' };
   }
 
-  async function heartbeat() {
-    if (heartbeatBusy || state.session?.role !== 'pc') return;
-    heartbeatBusy = true;
-    try {
-      const result = await request('status', {}, monitoringState().heavy ? 45000 : 18000);
-      state.lastPhoneSeenAt = now();
-      state.session.lastSeenAt = now();
-      state.session.phoneStatus = result;
-      state.lastError = '';
-      heartbeatFailures = 0;
-      event('status');
-      if (document.visibilityState === 'visible') request('foreground', {}, 18000).then(result => {
-        if (!result?.trustExpiresAt || state.session?.role !== 'pc') return;
-        state.session.trustExpiresAt = Number(result.trustExpiresAt) || state.session.trustExpiresAt;
-        rememberPair(state.session);
-        persistSession();
-      }).catch(() => {});
-    } catch (error) {
-      state.lastError = error.message;
-      event('status');
-      heartbeatFailures++;
-      // A restored session can outlive the phone's relay process. Give temporary
-      // network loss time to recover, then ask the still-trusted phone for a new key.
-      if (heartbeatFailures >= 2 && now() - state.lastPhoneSeenAt > 90000 &&
-          state.session?.role === 'pc' && !pendingRpc.size &&
-          document.visibilityState === 'visible' && Drive.connected?.() && rememberedPair()) {
-        await disconnect({ notify: false, keepRemembered: true, reason: 'stale' });
-        reconnectTrustedComputer().catch(sessionError);
+  function heartbeat(timeout = monitoringState().heavy ? 45000 : 18000) {
+    if (heartbeatJob) return heartbeatJob;
+    if (state.session?.role !== 'pc') return Promise.resolve(false);
+    const sessionId = state.session.sessionId;
+    heartbeatJob = (async () => {
+      try {
+        const result = await request('status', {}, timeout);
+        if (state.session?.sessionId !== sessionId) return false;
+        state.lastPhoneSeenAt = now();
+        state.session.lastSeenAt = now();
+        state.session.phoneStatus = result;
+        state.lastError = '';
+        heartbeatFailures = 0;
+        event('status');
+        if (document.visibilityState === 'visible') request('foreground', {}, 18000).then(result => {
+          if (!result?.trustExpiresAt || state.session?.sessionId !== sessionId) return;
+          state.session.trustExpiresAt = Number(result.trustExpiresAt) || state.session.trustExpiresAt;
+          rememberPair(state.session);
+          persistSession();
+        }).catch(() => {});
+        return true;
+      } catch (error) {
+        if (state.session?.sessionId !== sessionId) return false;
+        state.lastError = error.message;
+        event('status');
+        heartbeatFailures++;
+        // A restored session can outlive the phone's relay process. Give temporary
+        // network loss time to recover, then ask the still-trusted phone for a new key.
+        if (heartbeatFailures >= 2 && now() - state.lastPhoneSeenAt > 90000 &&
+            state.session?.role === 'pc' && !pendingRpc.size &&
+            document.visibilityState === 'visible' && Drive.connected?.() && rememberedPair()) {
+          await disconnect({ notify: false, keepRemembered: true, reason: 'stale' });
+          reconnectTrustedComputer().catch(sessionError);
+        }
+        return false;
       }
-    } finally {
-      heartbeatBusy = false;
-    }
+    })().finally(() => { heartbeatJob = null; });
+    return heartbeatJob;
+  }
+
+  async function reconnectExistingSession() {
+    if (state.session?.role !== 'pc') return false;
+    if (connected()) return true;
+    return Promise.race([heartbeat(12000), wait(12000).then(() => false)]);
   }
 
   function renewTrust() {
@@ -1415,7 +1427,7 @@
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
     return {
-      version: '0.9.5.08',
+      version: '0.9.5.09',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1425,6 +1437,8 @@
       relayTransport: state.relayTransport,
       relayDiagnostic: state.relayDiagnostic,
       connected: connected(),
+      sessionId: state.session?.sessionId || '',
+      sessionRestorable: state.session?.role === 'pc',
       paired: connected() || pairedCount > 0,
       pairedCount,
       pairing: state.pairing ? { code: state.pairing.code, sessionId: state.pairing.sessionId, expiresAt: state.pairing.expiresAt, automatic: !!state.pairing.automatic } : null,
@@ -1484,7 +1498,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.08',
+    version: '0.9.5.09',
     init,
     status,
     subscribe,
@@ -1492,6 +1506,7 @@
     preparePhonePairing,
     repairPairingAccess,
     reconnectTrustedComputer,
+    reconnectExistingSession,
     startPairing,
     cancelPairing,
     pendingPairings,

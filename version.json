@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.08",
-  "build": "095008",
-  "release": "phone-pairing-background-recovery",
+  "version": "0.9.5.09",
+  "build": "095009",
+  "release": "phone-reconnect-dialog-recovery",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095008-phone-pairing-background-recovery",
+  "serviceWorkerCache": "lotkeys-app-v095009-phone-reconnect-dialog-recovery",
   "publishedAt": "2026-09-27",
-  "basedOn": "LotKeys V0.9.5.07 verified PC pairing and SMS"
+  "basedOn": "LotKeys V0.9.5.08 paired PC and background recovery"
 }

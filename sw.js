@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095008-phone-pairing-background-recovery';
+const CACHE='lotkeys-app-v095009-phone-reconnect-dialog-recovery';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

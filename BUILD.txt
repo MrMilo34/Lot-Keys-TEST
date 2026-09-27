@@ -1,3 +1,10 @@
+V0.9.5.09 PHONE RECONNECT + CONNECTION DIALOG
+- Probes a saved PC-to-phone session before creating a new pairing offer; guards a late heartbeat from changing a replacement session.
+- Keeps the phone's three connection actions in one row and separates phone relay errors from Hub record-sync errors.
+- The installed V0.9.5.08 Android connector remains compatible with this web update.
+- Build: 095009.
+- Service worker cache: lotkeys-app-v095009-phone-reconnect-dialog-recovery.
+
 V0.9.5.08 PAIRED PC STATUS + BACKGROUND RECOVERY
 - Shows paired PC state in Hub and the healthy header, with a Connected/Forget list on the phone.
 - Retries trusted PC pairing after an expired offer or stale session, prioritizes active Android message frames, and links to Android battery settings.

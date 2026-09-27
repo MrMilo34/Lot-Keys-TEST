@@ -1,15 +1,15 @@
-# LotKeys V0.9.5.08 team-test checklist
+# LotKeys V0.9.5.09 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095008` and confirm **V0.9.5.08 / 095008**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095009` and confirm **V0.9.5.09 / 095009**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- Install **LotKeys-Android-V0.9.5.08** from the signed TEST APK artifact when available to exercise locked-phone settings and relay priority. Earlier connectors remain protocol-compatible with browser pairing. Confirm Android assemble/lint completes even if the APK is intentionally withheld without signing secrets.
+- Keep the compatible V0.9.5.08 Android TEST connector for this web update; a new APK is needed only if installing or updating the connector itself. Confirm Android assemble/lint completes even if a signed APK is intentionally withheld without signing secrets.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -18,6 +18,9 @@
 
 ## Paired computers and locked phone
 
+- On the phone, check that **🖥️ Connected**, **Sync records**, and **Pair a computer** appear side by side at a narrow phone width, including when a warning is shown.
+- After a working session goes idle, return to the PC and choose **Reconnect phone**. When the phone responds, confirm that no new four-digit code appears. If the saved session cannot answer, confirm that a new matching-code offer appears and can be approved.
+- Fail a Hub records sync deliberately in TEST and verify its error appears on the sync action, rather than as a phone relay warning in Phone connection. Check a real relay error remains visible and labeled as a phone connection issue.
 - On the phone, open **Phone connection → 🖥️ Connected**. Confirm the active computer and trusted list appear. Forget one computer and confirm it disappears and can no longer reconnect automatically.
 - Install the updated Android connector and choose **Locked-Phone Battery Settings**. In Android settings, set the TEST connector battery mode to Unrestricted and keep its notification enabled.
 - Close the phone browser, lock the phone, leave the PC page open, and send a fictional SMS to your own test number. Verify its receipt on the phone and the PC. Repeat after a longer idle period, then wake the phone and confirm automatic reconnection without a new code while trust remains valid.
