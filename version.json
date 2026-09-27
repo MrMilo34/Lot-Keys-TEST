@@ -1,11 +1,11 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.07",
-  "build": "095007",
-  "release": "pairing-multipart-boundary-fix",
+  "version": "0.9.5.08",
+  "build": "095008",
+  "release": "phone-pairing-background-recovery",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095007-pairing-multipart-boundary-fix",
-  "publishedAt": "2026-09-26",
-  "basedOn": "LotKeys V0.9.5.06 PC browser-route pairing recovery"
+  "serviceWorkerCache": "lotkeys-app-v095008-phone-pairing-background-recovery",
+  "publishedAt": "2026-09-27",
+  "basedOn": "LotKeys V0.9.5.07 verified PC pairing and SMS"
 }

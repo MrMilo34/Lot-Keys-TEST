@@ -190,8 +190,10 @@ final class DriveRelay {
     }
 
     void forget(String browserId) {
-        worker.execute(() -> {
-            try {
+        if (browserId == null || browserId.isEmpty()) return;
+        try {
+            JSONObject revoked;
+            synchronized (this) {
                 JSONArray rows = trusts();
                 JSONArray next = new JSONArray();
                 for (int i = 0; i < rows.length(); i++) {
@@ -200,12 +202,22 @@ final class DriveRelay {
                 }
                 saveTrusts(next);
                 JSONObject session = session();
-                if (session != null && browserId.equals(session.optString("browserId"))) {
-                    disconnectNow(true, true, "", "");
+                revoked = session != null && browserId.equals(session.optString("browserId")) ? session : null;
+                if (revoked != null) prefs.edit().remove(SESSION).commit();
+            }
+            // Revoke locally before returning from the phone API, even if the
+            // Drive worker is waiting for a network timeout on a locked phone.
+            service.relayChanged();
+            if (revoked != null) worker.execute(() -> {
+                try {
+                    sendFrame(revoked, "pc", new JSONObject()
+                        .put("kind", "event").put("event", "disconnect")
+                        .put("reason", "forgotten").put("movedTo", ""));
+                } catch (Exception ignored) {
+                    // The locally revoked key cannot receive new phone requests.
                 }
-                service.relayChanged();
-            } catch (Exception error) { fail(error); }
-        });
+            });
+        } catch (Exception error) { fail(error); }
     }
 
     synchronized JSONObject status() throws Exception {
@@ -233,8 +245,10 @@ final class DriveRelay {
     private void tickSafely() {
         if (stopped || account(service).isEmpty()) return;
         try {
-            pollOffers();
+            // Serve an established conversation first. A temporary pairing-offer
+            // listing failure must not starve a locked phone's message requests.
             pollFrames();
+            pollOffers();
             if (now() - lastCleanup > 5 * 60 * 1000L) {
                 cleanupStale();
                 lastCleanup = now();
@@ -349,6 +363,8 @@ final class DriveRelay {
             "sessionId", sessionId,
             "target", "phone"));
         for (int i = 0; i < files.length(); i++) {
+            JSONObject current = session();
+            if (current == null || !sessionId.equals(current.optString("sessionId"))) return;
             JSONObject file = files.getJSONObject(i);
             JSONObject props = file.optJSONObject("appProperties");
             String fileId = file.optString("id");
@@ -360,10 +376,14 @@ final class DriveRelay {
             }
             try {
                 JSONObject payload = openFrame(session, frameId, "phone", new JSONObject(readFile(fileId)));
+                synchronized (this) {
+                    JSONObject current = session();
+                    if (current == null || !sessionId.equals(current.optString("sessionId"))) return;
+                    session.put("lastSeenAt", now());
+                    saveSession(session);
+                }
                 processedFrames.add(frameId);
                 if (processedFrames.size() > 1000) processedFrames.remove(processedFrames.iterator().next());
-                session.put("lastSeenAt", now());
-                saveSession(session);
                 handlePayload(session, payload);
             } finally {
                 deleteFile(fileId);

@@ -1,3 +1,10 @@
+V0.9.5.08 PAIRED PC STATUS + BACKGROUND RECOVERY
+- Shows paired PC state in Hub and the healthy header, with a Connected/Forget list on the phone.
+- Retries trusted PC pairing after an expired offer or stale session, prioritizes active Android message frames, and links to Android battery settings.
+- Build: 095008.
+- Service worker cache: lotkeys-app-v095008-phone-pairing-background-recovery.
+- Real locked-phone latency remains subject to Android Doze network windows; verify on a physical device.
+
 V0.9.5.07 PC PAIRING MULTIPART UPLOAD CORRECTION
 - Sends the exact mixed-case boundary in the multipart header and body for private pairing probes and offers.
 - Fixes Google's “Invalid multipart request with 0 mime parts” response observed on the PC in V0.9.5.06.

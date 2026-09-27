@@ -8,17 +8,41 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.07', () => {
+test('release metadata is consistently V0.9.5.08', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.07');
-  assert.equal(version.build, '095007');
+  assert.equal(version.version, '0.9.5.08');
+  assert.equal(version.build, '095008');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'pairing-multipart-boundary-fix');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095007-pairing-multipart-boundary-fix');
+  assert.equal(version.release, 'phone-pairing-background-recovery');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095008-phone-pairing-background-recovery');
   assert.match(read('index.html'), /V0\.9\.5\.07/);
-  assert.match(read('manifest.webmanifest'), /build=095007/);
-  assert.match(read('sw.js'), /lotkeys-app-v095007-pairing-multipart-boundary-fix/);
-  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.07/);
+  assert.match(read('manifest.webmanifest'), /build=095008/);
+  assert.match(read('sw.js'), /lotkeys-app-v095008-phone-pairing-background-recovery/);
+  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.08/);
+});
+
+test('paired phone UI shows the trusted PC and can forget it', () => {
+  const phone = read('lotkeys-phone.js');
+  const hub = read('lotkeys-hub.js');
+  const html = read('index.html');
+  assert.match(phone, /pairedCount = \(state\.nativeToken \? trusts\(\) : \[\]\)\.filter\(row => P\.trustValid/);
+  assert.match(hub, /hub-phone-indicator \$\{paired\?'green':e\(c\.level\)\}/);
+  assert.match(hub, /id="hub-connected-pcs">🖥️ Connected/);
+  assert.match(hub, /data-forget-browser=.*?Forget/);
+  assert.match(html, /\.readiness-btn\.good\.phone-paired\{background:#1689e8\}/);
+  assert.match(html, /phone\.native&&phone\.relayReady&&phone\.paired/);
+});
+
+test('trusted reconnection and local phone revocation survive an idle browser', () => {
+  const phone = read('lotkeys-phone.js');
+  const relay = read('android/app/src/main/java/ca/lotkeys/connector/DriveRelay.java');
+  const setup = read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java');
+  assert.match(phone, /if \(pairing\?\.automatic && reason\.startsWith\('Pairing expired'\)\) scheduleTrustedReconnect\(1000\)/);
+  assert.match(phone, /heartbeatFailures >= 2 && now\(\) - state\.lastPhoneSeenAt > 90000/);
+  assert.match(phone, /disconnect\(\{ notify: false, keepRemembered: true, reason: 'stale' \}\)/);
+  assert.ok(relay.indexOf('pollFrames();') < relay.indexOf('pollOffers();'), 'active frames should be processed before offers');
+  assert.match(relay, /if \(revoked != null\) prefs\.edit\(\)\.remove\(SESSION\)\.commit\(\)/);
+  assert.match(setup, /Locked-Phone Battery Settings/);
 });
 
 test('V0.9.4.98 preserves the active page and labels the newest successful sync', () => {
@@ -140,7 +164,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095007/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095008/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -215,8 +239,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095007/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095007/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095008/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095008/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {

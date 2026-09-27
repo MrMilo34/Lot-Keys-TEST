@@ -1,20 +1,28 @@
-# LotKeys V0.9.5.07 team-test checklist
+# LotKeys V0.9.5.08 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095007` and confirm **V0.9.5.07 / 095007**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095008` and confirm **V0.9.5.08 / 095008**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- The installed V0.9.5.05 connector remains compatible with this PC web fix; do not reinstall it solely for this pairing test. For a clean-install test, download **LotKeys-Android-V0.9.5.07** when the stable TEST signing secrets publish its `app-debug.apk`. Otherwise confirm CI completes Android assemble/lint and intentionally withholds the unsigned APK.
+- Install **LotKeys-Android-V0.9.5.08** from the signed TEST APK artifact when available to exercise locked-phone settings and relay priority. Earlier connectors remain protocol-compatible with browser pairing. Confirm Android assemble/lint completes even if the APK is intentionally withheld without signing secrets.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
 - Approve the quiet connection-status notification, choose the same LotKeys Google account for PC pairing, then tap **Open LotKeys & Link This Phone**.
-- Confirm LotKeys opens in the browser and shows **SMS/MMS live** in amber—not full/RCS coverage.
+- Before pairing, confirm the Hub signal is amber for SMS/MMS (RCS is not covered). After pairing, confirm 📶 turns green, while the healthy sync text and light turn blue.
+
+## Paired computers and locked phone
+
+- On the phone, open **Phone connection → 🖥️ Connected**. Confirm the active computer and trusted list appear. Forget one computer and confirm it disappears and can no longer reconnect automatically.
+- Install the updated Android connector and choose **Locked-Phone Battery Settings**. In Android settings, set the TEST connector battery mode to Unrestricted and keep its notification enabled.
+- Close the phone browser, lock the phone, leave the PC page open, and send a fictional SMS to your own test number. Verify its receipt on the phone and the PC. Repeat after a longer idle period, then wake the phone and confirm automatic reconnection without a new code while trust remains valid.
+- Test a transient network interruption and confirm retry after recovery. A 36-hour or 7-day trust that has actually expired still requires phone approval.
+- Deep Doze can defer Google Drive relay traffic; record the phone model, Android battery mode, idle duration, and reconnect time if delivery waits until the screen wakes.
 
 ## Pairing
 

@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.07 — exact multipart boundary for PC pairing uploads. */
+/* LotKeys Phone V0.9.5.08 — exact multipart boundary for PC pairing uploads. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -60,7 +60,9 @@
   let heartbeatBusy = false;
   let monitoringWasHeavy = false;
   let monitoringGraceUntil = 0;
-  let automaticPairAttempted = false;
+  let lastAutomaticPairAttemptAt = 0;
+  let automaticReconnectTimer = 0;
+  let heartbeatFailures = 0;
   let lastStatusEventSignature = '';
   let readReceipts = loadReadReceipts();
 
@@ -276,7 +278,7 @@
       if (state.backgroundRelay) {
         state.relayReady = true;
         state.relayIdentity = text(native.relay?.account).toLowerCase();
-        if (native.relay?.lastError) state.lastError = text(native.relay.lastError);
+        state.lastError = text(native.relay?.lastError);
       } else {
         state.relayReady = !!Drive.connected?.();
         if (!state.relayReady) state.relayIdentity = '';
@@ -337,10 +339,11 @@
   }
 
   async function reconnectTrustedComputer() {
-    if (state.nativeToken || state.session || state.pairing || automaticPairAttempted || document.visibilityState !== 'visible') return false;
+    if (state.nativeToken || state.session || state.pairing || document.visibilityState !== 'visible') return false;
     const remembered = rememberedPair();
     if (!remembered || !Drive.connected?.()) return false;
-    automaticPairAttempted = true;
+    if (now() - lastAutomaticPairAttemptAt < 60000) return false;
+    lastAutomaticPairAttemptAt = now();
     try {
       await startPairing({ trustMode: remembered.trustMode, automatic: true });
       return true;
@@ -349,8 +352,18 @@
       state.lastErrorCode = error?.code || '';
       state.relayDiagnostic = String(error?.detail || error?.message || error).slice(0, 500);
       event('status');
+      scheduleTrustedReconnect();
       return false;
     }
+  }
+
+  function scheduleTrustedReconnect(delay = 60000) {
+    clearTimeout(automaticReconnectTimer);
+    if (state.nativeToken || state.session || state.pairing || !rememberedPair()) return;
+    automaticReconnectTimer = setTimeout(() => {
+      automaticReconnectTimer = 0;
+      reconnectTrustedComputer().catch(sessionError);
+    }, delay);
   }
 
   function friendlyPairingDriveError(error) {
@@ -661,7 +674,7 @@
   }
 
   function trusts() {
-    if (state.backgroundRelay) return state.nativeTrusts.map(row => ({ ...row }));
+    if (state.nativeToken && state.nativeStatus) return state.nativeTrusts.map(row => ({ ...row }));
     try {
       const value = JSON.parse(localStorage.getItem(TRUST_KEY) || '[]');
       return Array.isArray(value) ? value.filter(item => item?.browserId) : [];
@@ -792,6 +805,8 @@
     state.lastPhoneSeenAt = now();
     state.pairing = null;
     clearTimeout(pairTimer);
+    clearTimeout(automaticReconnectTimer);
+    heartbeatFailures = 0;
     await Promise.allSettled([deleteFile(answerFile.id), deleteFile(pairing.fileId)]);
     await persistSession();
     rememberPair(state.session);
@@ -807,6 +822,7 @@
     if (pairing?.fileId) deleteFile(pairing.fileId).catch(() => {});
     if (reason) state.lastError = reason;
     event('pairing-cancelled', { reason });
+    if (pairing?.automatic && reason.startsWith('Pairing expired')) scheduleTrustedReconnect(1000);
   }
 
   async function pollOffers() {
@@ -1144,6 +1160,7 @@
       state.session.lastSeenAt = now();
       state.session.phoneStatus = result;
       state.lastError = '';
+      heartbeatFailures = 0;
       event('status');
       if (document.visibilityState === 'visible') request('foreground', {}, 18000).then(result => {
         if (!result?.trustExpiresAt || state.session?.role !== 'pc') return;
@@ -1154,6 +1171,15 @@
     } catch (error) {
       state.lastError = error.message;
       event('status');
+      heartbeatFailures++;
+      // A restored session can outlive the phone's relay process. Give temporary
+      // network loss time to recover, then ask the still-trusted phone for a new key.
+      if (heartbeatFailures >= 2 && now() - state.lastPhoneSeenAt > 90000 &&
+          state.session?.role === 'pc' && !pendingRpc.size &&
+          document.visibilityState === 'visible' && Drive.connected?.() && rememberedPair()) {
+        await disconnect({ notify: false, keepRemembered: true, reason: 'stale' });
+        reconnectTrustedComputer().catch(sessionError);
+      }
     } finally {
       heartbeatBusy = false;
     }
@@ -1321,7 +1347,7 @@
   }
 
   async function disconnect({ notify = true, forget = false, reason = '', movedTo = '', keepRemembered = false } = {}) {
-    if (state.nativeToken && state.backgroundRelay && !state.session) {
+    if (state.nativeToken && state.nativeStatus && !state.session) {
       await nativeCall('/v1/relay/disconnect', {
         method: 'POST', body: JSON.stringify({ forget: !!forget }), timeout: 15000
       });
@@ -1346,6 +1372,7 @@
     state.lastPhoneSeenAt = 0;
     clearTimeout(frameTimer);
     clearTimeout(heartbeatTimer);
+    heartbeatFailures = 0;
     for (const [id, pending] of pendingRpc) {
       clearTimeout(pending.timer);
       pending.reject(Error('Phone disconnected. Nothing was sent.'));
@@ -1357,18 +1384,19 @@
   }
 
   function forgetDevice(browser) {
-    if (state.nativeToken && state.backgroundRelay) {
+    if (state.nativeToken && state.nativeStatus) {
       state.nativeTrusts = state.nativeTrusts.filter(row => row.browserId !== browser);
       return nativeCall('/v1/relay/forget', {
         method: 'POST', body: JSON.stringify({ browserId: browser }), timeout: 15000
-      }).then(() => nativeTick()).catch(error => { state.lastError = error.message; event('status'); });
+      }).then(async () => { await wait(500); await nativeTick(); })
+        .catch(error => { state.lastError = error.message; event('status'); throw error; });
     }
     saveTrusts(trusts().filter(row => row.browserId !== browser));
     if (state.session?.browserId === browser) return disconnect({ notify: true, forget: true });
   }
 
   async function disconnectAll() {
-    if (state.nativeToken && state.backgroundRelay) {
+    if (state.nativeToken && state.nativeStatus) {
       await nativeCall('/v1/relay/disconnect-all', { method: 'POST', body: '{}', timeout: 15000 });
       state.nativeTrusts = [];
       await wait(500);
@@ -1385,8 +1413,9 @@
   function status() {
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
+    const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
     return {
-      version: '0.9.5.07',
+      version: '0.9.5.08',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1396,6 +1425,8 @@
       relayTransport: state.relayTransport,
       relayDiagnostic: state.relayDiagnostic,
       connected: connected(),
+      paired: connected() || pairedCount > 0,
+      pairedCount,
       pairing: state.pairing ? { code: state.pairing.code, sessionId: state.pairing.sessionId, expiresAt: state.pairing.expiresAt, automatic: !!state.pairing.automatic } : null,
       deviceName: state.nativeStatus?.deviceName || state.session?.peerName || '',
       sourceApp: state.nativeStatus?.sourceApp || state.session?.phoneStatus?.sourceApp || '',
@@ -1438,13 +1469,14 @@
       refreshThreads().catch(() => {});
     }
     cleanupStale().catch(() => {});
-    if (!state.nativeToken && !state.session) setTimeout(() => reconnectTrustedComputer().catch(() => {}), 500);
+    if (!state.nativeToken && !state.session) setTimeout(() => reconnectTrustedComputer().then(connected => { if (!connected) scheduleTrustedReconnect(); }).catch(() => scheduleTrustedReconnect()), 500);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         if (state.nativeStatus && state.relayReady) {
           pollOffers().catch(() => {});
           if (state.session) scheduleFramePoll(100);
-        } else if (!state.nativeToken && !state.session) reconnectTrustedComputer().catch(() => {});
+        } else if (!state.nativeToken && !state.session) reconnectTrustedComputer().then(connected => { if (!connected) scheduleTrustedReconnect(); }).catch(() => scheduleTrustedReconnect());
+        else if (state.session?.role === 'pc') scheduleHeartbeat(100);
       } else if (state.session) persistSession();
     });
     window.addEventListener('pagehide', () => { if (state.session) persistSession(); });
@@ -1452,7 +1484,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.07',
+    version: '0.9.5.08',
     init,
     status,
     subscribe,
