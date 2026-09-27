@@ -1,3 +1,11 @@
+V0.9.5.10 ANDROID RELAY REQUIRED + VISIBLE MATCHING CODE
+- The phone refuses browser-only PC pairing when the Android background relay is unauthorized or reports an error.
+- Android relay errors survive local message refresh and appear in Phone connection; legacy browser-owned phone sessions are retired.
+- Automatically shows a pending PC matching code in Hub without a second Pairing tap.
+- Web-only update; the Android connector remains at V0.9.5.09 source metadata and needs no new signed APK for these checks.
+- Build: 095010.
+- Service worker cache: lotkeys-app-v095010-android-relay-required-pairing-code.
+
 V0.9.5.09 PHONE RECONNECT + CONNECTION DIALOG
 - Probes a saved PC-to-phone session before creating a new pairing offer; guards a late heartbeat from changing a replacement session.
 - Keeps the phone's three connection actions in one row and separates phone relay errors from Hub record-sync errors.

@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.09 — exact multipart boundary for PC pairing uploads. */
+/* LotKeys Phone V0.9.5.10 — exact multipart boundary for PC pairing uploads. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -39,6 +39,7 @@
     nativeTrusts: [],
     relayReady: false,
     relayIdentity: '',
+    relayError: '',
     relayTransport: '',
     relayDiagnostic: '',
     session: null,
@@ -275,14 +276,10 @@
       state.nativeRevision = Number(native.revision) || 0;
       state.backgroundRelay = !!native.relay?.authorized;
       state.nativeTrusts = Array.isArray(native.relay?.trusts) ? native.relay.trusts : [];
-      if (state.backgroundRelay) {
-        state.relayReady = true;
-        state.relayIdentity = text(native.relay?.account).toLowerCase();
-        state.lastError = text(native.relay?.lastError);
-      } else {
-        state.relayReady = !!Drive.connected?.();
-        if (!state.relayReady) state.relayIdentity = '';
-      }
+      // A browser Drive grant cannot keep the PC relay alive after this tab closes.
+      state.relayReady = state.backgroundRelay;
+      state.relayIdentity = text(native.relay?.account).toLowerCase();
+      state.relayError = text(native.relay?.lastError);
       if (!state.session || state.session.role === 'phone') state.role = 'phone';
       if (previous && previous !== state.nativeRevision) {
         await refreshThreads(0).catch(error => { state.lastError = error.message; event('status'); });
@@ -296,6 +293,10 @@
       const changed = !!state.nativeStatus || state.nativeError !== error.message;
       state.nativeStatus = null;
       state.nativeError = error.message;
+      state.backgroundRelay = false;
+      state.relayReady = false;
+      state.relayError = '';
+      state.nativeTrusts = [];
       if (!state.session) state.role = 'phone';
       if (changed) event('status');
       if (throwOnError) throw error;
@@ -312,8 +313,9 @@
 
   async function preparePhonePairing() {
     if (!state.nativeToken) throw Error('Open LotKeys from the Android setup before pairing a computer.');
-    if (!state.nativeStatus) await connectNative();
+    await nativeTick({ throwOnError: true, userInitiated: true });
     if (state.backgroundRelay) {
+      if (state.relayError) throw Error('The Android PC relay reported: ' + state.relayError + ' Open LotKeys Connector TEST and resolve its connection warning before pairing.');
       state.relayReady = true;
       state.relayIdentity = text(state.nativeStatus?.relay?.account).toLowerCase();
       state.lastError = '';
@@ -324,18 +326,7 @@
       event('pair-ready', { account: state.relayIdentity, background: true });
       return status();
     }
-    await Drive.authorize(false);
-    const identity = await Drive.getGoogleIdentity();
-    state.relayReady = true;
-    state.relayIdentity = text(identity?.email).toLowerCase();
-    state.lastError = '';
-    state.lastErrorCode = '';
-    state.relayDiagnostic = '';
-    await pollOffers();
-    scheduleOfferPoll(300);
-    if (state.session) scheduleFramePoll(100);
-    event('pair-ready', { account: state.relayIdentity });
-    return status();
+    throw Error('The Android PC relay needs Google authorization. Open LotKeys Connector TEST, finish PC Pairing Account with the same Google account, then return here and tap Check PC relay. Pairing in this browser alone would disconnect when you leave LotKeys.');
   }
 
   async function reconnectTrustedComputer() {
@@ -489,13 +480,11 @@
         throw error;
       }
       state.relayDiagnostic = '';
-      if (state.nativeToken) state.relayReady = true;
       return relayPayload(result);
     } catch (error) {
       const converted = friendlyPairingDriveError(error);
       state.lastErrorCode = converted?.code || error?.code || '';
       state.relayDiagnostic = String(converted?.detail || error?.detail || error?.message || error).slice(0, 500);
-      if (state.nativeToken) state.relayReady = false;
       throw converted;
     }
   }
@@ -615,6 +604,12 @@
     try { saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); }
     catch { saved = null; }
     const role = state.nativeToken ? 'phone' : 'pc';
+    if (role === 'phone') {
+      // Older builds stored a browser-owned phone session. It cannot survive a
+      // closed tab, so the Android service must own any restored phone session.
+      sessionStorage.removeItem(SESSION_KEY);
+      return false;
+    }
     if (!P.validateStoredSession(saved, role)) {
       sessionStorage.removeItem(SESSION_KEY);
       return false;
@@ -674,7 +669,7 @@
   }
 
   function trusts() {
-    if (state.nativeToken && state.nativeStatus) return state.nativeTrusts.map(row => ({ ...row }));
+    if (state.nativeToken) return state.nativeStatus ? state.nativeTrusts.map(row => ({ ...row })) : [];
     try {
       const value = JSON.parse(localStorage.getItem(TRUST_KEY) || '[]');
       return Array.isArray(value) ? value.filter(item => item?.browserId) : [];
@@ -700,7 +695,7 @@
   }
 
   async function cleanupStale() {
-    if (!Drive.connected?.()) return;
+    if (state.nativeToken || !Drive.connected?.()) return;
     for (const role of ['lotkeysPairOffer', 'lotkeysPairAnswer', 'lotkeysPhoneFrame', 'lotkeysPairProbe']) {
       const files = await listFiles({ lotkeysRole: role }).catch(() => []);
       for (const file of files) {
@@ -826,7 +821,7 @@
   }
 
   async function pollOffers() {
-    if (offerBusy || !state.nativeStatus || !state.relayReady) return;
+    if (offerBusy || !state.nativeStatus || !state.backgroundRelay) return;
     offerBusy = true;
     try {
       if (state.backgroundRelay) {
@@ -936,6 +931,7 @@
 
   async function approvePair(sessionId, trustMode = '36h', { automatic = false } = {}) {
     const offer = pendingOffers.get(sessionId);
+    if (state.nativeToken && !state.backgroundRelay) throw Error('Authorize the Android PC relay in LotKeys Connector TEST before approving a computer.');
     if (offer?._native) {
       if (!['ask', '36h', '7d', 'until-disconnect'].includes(trustMode)) trustMode = '36h';
       await nativeCall('/v1/pairings/approve', {
@@ -1351,7 +1347,7 @@
   }
 
   function connected() {
-    if (state.nativeToken && state.backgroundRelay) return !!state.nativeStatus?.relay?.connected;
+    if (state.nativeToken) return !!(state.backgroundRelay && state.nativeStatus?.relay?.connected);
     if (!state.session) return false;
     const staleAfter = monitoringState().heavy || now() < monitoringGraceUntil ? 90000 : state.session.role === 'phone' ? 35000 : 22000;
     if (state.session.role === 'phone' && (!state.nativeStatus || !state.relayReady)) return false;
@@ -1427,13 +1423,14 @@
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
     return {
-      version: '0.9.5.09',
+      version: '0.9.5.10',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
       nativeError: state.nativeError,
       relayReady: !!state.relayReady,
       relayIdentity: state.relayIdentity,
+      relayError: state.relayError,
       relayTransport: state.relayTransport,
       relayDiagnostic: state.relayDiagnostic,
       connected: connected(),
@@ -1465,14 +1462,10 @@
 
   async function init() {
     parseNativeToken();
-    const driveRestored = await Drive.restoreSessionAuthorization?.().catch(() => false);
+    // Hub records may need this browser grant, but it never authorizes the
+    // separate Android-owned PC messaging relay.
+    await Drive.restoreSessionAuthorization?.().catch(() => false);
     await nativeTick();
-    state.relayReady = !!(state.backgroundRelay || (state.nativeStatus && (driveRestored || Drive.connected?.())));
-    if (state.relayReady) {
-      state.relayIdentity = state.backgroundRelay
-        ? text(state.nativeStatus?.relay?.account).toLowerCase()
-        : text((await Drive.getGoogleIdentity().catch(() => null))?.email).toLowerCase();
-    }
     await restoreSession();
     monitoringWasHeavy = !!monitoringState().heavy;
     scheduleNativeTick(phonePollDelay());
@@ -1498,7 +1491,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.09',
+    version: '0.9.5.10',
     init,
     status,
     subscribe,
@@ -1524,7 +1517,7 @@
     trusts,
     forgetDevice,
     disconnectAll,
-    clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; state.relayReady = false; state.relayIdentity = ''; state.role = 'pc'; clearStoredSession(); event('status'); }
+    clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; state.relayReady = false; state.relayIdentity = ''; state.relayError = ''; state.role = 'pc'; clearStoredSession(); event('status'); }
   };
 
   function initAfterBase() {

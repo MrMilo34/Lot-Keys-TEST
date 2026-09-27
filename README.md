@@ -1,6 +1,14 @@
-# LotKeys V0.9.5.09 — phone reconnection and connection dialog
+# LotKeys V0.9.5.10 — Android relay required for PC pairing
 
-This TEST release checks the saved PC session before starting a new pairing request, keeps all three phone connection actions in one row, and separates phone relay errors from Hub record-sync errors.
+This web TEST release keeps PC pairing on the Android background relay. It exposes a missing Android authorization or relay error instead of offering a browser-only connection that stops when the phone leaves the LotKeys page.
+
+## V0.9.5.10 included
+
+- Require the installed LotKeys Connector TEST to own the phone-side PC relay. A Google Drive grant in the phone browser can no longer make an unavailable Android relay look ready.
+- On the phone, **Check PC relay** explains how to finish or renew the connector's PC Pairing Account. The Android relay's own error remains visible even after SMS records refresh successfully.
+- Automatically show a new PC pairing code when Hub is visible, so an automatic request does not require a second tap on **Pairing** to reveal the code.
+- Keep a saved PC session and its previous V0.9.5.09 reconnect logic. A formerly browser-owned phone session is retired when the page reloads; approve a fresh code through Android if needed.
+- This is a web-only change. The compatible installed Android connector is still required and was not rebuilt into a new signed APK for this release. A relay stopped by Android, network loss, or lost Google authorization must be restored in the connector.
 
 ## V0.9.5.09 included
 
@@ -218,8 +226,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095009`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095010`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.09 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.10 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.

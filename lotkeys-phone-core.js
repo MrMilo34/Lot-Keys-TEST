@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.09 — pure identity, trust, pairing and conversation helpers. */
+/* LotKeys Phone V0.9.5.10 — pure identity, trust, pairing and conversation helpers. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -179,7 +179,7 @@
   }
 
   return {
-    version: '0.9.5.09',
+    version: '0.9.5.10',
     buildMultipartJsonUpload,
     phone,
     contactPhone,

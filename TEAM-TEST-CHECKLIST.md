@@ -1,8 +1,8 @@
-# LotKeys V0.9.5.09 team-test checklist
+# LotKeys V0.9.5.10 team-test checklist
 
 ## Clean V0.9.4.83 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095009` and confirm **V0.9.5.09 / 095009**.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095010` and confirm **V0.9.5.10 / 095010**.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
@@ -18,6 +18,10 @@
 
 ## Paired computers and locked phone
 
+- Open the Android connector and check that PC Pairing Account is authorized on the same Google account. On the phone's Hub → Phone connection, **Android PC relay** should show Ready or Connected, with no relay error. If **Check PC relay** appears, finish the account step in the connector before pairing.
+- Start pairing from the PC while Hub is visible. A matching four-digit code should appear without tapping a separate **Pairing** button. Approve it on the phone.
+- Switch the phone to another app while leaving the Android phone-connection notification running. Confirm the PC remains connected and can refresh a fictional Device conversation. Repeat with the phone locked, and record the notification text, Android relay warning and exact elapsed time if the PC drops.
+- With Android PC relay authorization deliberately unavailable, verify phone Hub refuses a browser-only pairing and explains how to restore the connector. Restore authorization before continuing.
 - On the phone, check that **🖥️ Connected**, **Sync records**, and **Pair a computer** appear side by side at a narrow phone width, including when a warning is shown.
 - After a working session goes idle, return to the PC and choose **Reconnect phone**. When the phone responds, confirm that no new four-digit code appears. If the saved session cannot answer, confirm that a new matching-code offer appears and can be approved.
 - Fail a Hub records sync deliberately in TEST and verify its error appears on the sync action, rather than as a phone relay warning in Phone connection. Check a real relay error remains visible and labeled as a phone connection issue.
