@@ -7,6 +7,7 @@ Prepared September 27, 2026 for the LotKeys TEST site from the verified V0.9.5.0
 - Hub 📶 turns green when the Android connector has an active or still-trusted PC. SMS/MMS coverage and the RCS limitation remain visible in the connection detail.
 - On the phone, the healthy synchronization label and dot turn blue for a paired PC. Warnings and errors keep their existing colors.
 - Phone connection offers **🖥️ Connected** to inspect active and trusted computers and forget individual PCs.
+- The paired phone dialog shows the Android Battery → Unrestricted path, including for the previously installed compatible connector.
 - The PC retries an expired automatic pairing offer, and after repeated failed heartbeats and a stale session it starts a new key exchange only for a still-trusted PC. Explicit disconnection still removes its remembered pair.
 - The Android relay serves message frames before scanning new offers. The updated Android connector links to its battery settings to help keep messaging available with the screen locked.
 

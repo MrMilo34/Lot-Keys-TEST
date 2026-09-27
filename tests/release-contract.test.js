@@ -29,6 +29,7 @@ test('paired phone UI shows the trusted PC and can forget it', () => {
   assert.match(hub, /hub-phone-indicator \$\{paired\?'green':e\(c\.level\)\}/);
   assert.match(hub, /id="hub-connected-pcs">🖥️ Connected/);
   assert.match(hub, /data-forget-browser=.*?Forget/);
+  assert.match(hub, /Android Settings → Apps → LotKeys Connector TEST → Battery and choose Unrestricted/);
   assert.match(html, /\.readiness-btn\.good\.phone-paired\{background:#1689e8\}/);
   assert.match(html, /phone\.native&&phone\.relayReady&&phone\.paired/);
 });
