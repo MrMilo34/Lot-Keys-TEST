@@ -27,9 +27,13 @@ LotKeys needs a normal HTTPS origin for Google browser OAuth. Opening `index.htm
 8. Wait for GitHub to publish the page, then use the HTTPS URL GitHub provides.
 9. Open that URL in Chrome on Android.
 
-## V0.9.5.12 Android connector
+## V0.9.5.13 web hotfix
 
-Uploading the complete release also updates `android/` and starts **Build LotKeys Android Layer**. After that Action succeeds:
+Deploy the complete website snapshot and then fully close and reopen the installed LotKeys web app once so cache `lotkeys-app-v095013-device-chat-live-refresh` takes control. Keep the working V0.9.5.12 Android connector installed: this release changes only the web conversation view, so there is no APK reinstall or Google-account re-selection.
+
+## Compatible V0.9.5.12 Android connector
+
+Uploading the complete release also includes the unchanged `android/` source and may start **Build LotKeys Android Layer**. Install its artifact only when the phone does not already have V0.9.5.12. After that Action succeeds:
 
 1. Open the repository's **Actions** tab and select the newest successful **Build LotKeys Android Layer** run.
 2. Download the `LotKeys-Android-V0.9.5.12` artifact and extract its APK.

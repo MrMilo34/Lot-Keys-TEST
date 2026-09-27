@@ -1,8 +1,17 @@
-# LotKeys V0.9.5.12 — Android account relay recovery
+# LotKeys V0.9.5.13 — open Device chat live refresh
 
-This TEST release repairs the Android foreground relay's saved Google-account identity. V0.9.5.11 could authorize the account in setup but later reconstruct a different normalized Android identity, producing `AccountNotPresent` while the screen still claimed the relay was ready.
+This TEST web hotfix keeps an open Device SMS/MMS conversation synchronized with the phone. Previously the incoming reply updated the Hub list and unread badge, but the visible chat did not show it until the user backed out and reopened the conversation.
 
-## V0.9.5.12 included
+## V0.9.5.13 included
+
+- Refresh the visible Device history when the Android connector or paired-PC relay reports changed message data.
+- Show incoming replies without leaving and reopening the conversation on either the phone or paired PC.
+- Follow the newest reply when the conversation is already near the bottom, while preserving the reading position when older messages are on screen.
+- Keep unsent text, queued attachments, and already-loaded older history intact during a live refresh.
+- Reconcile the locally rendered outgoing SMS with the phone-confirmed copy instead of displaying it twice.
+- Keep the working V0.9.5.12 Android connector. This is a web-only update and does not require an APK reinstall or account re-selection.
+
+## V0.9.5.12 retained
 
 - Preserve the exact account name and Android account type returned by Google's account picker.
 - Deliver the freshly authorized token into the live foreground service instead of discarding it after setup.
@@ -236,8 +245,8 @@ No `device.json`, `hub.json`, Python relay, HTTPS tunnel, Bluetooth, screen cast
 
 GitHub Pages serves:
 
-`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095012`
+`https://mrmilo34.github.io/Lot-Keys-TEST/?build=095013`
 
 Keep `CNAME` absent. This repository is TEST only; `lot-keys.ca` is not changed by this release.
 
-Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.12 service worker replaces the old cache. Do not clear browser/app data; existing LotKeys and Hub records should remain.
+Fully close and reopen the installed TEST web app once after deployment so the V0.9.5.13 service worker replaces the old cache. Do not clear browser/app data or reinstall the V0.9.5.12 connector; existing LotKeys, Hub, pairing, and Android account state should remain.

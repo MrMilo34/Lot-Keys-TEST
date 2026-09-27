@@ -8,16 +8,17 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.12', () => {
+test('release metadata is consistently V0.9.5.13 while Android remains V0.9.5.12', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.12');
-  assert.equal(version.build, '095012');
+  assert.equal(version.version, '0.9.5.13');
+  assert.equal(version.build, '095013');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'android-relay-account-recovery');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095012-android-relay-account-recovery');
-  assert.match(read('index.html'), /V0\.9\.5\.11/);
-  assert.match(read('manifest.webmanifest'), /build=095012/);
-  assert.match(read('sw.js'), /lotkeys-app-v095012-android-relay-account-recovery/);
+  assert.equal(version.release, 'device-chat-live-refresh');
+  assert.equal(version.androidConnectorVersion, '0.9.5.12');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095013-device-chat-live-refresh');
+  assert.match(read('index.html'), /V0\.9\.5\.13/);
+  assert.match(read('manifest.webmanifest'), /build=095013/);
+  assert.match(read('sw.js'), /lotkeys-app-v095013-device-chat-live-refresh/);
   assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.12/);
   assert.match(read('android/app/build.gradle'), /versionCode 95012/);
   assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.12 TEST/);
@@ -173,7 +174,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095012/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095013/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -267,8 +268,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095012/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095012/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095013/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095013/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -725,6 +726,17 @@ test('PC notification sounds never add a second Android alert', () => {
   assert.match(messaging, /if\(!preview&&isPhoneNotificationDevice\(\)\)return false/);
   assert.match(messaging, /notificationSounds/);
   assert.match(messaging, /playNotificationSound\(\)\.catch/);
+});
+
+test('an open Device chat refreshes when the phone reports new messages', () => {
+  const hub = read('lotkeys-hub.js');
+  assert.match(hub, /activeDeviceChatRefresh=null/);
+  assert.match(hub, /activeDeviceChatRefresh=\(\)=>loadPage\(false,\{live:true\}\)/);
+  assert.match(hub, /lotkeys-phone-data',event=>\{scheduleRefresh\(\);if\(event\.detail\?\.reason!=='read'\)activeDeviceChatRefresh\?\.\(\)/);
+  assert.match(hub, /liveRefreshPending/);
+  assert.match(hub, /liveChatIsCurrent/);
+  assert.match(hub, /H\.mergeDeviceMessages\(messages,incoming\)/);
+  assert.match(hub, /if\(!live\|\|!loadedOlder\)\{hasMore=!!page\.hasMore;nextBefore=page\.nextBefore\|\|null;\}/);
 });
 
 test('Hub logo and floating actions use the corrected responsive layout', () => {

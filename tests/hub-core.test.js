@@ -155,6 +155,22 @@ test('Device identity keeps a saved name and phone inline without duplicating ph
   });
 });
 
+test('live Device history keeps older rows and reconciles local sends one for one', () => {
+  const current = [
+    { id: 'old', text: 'Earlier', at: 100, outgoing: false },
+    { id: 'local-one', text: 'Same reply', at: 1_000, outgoing: true, local: true },
+    { id: 'local-two', text: 'Same reply', at: 1_100, outgoing: true, local: true },
+    { id: 'local-media', text: 'Same reply', at: 1_200, outgoing: true, local: true, attachments: [{ id: 'photo' }] }
+  ];
+  const incoming = [
+    { id: 'confirmed-one', text: 'Same reply', at: 1_020, outgoing: true },
+    { id: 'new', text: 'New incoming', at: 2_000, outgoing: false }
+  ];
+  const merged = Hub.mergeDeviceMessages(current, incoming);
+  assert.deepEqual(merged.map(message => message.id), ['old', 'confirmed-one', 'local-two', 'local-media', 'new']);
+  assert.equal(merged.filter(message => message.text === 'Same reply').length, 3);
+});
+
 test('appointment identity shows a phone-only customer exactly once', () => {
   assert.deepEqual(Hub.appointmentIdentity({
     customerName: '+1 (780) 872-1598',

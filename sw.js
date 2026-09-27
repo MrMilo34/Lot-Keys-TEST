@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095012-android-relay-account-recovery';
+const CACHE='lotkeys-app-v095013-device-chat-live-refresh';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

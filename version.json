@@ -1,11 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.12",
-  "build": "095012",
-  "release": "android-relay-account-recovery",
+  "version": "0.9.5.13",
+  "build": "095013",
+  "release": "device-chat-live-refresh",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095012-android-relay-account-recovery",
+  "serviceWorkerCache": "lotkeys-app-v095013-device-chat-live-refresh",
   "publishedAt": "2026-09-27",
-  "basedOn": "LotKeys V0.9.5.11 trusted-phone automatic reconnect"
+  "basedOn": "LotKeys V0.9.5.12 Android account relay recovery",
+  "androidConnectorVersion": "0.9.5.12"
 }

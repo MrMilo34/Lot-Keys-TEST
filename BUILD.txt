@@ -1,3 +1,13 @@
+V0.9.5.13 OPEN DEVICE CHAT LIVE REFRESH
+- Refreshes the visible Device SMS/MMS history when Android or the paired-PC relay reports changed phone data.
+- Shows incoming replies without backing out of and reopening the conversation on either phone or PC.
+- Preserves unsent composer content, queued attachments, reading position, and previously loaded older history during live updates.
+- Reconciles a locally rendered outgoing SMS with its phone-confirmed copy to avoid a duplicate bubble.
+- Web-only update; keep the compatible V0.9.5.12 Android connector installed. No APK reinstall or account re-selection is required.
+- Build: 095013.
+- Android connector: V0.9.5.12, version code 95012 (unchanged).
+- Service worker cache: lotkeys-app-v095013-device-chat-live-refresh.
+
 V0.9.5.12 ANDROID ACCOUNT RELAY RECOVERY
 - Preserves the exact Android Google account name and account type instead of rebuilding a normalized identity that can fail with AccountNotPresent.
 - Hands the freshly authorized Google token directly to the already-running foreground relay so the setup screen and live relay cannot disagree.

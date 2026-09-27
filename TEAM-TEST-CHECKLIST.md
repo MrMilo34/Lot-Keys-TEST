@@ -1,16 +1,16 @@
-# LotKeys V0.9.5.12 team-test checklist
+# LotKeys V0.9.5.13 team-test checklist
 
-## V0.9.5.12 baseline
+## V0.9.5.13 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095012` and confirm **V0.9.5.12 / 095012**.
-- Install the **LotKeys-Android-V0.9.5.12** Actions artifact and confirm the connector itself shows **V0.9.5.12 TEST**. V0.9.4.85 cannot perform this background reconnect test.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095013` and confirm **V0.9.5.13 / 095013**.
+- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.13 is a web-only hotfix; do not reinstall the APK or reselect the account.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- Replace the older connector with the V0.9.5.12 Android TEST artifact. Confirm Android assemble/lint completes even if a signed APK is intentionally withheld when signing secrets are unavailable.
+- If the connector is older than V0.9.5.12, replace it with the V0.9.5.12 Android TEST artifact. Confirm Android assemble/lint completes even if a signed APK is intentionally withheld when signing secrets are unavailable.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
 - Open **LotKeys Connector TEST** and approve Messages access. If Android blocks it for the sideloaded APK, confirm the connector opens App info and clearly directs **⋮ → Allow restricted settings** before retrying. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
@@ -70,6 +70,9 @@
 - Confirm Device lists the phone's newest SMS/MMS conversations first and loads only 40 at a time.
 - Use **Load older conversations** and confirm additional threads append without duplicates.
 - Open a conversation and confirm older messages are above newer messages; use **Load older messages** for history.
+- Leave that Device conversation open and receive a fictional SMS reply. Confirm the new bubble appears automatically on both the phone and paired PC without backing out or reopening the chat.
+- Repeat while an unsent draft and queued attachment are in the composer; both must remain. Scroll up before another reply and confirm the reading position stays fixed, then return to the bottom and confirm a later reply follows automatically.
+- Send an SMS from the open conversation and confirm the locally rendered outgoing bubble is replaced by, rather than duplicated beside, the phone-confirmed copy.
 - Confirm Android contact names appear when Contacts access is approved and LotKeys custom names take priority.
 - Send a short SMS from the phone view and from the paired computer. Confirm it is actually sent by the phone.
 - Confirm the message state changes through **Sending**, then **Sent** or **Failed**.

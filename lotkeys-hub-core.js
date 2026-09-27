@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.5.12 — pure customer, conversation, standalone reminder and appointment models. */
+/* LotKeys Hub V0.9.5.13 — pure customer, conversation, standalone reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -41,6 +41,34 @@
     const displayPhone = text(address);
     const phoneOnly = !!phone(displayPhone) && phone(displayTitle) === phone(displayPhone);
     return { title: displayTitle, phone: phoneOnly ? '' : displayPhone, phoneOnly };
+  }
+
+  function sortDeviceMessages(rows) {
+    const unique = new Map();
+    for (const [index, message] of (Array.isArray(rows) ? rows : []).entries()) {
+      const key = message?.id == null ? 'missing-' + index : String(message.id);
+      unique.set(key, message);
+    }
+    return [...unique.values()].sort((a, b) =>
+      (Number(a?.at) || 0) - (Number(b?.at) || 0) || String(a?.id ?? '').localeCompare(String(b?.id ?? ''))
+    );
+  }
+
+  function mergeDeviceMessages(current, incoming, confirmationWindowMs = 5 * 60 * 1000) {
+    const existing = Array.isArray(current) ? current : [];
+    const fresh = Array.isArray(incoming) ? incoming : [];
+    const localTexts = existing.filter(message => message?.local && !message.attachments?.length);
+    const confirmedLocal = new Set();
+    for (const candidate of fresh) {
+      if (!candidate?.outgoing) continue;
+      const match = localTexts
+        .filter(message => !confirmedLocal.has(message.id) && text(candidate.text) === text(message.text))
+        .map(message => ({ message, delta: Math.abs((Number(candidate.at) || 0) - (Number(message.at) || 0)) }))
+        .filter(row => row.delta < confirmationWindowMs)
+        .sort((a, b) => a.delta - b.delta)[0]?.message;
+      if (match) confirmedLocal.add(match.id);
+    }
+    return sortDeviceMessages([...existing.filter(message => !confirmedLocal.has(message?.id)), ...fresh]);
   }
 
   function primary(contact) {
@@ -724,6 +752,8 @@
     validPhone,
     validMessageAddress,
     deviceIdentity,
+    sortDeviceMessages,
+    mergeDeviceMessages,
     primary,
     nextLabel,
     field,
