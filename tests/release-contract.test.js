@@ -8,19 +8,19 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.11', () => {
+test('release metadata is consistently V0.9.5.12', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.11');
-  assert.equal(version.build, '095011');
+  assert.equal(version.version, '0.9.5.12');
+  assert.equal(version.build, '095012');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'trusted-phone-auto-reconnect');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095011-trusted-phone-auto-reconnect');
+  assert.equal(version.release, 'android-relay-account-recovery');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095012-android-relay-account-recovery');
   assert.match(read('index.html'), /V0\.9\.5\.11/);
-  assert.match(read('manifest.webmanifest'), /build=095011/);
-  assert.match(read('sw.js'), /lotkeys-app-v095011-trusted-phone-auto-reconnect/);
-  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.11/);
-  assert.match(read('android/app/build.gradle'), /versionCode 95011/);
-  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.11 TEST/);
+  assert.match(read('manifest.webmanifest'), /build=095012/);
+  assert.match(read('sw.js'), /lotkeys-app-v095012-android-relay-account-recovery/);
+  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.12/);
+  assert.match(read('android/app/build.gradle'), /versionCode 95012/);
+  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.12 TEST/);
 });
 
 test('paired phone UI shows the trusted PC and can forget it', () => {
@@ -173,7 +173,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095011/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095012/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -202,6 +202,25 @@ test('Android background relay supports secure approval, trusted reconnect and r
   assert.match(workflow, /secrets\.LOTKEYS_TEST_KEYSTORE_B64/);
   assert.match(workflow, /Verify registered TEST certificate/);
   assert.doesNotMatch(read('CHECKSUMS.txt'), /lotkeys-test-debug\.keystore/);
+});
+
+test('Android relay preserves the selected account identity and receives its live token', () => {
+  const relay = read('android/app/src/main/java/ca/lotkeys/connector/DriveRelay.java');
+  const service = read('android/app/src/main/java/ca/lotkeys/connector/PhoneConnectorService.java');
+  const activity = read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java');
+  const manifest = read('android/app/src/main/AndroidManifest.xml');
+  assert.match(relay, /GOOGLE_ACCOUNT_TYPE/);
+  assert.match(relay, /putString\(GOOGLE_ACCOUNT, account\.name\.trim\(\)\)/);
+  assert.doesNotMatch(relay, /account\.name\.trim\(\)\.toLowerCase/);
+  assert.match(relay, /new Account\(email, type\)/);
+  assert.match(activity, /String token = DriveRelay\.authorizeAccount\(this, account\)/);
+  assert.match(activity, /setAction\(PhoneConnectorService\.ACTION_ACCOUNT_AUTHORIZED\)/);
+  assert.match(activity, /EXTRA_ACCESS_TOKEN, token/);
+  assert.match(service, /ACTION_ACCOUNT_AUTHORIZED\.equals\(intent\.getAction\(\)\)/);
+  assert.match(service, /relay\.accountAuthorized\(/);
+  assert.match(activity, /Allow restricted settings/);
+  assert.match(activity, /ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS/);
+  assert.match(manifest, /REQUEST_IGNORE_BATTERY_OPTIMIZATIONS/);
 });
 
 test('Android layer keeps the existing messenger and adds a reviewed media handoff', () => {
@@ -248,8 +267,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095011/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095011/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095012/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095012/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {

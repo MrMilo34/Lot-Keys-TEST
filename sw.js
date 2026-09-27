@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095011-trusted-phone-auto-reconnect';
+const CACHE='lotkeys-app-v095012-android-relay-account-recovery';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

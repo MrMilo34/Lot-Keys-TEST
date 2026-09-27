@@ -28,8 +28,8 @@ android {
         applicationId 'ca.lotkeys.connector.test'
         minSdk 30
         targetSdk 35
-        versionCode 95011
-        versionName '0.9.5.11-test'
+        versionCode 95012
+        versionName '0.9.5.12-test'
     }
 
     buildTypes {

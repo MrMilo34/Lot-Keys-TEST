@@ -33,7 +33,6 @@ import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -54,6 +53,7 @@ import javax.crypto.spec.SecretKeySpec;
 final class DriveRelay {
     static final String PREFS = "lotkeys-drive-relay";
     static final String GOOGLE_ACCOUNT = "googleAccount";
+    static final String GOOGLE_ACCOUNT_TYPE = "googleAccountType";
     static final String GOOGLE_AUTHORIZED_AT = "googleAuthorizedAt";
     private static final String GOOGLE_NEEDS_AUTH = "googleNeedsAuthorization";
     static final String GOOGLE_SCOPE = "oauth2:https://www.googleapis.com/auth/drive.appdata";
@@ -105,8 +105,14 @@ final class DriveRelay {
 
     static boolean wasAuthorized(Context context) {
         SharedPreferences value = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        return !value.getString(GOOGLE_ACCOUNT, "").isEmpty() && value.getLong(GOOGLE_AUTHORIZED_AT, 0) > 0 &&
+        return !value.getString(GOOGLE_ACCOUNT, "").isEmpty() &&
+            !value.getString(GOOGLE_ACCOUNT_TYPE, "").isEmpty() &&
+            value.getLong(GOOGLE_AUTHORIZED_AT, 0) > 0 &&
             !value.getBoolean(GOOGLE_NEEDS_AUTH, false);
+    }
+
+    static String accountType(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(GOOGLE_ACCOUNT_TYPE, "");
     }
 
     static JSONObject pendingRequest(Context context) {
@@ -122,7 +128,12 @@ final class DriveRelay {
         }
         String token = GoogleAuthUtil.getToken(context, account, GOOGLE_SCOPE);
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString(GOOGLE_ACCOUNT, account.name.trim().toLowerCase(Locale.ROOT))
+            // Android Account identities are exact. Lower-casing a mixed-case
+            // Google account makes GoogleAuthUtil report AccountNotPresent
+            // after the service has to acquire a fresh background token.
+            .putString(GOOGLE_ACCOUNT, account.name.trim())
+            .putString(GOOGLE_ACCOUNT_TYPE,
+                account.type == null || account.type.trim().isEmpty() ? "com.google" : account.type.trim())
             .putLong(GOOGLE_AUTHORIZED_AT, System.currentTimeMillis())
             .putBoolean(GOOGLE_NEEDS_AUTH, false)
             .commit();
@@ -131,13 +142,15 @@ final class DriveRelay {
 
     static void clearAccount(Context context) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .remove(GOOGLE_ACCOUNT).remove(GOOGLE_AUTHORIZED_AT).remove(SESSION)
+            .remove(GOOGLE_ACCOUNT).remove(GOOGLE_ACCOUNT_TYPE).remove(GOOGLE_AUTHORIZED_AT).remove(SESSION)
             .remove(GOOGLE_NEEDS_AUTH).remove(TRUSTS).remove(PENDING).commit();
     }
 
-    void accountAuthorized(String email, String token) {
+    void accountAuthorized(String email, String accountType, String token) {
         if (email != null && !email.trim().isEmpty()) {
-            prefs.edit().putString(GOOGLE_ACCOUNT, email.trim().toLowerCase(Locale.ROOT))
+            prefs.edit().putString(GOOGLE_ACCOUNT, email.trim())
+                .putString(GOOGLE_ACCOUNT_TYPE,
+                    accountType == null || accountType.trim().isEmpty() ? "com.google" : accountType.trim())
                 .putLong(GOOGLE_AUTHORIZED_AT, System.currentTimeMillis())
                 .putBoolean(GOOGLE_NEEDS_AUTH, false).apply();
         }
@@ -773,8 +786,11 @@ final class DriveRelay {
     private String token() throws IOException, UserRecoverableAuthException, GoogleAuthException {
         if (!accessToken.isEmpty()) return accessToken;
         String email = account(service);
-        if (email.isEmpty()) throw new IllegalStateException("Choose the Google account used by LotKeys in the Android setup.");
-        accessToken = GoogleAuthUtil.getToken(service, new Account(email, "com.google"), GOOGLE_SCOPE);
+        String type = accountType(service);
+        if (email.isEmpty() || type.isEmpty()) {
+            throw new IllegalStateException("Choose the Google account used by LotKeys in the Android setup.");
+        }
+        accessToken = GoogleAuthUtil.getToken(service, new Account(email, type), GOOGLE_SCOPE);
         prefs.edit().putLong(GOOGLE_AUTHORIZED_AT, now()).putBoolean(GOOGLE_NEEDS_AUTH, false).apply();
         return accessToken;
     }

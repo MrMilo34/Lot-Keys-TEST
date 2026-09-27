@@ -40,7 +40,7 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_GOOGLE_ACCOUNT = 44;
     private static final int REQUEST_GOOGLE_AUTHORIZATION = 45;
     private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
-    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095011";
+    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095012";
     private LinearLayout body;
     private Account pendingGoogleAccount;
 
@@ -64,7 +64,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.5.11 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.5.12 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();
@@ -124,7 +124,11 @@ public final class MainActivity extends Activity {
         statusLine("Contact names", contacts, contacts ? "allowed" : "using phone numbers");
         statusLine("Coverage", false, "SMS/MMS only · RCS watcher comes later");
         statusLine("Messaging app", true, store.sourceApp());
-        statusLine("PC relay", true, "ready · " + relayAccount);
+        JSONObject relayStatus = PhoneConnectorService.relaySnapshot();
+        String relayError = relayStatus == null ? "" : relayStatus.optString("lastError");
+        statusLine("PC relay", relayError.isEmpty(), relayError.isEmpty()
+            ? "ready · " + relayAccount
+            : "needs attention · " + relayError);
         PowerManager power = getSystemService(PowerManager.class);
         boolean unrestricted = power != null && power.isIgnoringBatteryOptimizations(getPackageName());
         statusLine("Locked-phone messaging", unrestricted,
@@ -133,9 +137,9 @@ public final class MainActivity extends Activity {
         button("Android App Permissions", this::openAppSettings, false);
         button("Locked-Phone Battery Settings", () -> new AlertDialog.Builder(this)
             .setTitle("Keep PC messages available while locked")
-            .setMessage("Open this app's Android settings, tap Battery, and choose Unrestricted for LotKeys Connector TEST. Keep its phone-connection notification enabled. Android may still delay the private Google Drive relay during deep idle or without network.")
+            .setMessage("Android will ask whether LotKeys Connector TEST may keep the private PC relay running while the phone is locked. Confirm the system prompt. The connection notification remains visible while it is active.")
             .setNegativeButton("Cancel", null)
-            .setPositiveButton("Open App Settings", (dialog, which) -> openAppSettings()).show(), false);
+            .setPositiveButton("Continue", (dialog, which) -> requestBatteryExemption()).show(), false);
         button("Reset Browser Link", () -> new AlertDialog.Builder(this)
             .setTitle("Reset the phone-to-browser link?")
             .setMessage("LotKeys tabs on this phone will stop seeing Android messages until you open LotKeys from this setup again. Phone messages and customer records are not deleted.")
@@ -149,6 +153,7 @@ public final class MainActivity extends Activity {
             .setMessage("This disconnects and forgets trusted computers. Phone messages and LotKeys customer records are not deleted.")
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Change", (dialog, which) -> {
+                stopService(new Intent(this, PhoneConnectorService.class));
                 DriveRelay.clearAccount(this);
                 chooseGoogleAccount();
             }).show(), false);
@@ -216,9 +221,14 @@ public final class MainActivity extends Activity {
         text("Authorizing private PC pairing…", 14, Color.rgb(100, 181, 246), true);
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                DriveRelay.authorizeAccount(this, account);
+                String token = DriveRelay.authorizeAccount(this, account);
                 prefs().edit().putBoolean("enabled", true).commit();
-                startForegroundService(new Intent(this, PhoneConnectorService.class));
+                Intent authorized = new Intent(this, PhoneConnectorService.class)
+                    .setAction(PhoneConnectorService.ACTION_ACCOUNT_AUTHORIZED)
+                    .putExtra(PhoneConnectorService.EXTRA_ACCOUNT_NAME, account.name)
+                    .putExtra(PhoneConnectorService.EXTRA_ACCOUNT_TYPE, account.type)
+                    .putExtra(PhoneConnectorService.EXTRA_ACCESS_TOKEN, token);
+                startForegroundService(authorized);
                 runOnUiThread(() -> { pendingGoogleAccount = null; render(); });
             } catch (UserRecoverableAuthException recoverable) {
                 runOnUiThread(() -> startActivityForResult(recoverable.getIntent(), REQUEST_GOOGLE_AUTHORIZATION));
@@ -255,10 +265,34 @@ public final class MainActivity extends Activity {
         catch (ActivityNotFoundException error) { alert("Open Android Settings > Apps > LotKeys Connector TEST."); }
     }
 
+    private void requestBatteryExemption() {
+        PowerManager power = getSystemService(PowerManager.class);
+        if (power != null && power.isIgnoringBatteryOptimizations(getPackageName())) {
+            alert("Locked-phone background access is already unrestricted.");
+            return;
+        }
+        try {
+            startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                Uri.parse("package:" + getPackageName())));
+        } catch (ActivityNotFoundException error) {
+            try { startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)); }
+            catch (ActivityNotFoundException ignored) { openAppSettings(); }
+        }
+    }
+
+    private void restrictedSettingsHelp() {
+        new AlertDialog.Builder(this)
+            .setTitle("Allow the connector's restricted access")
+            .setMessage("Android blocked the Messages permission for this manually installed test app. On the App info screen, tap ⋮ in the top-right, choose Allow restricted settings, return here, and press Continue to Messages access again.")
+            .setNegativeButton("Not Now", null)
+            .setPositiveButton("Open App Info", (dialog, which) -> openAppSettings())
+            .show();
+    }
+
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
         if (requestCode == REQUEST_MESSAGES && !requiredMessagesGranted()) {
-            alert("Messages access is required for this phone-source checkpoint. LotKeys has not changed your default messaging app.");
+            restrictedSettingsHelp();
         }
         if (requestCode == REQUEST_CONTACTS && new PhoneStore(this).canReadContacts()) {
             prefs().edit().putBoolean("contactsSkipped", false).apply();

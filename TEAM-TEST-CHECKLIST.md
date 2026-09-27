@@ -1,20 +1,20 @@
-# LotKeys V0.9.5.11 team-test checklist
+# LotKeys V0.9.5.12 team-test checklist
 
-## V0.9.5.11 baseline
+## V0.9.5.12 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095011` and confirm **V0.9.5.11 / 095011**.
-- Install the **LotKeys-Android-V0.9.5.11** Actions artifact and confirm the connector itself shows **V0.9.5.11 TEST**. V0.9.4.85 cannot perform this background reconnect test.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095012` and confirm **V0.9.5.12 / 095012**.
+- Install the **LotKeys-Android-V0.9.5.12** Actions artifact and confirm the connector itself shows **V0.9.5.12 TEST**. V0.9.4.85 cannot perform this background reconnect test.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
 
 ## Android setup
 
-- Replace the older connector with the V0.9.5.11 Android TEST artifact. Confirm Android assemble/lint completes even if a signed APK is intentionally withheld when signing secrets are unavailable.
+- Replace the older connector with the V0.9.5.12 Android TEST artifact. Confirm Android assemble/lint completes even if a signed APK is intentionally withheld when signing secrets are unavailable.
 - Confirm Android screenshots and screen recording work while the connector setup is visible.
-- Open **LotKeys Connector TEST** and approve Messages access. Contacts is optional but required to show Android contact names.
+- Open **LotKeys Connector TEST** and approve Messages access. If Android blocks it for the sideloaded APK, confirm the connector opens App info and clearly directs **⋮ → Allow restricted settings** before retrying. Contacts is optional but required to show Android contact names.
 - Confirm the setup clearly says the phone's existing messaging app stays the default.
-- Approve the quiet connection-status notification, choose the same LotKeys Google account for PC pairing, then tap **Open LotKeys & Link This Phone**.
+- Approve the quiet connection-status notification, choose the same LotKeys Google account for PC pairing, then tap **Open LotKeys & Link This Phone**. An upgrade from V0.9.5.11 must request this selection once because that build did not retain the complete Android account identity.
 - Before pairing, confirm the Hub signal is amber for SMS/MMS (RCS is not covered). After pairing, confirm 📶 turns green, while the healthy sync text and light turn blue.
 
 ## Paired computers and locked phone
@@ -27,7 +27,7 @@
 - After a working session goes idle, return to the PC and do not press **Reconnect phone**. Confirm LotKeys probes the saved session and creates a fresh trusted session automatically. The matching-code dialog should stay hidden during normal recovery and appear after eight seconds only if manual approval is genuinely needed.
 - Fail a Hub records sync deliberately in TEST and verify its error appears on the sync action, rather than as a phone relay warning in Phone connection. Check a real relay error remains visible and labeled as a phone connection issue.
 - On the phone, open **Phone connection → 🖥️ Connected**. Confirm the active computer and trusted list appear. Forget one computer and confirm it disappears and can no longer reconnect automatically.
-- Install the updated Android connector and choose **Locked-Phone Battery Settings**. In Android settings, set the TEST connector battery mode to Unrestricted and keep its notification enabled.
+- Install the updated Android connector and choose **Locked-Phone Battery Settings**. Confirm Android opens its direct battery-exemption prompt; approve it and keep the connection notification enabled.
 - Close the phone browser, lock the phone, leave the PC page open, and send a fictional SMS to your own test number. Verify its receipt on the phone and the PC. Repeat after a longer idle period, then wake the phone and confirm automatic reconnection without a new code while trust remains valid.
 - Test a transient network interruption and confirm retry after recovery. A 36-hour or 7-day trust that has actually expired still requires phone approval.
 - Deep Doze can defer Google Drive relay traffic; record the phone model, Android battery mode, idle duration, and reconnect time if delivery waits until the screen wakes.

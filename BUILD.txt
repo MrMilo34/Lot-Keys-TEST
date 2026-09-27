@@ -1,11 +1,12 @@
-V0.9.5.11 TRUSTED-PHONE AUTOMATIC RECONNECT
-- Actively probes a restored PC session and automatically negotiates a fresh encrypted session when the old key is stale.
-- Retains valid computer trust and lets the Android foreground relay approve the newest trusted reconnect offer without a user tap.
-- Delays the matching-code dialog during automatic recovery and shows it only as a manual-approval fallback.
-- Updates the Android connector to V0.9.5.11; the physically tested V0.9.4.85 connector cannot perform browser-independent reconnection.
-- Build: 095011.
-- Android version code: 95011.
-- Service worker cache: lotkeys-app-v095011-trusted-phone-auto-reconnect.
+V0.9.5.12 ANDROID ACCOUNT RELAY RECOVERY
+- Preserves the exact Android Google account name and account type instead of rebuilding a normalized identity that can fail with AccountNotPresent.
+- Hands the freshly authorized Google token directly to the already-running foreground relay so the setup screen and live relay cannot disagree.
+- Requires one account re-selection when upgrading from the incomplete V0.9.5.11 stored identity, then keeps that exact identity for later background refreshes.
+- Shows the foreground relay's real error in the connector and retains V0.9.5.11 trusted-PC automatic reconnect once pairing succeeds.
+- Guides sideloaded-app restricted-settings recovery and opens Android's direct battery-exemption confirmation.
+- Build: 095012.
+- Android version code: 95012.
+- Service worker cache: lotkeys-app-v095012-android-relay-account-recovery.
 
 V0.9.5.10 ANDROID RELAY REQUIRED + VISIBLE MATCHING CODE
 - The phone refuses browser-only PC pairing when the Android background relay is unauthorized or reports an error.

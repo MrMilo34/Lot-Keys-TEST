@@ -27,15 +27,16 @@ LotKeys needs a normal HTTPS origin for Google browser OAuth. Opening `index.htm
 8. Wait for GitHub to publish the page, then use the HTTPS URL GitHub provides.
 9. Open that URL in Chrome on Android.
 
-## V0.9.5.11 Android connector
+## V0.9.5.12 Android connector
 
 Uploading the complete release also updates `android/` and starts **Build LotKeys Android Layer**. After that Action succeeds:
 
 1. Open the repository's **Actions** tab and select the newest successful **Build LotKeys Android Layer** run.
-2. Download the `LotKeys-Android-V0.9.5.11` artifact and extract its APK.
+2. Download the `LotKeys-Android-V0.9.5.12` artifact and extract its APK.
 3. Install it over the existing **LotKeys Connector TEST** app. The repository's stable TEST signing secrets must be configured for an in-place update.
-4. Open the connector and confirm the heading reads **Phone Connection · V0.9.5.11 TEST**. If it still reads V0.9.4.85, the background relay and automatic trusted reconnect are not installed.
-5. Complete **PC Pairing Account** using the same Google account as LotKeys, keep the connection notification enabled, and set Android battery access to **Unrestricted**.
+4. Open the connector and confirm the heading reads **Phone Connection · V0.9.5.12 TEST**.
+5. Select the same Google account once when prompted. This refreshes V0.9.5.11's incomplete saved Android account identity; future updates preserve the exact identity.
+6. Keep the connection notification enabled. Use **Locked-Phone Battery Settings** and confirm Android's direct unrestricted-background prompt.
 
 After the website is current, sign in as Admin Level 2, run **Repair Store Structure**, and complete `PROCESSOR-SETUP.md`. The static website can accept More requests without the trigger, but creator/Trusted automatic changes and Administration queue delivery require the processor.
 

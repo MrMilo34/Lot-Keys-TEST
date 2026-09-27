@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.11 — trusted phones recover PC sessions automatically. */
+/* LotKeys Phone V0.9.5.12 — trusted phones recover PC sessions automatically. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -1458,7 +1458,7 @@
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
     return {
-      version: '0.9.5.11',
+      version: '0.9.5.12',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1526,7 +1526,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.11',
+    version: '0.9.5.12',
     init,
     status,
     subscribe,

@@ -18,6 +18,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /** Keeps the loopback API and encrypted PC relay available while LotKeys is in use. */
 public final class PhoneConnectorService extends Service {
+    static final String ACTION_ACCOUNT_AUTHORIZED = "ca.lotkeys.connector.ACCOUNT_AUTHORIZED";
+    static final String EXTRA_ACCOUNT_NAME = "accountName";
+    static final String EXTRA_ACCOUNT_TYPE = "accountType";
+    static final String EXTRA_ACCESS_TOKEN = "accessToken";
     private static final String CHANNEL = "lotkeys-phone-connector";
     private static final int NOTIFICATION_ID = 9484;
     private static final AtomicLong REVISION = new AtomicLong(1);
@@ -79,7 +83,12 @@ public final class PhoneConnectorService extends Service {
         }
         if (intent != null && relay != null) {
             String sessionId = intent.getStringExtra("sessionId");
-            if ("APPROVE_PAIR".equals(intent.getAction())) {
+            if (ACTION_ACCOUNT_AUTHORIZED.equals(intent.getAction())) {
+                relay.accountAuthorized(
+                    intent.getStringExtra(EXTRA_ACCOUNT_NAME),
+                    intent.getStringExtra(EXTRA_ACCOUNT_TYPE),
+                    intent.getStringExtra(EXTRA_ACCESS_TOKEN));
+            } else if ("APPROVE_PAIR".equals(intent.getAction())) {
                 relay.approve(sessionId == null ? "" : sessionId, intent.getStringExtra("trustMode"));
             } else if ("DECLINE_PAIR".equals(intent.getAction())) {
                 relay.reject(sessionId == null ? "" : sessionId);
@@ -100,7 +109,9 @@ public final class PhoneConnectorService extends Service {
     void relayChanged() {
         try {
             org.json.JSONObject value = relay == null ? null : relay.status();
-            if (value != null && value.optBoolean("connected")) {
+            if (value != null && !value.optString("lastError").isEmpty()) {
+                status = "PC relay needs attention · " + value.optString("lastError");
+            } else if (value != null && value.optBoolean("connected")) {
                 status = "PC connected · " + value.optString("peerName", "Computer");
             } else if (value != null && value.optJSONArray("pendingPairings") != null && value.optJSONArray("pendingPairings").length() > 0) {
                 org.json.JSONObject request = value.optJSONArray("pendingPairings").optJSONObject(0);
@@ -117,6 +128,13 @@ public final class PhoneConnectorService extends Service {
             status = "SMS/MMS coverage ready · PC relay checking";
         }
         getSystemService(NotificationManager.class).notify(NOTIFICATION_ID, notification());
+    }
+
+    static org.json.JSONObject relaySnapshot() {
+        PhoneConnectorService current = instance;
+        if (current == null || current.relay == null) return null;
+        try { return current.relay.status(); }
+        catch (Exception ignored) { return null; }
     }
 
     void relayNeedsAuthorization() {
