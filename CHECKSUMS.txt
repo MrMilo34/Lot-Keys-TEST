@@ -28,7 +28,7 @@ dc1ebd925572f71966b72deaec0599c7c07d70b9c110b3ac06711193dc09166c  SECURITY-RELEA
 23ac5e19cade722fb19873daf6d5d37a9fb00b7e8789639b10a758245d01dda3  android/app/build.gradle
 7949eda8403fa7d619837d31ac22de646bbc17ea3ef2900454c64f5214a2e0cd  android/app/src/main/AndroidManifest.xml
 b7cbfa2cf1a29b6fa51dec8b28dec119e419b6b7cf7eedde40b50eb7281b73f3  android/app/src/main/java/ca/lotkeys/connector/BootReceiver.java
-1b434d085e9900196d0b4f74d221502ed5ace0883c6386577ee619584c715062  android/app/src/main/java/ca/lotkeys/connector/DriveRelay.java
+f49adb5823993db3b8bd17e6372194d3db4b5677983652c6d507c7a634392ab4  android/app/src/main/java/ca/lotkeys/connector/DriveRelay.java
 e6e3d2d448bdd40bcfaadf00b8ed5443edd66be95c5e9532bd31d5c7ef420bb8  android/app/src/main/java/ca/lotkeys/connector/InstallIdentity.java
 694a94b7c3319056b62584d3a90c0ca933ca2cfcd69669dd5a5625eb1a111692  android/app/src/main/java/ca/lotkeys/connector/LocalApiServer.java
 d9041572c41eca796343c2cd5e683a801e19f280c7f5bc352f7e6b5110de2735  android/app/src/main/java/ca/lotkeys/connector/MainActivity.java

@@ -377,8 +377,8 @@ final class DriveRelay {
             try {
                 JSONObject payload = openFrame(session, frameId, "phone", new JSONObject(readFile(fileId)));
                 synchronized (this) {
-                    JSONObject current = session();
-                    if (current == null || !sessionId.equals(current.optString("sessionId"))) return;
+                    JSONObject activeSession = session();
+                    if (activeSession == null || !sessionId.equals(activeSession.optString("sessionId"))) return;
                     session.put("lastSeenAt", now());
                     saveSession(session);
                 }
