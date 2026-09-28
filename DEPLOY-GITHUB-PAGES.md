@@ -1,5 +1,9 @@
 # Host the LotKeys test build with GitHub Pages
 
+## V0.9.5.19 web update
+
+Deploy the complete website snapshot, then fully close and reopen the installed LotKeys web app once so cache `lotkeys-app-v095019-unified-bubble-chat-hub-controls` takes control. Keep the V0.9.5.12 Android connector installed. The update adds the shared LotKeys/Device Bubble Chat, incoming previews, bell adjustments, and lower-right Hub action placement. No APK reinstall or re-pairing is required.
+
 LotKeys needs a normal HTTPS origin for Google browser OAuth. Opening `index.html` with Android's `content://` URL is fine for UI testing but Google authorization will not work there.
 
 ## Team-test deployment

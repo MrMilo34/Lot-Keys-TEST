@@ -1,8 +1,10 @@
-# LotKeys V0.9.5.18 — readable contact headers and named computers
+# LotKeys V0.9.5.19 — Bubble Chat for LotKeys and Device messages
 
-This TEST web update shows long Device contact names on two lines above the number and lets the phone name each trusted computer in Connected Devices. The V0.9.5.17 Hub action order, theme styling, PC side rail, and Enter-to-send remain. Keep the V0.9.5.12 Android connector installed.
+The TEST web update shares one quick-reply Bubble Chat across LotKeys and connected Device conversations. Holding Hub opens the most recently replied-to chat; incoming message previews open the sender in Bubble Chat. The Hub action stack sits near the lower-right edge with its existing order and spacing, and both reminder bells have corrected alignment and sizing. Keep the V0.9.5.12 Android connector installed. See [RELEASE-0.9.5.19.md](RELEASE-0.9.5.19.md) for the complete change list and test limits.
 
-## V0.9.5.18 included
+## V0.9.5.18 retained
+
+The previous update shows long Device contact names on two lines above the number and lets the phone name each trusted computer in Connected Devices. The V0.9.5.17 Hub action order, theme styling, PC side rail, and Enter-to-send remain.
 
 - Remove the redundant SMS/MMS status from the compact Device conversation header so a long name can wrap over two lines without growing the vehicle card.
 - On the phone, open **Phone connection → 🖥️ Connected → Rename** to give a trusted PC a recognizable name. A blank name restores its original browser label. The nickname is saved on that phone's LotKeys browser and also appears for its active connection there.

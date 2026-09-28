@@ -1,8 +1,18 @@
-# LotKeys V0.9.5.18 team-test checklist
+# LotKeys V0.9.5.19 team-test checklist
+
+## V0.9.5.19 Bubble Chat and controls
+
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095019` and confirm **V0.9.5.19 / 095019**. Keep the existing V0.9.5.12 Android connector installed.
+- Reply to a LotKeys chat, then to a connected Device SMS chat. Hold Hub and confirm Bubble Chat opens the Device conversation; reply to LotKeys again and confirm the next hold opens LotKeys. Receiving a newer message alone must not change this last-replied choice.
+- With a Device Bubble Chat open, receive a reply from that person and confirm it appears without leaving the current LotKeys screen. Send a response in the bubble and verify that the phone actually sends it. Reconnect the phone after a disconnect and verify history is retrieved again.
+- Receive an incoming Device message from a saved contact with an Organization color. Confirm the compact pop-up displays the contact name and message text in that color, and that tapping it opens a replyable bubble. Repeat for a LotKeys message. Confirm a muted LotKeys chat does not pop up.
+- On PC and a narrow phone screen, confirm the header bell is centered, the Hub bell is readable, and the Alert, Calendar, Phone and Add buttons keep their existing order and gaps near the lower-right corner without touching the scrollbar or bottom navigation.
+
+## V0.9.5.18 retained baseline
 
 ## V0.9.5.18 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095018` and confirm **V0.9.5.18 / 095018**.
+- Confirm V0.9.5.18's two-line Device contact header and trusted-computer nicknames are still present in V0.9.5.19.
 - Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.18 is a web-only update; do not reinstall the APK, re-pair, or reselect the account.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.

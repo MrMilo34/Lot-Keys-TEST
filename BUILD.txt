@@ -971,3 +971,11 @@ Preserved from v0.9.4.15:
 Release layout:
 - Standard LotKeys root layout: 11 files + assets folder.
 - v0.9.4.16 runtime helper lives inside assets/lotkeys-v09416.js rather than cluttering the repository root.
+V0.9.5.19 UNIFIED BUBBLE CHAT + HUB CONTROLS
+- Bubble Chat follows the last conversation replied to across LotKeys and connected Device SMS.
+- Device replies and incoming messages appear in Bubble Chat through the phone connection.
+- Incoming previews show the contact name, text and Device organization color; tap to reply.
+- Centers the header bell, enlarges the Hub bell, and moves the existing action stack near the lower-right corner without stretching its spacing.
+- Web-only update; V0.9.5.12 Android connector remains installed.
+- Build: 095019.
+- Service worker cache: lotkeys-app-v095019-unified-bubble-chat-hub-controls.

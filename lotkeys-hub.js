@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.5.18. Chat actions dock on PC and desktop Enter sends. */
+/* LotKeys Hub V0.9.5.19. Chat actions dock on PC and desktop Enter sends. */
 (()=>{'use strict';
 const H=window.LotKeysHubCore,S=window.LotKeysHubStore,M=window.LotKeysMessaging,Core=window.LotKeysMessagingBridge,P=window.LotKeysPhone,PC=window.LotKeysPhoneCore;
 if(!H||!S||!M||!P||!PC)return;
@@ -20,7 +20,7 @@ const when=x=>x?(H.localDay(x)===H.localDay()?time(x):new Date(x).toLocaleDateSt
 const btn=(text,cls='')=>`<button type="button" class="hub-btn ${cls}">${text}</button>`;
 const pcEnterSends=event=>event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&!event.repeat&&!!window.matchMedia?.('(min-width: 760px) and (pointer: fine)').matches;
 const DEVICE_DRAFT_PREFIX='lotkeys-device-draft-v1:',DEVICE_DRAFT_MAX_AGE=30*24*60*60*1000,GROUP_STATE_KEY='lotkeys-hub-group-state-v1',AUTO_PAIRING_FALLBACK_MS=8000,DEVICE_INITIAL_MESSAGE_COUNT=6,DEVICE_OLDER_MESSAGE_CHUNK=20,DEVICE_HISTORY_CACHE_MS=5*60*1000,DEVICE_HISTORY_CACHE_MAX=8,DEVICE_HISTORY_REFRESH_MS=5000;
-const deviceHistoryCache=new Map(),deviceHistoryRequests=new Map();let deviceHistoryGeneration=0;
+const deviceHistoryCache=new Map(),deviceHistoryRequests=new Map(),deviceBubbleSent=new Map(),deviceAlertSignatures=new Map(),deviceNotifiedMessages=new Map();let deviceHistoryGeneration=0,deviceBubbleRequest=0;
 let groupState=readGroupState();
 function deviceHistoryKey(threadId){const status=P.status();return[status.role,status.deviceName,status.relayIdentity,status.sessionId||'native',String(threadId)].join('|');}
 function forgetDeviceHistory(key){const entry=deviceHistoryCache.get(key);if(entry?.expiryTimer)clearTimeout(entry.expiryTimer);deviceHistoryCache.delete(key);}
@@ -30,6 +30,48 @@ function rememberDeviceHistory(threadId,page,key=deviceHistoryKey(threadId)){for
 function deviceHistoryPage(threadId,{fresh=false}={}){const key=deviceHistoryKey(threadId),cached=fresh?null:cachedDeviceHistory(threadId);if(cached)return Promise.resolve(cached.page);const generation=deviceHistoryGeneration,pending=deviceHistoryRequests.get(key);if(pending?.generation===generation)return pending.promise;const request={generation,promise:null};request.promise=P.history(threadId).then(page=>{if(generation===deviceHistoryGeneration&&key===deviceHistoryKey(threadId))rememberDeviceHistory(threadId,page,key);return page;}).finally(()=>{if(deviceHistoryRequests.get(key)===request)deviceHistoryRequests.delete(key);});deviceHistoryRequests.set(key,request);return request.promise;}
 function prefetchDeviceHistory(threadId){if(!threadId||(!P.status().connected&&!P.status().native)||cachedDeviceHistory(threadId))return;deviceHistoryPage(threadId).catch(()=>{});}
 function prefetchRecentDeviceHistory(){if(!home())return;const row=deviceRows().filter(item=>item.live&&!item.blocked).sort((a,b)=>(b.at||0)-(a.at||0))[0];prefetchDeviceHistory(row?.id);}
+function currentDeviceKey(){const status=P.status();return[status.role,status.deviceName,status.relayIdentity].join('|');}
+async function sendDeviceBubbleText(threadId,row,key,text){
+  if(key!==currentDeviceKey()||(!P.status().connected&&!P.status().native))throw Error('Reconnect the phone before replying.');
+  const receipt=await P.send({threadId,address:row.address,text});if(!['sent','sending'].includes(receipt.phase))throw Error(receipt.error||'The phone could not send this SMS.');
+  const message={id:'local-'+H.uid('SMS'),text,at:Date.now(),outgoing:true,transport:'SMS',state:receipt.phase,local:true};deviceBubbleSent.set(threadId,[...(deviceBubbleSent.get(threadId)||[]),message].slice(-6));if(receipt.phase==='sent')await M.rememberReply('device',threadId,key,message.at);
+}
+function paintDeviceBubble(threadId,row,page,key){
+  const local=(deviceBubbleSent.get(threadId)||[]).filter(message=>Date.now()-message.at<5*60*1000),messages=H.mergeDeviceMessages(local,H.sortDeviceMessages(page.messages||[]));deviceBubbleSent.set(threadId,messages.filter(message=>message.local));
+  M.renderDeviceBubble({threadId,title:row.title,address:row.address,color:tint(row.organization),messages,canReply:row.canReply,full:()=>openDeviceConversation(threadId),send:text=>sendDeviceBubbleText(threadId,row,key,text)});
+  P.acknowledgeUnread?.(threadId,page.messages||[]);return true;
+}
+async function refreshDeviceBubble(threadId){
+  if(!M.isDeviceBubbleOpen(threadId))return false;
+  const key=currentDeviceKey(),row=deviceRows().find(item=>item.live&&item.id===threadId&&!item.blocked),request=++deviceBubbleRequest;
+  if(!row||(!P.status().connected&&!P.status().native)){M.collapseBubble();return false;}
+  const page=await P.history(threadId);if(request!==deviceBubbleRequest||key!==currentDeviceKey()||!M.isDeviceBubbleOpen(threadId))return false;
+  return paintDeviceBubble(threadId,row,page,key);
+}
+async function openDeviceBubble(threadId,{deviceKey=''}={}){
+  const key=currentDeviceKey(),request=++deviceBubbleRequest;
+  if(deviceKey&&deviceKey!==key){toast('Connect the phone used for that Device chat.');return false;}
+  if(!P.status().connected&&!P.status().native){toast('Reconnect the phone to open its Bubble Chat.');return false;}
+  await loadBadgeData();const row=deviceRows().find(item=>item.live&&item.id===threadId&&!item.blocked);
+  if(!row){toast('That phone conversation is not available on this connection.');return false;}
+  // Only the phone supplies Device message bodies; no second transcript is retained by the web app.
+  const page=await P.history(threadId);if(request!==deviceBubbleRequest||key!==currentDeviceKey())return false;
+  return paintDeviceBubble(threadId,row,page,key);
+}
+async function checkDeviceMessageActivity(){
+  if(document.body.dataset.lotkeysLocked==='true'||(!P.status().connected&&!P.status().native))return;
+  const changed=[];for(const thread of P.threads()){const signature=PC.threadAlertSignature(thread),old=deviceAlertSignatures.get(thread.id);deviceAlertSignatures.set(thread.id,signature);if(old!==signature&&Date.now()-Number(thread.at||0)<120000)changed.push(thread);}
+  if(!changed.length)return;await loadBadgeData();
+  for(const thread of changed.slice(0,3)){
+    const row=deviceRows().find(item=>item.live&&item.id===thread.id);if(!row||row.blocked)continue;
+    try{const page=await P.history(thread.id),latest=H.sortDeviceMessages(page.messages||[]).at(-1);if(!latest||Math.abs(Number(latest.at||0)-Number(thread.at||0))>120000)continue;
+      if(latest.outgoing){await M.rememberReply('device',thread.id,currentDeviceKey(),Number(latest.at)||Date.now());continue;}
+      if(!row.unread||deviceNotifiedMessages.get(thread.id)===String(latest.id))continue;deviceNotifiedMessages.set(thread.id,String(latest.id));
+      if(M.isDeviceBubbleOpen(thread.id)){await refreshDeviceBubble(thread.id);continue;}
+      M.showMessagePreview({title:row.title,text:latest.text||row.preview||'Media message',color:tint(row.organization),onOpen:()=>openDeviceBubble(thread.id)});
+    }catch(error){console.warn('Device preview deferred until phone history is available',error)}
+  }
+}
 function bindCategoryReorder(container,onMove){
   if(!container)return;
   let from=null,activeRow=null,pointerId=null,lastTarget=null,lastSide=null,ghost=null,grabX=0,grabY=0;
@@ -407,7 +449,7 @@ function reminderSort(left,right){
   return leftDay.localeCompare(rightDay)||(left.dueTime||'99:99').localeCompare(right.dueTime||'99:99')||String(left.title||'').localeCompare(String(right.title||''));
 }
 function notifyReminderChange(){window.dispatchEvent(new CustomEvent('lotkeys-reminder-change'));paintReminderFab();scheduleRefresh();}
-function paintReminderFab(){const button=$('#hub-reminders',panel());if(!button)return;const state=H.reminderBellState(reminders,new Date());button.hidden=!state.visible;button.textContent=state.symbol;button.dataset.urgency=String(state.urgency);button.setAttribute('aria-label',`${state.count} active reminder${state.count===1?'':'s'}. Open reminders.`);button.title='Reminders';}
+function paintReminderFab(){const button=$('#hub-reminders',panel());if(!button)return;const state=H.reminderBellState(reminders,new Date());button.hidden=!state.visible;button.innerHTML=`<span class="hub-reminder-glyph" aria-hidden="true">🔔</span>${state.urgency?`<span class="hub-reminder-mark" aria-hidden="true">${state.urgency===2?'!!':'!'}</span>`:''}`;button.dataset.urgency=String(state.urgency);button.setAttribute('aria-label',`${state.count} active reminder${state.count===1?'':'s'}. Open reminders.`);button.title='Reminders';}
 async function toggleReminderRecord(id,onChanged){
   await loadLocal();let reminder=await S.get('reminder',id)||reminders.find(row=>row.id===id);if(!reminder)return;
   if(!await S.get('reminder',id))reminder=await S.save('reminder',reminder);
@@ -646,7 +688,7 @@ async function openDeviceConversation(threadId){
     }
   };
   activeDeviceChatRefresh=()=>loadPage(false,{live:true});
-  const sendText=async message=>{if(!message?.text)return;message.state='sending';draw({bottom:true});try{const receipt=await P.send({threadId,address:row.address,text:message.text});message.state=receipt.phase==='sent'?'sent':receipt.phase==='sending'?'sending':receipt.phase||'failed';message.error=receipt.error||'';if(!['sent','sending'].includes(message.state))message.state=message.state==='unconfirmed'?'unconfirmed':'failed';draw({bottom:true});if(message.state==='sent')toast('SMS sent through the phone.');else if(message.error)toast(message.error);}catch(error){message.state='failed';message.error=error.message;draw({bottom:true});toast(error.message);}};
+  const sendText=async message=>{if(!message?.text)return;message.state='sending';draw({bottom:true});try{const receipt=await P.send({threadId,address:row.address,text:message.text});message.state=receipt.phase==='sent'?'sent':receipt.phase==='sending'?'sending':receipt.phase||'failed';message.error=receipt.error||'';if(!['sent','sending'].includes(message.state))message.state=message.state==='unconfirmed'?'unconfirmed':'failed';draw({bottom:true});if(message.state==='sent'){await M.rememberReply('device',threadId,currentDeviceKey(),message.at);toast('SMS sent through the phone.');}else if(message.error)toast(message.error);}catch(error){message.state='failed';message.error=error.message;draw({bottom:true});toast(error.message);}};
   $('#hub-device-compose',root).onsubmit=async event=>{event.preventDefault();const body=draft.value.trim();if(!body&&!queuedFiles.length)return;if(queuedFiles.length){const files=queuedFiles.slice(),message={id:'local-'+H.uid('MMS'),text:body||'Media attachment',at:Date.now(),outgoing:true,transport:'MMS',state:'sending',local:true,attachments:files.map((file,index)=>({id:'local-'+index,name:file.name,type:file.type,size:file.size,_file:file}))};messages.push(message);draw({bottom:true});try{const receipt=await P.sendMedia({threadId,address:row.address,text:body,files});if(receipt.phase==='failed')throw Error(receipt.error||'The phone could not prepare this media.');message.state=receipt.phase||'handoff';queuedFiles=[];draft.value='';saveDeviceDraft(draftKey,'');drawQueued();draw({bottom:true});toast(receipt.phase==='handoff'?'Media is ready in the phone’s messaging app. Review and send it there.':'Media handed to the phone.');}catch(error){message.state='failed';message.error=error.message;draw({bottom:true});toast(error.message);}return;}if(!body)return;const message={id:'local-'+H.uid('SMS'),text:body,at:Date.now(),outgoing:true,transport:'SMS',state:'sending',local:true};messages.push(message);draft.value='';saveDeviceDraft(draftKey,'');draw({bottom:true});await sendText(message);};await loadPage(false);
 }
 
@@ -659,21 +701,22 @@ openDeviceConversation=async function openDeviceConversationWithInterestedVehicl
 
 document.addEventListener('click',event=>{if(!event.target.closest?.('.hub-smart-note-options,.hub-smart-note-trigger'))$$('.hub-smart-note-options').forEach(node=>node.hidden=true);if(!event.target.closest?.('.hub-gesture-menu,.hub-gesture-anchor'))closeGestureMenu();const target=event.target.closest?.('[data-calendar-day]');if(!target)return;event.preventDefault();event.stopPropagation();calendar(target.dataset.calendarDay,'week');});
 async function publicReminderBellState(){await S.identity();const [stored,legacyAppointments]=await Promise.all([S.list('reminder'),S.list('appointment')]),known=new Set(stored.map(reminder=>reminder.id)),rows=[...stored,...legacyAppointments.filter(appointment=>appointment.kind==='Reminder'&&!known.has(appointment.id)).map(H.legacyAppointmentToReminder)];if(legacyAppointments.some(appointment=>appointment.kind==='Reminder'))scheduleLegacyReminderMigration();return H.reminderBellState(rows,new Date());}
-window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,calendar,plus:plusMenu,openDeviceConversation,pending:S.pending,openReminders,newReminder:options=>editReminder(null,options||{}),reminderBellState:publicReminderBellState,version:'0.9.5.18'};
+window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,calendar,plus:plusMenu,openDeviceConversation,openDeviceBubble,refreshDeviceBubble,pending:S.pending,openReminders,newReminder:options=>editReminder(null,options||{}),reminderBellState:publicReminderBellState,version:'0.9.5.19'};
 window.addEventListener('lotkeys-hub-data',scheduleRefresh);
 window.addEventListener('lotkeys-hub-internal',scheduleRefresh);
 window.addEventListener('lotkeys-phone-pair-request',event=>showPairRequest(event.detail?.offer));
 function showAutomaticPairingCode(){if(home()&&document.visibilityState==='visible'&&document.body.dataset.lotkeysLocked!=='true'&&P.status().pairing?.automatic&&!pairDialog&&!$('dialog[open]'))showPairingProgress();}
 window.addEventListener('lotkeys-phone-pairing',event=>{if(event.detail?.status?.pairing?.automatic)setTimeout(showAutomaticPairingCode,AUTO_PAIRING_FALLBACK_MS);});
-window.addEventListener('lotkeys-phone-data',event=>{scheduleRefresh();if(event.detail?.reason==='threads'){clearDeviceHistoryCache();setTimeout(prefetchRecentDeviceHistory,0);}if(event.detail?.reason!=='read')activeDeviceChatRefresh?.();});
+window.addEventListener('lotkeys-phone-data',event=>{scheduleRefresh();if(event.detail?.reason==='threads'){clearDeviceHistoryCache();setTimeout(prefetchRecentDeviceHistory,0);checkDeviceMessageActivity().catch(console.warn);const active=$('#lotkeys-message-bubble');if(active?.dataset.source==='device'&&!active.hidden)refreshDeviceBubble(active.dataset.threadId).catch(console.warn);}if(event.detail?.reason!=='read')activeDeviceChatRefresh?.();});
+window.addEventListener('lotkeys-phone-send-state',event=>{const receipt=event.detail?.receipt,threadId=event.detail?.threadId;if(receipt?.phase==='sent'&&threadId)M.rememberReply('device',threadId,currentDeviceKey()).catch(console.warn);});
 window.addEventListener('lotkeys-phone-status',()=>{if(home())paintStatus();});
 window.addEventListener('lotkeys-phone-connected',()=>{clearDeviceHistoryCache();if(home()){paintStatus();P.refreshThreads().then(()=>{scheduleRefresh();setTimeout(prefetchRecentDeviceHistory,0);}).catch(()=>{});}});
-window.addEventListener('lotkeys-phone-disconnected',()=>{clearDeviceHistoryCache();if(home()){paintStatus();paintRows();}});
-window.addEventListener('lotkeys-hub-identity',()=>{clearDeviceHistoryCache();contacts=[];phoneSorting=[];appointments=[];reminders=[];categories=[];internal=[];selectedCategories=[];clearTimeout(legacyMigrationTimer);legacyMigrationTimer=null;clearThumbs();$$('dialog.hub-dialog').forEach(d=>d.close());if(home())open({refresh:false});});
+window.addEventListener('lotkeys-phone-disconnected',()=>{clearDeviceHistoryCache();deviceBubbleSent.clear();deviceAlertSignatures.clear();deviceNotifiedMessages.clear();const bubble=$('#lotkeys-message-bubble');if(bubble?.dataset.source==='device')M.collapseBubble();if(home()){paintStatus();paintRows();}});
+window.addEventListener('lotkeys-hub-identity',()=>{clearDeviceHistoryCache();deviceBubbleSent.clear();deviceAlertSignatures.clear();deviceNotifiedMessages.clear();const bubble=$('#lotkeys-message-bubble');if(bubble?.dataset.source==='device')M.collapseBubble();contacts=[];phoneSorting=[];appointments=[];reminders=[];categories=[];internal=[];selectedCategories=[];clearTimeout(legacyMigrationTimer);legacyMigrationTimer=null;clearThumbs();$$('dialog.hub-dialog').forEach(d=>d.close());if(home())open({refresh:false});});
 window.addEventListener('lotkeys-phone-disconnected',()=>activeDeviceMediaCleanup?.());
 window.addEventListener('lotkeys-hub-identity',()=>activeDeviceMediaCleanup?.());
 window.addEventListener('pagehide',()=>activeDeviceMediaCleanup?.());
-function init(){const guard=new MutationObserver(()=>{if(document.body.dataset.lotkeysLocked==='true'){activeDeviceMediaCleanup?.();$$('dialog.hub-dialog').forEach(d=>d.close());$('#hub-toast')?.setAttribute('hidden','');}});guard.observe(document.body,{attributes:true,attributeFilter:['data-lotkeys-locked']});const nav=$('#chat-nav-btn');if(nav){const label=$('small',nav);if(label)label.textContent='Hub';nav.title='Hub · hold for the most recent LotKeys conversation';nav.setAttribute('aria-label','Hub. Hold for the most recent LotKeys conversation.');}window.addEventListener('pagehide',()=>{$$('dialog.hub-dialog').forEach(d=>d.close());clearThumbs();clearDeviceHistoryCache();});setInterval(()=>{if(home()){$('.hub-clock',panel()).innerHTML=`<strong>${e(time(Date.now()))}</strong>${e(new Date().toLocaleDateString())}`;paintReminderFab();}if(shown())S.identity().catch(()=>{});},10000);}
+function init(){const guard=new MutationObserver(()=>{if(document.body.dataset.lotkeysLocked==='true'){activeDeviceMediaCleanup?.();M.collapseBubble();$$('dialog.hub-dialog').forEach(d=>d.close());$('#hub-toast')?.setAttribute('hidden','');}});guard.observe(document.body,{attributes:true,attributeFilter:['data-lotkeys-locked']});const nav=$('#chat-nav-btn');if(nav){const label=$('small',nav);if(label)label.textContent='Hub';nav.title='Hub · hold for the most recently replied-to LotKeys or Device conversation';nav.setAttribute('aria-label','Hub. Hold for the most recently replied-to conversation in Bubble Chat.');}window.addEventListener('pagehide',()=>{$$('dialog.hub-dialog').forEach(d=>d.close());clearThumbs();clearDeviceHistoryCache();deviceBubbleSent.clear();});setInterval(()=>{if(home()){$('.hub-clock',panel()).innerHTML=`<strong>${e(time(Date.now()))}</strong>${e(new Date().toLocaleDateString())}`;paintReminderFab();}if(shown())S.identity().catch(()=>{});},10000);}
 function initAfterBase(){if(window.__lotKeysBaseReady)setTimeout(()=>init(),0);else window.addEventListener('lotkeys-base-ready',()=>init(),{once:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initAfterBase,{once:true});else initAfterBase();
 })();
