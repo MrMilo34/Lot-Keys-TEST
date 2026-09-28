@@ -1,8 +1,20 @@
-# LotKeys V0.9.5.14 — progressive Device history
+# LotKeys V0.9.5.15 — MMS previews and organized contact media
 
-This TEST web update makes recent Device SMS/MMS conversations feel quicker without changing the proven V0.9.5.13 connection and live-refresh path. It renders the newest six messages first, reveals older history in local chunks, and warms the most recent conversation while the Hub list is open.
+This TEST web update lets a user inspect an MMS photo inside its Device conversation before deciding whether to retain it. It also places **💾 Media** in the Device-chat action row and separates each contact's saved **Photos** and **Documents**.
 
-## V0.9.5.14 included
+## V0.9.5.15 included
+
+- Show **View photo** for image attachments in Device SMS/MMS bubbles.
+- Fetch a preview from the connected phone only after the user requests it, keeping the six-message opening path fast.
+- Keep previews in temporary browser memory and revoke them when the chat closes, the phone disconnects, the account changes, or the page closes.
+- Keep retention explicit: the photo enters the contact's private Drive folder only after the user presses **💾**.
+- Add **💾 Media** beside Notes, Questions, Call, Booking, and Organize in Device chats.
+- Divide saved contact attachments into **Photos** and **Documents**, including separate counts and empty states. HEIC/HEIF filenames are classified as photos even when the browser reports a generic MIME type.
+- Keep the V0.9.5.14 progressive-history/live-refresh behavior and the working V0.9.5.12 Android connector. No APK reinstall, permission change, re-pairing, or Google-account re-selection is required.
+
+Browser-decodable MMS images can be previewed inline. If a browser cannot decode a particular image format, LotKeys keeps the **💾** save path available instead of retaining or converting the attachment silently.
+
+## V0.9.5.14 retained
 
 - Render only the newest six messages when a Device conversation first opens.
 - Reveal the already-fetched older messages 20 at a time before requesting the next Android history page.

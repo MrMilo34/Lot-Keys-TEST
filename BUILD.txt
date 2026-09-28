@@ -1,3 +1,13 @@
+V0.9.5.15 DEVICE MMS PREVIEWS + ORGANIZED MEDIA
+- Adds an on-demand View photo control to image attachments inside Device SMS/MMS bubbles.
+- Keeps previews transient in browser memory; only the explicit 💾 action retains an attachment in the contact's private folder.
+- Adds 💾 Media to the Device-chat action row beside Notes, Questions, Call, Booking and Organize.
+- Separates saved contact attachments into Photos and Documents with individual counts and empty states.
+- Retains V0.9.5.14 progressive history/live refresh and the compatible V0.9.5.12 Android connector.
+- Build: 095015.
+- Android connector: V0.9.5.12, version code 95012 (unchanged).
+- Service worker cache: lotkeys-app-v095015-device-mms-preview-media-sections.
+
 V0.9.5.14 DEVICE CHAT PROGRESSIVE HISTORY
 - Opens Device chats with the newest six messages and reveals older history in 20-message chunks.
 - Warms the newest conversation from the Hub list and reuses up to eight recent first pages in volatile memory for five minutes.

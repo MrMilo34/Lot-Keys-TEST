@@ -8,17 +8,17 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.14 while Android remains V0.9.5.12', () => {
+test('release metadata is consistently V0.9.5.15 while Android remains V0.9.5.12', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.14');
-  assert.equal(version.build, '095014');
+  assert.equal(version.version, '0.9.5.15');
+  assert.equal(version.build, '095015');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'device-chat-progressive-history');
+  assert.equal(version.release, 'device-mms-preview-media-sections');
   assert.equal(version.androidConnectorVersion, '0.9.5.12');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095014-device-chat-progressive-history');
-  assert.match(read('index.html'), /V0\.9\.5\.14/);
-  assert.match(read('manifest.webmanifest'), /build=095014/);
-  assert.match(read('sw.js'), /lotkeys-app-v095014-device-chat-progressive-history/);
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095015-device-mms-preview-media-sections');
+  assert.match(read('index.html'), /V0\.9\.5\.15/);
+  assert.match(read('manifest.webmanifest'), /build=095015/);
+  assert.match(read('sw.js'), /lotkeys-app-v095015-device-mms-preview-media-sections/);
   assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.12/);
   assert.match(read('android/app/build.gradle'), /versionCode 95012/);
   assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.12 TEST/);
@@ -174,7 +174,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095014/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095015/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -268,8 +268,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095014/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095014/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095015/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095015/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -366,11 +366,12 @@ test('current Device conversation keeps the compact customer card inside the hea
   const start = hub.lastIndexOf('async function openDeviceConversation(threadId)');
   const current = hub.slice(start, hub.indexOf("document.addEventListener('click'", start));
   assert.doesNotMatch(current, /hub-device-avatar/);
-  for (const id of ['hub-device-customer', 'hub-device-note', 'hub-device-questions', 'hub-device-appointment', 'hub-device-organize']) {
+  for (const id of ['hub-device-customer', 'hub-device-note', 'hub-device-questions', 'hub-device-appointment', 'hub-device-files', 'hub-device-organize']) {
     assert.match(current, new RegExp(id));
   }
-  assert.doesNotMatch(current, /hub-device-contact|hub-device-files/);
+  assert.doesNotMatch(current, /hub-device-contact/);
   assert.match(current, /<small>Notes<\/small>.*<small>Questions<\/small>.*<small>Call<\/small>.*<small>Booking<\/small>.*<small>Organize<\/small>/s);
+  assert.match(current, /mediaButton\.innerHTML='<span>💾<\/span><small>Media<\/small>'.*insertBefore\(mediaButton,\$\('#hub-device-organize'/s);
   assert.match(current, /hub-device-plus/);
   assert.match(current, /hub-device-mic/);
   assert.match(current, /P\.sendMedia/);
@@ -698,6 +699,28 @@ test('both chat composers expose tap and hold media/voice controls', () => {
   assert.match(messaging, /async function sendFile/);
   assert.match(messaging, /data-lkmsg-save-media/);
   assert.match(messaging, /async function mediaFile/);
+});
+
+test('Device MMS photos preview transiently and saved media is split into Photos and Documents', () => {
+  const hub = read('lotkeys-hub.js');
+  const core = read('lotkeys-hub-core.js');
+  const css = read('lotkeys-hub.css');
+  assert.match(hub, /mediaButton\.id='hub-device-files'/);
+  assert.match(hub, /<span>💾<\/span><small>Media<\/small>/);
+  assert.match(hub, /deviceMediaPreviews=new Map\(\)/);
+  assert.match(hub, /P\.attachment\(part\.id\)/);
+  assert.match(hub, /View photo/);
+  assert.match(hub, /Loads from phone · not saved/);
+  assert.match(hub, /URL\.revokeObjectURL\(preview\.url\)/);
+  assert.match(hub, /activeDeviceMediaCleanup!==clearDeviceMediaPreviews\|\|root\.hidden/);
+  assert.match(hub, /deviceMediaObserver\.observe\(root,\{attributes:true/);
+  assert.match(hub, /H\.splitAttachments\(c\.attachments\|\|\[\]\)/);
+  assert.match(hub, /section\('Photos','🖼️',grouped\.photos/);
+  assert.match(hub, /section\('Documents','📄',grouped\.documents/);
+  assert.match(core, /function isPhotoAttachment/);
+  assert.match(css, /\.hub-device-tools\.hub-six-actions\{grid-template-columns:repeat\(6/);
+  assert.match(css, /\.hub-phone-photo-preview img/);
+  assert.doesNotMatch(hub, /localStorage\.setItem\([^\n]*deviceMediaPreviews/);
 });
 
 test('Lock Screen and Device composer omit the reported clutter', () => {

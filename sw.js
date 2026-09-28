@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095014-device-chat-progressive-history';
+const CACHE='lotkeys-app-v095015-device-mms-preview-media-sections';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

@@ -193,6 +193,18 @@ test('a burst of live Device replies cannot hide the seventh new message in the 
   assert.deepEqual(Hub.unseenDeviceMessages(current, buffered, refreshed).map(message => message.id), ['41', '42', '43', '44', '45', '46', '47']);
 });
 
+test('saved contact media separates photos from documents using MIME type or filename', () => {
+  const grouped = Hub.splitAttachments([
+    { id: 'jpeg', name: 'customer.jpg', type: 'image/jpeg' },
+    { id: 'heic', name: 'trade-in.HEIC', type: 'application/octet-stream' },
+    { id: 'pdf', name: 'registration.pdf', type: 'application/pdf' },
+    { id: 'voice', name: 'message.m4a', type: 'audio/mp4' }
+  ]);
+  assert.deepEqual(grouped.photos.map(file => file.id), ['jpeg', 'heic']);
+  assert.deepEqual(grouped.documents.map(file => file.id), ['pdf', 'voice']);
+  assert.equal(Hub.isPhotoAttachment({ name: 'scan.docx', type: 'application/octet-stream' }), false);
+});
+
 test('appointment identity shows a phone-only customer exactly once', () => {
   assert.deepEqual(Hub.appointmentIdentity({
     customerName: '+1 (780) 872-1598',

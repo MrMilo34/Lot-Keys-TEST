@@ -1,9 +1,9 @@
-# LotKeys V0.9.5.14 team-test checklist
+# LotKeys V0.9.5.15 team-test checklist
 
-## V0.9.5.14 baseline
+## V0.9.5.15 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095014` and confirm **V0.9.5.14 / 095014**.
-- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.14 is a web-only update; do not reinstall the APK or reselect the account.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095015` and confirm **V0.9.5.15 / 095015**.
+- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.15 is a web-only update; do not reinstall the APK, re-pair, or reselect the account.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
@@ -76,6 +76,10 @@
 - Leave that Device conversation open and receive a fictional SMS reply. Confirm the new bubble appears automatically on both the phone and paired PC without backing out or reopening the chat.
 - Repeat while an unsent draft and queued attachment are in the composer; both must remain. Scroll up before another reply and confirm the reading position stays fixed, then return to the bottom and confirm a later reply follows automatically.
 - Send an SMS from the open conversation and confirm the locally rendered outgoing bubble is replaced by, rather than duplicated beside, the phone-confirmed copy.
+- Receive a browser-decodable MMS photo. Confirm the bubble offers **View photo** without transferring or saving it automatically, then tap it and confirm the image appears inline and opens larger when tapped again.
+- Before pressing 💾, open the new chat-toolbar **💾 Media** button and confirm the previewed photo is not present in the contact folder. Return to the chat, press the attachment's 💾 button, and confirm exactly one retained copy appears.
+- Close and reopen the conversation after previewing but not saving a different photo. Confirm the temporary image has been cleared and **View photo** appears again.
+- If an MMS uses a format the current browser cannot decode, confirm LotKeys reports that honestly and leaves the explicit 💾 save option available.
 - Confirm Android contact names appear when Contacts access is approved and LotKeys custom names take priority.
 - Send a short SMS from the phone view and from the paired computer. Confirm it is actually sent by the phone.
 - Confirm the message state changes through **Sending**, then **Sent** or **Failed**.
@@ -100,6 +104,7 @@
 - Rename the LotKeys contact and confirm the custom name overrides the Android contact name.
 - Delete the LotKeys contact and confirm its number returns to Unsorted while the phone conversation remains.
 - Confirm deleting/clearing a phone conversation does not delete the LotKeys customer folder, notes, or saved documents.
+- From a Device chat, confirm the six action buttons appear in this order: Notes, Questions, Call, Booking, Media, Organize. Open **💾 Media** and confirm retained images are grouped under **Photos** while PDFs, office files, audio, and video appear under **Documents**, each with its own count and empty state.
 
 ## Listing photo order
 

@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.5.14 — pure customer, conversation, standalone reminder and appointment models. */
+/* LotKeys Hub V0.9.5.15 — pure customer, conversation, media, standalone reminder and appointment models. */
 (function (root) {
   'use strict';
 
@@ -95,6 +95,21 @@
     const known = new Set([...sortDeviceMessages(current), ...sortDeviceMessages(buffered)]
       .map(message => String(message?.id ?? '')));
     return sortDeviceMessages(incoming).filter(message => !known.has(String(message?.id ?? '')));
+  }
+
+  function isPhotoAttachment(file) {
+    const type = text(file?.type).toLowerCase();
+    if (type.startsWith('image/')) return true;
+    const name = text(file?.name).toLowerCase();
+    return /\.(?:avif|bmp|gif|heic|heif|jpe?g|png|webp)$/.test(name);
+  }
+
+  function splitAttachments(rows) {
+    const result = { photos: [], documents: [] };
+    for (const file of Array.isArray(rows) ? rows : []) {
+      result[isPhotoAttachment(file) ? 'photos' : 'documents'].push(file);
+    }
+    return result;
   }
 
   function primary(contact) {
@@ -783,6 +798,8 @@
     splitDeviceHistory,
     revealDeviceHistory,
     unseenDeviceMessages,
+    isPhotoAttachment,
+    splitAttachments,
     primary,
     nextLabel,
     field,
