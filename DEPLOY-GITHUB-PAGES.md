@@ -27,9 +27,9 @@ LotKeys needs a normal HTTPS origin for Google browser OAuth. Opening `index.htm
 8. Wait for GitHub to publish the page, then use the HTTPS URL GitHub provides.
 9. Open that URL in Chrome on Android.
 
-## V0.9.5.16 web update
+## V0.9.5.17 web update
 
-Deploy the complete website snapshot and then fully close and reopen the installed LotKeys web app once so cache `lotkeys-app-v095016-live-mms-preview-scroll-history` takes control. Keep the working V0.9.5.12 Android connector installed: this release adds automatic inline previews for MMS photos arriving in an open chat, restores explicitly saved photos from contact Media, and loads older message chunks at the scroll boundary. There is no APK reinstall, re-pairing, or Google-account re-selection.
+Deploy the complete website snapshot and then fully close and reopen the installed LotKeys web app once so cache `lotkeys-app-v095017-hub-chat-actions` takes control. Keep the working V0.9.5.12 Android connector installed: this release reorders and restyles Hub chat actions, docks them at the side on PC, and adds Enter-to-send with Shift+Enter line breaks on desktop. It retains V0.9.5.16 live MMS previews and scroll-loaded history. There is no APK reinstall, re-pairing, or Google-account re-selection.
 
 ## Compatible V0.9.5.12 Android connector
 

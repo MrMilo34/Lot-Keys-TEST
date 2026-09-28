@@ -1,8 +1,17 @@
-# LotKeys V0.9.5.16 — live MMS images and scroll-loaded history
+# LotKeys V0.9.5.17 — cohesive Hub chat actions
 
-This TEST web update shows new MMS photos inline while a Device conversation is open, restores explicitly saved images from contact Media, and loads older message chunks automatically as the user scrolls backward.
+This TEST web update puts the Device chat actions in the working order, makes Organize visually consistent throughout Hub, docks chat actions at the side on PC, and adds standard desktop keyboard sending.
 
-## V0.9.5.16 included
+## V0.9.5.17 included
+
+- Order Device chat actions as **Notes, Questions, Call, Media, Booking, Organize**.
+- Apply the existing high-contrast Organize treatment everywhere it appears in Hub: black with white text in the light theme and white with black text in the dark theme.
+- Dock Device and LotKeys chat actions in a fixed right-side rail on PC while preserving the compact horizontal phone layout.
+- Reserve conversation space beside the desktop rail so action buttons never cover Device messages.
+- Make **Enter** send from both Device and LotKeys chats on a PC while **Shift+Enter** inserts a line break. Touch/mobile keyboards keep their normal behavior.
+- Retain live MMS previews, saved-photo restoration, scroll-loaded older history, reconnection, and the working V0.9.5.12 Android connector. No APK reinstall, permission change, re-pairing, or Google-account re-selection is required.
+
+## V0.9.5.16 retained
 
 - Automatically fetch and show a browser-decodable MMS photo when it arrives while that Device conversation is open.
 - Keep older unsaved photos lightweight and private: they retain the existing **View photo** control and load only when requested.

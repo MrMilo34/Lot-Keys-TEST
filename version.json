@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.16",
-  "build": "095016",
-  "release": "live-mms-preview-scroll-history",
+  "version": "0.9.5.17",
+  "build": "095017",
+  "release": "hub-chat-actions",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095016-live-mms-preview-scroll-history",
-  "publishedAt": "2026-09-27",
-  "basedOn": "LotKeys V0.9.5.15 Device MMS preview and media sections",
+  "serviceWorkerCache": "lotkeys-app-v095017-hub-chat-actions",
+  "publishedAt": "2026-09-28",
+  "basedOn": "LotKeys V0.9.5.16 live MMS previews and scroll-loaded history",
   "androidConnectorVersion": "0.9.5.12"
 }

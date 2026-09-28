@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095016-live-mms-preview-scroll-history';
+const CACHE='lotkeys-app-v095017-hub-chat-actions';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

@@ -8,17 +8,17 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.16 while Android remains V0.9.5.12', () => {
+test('release metadata is consistently V0.9.5.17 while Android remains V0.9.5.12', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.16');
-  assert.equal(version.build, '095016');
+  assert.equal(version.version, '0.9.5.17');
+  assert.equal(version.build, '095017');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'live-mms-preview-scroll-history');
+  assert.equal(version.release, 'hub-chat-actions');
   assert.equal(version.androidConnectorVersion, '0.9.5.12');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095016-live-mms-preview-scroll-history');
-  assert.match(read('index.html'), /V0\.9\.5\.16/);
-  assert.match(read('manifest.webmanifest'), /build=095016/);
-  assert.match(read('sw.js'), /lotkeys-app-v095016-live-mms-preview-scroll-history/);
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095017-hub-chat-actions');
+  assert.match(read('index.html'), /V0\.9\.5\.17/);
+  assert.match(read('manifest.webmanifest'), /build=095017/);
+  assert.match(read('sw.js'), /lotkeys-app-v095017-hub-chat-actions/);
   assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.12/);
   assert.match(read('android/app/build.gradle'), /versionCode 95012/);
   assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.12 TEST/);
@@ -174,7 +174,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095016/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095017/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -268,8 +268,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095016/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095016/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095017/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095017/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -371,7 +371,7 @@ test('current Device conversation keeps the compact customer card inside the hea
   }
   assert.doesNotMatch(current, /hub-device-contact/);
   assert.match(current, /<small>Notes<\/small>.*<small>Questions<\/small>.*<small>Call<\/small>.*<small>Booking<\/small>.*<small>Organize<\/small>/s);
-  assert.match(current, /mediaButton\.innerHTML='<span>💾<\/span><small>Media<\/small>'.*insertBefore\(mediaButton,\$\('#hub-device-organize'/s);
+  assert.match(current, /mediaButton\.innerHTML='<span>💾<\/span><small>Media<\/small>'.*insertBefore\(mediaButton,\$\('#hub-device-appointment'/s);
   assert.match(current, /hub-device-plus/);
   assert.match(current, /hub-device-mic/);
   assert.match(current, /P\.sendMedia/);
@@ -725,6 +725,28 @@ test('Device MMS photos preview transiently, restore saved copies and split Medi
   assert.match(css, /\.hub-device-tools\.hub-six-actions\{grid-template-columns:repeat\(6/);
   assert.match(css, /\.hub-phone-photo-preview img/);
   assert.doesNotMatch(hub, /localStorage\.setItem\([^\n]*deviceMediaPreviews/);
+});
+
+test('PC chat actions dock at the side, Organize stays high contrast, and Enter sends', () => {
+  const hub = read('lotkeys-hub.js');
+  const messaging = read('lotkeys-messaging.js');
+  const css = read('lotkeys-hub.css');
+  const start = hub.lastIndexOf('async function openDeviceConversation(threadId)');
+  const current = hub.slice(start, hub.indexOf('const openDeviceConversationWithMedia', start));
+  assert.match(current, /<small>Notes<\/small>.*<small>Questions<\/small>.*<small>Call<\/small>.*<small>Booking<\/small>.*<small>Organize<\/small>/s);
+  assert.match(current, /insertBefore\(mediaButton,\$\('#hub-device-appointment'/);
+  assert.match(hub, /class="hub-btn hub-organize-button" id="hub-device-organize"/);
+  assert.match(hub, /class="hub-btn hub-organize-button" id="hub-contact-organize"/);
+  assert.match(hub, /class="hub-btn hub-organize-button" data-internal="organize"/);
+  assert.match(css, /@media\(min-width:980px\)\{\.hub-device-tools\.hub-five-actions,\.hub-internal-tools\.hub-five-actions\{position:fixed;top:50%;right:12px/);
+  assert.match(css, /\.hub-device-history\{padding-right:110px\}/);
+  for (const source of [hub, messaging]) {
+    assert.match(source, /const pcEnterSends=event=>event\.key==='Enter'&&!event\.shiftKey&&!event\.isComposing&&!event\.repeat/);
+    assert.match(source, /\(min-width: 760px\) and \(pointer: fine\)/);
+  }
+  assert.match(current, /draft\.addEventListener\('keydown',event=>\{if\(!pcEnterSends\(event\)\)return;event\.preventDefault\(\);\$\('#hub-device-compose',root\)\.requestSubmit\(\)/);
+  assert.match(hub, /if\(pcEnterSends\(event\)&&files\.length\)\{event\.preventDefault\(\);event\.stopImmediatePropagation\(\);send\.click\(\)/);
+  assert.match(messaging, /input\.addEventListener\('keydown',e=>\{if\(pcEnterSends\(e\)\)\{e\.preventDefault\(\);send\(\)\}\}\)/);
 });
 
 test('live MMS photos open inline and older Device chunks load at the scroll boundary', () => {

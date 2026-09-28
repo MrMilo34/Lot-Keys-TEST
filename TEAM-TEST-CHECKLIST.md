@@ -1,9 +1,9 @@
-# LotKeys V0.9.5.16 team-test checklist
+# LotKeys V0.9.5.17 team-test checklist
 
-## V0.9.5.16 baseline
+## V0.9.5.17 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095016` and confirm **V0.9.5.16 / 095016**.
-- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.16 is a web-only update; do not reinstall the APK, re-pair, or reselect the account.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095017` and confirm **V0.9.5.17 / 095017**.
+- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.17 is a web-only update; do not reinstall the APK, re-pair, or reselect the account.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
@@ -76,6 +76,8 @@
 - Leave that Device conversation open and receive a fictional SMS reply. Confirm the new bubble appears automatically on both the phone and paired PC without backing out or reopening the chat.
 - Repeat while an unsent draft and queued attachment are in the composer; both must remain. Scroll up before another reply and confirm the reading position stays fixed, then return to the bottom and confirm a later reply follows automatically.
 - Send an SMS from the open conversation and confirm the locally rendered outgoing bubble is replaced by, rather than duplicated beside, the phone-confirmed copy.
+- On PC, confirm both Device and LotKeys chat actions form a fixed vertical rail at the right and do not cover any message bubble. Confirm the same actions remain horizontal on a phone.
+- In both PC chat composers, press **Shift+Enter** and confirm it inserts a line break without sending. Then press **Enter** and confirm the complete draft sends exactly once. Confirm a phone's normal touch keyboard behavior is unchanged.
 - With the conversation open, receive a browser-decodable MMS photo and confirm it appears inline automatically without being retained. Tap the image and confirm it opens larger.
 - Reopen an older conversation containing an unsaved photo and confirm it still offers **View photo** instead of automatically downloading the history image. Tap it and confirm the image appears inline.
 - Before pressing 💾, open the new chat-toolbar **💾 Media** button and confirm the previewed photo is not present in the contact folder. Return to the chat, press the attachment's 💾 button, and confirm exactly one retained copy appears.
@@ -106,7 +108,8 @@
 - Rename the LotKeys contact and confirm the custom name overrides the Android contact name.
 - Delete the LotKeys contact and confirm its number returns to Unsorted while the phone conversation remains.
 - Confirm deleting/clearing a phone conversation does not delete the LotKeys customer folder, notes, or saved documents.
-- From a Device chat, confirm the six action buttons appear in this order: Notes, Questions, Call, Booking, Media, Organize. Open **💾 Media** and confirm retained images are grouped under **Photos** while PDFs, office files, audio, and video appear under **Documents**, each with its own count and empty state.
+- From a Device chat, confirm the six action buttons appear in this order: Notes, Questions, Call, Media, Booking, Organize. Open **💾 Media** and confirm retained images are grouped under **Photos** while PDFs, office files, audio, and video appear under **Documents**, each with its own count and empty state.
+- Switch between light and dark themes. Confirm every Hub **🗂️ Organize** action is black with white text in the light theme and white with black text in the dark theme, including Device Categories, Device chat, LotKeys chat, and Contact details.
 
 ## Listing photo order
 

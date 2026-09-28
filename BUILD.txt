@@ -1,3 +1,14 @@
+V0.9.5.17 HUB CHAT ACTIONS + PC COMPOSER
+- Orders Device chat actions as Notes, Questions, Call, Media, Booking and Organize.
+- Gives every Hub Organize action the same inverted light/dark theme treatment used by Device Categories.
+- Docks Device and LotKeys chat action strips to a right-side PC rail without covering messages.
+- Uses Enter to send and Shift+Enter for a new line on PC while retaining normal touch-keyboard behavior.
+- Retains V0.9.5.16 live MMS previews, saved-photo history, automatic older-message loading and reconnection.
+- Web-only update; the compatible V0.9.5.12 Android connector is unchanged.
+- Build: 095017.
+- Android connector: V0.9.5.12, version code 95012 (unchanged).
+- Service worker cache: lotkeys-app-v095017-hub-chat-actions.
+
 V0.9.5.16 LIVE MMS PREVIEWS + SCROLL-LOADED HISTORY
 - Automatically shows browser-decodable MMS photos that arrive while their Device conversation is open.
 - Keeps older unsaved images on the explicit View photo path, while retained 💾 copies restore inline from the contact's private Media folder.
