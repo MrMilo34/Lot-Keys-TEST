@@ -1,3 +1,12 @@
+V0.9.5.18 CONTACT HEADER + TRUSTED COMPUTER NAMES
+- Shows long Device contact names on two lines above their number in the compact vehicle header.
+- Removes the redundant SMS/MMS live label from that card.
+- Adds Rename for trusted PCs in the phone Connected Devices list, stored in that phone browser.
+- Retains V0.9.5.17 action order, Organize theme styling, PC side rail and desktop keyboard controls.
+- Web-only update; V0.9.5.12 Android connector remains installed.
+- Build: 095018.
+- Service worker cache: lotkeys-app-v095018-contact-header-pc-names.
+
 V0.9.5.17 HUB CHAT ACTIONS + PC COMPOSER
 - Orders Device chat actions as Notes, Questions, Call, Media, Booking and Organize.
 - Gives every Hub Organize action the same inverted light/dark theme treatment used by Device Categories.

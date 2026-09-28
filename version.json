@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.17",
-  "build": "095017",
-  "release": "hub-chat-actions",
+  "version": "0.9.5.18",
+  "build": "095018",
+  "release": "contact-header-pc-names",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095017-hub-chat-actions",
+  "serviceWorkerCache": "lotkeys-app-v095018-contact-header-pc-names",
   "publishedAt": "2026-09-28",
-  "basedOn": "LotKeys V0.9.5.16 live MMS previews and scroll-loaded history",
+  "basedOn": "LotKeys V0.9.5.17 Hub chat actions and PC keyboard controls",
   "androidConnectorVersion": "0.9.5.12"
 }

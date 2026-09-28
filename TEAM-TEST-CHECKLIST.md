@@ -1,12 +1,14 @@
-# LotKeys V0.9.5.17 team-test checklist
+# LotKeys V0.9.5.18 team-test checklist
 
-## V0.9.5.17 baseline
+## V0.9.5.18 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095017` and confirm **V0.9.5.17 / 095017**.
-- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.17 is a web-only update; do not reinstall the APK, re-pair, or reselect the account.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095018` and confirm **V0.9.5.18 / 095018**.
+- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.18 is a web-only update; do not reinstall the APK, re-pair, or reselect the account.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
+- Open a Device conversation with a long name and an Interested Vehicle card. Confirm the name wraps to a second line above its phone number without growing the vehicle card; the SMS/MMS status text is gone.
+- On the phone, open **Phone connection → 🖥️ Connected**, rename a trusted computer, close and reopen the browser, and confirm its custom name remains. Clear the nickname to restore the original browser label. Forget the computer and confirm its nickname is removed.
 
 ## Android setup
 

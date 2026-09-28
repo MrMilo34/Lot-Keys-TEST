@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.17 — trusted phones recover PC sessions and warm recent Device history. */
+/* LotKeys Phone V0.9.5.18 — trusted phones recover PC sessions and warm recent Device history. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -12,6 +12,7 @@
   const TOKEN_KEY = 'lotkeys-phone-native-token-v1';
   const BROWSER_KEY = 'lotkeys-phone-browser-id-v1';
   const TRUST_KEY = 'lotkeys-phone-trusted-pcs-v1';
+  const TRUST_NAMES_KEY = 'lotkeys-phone-trusted-pc-names-v1';
   const SESSION_KEY = 'lotkeys-phone-active-session-v1';
   const REMEMBERED_PAIR_KEY = 'lotkeys-phone-remembered-pair-v1';
   const READ_RECEIPTS_KEY = 'lotkeys-phone-read-receipts-v1';
@@ -179,6 +180,42 @@
     const browser = /Edg\//.test(navigator.userAgent) ? 'Edge' : /Firefox\//.test(navigator.userAgent) ? 'Firefox' : /Chrome\//.test(navigator.userAgent) ? 'Chrome' : 'Browser';
     return (browser + ' on ' + platform).slice(0, 80);
   };
+
+  function trustNames() {
+    try {
+      const names = JSON.parse(localStorage.getItem(TRUST_NAMES_KEY) || '{}');
+      return names && typeof names === 'object' && !Array.isArray(names) ? names : {};
+    } catch { return {}; }
+  }
+
+  function trustedComputerName(browser, fallback = 'Computer') {
+    const key = text(browser);
+    if (!/^[A-Za-z0-9_-]{16,100}$/.test(key)) return fallback;
+    const names = trustNames();
+    const name = Object.hasOwn(names, key) ? names[key] : '';
+    return typeof name === 'string' && name.trim() ? name.trim().slice(0, 60) : fallback;
+  }
+
+  function namedTrusts() {
+    return trusts().map(row => ({ ...row, name: trustedComputerName(row.browserId, row.name || 'Computer') }));
+  }
+
+  function setTrustedComputerName(browser, name) {
+    if (!state.nativeToken || !/^[A-Za-z0-9_-]{16,100}$/.test(browser) || !trusts().some(row => row.browserId === browser)) throw Error('That computer is no longer trusted.');
+    const label = String(name ?? '').trim();
+    if (label.length > 60) throw Error('Use a computer name of 60 characters or less.');
+    const names = trustNames();
+    if (label) names[browser] = label;
+    else delete names[browser];
+    localStorage.setItem(TRUST_NAMES_KEY, JSON.stringify(names));
+    event('trust');
+  }
+
+  function removeTrustedComputerName(browser) {
+    const names = trustNames();
+    delete names[browser];
+    localStorage.setItem(TRUST_NAMES_KEY, JSON.stringify(names));
+  }
 
   function rememberedPair() {
     try {
@@ -1428,12 +1465,12 @@
 
   function forgetDevice(browser) {
     if (state.nativeToken && state.nativeStatus) {
-      state.nativeTrusts = state.nativeTrusts.filter(row => row.browserId !== browser);
       return nativeCall('/v1/relay/forget', {
         method: 'POST', body: JSON.stringify({ browserId: browser }), timeout: 15000
-      }).then(async () => { await wait(500); await nativeTick(); })
+      }).then(async () => { removeTrustedComputerName(browser); state.nativeTrusts = state.nativeTrusts.filter(row => row.browserId !== browser); await wait(500); await nativeTick(); })
         .catch(error => { state.lastError = error.message; event('status'); throw error; });
     }
+    removeTrustedComputerName(browser);
     saveTrusts(trusts().filter(row => row.browserId !== browser));
     if (state.session?.browserId === browser) return disconnect({ notify: true, forget: true });
   }
@@ -1441,12 +1478,14 @@
   async function disconnectAll() {
     if (state.nativeToken && state.nativeStatus) {
       await nativeCall('/v1/relay/disconnect-all', { method: 'POST', body: '{}', timeout: 15000 });
+      localStorage.removeItem(TRUST_NAMES_KEY);
       state.nativeTrusts = [];
       await wait(500);
       await nativeTick().catch(() => {});
       event('trust');
       return;
     }
+    localStorage.removeItem(TRUST_NAMES_KEY);
     saveTrusts([]);
     pendingOffers.clear();
     await disconnect({ notify: true, forget: true });
@@ -1458,7 +1497,7 @@
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
     return {
-      version: '0.9.5.17',
+      version: '0.9.5.18',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1476,7 +1515,7 @@
       pairing: state.pairing ? { code: state.pairing.code, sessionId: state.pairing.sessionId, expiresAt: state.pairing.expiresAt, automatic: !!state.pairing.automatic } : null,
       deviceName: state.nativeStatus?.deviceName || state.session?.peerName || '',
       sourceApp: state.nativeStatus?.sourceApp || state.session?.phoneStatus?.sourceApp || '',
-      peerName: state.nativeStatus?.relay?.peerName || state.session?.peerName || '',
+      peerName: state.nativeToken ? trustedComputerName(state.nativeStatus?.relay?.browserId || state.session?.browserId, state.nativeStatus?.relay?.peerName || state.session?.peerName || '') : state.session?.peerName || '',
       trustMode: state.nativeStatus?.relay?.trustMode || state.session?.trustMode || '',
       trustExpiresAt: Number(state.nativeStatus?.relay?.trustExpiresAt) || state.session?.trustExpiresAt || 0,
       coverage,
@@ -1526,7 +1565,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.17',
+    version: '0.9.5.18',
     init,
     status,
     subscribe,
@@ -1550,6 +1589,8 @@
     attachment,
     disconnect,
     trusts,
+    namedTrusts,
+    setTrustedComputerName,
     forgetDevice,
     disconnectAll,
     clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; state.relayReady = false; state.relayIdentity = ''; state.relayError = ''; state.role = 'pc'; clearStoredSession(); event('status'); }

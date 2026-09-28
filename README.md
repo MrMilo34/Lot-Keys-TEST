@@ -1,8 +1,15 @@
-# LotKeys V0.9.5.17 — cohesive Hub chat actions
+# LotKeys V0.9.5.18 — readable contact headers and named computers
 
-This TEST web update puts the Device chat actions in the working order, makes Organize visually consistent throughout Hub, docks chat actions at the side on PC, and adds standard desktop keyboard sending.
+This TEST web update shows long Device contact names on two lines above the number and lets the phone name each trusted computer in Connected Devices. The V0.9.5.17 Hub action order, theme styling, PC side rail, and Enter-to-send remain. Keep the V0.9.5.12 Android connector installed.
 
-## V0.9.5.17 included
+## V0.9.5.18 included
+
+- Remove the redundant SMS/MMS status from the compact Device conversation header so a long name can wrap over two lines without growing the vehicle card.
+- On the phone, open **Phone connection → 🖥️ Connected → Rename** to give a trusted PC a recognizable name. A blank name restores its original browser label. The nickname is saved on that phone's LotKeys browser and also appears for its active connection there.
+- Keep the six actions in order: **Notes, Questions, Call, Media, Booking, Organize**, with the inverted Organize colors in both themes.
+- No Android APK reinstall, permission change, re-pairing, or Google-account re-selection.
+
+## V0.9.5.17 retained
 
 - Order Device chat actions as **Notes, Questions, Call, Media, Booking, Organize**.
 - Apply the existing high-contrast Organize treatment everywhere it appears in Hub: black with white text in the light theme and white with black text in the dark theme.
