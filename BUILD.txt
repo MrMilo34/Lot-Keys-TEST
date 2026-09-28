@@ -1,3 +1,13 @@
+V0.9.5.16 LIVE MMS PREVIEWS + SCROLL-LOADED HISTORY
+- Automatically shows browser-decodable MMS photos that arrive while their Device conversation is open.
+- Keeps older unsaved images on the explicit View photo path, while retained 💾 copies restore inline from the contact's private Media folder.
+- Loads the next existing 20-message history chunk when the reader reaches the top boundary and displays a Loading older messages spinner during the handoff.
+- Preserves reading position, newest-six-first opening, organized Media, live refresh, and reconnection.
+- Web-only update; the compatible V0.9.5.12 Android connector is unchanged.
+- Build: 095016.
+- Android connector: V0.9.5.12, version code 95012 (unchanged).
+- Service worker cache: lotkeys-app-v095016-live-mms-preview-scroll-history.
+
 V0.9.5.15 DEVICE MMS PREVIEWS + ORGANIZED MEDIA
 - Adds an on-demand View photo control to image attachments inside Device SMS/MMS bubbles.
 - Keeps previews transient in browser memory; only the explicit 💾 action retains an attachment in the contact's private folder.

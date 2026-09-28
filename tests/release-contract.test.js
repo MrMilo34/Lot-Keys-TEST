@@ -8,17 +8,17 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.15 while Android remains V0.9.5.12', () => {
+test('release metadata is consistently V0.9.5.16 while Android remains V0.9.5.12', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.15');
-  assert.equal(version.build, '095015');
+  assert.equal(version.version, '0.9.5.16');
+  assert.equal(version.build, '095016');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'device-mms-preview-media-sections');
+  assert.equal(version.release, 'live-mms-preview-scroll-history');
   assert.equal(version.androidConnectorVersion, '0.9.5.12');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095015-device-mms-preview-media-sections');
-  assert.match(read('index.html'), /V0\.9\.5\.15/);
-  assert.match(read('manifest.webmanifest'), /build=095015/);
-  assert.match(read('sw.js'), /lotkeys-app-v095015-device-mms-preview-media-sections/);
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095016-live-mms-preview-scroll-history');
+  assert.match(read('index.html'), /V0\.9\.5\.16/);
+  assert.match(read('manifest.webmanifest'), /build=095016/);
+  assert.match(read('sw.js'), /lotkeys-app-v095016-live-mms-preview-scroll-history/);
   assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.12/);
   assert.match(read('android/app/build.gradle'), /versionCode 95012/);
   assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.12 TEST/);
@@ -174,7 +174,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095015/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095016/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -268,8 +268,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095015/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095015/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095016/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095016/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -701,7 +701,7 @@ test('both chat composers expose tap and hold media/voice controls', () => {
   assert.match(messaging, /async function mediaFile/);
 });
 
-test('Device MMS photos preview transiently and saved media is split into Photos and Documents', () => {
+test('Device MMS photos preview transiently, restore saved copies and split Media into sections', () => {
   const hub = read('lotkeys-hub.js');
   const core = read('lotkeys-hub-core.js');
   const css = read('lotkeys-hub.css');
@@ -712,7 +712,11 @@ test('Device MMS photos preview transiently and saved media is split into Photos
   assert.match(hub, /View photo/);
   assert.match(hub, /Loads from phone · not saved/);
   assert.match(hub, /URL\.revokeObjectURL\(preview\.url\)/);
-  assert.match(hub, /activeDeviceMediaCleanup!==clearDeviceMediaPreviews\|\|root\.hidden/);
+  assert.match(hub, /activeDeviceMediaCleanup===clearDeviceMediaPreviews&&!root\.hidden/);
+  assert.match(hub, /savedDeviceMedia\.get\(deviceMediaSourceKey\(message,part\)\)/);
+  assert.match(hub, /S\.blob\(mediaContactId,retained\.id\)/);
+  assert.match(hub, /preview=\{file,url,saved:!!retained\}/);
+  assert.match(hub, /Saved in this contact’s private Media folder/);
   assert.match(hub, /deviceMediaObserver\.observe\(root,\{attributes:true/);
   assert.match(hub, /H\.splitAttachments\(c\.attachments\|\|\[\]\)/);
   assert.match(hub, /section\('Photos','🖼️',grouped\.photos/);
@@ -721,6 +725,24 @@ test('Device MMS photos preview transiently and saved media is split into Photos
   assert.match(css, /\.hub-device-tools\.hub-six-actions\{grid-template-columns:repeat\(6/);
   assert.match(css, /\.hub-phone-photo-preview img/);
   assert.doesNotMatch(hub, /localStorage\.setItem\([^\n]*deviceMediaPreviews/);
+});
+
+test('live MMS photos open inline and older Device chunks load at the scroll boundary', () => {
+  const hub = read('lotkeys-hub.js');
+  const start = hub.lastIndexOf('async function openDeviceConversation(threadId)');
+  const current = hub.slice(start, hub.indexOf('const openDeviceConversationWithMedia', start));
+  assert.match(current, /newlyArrived=live\?H\.unseenDeviceMessages\(messages,bufferedOlder,pageMessages\):\[\]/);
+  assert.match(current, /if\(live\)for\(const message of newlyArrived\)for\(const part of message\.attachments\|\|\[\]\)if\(H\.isPhotoAttachment\(part\)\)livePhotoKeys\.add/);
+  assert.match(current, /!!retained\|\|livePhotoKeys\.delete\(key\)\|\|!!part\._file/);
+  assert.match(current, /historyScrollArmed=false,lastHistoryScrollTop=mediaHistory\.scrollTop/);
+  assert.match(current, /mediaHistory\.addEventListener\('scroll'/);
+  assert.match(current, /mediaHistory\.scrollTop>120/);
+  assert.match(current, /Loading older messages…/);
+  assert.match(current, /requestAnimationFrame\(\(\)=>requestAnimationFrame\(resolve\)\)/);
+  assert.match(current, /setAttribute\('aria-busy','true'\)/);
+  assert.match(current, /bindOlderTrigger\(box\)/);
+  assert.match(current, /setTimeout\(maybeLoadOlder,0\)/);
+  assert.doesNotMatch(current, /action\(\$\('#hub-device-older',box\),\(\)=>loadPage\(true\)\)/);
 });
 
 test('Lock Screen and Device composer omit the reported clutter', () => {

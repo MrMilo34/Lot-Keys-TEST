@@ -1,11 +1,20 @@
-# LotKeys V0.9.5.15 — MMS previews and organized contact media
+# LotKeys V0.9.5.16 — live MMS images and scroll-loaded history
 
-This TEST web update lets a user inspect an MMS photo inside its Device conversation before deciding whether to retain it. It also places **💾 Media** in the Device-chat action row and separates each contact's saved **Photos** and **Documents**.
+This TEST web update shows new MMS photos inline while a Device conversation is open, restores explicitly saved images from contact Media, and loads older message chunks automatically as the user scrolls backward.
 
-## V0.9.5.15 included
+## V0.9.5.16 included
 
-- Show **View photo** for image attachments in Device SMS/MMS bubbles.
-- Fetch a preview from the connected phone only after the user requests it, keeping the six-message opening path fast.
+- Automatically fetch and show a browser-decodable MMS photo when it arrives while that Device conversation is open.
+- Keep older unsaved photos lightweight and private: they retain the existing **View photo** control and load only when requested.
+- Preserve the relationship between a message attachment and its explicitly saved Media copy. Once **💾** has retained a photo, reopening that message restores the saved Drive copy inline even if the phone copy is no longer available.
+- Replace the normal **Load older messages** tap with scroll-boundary loading. The button changes to **Loading older messages…** with a spinner while each existing 20-message chunk is revealed.
+- Preserve the user's reading position as older chunks and inline images expand.
+- Retain the newest-six-first opening, **💾 Media** shortcut, Photos/Documents sections, live replies, reconnection, and the working V0.9.5.12 Android connector. No APK reinstall, permission change, re-pairing, or Google-account re-selection is required.
+
+## V0.9.5.15 retained
+
+- Show **View photo** for older unsaved image attachments in Device SMS/MMS bubbles.
+- Fetch an older unsaved preview from the connected phone only after the user requests it, keeping the six-message opening path fast.
 - Keep previews in temporary browser memory and revoke them when the chat closes, the phone disconnects, the account changes, or the page closes.
 - Keep retention explicit: the photo enters the contact's private Drive folder only after the user presses **💾**.
 - Add **💾 Media** beside Notes, Questions, Call, Booking, and Organize in Device chats.

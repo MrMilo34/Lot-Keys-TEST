@@ -1,9 +1,9 @@
-# LotKeys V0.9.5.15 team-test checklist
+# LotKeys V0.9.5.16 team-test checklist
 
-## V0.9.5.15 baseline
+## V0.9.5.16 baseline
 
-- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095015` and confirm **V0.9.5.15 / 095015**.
-- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.15 is a web-only update; do not reinstall the APK, re-pair, or reselect the account.
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095016` and confirm **V0.9.5.16 / 095016**.
+- Keep the working **LotKeys-Android-V0.9.5.12** connector installed and confirm it still shows **V0.9.5.12 TEST**. V0.9.5.16 is a web-only update; do not reinstall the APK, re-pair, or reselect the account.
 - Confirm Account storage still restores the profile photo, celebration sounds, and Description Builder templates from the selected personal folder.
 - Confirm Inventory, Listings, Garage, internal LotKeys Chat, and Posting Buddy still open normally.
 - Confirm Hub contacts, notes, documents, appointments, categories, and subcategories from V0.9.4.83 remain available.
@@ -69,16 +69,18 @@
 
 - Confirm Device lists the phone's newest SMS/MMS conversations first and loads only 40 at a time.
 - Use **Load older conversations** and confirm additional threads append without duplicates.
-- Open a conversation and confirm older messages are above newer messages; use **Load older messages** for history.
-- Confirm a warm/recent conversation initially renders only its newest six messages. Tap **Load older messages** and confirm the next 20 closest older messages appear immediately without gaps or duplicates; continue until a new Android history page is required.
+- Open a conversation and confirm older messages are above newer messages. Scroll backward until the history boundary appears; confirm **Load older messages** changes to a spinner with **Loading older messages…** without requiring a tap.
+- Confirm a warm/recent conversation initially renders only its newest six messages. At each history boundary, confirm the next 20 closest older messages appear without gaps or duplicates and the current reading position stays stable; continue until a new Android history page is required.
 - Return to Hub, reopen the same chat within five minutes, and confirm it paints from volatile memory without another initial wait. Disconnect the phone, reconnect, and confirm stale cached history is not reused.
 - On a completely cold PC chat, confirm the conversation-list preview appears immediately while the encrypted relay fetch is pending. Record the cold and warmed open times separately; the cold round trip remains transport-dependent.
 - Leave that Device conversation open and receive a fictional SMS reply. Confirm the new bubble appears automatically on both the phone and paired PC without backing out or reopening the chat.
 - Repeat while an unsent draft and queued attachment are in the composer; both must remain. Scroll up before another reply and confirm the reading position stays fixed, then return to the bottom and confirm a later reply follows automatically.
 - Send an SMS from the open conversation and confirm the locally rendered outgoing bubble is replaced by, rather than duplicated beside, the phone-confirmed copy.
-- Receive a browser-decodable MMS photo. Confirm the bubble offers **View photo** without transferring or saving it automatically, then tap it and confirm the image appears inline and opens larger when tapped again.
+- With the conversation open, receive a browser-decodable MMS photo and confirm it appears inline automatically without being retained. Tap the image and confirm it opens larger.
+- Reopen an older conversation containing an unsaved photo and confirm it still offers **View photo** instead of automatically downloading the history image. Tap it and confirm the image appears inline.
 - Before pressing 💾, open the new chat-toolbar **💾 Media** button and confirm the previewed photo is not present in the contact folder. Return to the chat, press the attachment's 💾 button, and confirm exactly one retained copy appears.
-- Close and reopen the conversation after previewing but not saving a different photo. Confirm the temporary image has been cleared and **View photo** appears again.
+- Close and reopen the conversation after previewing but not saving a different old photo. Confirm the temporary image has been cleared and **View photo** appears again.
+- Save a photo with 💾, close and reopen the conversation, and confirm that message restores the retained Media copy inline even if the live phone attachment cannot be fetched.
 - If an MMS uses a format the current browser cannot decode, confirm LotKeys reports that honestly and leaves the explicit 💾 save option available.
 - Confirm Android contact names appear when Contacts access is approved and LotKeys custom names take priority.
 - Send a short SMS from the phone view and from the paired computer. Confirm it is actually sent by the phone.
