@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095020-neutral-bubble-frame-contact-header';
+const CACHE='lotkeys-app-v095021-chat-width-typography-theme-headers';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

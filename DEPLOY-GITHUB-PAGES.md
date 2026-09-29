@@ -1,5 +1,9 @@
 # Host the LotKeys test build with GitHub Pages
 
+## V0.9.5.21 web update
+
+Deploy the complete website snapshot, then fully close and reopen the installed web app so cache `lotkeys-app-v095021-chat-width-typography-theme-headers` takes control. Full LotKeys Chat now uses more screen width, incoming chat cards match Device chat, Device text matches the in-app type, and the five main page headers follow the light and dark theme. Keep the V0.9.5.12 Android connector installed; no re-pairing is needed.
+
 ## V0.9.5.20 web update
 
 Deploy the complete website snapshot, then fully close and reopen the installed LotKeys web app once so cache `lotkeys-app-v095020-neutral-bubble-frame-contact-header` takes control. The Device Bubble Chat frame is grey, while messages and compact alerts retain their Organization color. Its contact number sits below the name. Keep the V0.9.5.12 Android connector installed; no re-pairing is needed.

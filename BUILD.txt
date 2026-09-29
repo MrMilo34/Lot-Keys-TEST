@@ -1,3 +1,12 @@
+V0.9.5.21 CHAT WIDTH + TYPOGRAPHY + THEME HEADERS
+- Full LotKeys Chat and composer use available width, clear of the PC action rail.
+- Incoming LotKeys messages use the Device chat card surface.
+- Device message bodies adopt LotKeys Chat 14px type and line spacing.
+- Home, Inventory, Listings, Garage and Account top headers are white in light theme and black in dark theme.
+- Web-only update; V0.9.5.12 Android connector remains installed.
+- Build: 095021.
+- Service worker cache: lotkeys-app-v095021-chat-width-typography-theme-headers.
+
 V0.9.5.20 GREY DEVICE BUBBLE FRAME + CONTACT HEADER
 - Expanded Device Bubble Chat outer border and divider are grey.
 - Message bubbles and compact incoming alerts retain their Organization color.

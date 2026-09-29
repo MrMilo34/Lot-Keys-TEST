@@ -1,4 +1,11 @@
-# LotKeys V0.9.5.20 team-test checklist
+# LotKeys V0.9.5.21 team-test checklist
+
+## V0.9.5.21 chat layout and headers
+
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095021` and confirm **V0.9.5.21 / 095021**. Keep the V0.9.5.12 Android connector installed.
+- On PC, compare a Device conversation with a full LotKeys Chat. LotKeys messages and composer should use the conversation width while leaving clearance for the right-side action rail; on phone, chat bubbles should fit without horizontal scrolling.
+- Confirm incoming LotKeys message bubbles are white in light theme and use the same dark card surface as Device messages in dark theme. Compare Device and LotKeys message body text for matching 14px size, font family and spacing.
+- Visit Home, Inventory, Listings, Garage and Account in both themes. Their top header should be white in light theme and black in dark theme, with readable text and controls.
 
 ## V0.9.5.20 Device Bubble Chat polish
 

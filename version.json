@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.20",
-  "build": "095020",
-  "release": "neutral-bubble-frame-contact-header",
+  "version": "0.9.5.21",
+  "build": "095021",
+  "release": "chat-width-typography-theme-headers",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095020-neutral-bubble-frame-contact-header",
+  "serviceWorkerCache": "lotkeys-app-v095021-chat-width-typography-theme-headers",
   "publishedAt": "2026-09-29",
-  "basedOn": "LotKeys V0.9.5.19 unified Bubble Chat and Hub controls",
+  "basedOn": "LotKeys V0.9.5.20 Device Bubble Chat frame and contact header",
   "androidConnectorVersion": "0.9.5.12"
 }
