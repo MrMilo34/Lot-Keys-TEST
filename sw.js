@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095022-quiet-device-send-confirmation';
+const CACHE='lotkeys-app-v095023-hub-aware-right-side-previews';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

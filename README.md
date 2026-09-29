@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.23 — Hub-aware incoming previews
+
+The TEST web update suppresses the in-app message preview whenever Hub is open, so a new message does not cover a conversation or reply field. Elsewhere, the preview starts beside the Hub tab and fills the right side up to a safe gap before the PC scrollbar. The Android system messaging heads-up is controlled by the phone, not this web preview. Keep the V0.9.5.12 Android connector installed. See [RELEASE-0.9.5.23.md](RELEASE-0.9.5.23.md).
+
+## V0.9.5.22 retained
+
 # LotKeys V0.9.5.22 — quiet Device send confirmation
 
 The TEST web update removes the redundant “SMS sent through the phone” pop-up from Device conversation sends. Each outgoing message continues to show its SMS Sent or MMS Sent state, while failures still display an error. Keep the V0.9.5.12 Android connector installed. See [RELEASE-0.9.5.22.md](RELEASE-0.9.5.22.md).

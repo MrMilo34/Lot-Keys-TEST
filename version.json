@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.22",
-  "build": "095022",
-  "release": "quiet-device-send-confirmation",
+  "version": "0.9.5.23",
+  "build": "095023",
+  "release": "hub-aware-right-side-previews",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095022-quiet-device-send-confirmation",
+  "serviceWorkerCache": "lotkeys-app-v095023-hub-aware-right-side-previews",
   "publishedAt": "2026-09-29",
-  "basedOn": "LotKeys V0.9.5.21 chat width, typography and theme headers",
+  "basedOn": "LotKeys V0.9.5.22 quiet Device send confirmation",
   "androidConnectorVersion": "0.9.5.12"
 }

@@ -1,5 +1,9 @@
 # Host the LotKeys test build with GitHub Pages
 
+## V0.9.5.23 web update
+
+Deploy the complete website snapshot, then fully close and reopen the installed web app so cache `lotkeys-app-v095023-hub-aware-right-side-previews` takes control. Incoming in-app previews are hidden while Hub is open and otherwise occupy only the right-side space from Hub toward the screen edge. The V0.9.5.12 Android connector stays installed; no re-pairing is needed.
+
 ## V0.9.5.22 web update
 
 Deploy the complete website snapshot, then fully close and reopen the installed web app so cache `lotkeys-app-v095022-quiet-device-send-confirmation` takes control. Device SMS sends no longer show a duplicate success pop-up; the sent state remains under the message and send errors still appear. Keep the V0.9.5.12 Android connector installed; no re-pairing is needed.

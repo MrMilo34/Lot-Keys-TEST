@@ -1,4 +1,11 @@
-# LotKeys V0.9.5.22 team-test checklist
+# LotKeys V0.9.5.23 team-test checklist
+
+## V0.9.5.23 Hub-aware incoming previews
+
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095023` and confirm **V0.9.5.23 / 095023**. Keep the V0.9.5.12 Android connector installed.
+- Receive a Device reply while its Hub conversation is open and the keyboard is up. Confirm the message appears in chat without a colored in-app preview covering the reply field. Repeat on Hub home and in a full LotKeys Chat. The unread count and normal PC notification sound should still work.
+- From Home, Inventory or Listings, receive a message. The colored preview should begin at the left edge of the Hub tab (or farther right) and reach close to the right edge without overlapping the PC scrollbar. Check a narrow phone and desktop browser, then tap the preview to open Bubble Chat.
+- If an Android grey heads-up still appears at the top, identify its source in Android notifications; it is separate from the colored LotKeys web preview.
 
 ## V0.9.5.22 quiet Device send confirmation
 
