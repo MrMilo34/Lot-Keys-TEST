@@ -1,4 +1,10 @@
-# LotKeys V0.9.5.19 team-test checklist
+# LotKeys V0.9.5.20 team-test checklist
+
+## V0.9.5.20 Device Bubble Chat polish
+
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095020` and confirm **V0.9.5.20 / 095020**. Keep the V0.9.5.12 Android connector installed.
+- Open a Device Bubble Chat with a saved contact. Confirm the outer border and header divider are grey, the sent messages and compact incoming alert retain the Organization color, and the phone number is below the name with no overlap.
+- Check a long name, a narrow phone screen, and the dark theme. Send and receive a message to confirm the Bubble Chat still updates and replies normally.
 
 ## V0.9.5.19 Bubble Chat and controls
 

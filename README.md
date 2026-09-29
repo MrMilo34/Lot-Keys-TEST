@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.20 — Device Bubble Chat frame and contact header
+
+The TEST web update returns the expanded Device chat outline and divider to grey, while keeping its message bubbles and compact alerts in the conversation color. The phone number sits below the contact name. Keep the V0.9.5.12 Android connector installed. See [RELEASE-0.9.5.20.md](RELEASE-0.9.5.20.md).
+
+## V0.9.5.19 retained
+
 # LotKeys V0.9.5.19 — Bubble Chat for LotKeys and Device messages
 
 The TEST web update shares one quick-reply Bubble Chat across LotKeys and connected Device conversations. Holding Hub opens the most recently replied-to chat; incoming message previews open the sender in Bubble Chat. The Hub action stack sits near the lower-right edge with its existing order and spacing, and both reminder bells have corrected alignment and sizing. Keep the V0.9.5.12 Android connector installed. See [RELEASE-0.9.5.19.md](RELEASE-0.9.5.19.md) for the complete change list and test limits.

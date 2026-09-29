@@ -1,3 +1,11 @@
+V0.9.5.20 GREY DEVICE BUBBLE FRAME + CONTACT HEADER
+- Expanded Device Bubble Chat outer border and divider are grey.
+- Message bubbles and compact incoming alerts retain their Organization color.
+- The Device contact number appears under the name.
+- Web-only update; V0.9.5.12 Android connector remains installed.
+- Build: 095020.
+- Service worker cache: lotkeys-app-v095020-neutral-bubble-frame-contact-header.
+
 V0.9.5.18 CONTACT HEADER + TRUSTED COMPUTER NAMES
 - Shows long Device contact names on two lines above their number in the compact vehicle header.
 - Removes the redundant SMS/MMS live label from that card.
