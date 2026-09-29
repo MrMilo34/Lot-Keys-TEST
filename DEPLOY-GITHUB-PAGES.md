@@ -1,5 +1,9 @@
 # Host the LotKeys test build with GitHub Pages
 
+## V0.9.5.24 web update
+
+Deploy the complete website snapshot, then fully close and reopen the installed web app so cache `lotkeys-app-v095024-conditional-hub-reminder-bell` takes control. The Hub bell now obeys the hidden state when no reminders are active, and its glyph is slightly smaller. Keep the V0.9.5.12 Android connector installed; no re-pairing is needed.
+
 ## V0.9.5.23 web update
 
 Deploy the complete website snapshot, then fully close and reopen the installed web app so cache `lotkeys-app-v095023-hub-aware-right-side-previews` takes control. Incoming in-app previews are hidden while Hub is open and otherwise occupy only the right-side space from Hub toward the screen edge. The V0.9.5.12 Android connector stays installed; no re-pairing is needed.

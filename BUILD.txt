@@ -1,3 +1,10 @@
+V0.9.5.24 CONDITIONAL HUB REMINDER BELL
+- Hub reminder bell actually hides when all reminders are complete; the display:grid rule no longer overrides hidden.
+- Bell glyph reduces from 29px to 26px on desktop and 27px to 24px on phone.
+- Web-only update; V0.9.5.12 Android connector remains installed.
+- Build: 095024.
+- Service worker cache: lotkeys-app-v095024-conditional-hub-reminder-bell.
+
 V0.9.5.23 HUB-AWARE RIGHT-SIDE MESSAGE PREVIEWS
 - Suppresses colored in-app incoming previews while Hub is open; new messages still appear in the conversation.
 - Clears an existing preview when Hub opens.

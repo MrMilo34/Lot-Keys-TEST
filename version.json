@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.23",
-  "build": "095023",
-  "release": "hub-aware-right-side-previews",
+  "version": "0.9.5.24",
+  "build": "095024",
+  "release": "conditional-hub-reminder-bell",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095023-hub-aware-right-side-previews",
+  "serviceWorkerCache": "lotkeys-app-v095024-conditional-hub-reminder-bell",
   "publishedAt": "2026-09-29",
-  "basedOn": "LotKeys V0.9.5.22 quiet Device send confirmation",
+  "basedOn": "LotKeys V0.9.5.23 Hub-aware right-side message previews",
   "androidConnectorVersion": "0.9.5.12"
 }

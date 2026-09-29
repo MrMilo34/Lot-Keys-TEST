@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.24 — conditional Hub reminder bell
+
+The TEST web update hides the Hub reminder bell whenever there are no active reminders, including after all have been checked off. Its glyph is slightly smaller on PC and phone. The existing V0.9.5.12 Android connector remains installed. See [RELEASE-0.9.5.24.md](RELEASE-0.9.5.24.md).
+
+## V0.9.5.23 retained
+
 # LotKeys V0.9.5.23 — Hub-aware incoming previews
 
 The TEST web update suppresses the in-app message preview whenever Hub is open, so a new message does not cover a conversation or reply field. Elsewhere, the preview starts beside the Hub tab and fills the right side up to a safe gap before the PC scrollbar. The Android system messaging heads-up is controlled by the phone, not this web preview. Keep the V0.9.5.12 Android connector installed. See [RELEASE-0.9.5.23.md](RELEASE-0.9.5.23.md).
