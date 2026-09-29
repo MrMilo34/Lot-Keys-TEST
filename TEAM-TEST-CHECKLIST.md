@@ -1,10 +1,10 @@
 # LotKeys V0.9.5.24 team-test checklist
 
-## V0.9.5.24 conditional Hub reminder bell
+## V0.9.5.24 persistent Hub reminder shortcut
 
 - Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095024` and confirm **V0.9.5.24 / 095024**. Keep the V0.9.5.12 Android connector installed.
-- With no active reminders, confirm the Hub bell is absent on PC and phone. Add a reminder; the smaller bell appears. Mark every reminder complete; it disappears immediately, without leaving an empty space in the action stack.
-- Reopen Hub with all reminders still complete. For a daily reminder, check it off and confirm it disappears for today; it should become active again on the next Edmonton calendar day. An urgent reminder retains its small urgency mark.
+- With no active reminders, confirm the smaller Hub bell and its button are grey on PC and phone, but still open all reminders. Add a reminder; the button regains its normal color. Mark every reminder complete; the button turns grey again without moving.
+- Reopen Hub with all reminders still complete and confirm the bell stays grey. For a daily reminder, check it off and confirm the bell greys out for today; it should regain color on the next Edmonton calendar day. An urgent reminder retains its small urgency mark. The separate main-header alert may still hide when there are no active reminders.
 
 ## V0.9.5.23 Hub-aware incoming previews
 

@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095024-conditional-hub-reminder-bell';
+const CACHE='lotkeys-app-v095024-hub-reminder-shortcut';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

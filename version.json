@@ -2,10 +2,10 @@
   "app": "LotKeys",
   "version": "0.9.5.24",
   "build": "095024",
-  "release": "conditional-hub-reminder-bell",
+  "release": "hub-reminder-shortcut",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095024-conditional-hub-reminder-bell",
+  "serviceWorkerCache": "lotkeys-app-v095024-hub-reminder-shortcut",
   "publishedAt": "2026-09-29",
   "basedOn": "LotKeys V0.9.5.23 Hub-aware right-side message previews",
   "androidConnectorVersion": "0.9.5.12"

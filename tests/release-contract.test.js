@@ -13,12 +13,12 @@ test('release metadata is consistently V0.9.5.24 while Android remains V0.9.5.12
   assert.equal(version.version, '0.9.5.24');
   assert.equal(version.build, '095024');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'conditional-hub-reminder-bell');
+  assert.equal(version.release, 'hub-reminder-shortcut');
   assert.equal(version.androidConnectorVersion, '0.9.5.12');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095024-conditional-hub-reminder-bell');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095024-hub-reminder-shortcut');
   assert.match(read('index.html'), /V0\.9\.5\.24/);
   assert.match(read('manifest.webmanifest'), /build=095024/);
-  assert.match(read('sw.js'), /lotkeys-app-v095024-conditional-hub-reminder-bell/);
+  assert.match(read('sw.js'), /lotkeys-app-v095024-hub-reminder-shortcut/);
   assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.12/);
   assert.match(read('android/app/build.gradle'), /versionCode 95012/);
   assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.12 TEST/);
@@ -600,6 +600,12 @@ test('standalone reminders have one private local-first record and shared list, 
   assert.match(hub, /appointments=\[\],reminders=\[\]/);
   assert.match(hub, /S\.list\('reminder'\)/);
   assert.match(hub, /id="hub-reminders"[\s\S]*?id="hub-calendar"/);
+  const hubBell = hub.match(/<button class="hub-fab hub-reminder-fab"[^>]*>/)?.[0];
+  assert.ok(hubBell, 'the Hub reminder shortcut stays in the action stack');
+  assert.doesNotMatch(hubBell, /\bhidden\b|\bdisabled\b/);
+  assert.match(hubBell, /data-empty="true"/);
+  assert.match(hub, /action\(\$\('#hub-reminders',p\),\(\)=>openReminders\(\)\)/);
+  assert.match(hub, /button\.dataset\.empty=state\.visible\?'false':'true'/);
   assert.match(hub, /async function openReminders/);
   for (const filter of ['all', 'open', 'completed', 'daily']) assert.match(hub, new RegExp(`option value="${filter}"`));
   for (const id of ['hub-reminder-title', 'hub-reminder-notes', 'hub-reminder-time', 'hub-reminder-date', 'hub-reminder-additional', 'hub-reminder-daily']) assert.match(hub, new RegExp(`id="${id}"`));
@@ -617,6 +623,9 @@ test('standalone reminders have one private local-first record and shared list, 
   assert.match(core, /function legacyAppointmentToReminder/);
   assert.match(css, /\.hub-reminder-row/);
   assert.match(css, /\.hub-reminder-calendar/);
+  assert.match(css, /\.hub-shell\.home \.hub-reminder-fab\[data-empty="true"\]/);
+  assert.match(css, /\.hub-reminder-glyph\{[^}]*font-size:26px/);
+  assert.match(css, /@media\(max-width:620px\)\{[^\n]*\.hub-reminder-glyph\{font-size:24px/);
 });
 
 test('appointment form follows the agreed order and display rules', () => {

@@ -143,7 +143,8 @@
 /* Keep the four Hub actions together beside the viewport edge and above the nav. */
 .hub-shell.home .hub-actions{top:auto;right:24px;bottom:24px;transform:none;gap:10px}
 .hub-shell.home .hub-reminder-fab{position:relative;display:grid;place-items:center;padding:0;letter-spacing:0;line-height:1}
-.hub-shell.home .hub-reminder-fab[hidden]{display:none!important}
+.hub-shell.home .hub-reminder-fab[data-empty="true"]{background:color-mix(in srgb,var(--muted) 13%,var(--card));border-color:var(--line);box-shadow:0 5px 22px #0002}
+.hub-shell.home .hub-reminder-fab[data-empty="true"] .hub-reminder-glyph{filter:grayscale(1);opacity:.55}
 .hub-reminder-glyph{display:grid;place-items:center;width:100%;height:100%;font-size:26px;line-height:1}
 .hub-reminder-mark{position:absolute;right:2px;bottom:2px;display:grid;place-items:center;min-width:15px;height:15px;padding:0 2px;border:1px solid #fdba74;border-radius:99px;background:#fff7ed;color:#c2410c;font:900 10px/1 system-ui,sans-serif;letter-spacing:-1px}
 .hub-reminder-fab[data-urgency="2"] .hub-reminder-mark{border-color:#fca5a5;background:#fef2f2;color:#b91c1c}

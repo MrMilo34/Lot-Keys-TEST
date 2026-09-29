@@ -1,6 +1,6 @@
-# LotKeys V0.9.5.24 — conditional Hub reminder bell
+# LotKeys V0.9.5.24 — persistent Hub reminder shortcut
 
-The TEST web update hides the Hub reminder bell whenever there are no active reminders, including after all have been checked off. Its glyph is slightly smaller on PC and phone. The existing V0.9.5.12 Android connector remains installed. See [RELEASE-0.9.5.24.md](RELEASE-0.9.5.24.md).
+The TEST web update keeps the Hub reminder shortcut visible so completed reminders remain accessible. The button turns grey when no active reminders need attention, and its glyph is slightly smaller on PC and phone. The existing V0.9.5.12 Android connector remains installed. See [RELEASE-0.9.5.24.md](RELEASE-0.9.5.24.md).
 
 ## V0.9.5.23 retained
 
