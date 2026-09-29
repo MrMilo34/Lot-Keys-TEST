@@ -1,5 +1,9 @@
 # Host the LotKeys test build with GitHub Pages
 
+## V0.9.5.22 web update
+
+Deploy the complete website snapshot, then fully close and reopen the installed web app so cache `lotkeys-app-v095022-quiet-device-send-confirmation` takes control. Device SMS sends no longer show a duplicate success pop-up; the sent state remains under the message and send errors still appear. Keep the V0.9.5.12 Android connector installed; no re-pairing is needed.
+
 ## V0.9.5.21 web update
 
 Deploy the complete website snapshot, then fully close and reopen the installed web app so cache `lotkeys-app-v095021-chat-width-typography-theme-headers` takes control. Full LotKeys Chat now uses more screen width, incoming chat cards match Device chat, Device text matches the in-app type, and the five main page headers follow the light and dark theme. Keep the V0.9.5.12 Android connector installed; no re-pairing is needed.

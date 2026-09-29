@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095021-chat-width-typography-theme-headers';
+const CACHE='lotkeys-app-v095022-quiet-device-send-confirmation';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

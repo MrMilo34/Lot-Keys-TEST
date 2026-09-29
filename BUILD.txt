@@ -1,3 +1,10 @@
+V0.9.5.22 QUIET DEVICE SEND CONFIRMATION
+- Removes the redundant “SMS sent through the phone” pop-up from both Device conversation send paths.
+- SMS Sent / MMS Sent status remains beneath outgoing messages, and failures still show errors.
+- Web-only update; V0.9.5.12 Android connector remains installed.
+- Build: 095022.
+- Service worker cache: lotkeys-app-v095022-quiet-device-send-confirmation.
+
 V0.9.5.21 CHAT WIDTH + TYPOGRAPHY + THEME HEADERS
 - Full LotKeys Chat and composer use available width, clear of the PC action rail.
 - Incoming LotKeys messages use the Device chat card surface.

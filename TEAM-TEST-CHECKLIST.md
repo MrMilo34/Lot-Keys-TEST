@@ -1,4 +1,10 @@
-# LotKeys V0.9.5.21 team-test checklist
+# LotKeys V0.9.5.22 team-test checklist
+
+## V0.9.5.22 quiet Device send confirmation
+
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095022` and confirm **V0.9.5.22 / 095022**. Keep the V0.9.5.12 Android connector installed.
+- Send a Device SMS from a phone and a paired PC. Confirm the outgoing message displays **SMS Sent** beneath it without the “SMS sent through the phone” pop-up. An MMS already sent by the phone should still display **MMS Sent**.
+- If a Device send fails, confirm an error remains visible and the message is marked failed. Media handoff should still tell the user to review and send in the phone’s messaging app.
 
 ## V0.9.5.21 chat layout and headers
 

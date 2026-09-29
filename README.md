@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.22 — quiet Device send confirmation
+
+The TEST web update removes the redundant “SMS sent through the phone” pop-up from Device conversation sends. Each outgoing message continues to show its SMS Sent or MMS Sent state, while failures still display an error. Keep the V0.9.5.12 Android connector installed. See [RELEASE-0.9.5.22.md](RELEASE-0.9.5.22.md).
+
+## V0.9.5.21 retained
+
 # LotKeys V0.9.5.21 — chat layout and page headers
 
 The TEST web update widens full LotKeys Chat and its composer to use the conversation area beside the action rail. Incoming LotKeys messages now match the Device chat card surface. Device message text adopts the in-app 14px size and line spacing. Home, Inventory, Listings, Garage and Account headers are white in light theme and black in dark theme. Keep the V0.9.5.12 Android connector installed. See [RELEASE-0.9.5.21.md](RELEASE-0.9.5.21.md).
