@@ -1,10 +1,22 @@
+# LotKeys V0.9.5.26 team-test checklist
+
+## V0.9.5.26 Store sync and disconnect recovery
+
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095026` and confirm V0.9.5.26. No Android connector reinstall is needed.
+- On Garage, start a Store refresh, then tap **Connected to Store ✓** and **Disconnect from Store**. The page may reload briefly and should end in Garage without a Store. The header should not remain on **Syncing…**.
+- Leave a Vehicle Profile with **Sync needs attention** and a pending Listing, then disconnect. Confirm they do not show in a newly created Store; your profile, Hub, appointments, phone connection and personal settings remain. Reconnect to the former Store with the same Google account and confirm its unfinished records return for retry.
+- Confirm a Store refresh shows **Refreshing…**, while actual upload progress continues to display its percentage.
+- On another browser/device, existing Store data still comes from Google Drive; the parked unfinished items require the original browser until uploaded.
+
+## V0.9.5.25 retained
+
 # LotKeys V0.9.5.25 team-test checklist
 
 ## V0.9.5.25 Store switching and fresh creation
 
 - Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095025` and confirm V0.9.5.25. No Android connector reinstall is needed.
 - In Garage, tap **Connected to Store ✓**, then **Disconnect from Store**. Confirm the Google account, Account profile, Hub contacts/appointments, phone pairing and personal settings still appear; Inventory and Listings direct you back to Garage.
-- With any unsynced Vehicle, Listing or contribution request, confirm disconnect is deferred until that Store work finishes.
+- This is the V0.9.5.25 behavior; V0.9.5.26 lets the user leave while Store work remains unfinished.
 - Create a new Store with its own name. Confirm the signed-in creator is Admin Level 2, a new Store Code and Google Drive root are generated, and its Inventory, Listings, roster and contributor points start empty.
 - Use Garage to disconnect from the new Store and reconnect to a saved Store by code. Confirm its Store data returns and the new Store remains separate.
 - Test with another signed-in LotKeys account: creating a Store grants ownership only in that newly created Store; an existing Store requires its own approved Google account permission and role.

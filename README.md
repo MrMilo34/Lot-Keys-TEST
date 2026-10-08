@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.26 — Store sync and disconnect recovery
+
+Garage can disconnect from a Store during an automatic refresh. Unfinished Store work stays on this device and returns only when the same Google account reconnects to that Store. The header labels read-only refreshes as “Refreshing…” so they are not confused with uploads. The personal Hub, profile and phone connection remain in place. See [RELEASE-0.9.5.26.md](RELEASE-0.9.5.26.md).
+
+## V0.9.5.25 retained
+
 # LotKeys V0.9.5.25 — Store switching and creation
 
 Disconnect from a Store through the blue Garage connection button, then join another Store or create a separate Store as Owner / Admin Level 2. Your Google sign-in, Hub, phone connection, profile and personal preferences remain in place. A new Store starts with fresh Inventory, Listings, user roster and contributor points. See [RELEASE-0.9.5.25.md](RELEASE-0.9.5.25.md).

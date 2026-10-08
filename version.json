@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.25",
-  "build": "095025",
-  "release": "store-switch-and-creation",
+  "version": "0.9.5.26",
+  "build": "095026",
+  "release": "store-sync-disconnect-recovery",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095025-store-switch-and-creation",
+  "serviceWorkerCache": "lotkeys-app-v095026-store-sync-disconnect-recovery",
   "publishedAt": "2026-10-08",
-  "basedOn": "LotKeys V0.9.5.24 persistent Hub reminder shortcut",
+  "basedOn": "LotKeys V0.9.5.25 Store switching and creation",
   "androidConnectorVersion": "0.9.5.12"
 }

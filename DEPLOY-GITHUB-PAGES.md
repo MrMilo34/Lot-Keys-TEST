@@ -1,5 +1,9 @@
 # Host the LotKeys test build with GitHub Pages
 
+## V0.9.5.26 web update
+
+Deploy the complete website snapshot and fully close and reopen the installed app so cache `lotkeys-app-v095026-store-sync-disconnect-recovery` takes control. Disconnect in Garage now parks unfinished Store work for a later reconnect, including when a background refresh is running; the page may briefly reload. The V0.9.5.12 Android connector stays installed.
+
 ## V0.9.5.25 web update
 
 Deploy the complete website snapshot and fully close and reopen the installed app so cache `lotkeys-app-v095025-store-switch-and-creation` takes control. Garage now offers a Store-only Disconnect action and fresh Store creation for signed-in users. Existing Store membership and personal data remain intact. The V0.9.5.12 Android connector stays installed.

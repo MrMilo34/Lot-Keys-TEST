@@ -1,3 +1,11 @@
+V0.9.5.26 STORE SYNC AND DISCONNECT RECOVERY
+- An active Store refresh or upload no longer prevents disconnect. The page may briefly reload to stop an active job.
+- Unfinished Store Vehicle Profiles, Listings, deletions, contribution requests and local analytics are retained on this device for a later reconnect to the same Store and Google account.
+- Foreground and Garage Inventory refreshes respect the five-minute interval; read-only refresh is labeled Refreshing rather than Syncing.
+- Web-only update; V0.9.5.12 Android connector remains installed.
+- Build: 095026.
+- Service worker cache: lotkeys-app-v095026-store-sync-disconnect-recovery.
+
 V0.9.5.25 STORE SWITCHING AND CREATION
 - Disconnect the active Store from Garage without signing out or changing personal Hub, profile, phone and settings.
 - Create a fresh Store in My Drive and become its Owner / Admin Level 2; its Store data starts empty.

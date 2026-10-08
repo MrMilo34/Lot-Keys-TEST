@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095025-store-switch-and-creation';
+const CACHE='lotkeys-app-v095026-store-sync-disconnect-recovery';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
