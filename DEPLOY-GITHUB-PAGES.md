@@ -1,5 +1,9 @@
 # Host the LotKeys test build with GitHub Pages
 
+## V0.9.5.25 web update
+
+Deploy the complete website snapshot and fully close and reopen the installed app so cache `lotkeys-app-v095025-store-switch-and-creation` takes control. Garage now offers a Store-only Disconnect action and fresh Store creation for signed-in users. Existing Store membership and personal data remain intact. The V0.9.5.12 Android connector stays installed.
+
 ## V0.9.5.24 web update
 
 Deploy the complete website snapshot, then fully close and reopen the installed web app so cache `lotkeys-app-v095024-hub-reminder-shortcut` takes control. The Hub bell remains available to open all reminders and turns grey when none are active; its glyph remains slightly smaller. Keep the V0.9.5.12 Android connector installed; no re-pairing is needed.

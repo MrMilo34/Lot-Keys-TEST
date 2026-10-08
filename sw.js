@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095024-hub-reminder-shortcut';
+const CACHE='lotkeys-app-v095025-store-switch-and-creation';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

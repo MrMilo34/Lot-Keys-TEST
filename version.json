@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.24",
-  "build": "095024",
-  "release": "hub-reminder-shortcut",
+  "version": "0.9.5.25",
+  "build": "095025",
+  "release": "store-switch-and-creation",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095024-hub-reminder-shortcut",
-  "publishedAt": "2026-09-29",
-  "basedOn": "LotKeys V0.9.5.23 Hub-aware right-side message previews",
+  "serviceWorkerCache": "lotkeys-app-v095025-store-switch-and-creation",
+  "publishedAt": "2026-10-08",
+  "basedOn": "LotKeys V0.9.5.24 persistent Hub reminder shortcut",
   "androidConnectorVersion": "0.9.5.12"
 }

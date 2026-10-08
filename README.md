@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.25 — Store switching and creation
+
+Disconnect from a Store through the blue Garage connection button, then join another Store or create a separate Store as Owner / Admin Level 2. Your Google sign-in, Hub, phone connection, profile and personal preferences remain in place. A new Store starts with fresh Inventory, Listings, user roster and contributor points. See [RELEASE-0.9.5.25.md](RELEASE-0.9.5.25.md).
+
+## V0.9.5.24 retained
+
 # LotKeys V0.9.5.24 — persistent Hub reminder shortcut
 
 The TEST web update keeps the Hub reminder shortcut visible so completed reminders remain accessible. The button turns grey when no active reminders need attention, and its glyph is slightly smaller on PC and phone. The existing V0.9.5.12 Android connector remains installed. See [RELEASE-0.9.5.24.md](RELEASE-0.9.5.24.md).

@@ -1,3 +1,16 @@
+# LotKeys V0.9.5.25 team-test checklist
+
+## V0.9.5.25 Store switching and fresh creation
+
+- Open `https://mrmilo34.github.io/Lot-Keys-TEST/?build=095025` and confirm V0.9.5.25. No Android connector reinstall is needed.
+- In Garage, tap **Connected to Store ✓**, then **Disconnect from Store**. Confirm the Google account, Account profile, Hub contacts/appointments, phone pairing and personal settings still appear; Inventory and Listings direct you back to Garage.
+- With any unsynced Vehicle, Listing or contribution request, confirm disconnect is deferred until that Store work finishes.
+- Create a new Store with its own name. Confirm the signed-in creator is Admin Level 2, a new Store Code and Google Drive root are generated, and its Inventory, Listings, roster and contributor points start empty.
+- Use Garage to disconnect from the new Store and reconnect to a saved Store by code. Confirm its Store data returns and the new Store remains separate.
+- Test with another signed-in LotKeys account: creating a Store grants ownership only in that newly created Store; an existing Store requires its own approved Google account permission and role.
+
+## V0.9.5.24 retained
+
 # LotKeys V0.9.5.24 team-test checklist
 
 ## V0.9.5.24 persistent Hub reminder shortcut
