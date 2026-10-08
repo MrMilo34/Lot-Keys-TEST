@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095027-legacy-listing-import';
+const CACHE='lotkeys-app-v095028-import-template-compatibility';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

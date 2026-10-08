@@ -11,7 +11,7 @@ const start = html.indexOf('const WebsiteInfo = (()=>{');
 const end = html.indexOf('\n})();', start) + '\n})();'.length;
 assert.ok(start >= 0 && end > start, 'WebsiteInfo module must exist');
 const normalizers = html.slice(html.indexOf('const FACEBOOK_BODY_STYLE_OPTIONS='), html.indexOf('function seedListingFacebookFields('));
-const source = html.slice(start, end).replace('return{scan,scanFacts,imageBlob};', 'return{scan,scanFacts,imageBlob,parseText,detectVehiclePrice,headingVehicle,carfaxReportUrl,extractCarfaxReportUrl};');
+const source = html.slice(start, end).replace('return{scan,scanFacts,imageBlob};', 'return{scan,scanFacts,imageBlob,parseText,detectVehiclePrice,headingVehicle,carfaxReportUrl,extractCarfaxReportUrl,extractImagesFromMarkdown,classifyPhotos};');
 const context = vm.createContext({ URL, Date, AbortController, setTimeout, clearTimeout });
 vm.runInContext(normalizers + source + '\nglobalThis.importer = WebsiteInfo;', context);
 const importer = context.importer;
@@ -76,9 +76,11 @@ test('conflicting Legacy sale labels remain ambiguous', () => {
 });
 
 test('payment amounts and a negative discount cannot become a vehicle price', () => {
-  const text = '2023 Jeep Grand Wagoneer Series II - $271.41 /WK\nStock #: BT2556\nDiscount $-8,517\nFinance Price $1,200/bw\nLegacy Price $1,500 per month';
-  const fields = importer.parseText(text, legacyUrl, {}, vehicle);
-  assert.equal(fields.price, undefined);
+  for (const unit of [' per month', '\nper month', '\n/mo']) {
+    const text = '2023 Jeep Grand Wagoneer Series II - $271.41 /WK\nStock #: BT2556\nDiscount $-8,517\nFinance Price $1,200/bw\nLegacy Price $1,500' + unit;
+    const fields = importer.parseText(text, legacyUrl, {}, vehicle);
+    assert.equal(fields.price, undefined);
+  }
 });
 
 test('a recently rejected Legacy price is not preferred over matched structured data', () => {
@@ -102,6 +104,47 @@ test('Legacy rules stay confined to the recognized dealership hosts', () => {
   const fields = importer.parseText('2023 Jeep Grand Wagoneer Series II\nSale Price $70,990\nStock #: BT2556', 'https://dealer.example/vehicle', {}, vehicle);
   assert.equal(fields.price.value, '70990');
   assert.equal(fields.price.confidence, 'high');
+});
+
+// Synthetic examples of the existing Go Auto-style labels and gallery format.
+// These cases preserve the previous parser contract; they are not live-site captures.
+test('Go Auto-style Your Price remains valid before a separate payment heading', () => {
+  const expected = { year: '2023', make: 'Infiniti', model: 'QX60 Luxe', stock: 'TEST43' };
+  for (const payment of ['Weekly Payment $125', 'Monthly Payment $500', 'Bi-weekly Payment $250', 'Weekly\n$125', 'Monthly\n$500']) {
+    const text = '2023 Infiniti QX60 Luxe\nStock #: TEST43\nYour Price $59,500\n' + payment;
+    const fields = importer.parseText(text, 'https://www.goauto.ca/vehicles/test-inventory', {}, expected);
+    assert.equal(fields.price.value, '59500');
+    assert.equal(fields.price.label, 'your price');
+    assert.equal(fields.price.confidence, 'high');
+    assert.equal(fields.price.identityBound, true);
+  }
+});
+
+test('Go Auto matching structured sale data keeps its established priority', () => {
+  const expected = { year: '2023', make: 'Infiniti', model: 'QX60 Luxe', stock: 'TEST43' };
+  const structured = { price: 59500, source: 'jsonld', name: '2023 Infiniti QX60 Luxe', stock: 'TEST43' };
+  const fields = importer.parseText('2023 Infiniti QX60 Luxe\nStock #: TEST43\nYour Price $59,500', 'https://www.goauto.ca/vehicles/test-inventory', { structuredPrices: [structured] }, expected);
+  assert.equal(fields.price.value, '59500');
+  assert.equal(fields.price.source, 'jsonld');
+  assert.equal(fields.price.confidence, 'high');
+  assert.equal(fields.price.identityBound, true);
+});
+
+test('existing gallery recognition retains large photos and excludes duplicates and related vehicles', () => {
+  const text = [
+    '![Front](https://dealer.example/vehicle-front-1200x800.jpg)',
+    '![Front thumbnail](https://dealer.example/vehicle-front-400x300.jpg)',
+    '![Rear](https://dealer.example/vehicle-rear-1200x800.jpg)',
+    '![Logo](https://dealer.example/dealer-logo.png)',
+    '![CARFAX](https://dealer.example/carfax-badge.png)',
+    '## Similar vehicles',
+    '![Other vehicle](https://dealer.example/vehicle-other-1200x800.jpg)'
+  ].join('\n');
+  const images = importer.extractImagesFromMarkdown(text, 'https://www.goauto.ca/vehicles/test-inventory');
+  assert.deepEqual(Array.from(images, x => x.url), ['https://dealer.example/vehicle-front-1200x800.jpg', 'https://dealer.example/vehicle-rear-1200x800.jpg']);
+  const photos = importer.classifyPhotos(images);
+  assert.equal(photos.length, 2);
+  assert.ok(photos.every(x => x.confidence === 'high' && x.selected));
 });
 
 test('call-for-price status still takes priority over a nearby price', () => {

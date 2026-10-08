@@ -1,3 +1,12 @@
+V0.9.5.28 IMPORT TEMPLATE COMPATIBILITY
+- Preserves a valid Your Price before a separate Weekly, Monthly or Bi-weekly Payment heading.
+- Adds regression coverage for Go Auto-style prices, matching structured data and gallery filtering.
+- Retains Legacy Price priority and all previous recognition rules; template improvements are cumulative.
+- Actual payment units still cannot become a vehicle sale price, including a separate /mo or per month line.
+- Web-only TEST update; Android connector V0.9.5.12 and Store Processor V0.9.4.76 remain compatible.
+- Build: 095028.
+- Service worker cache: lotkeys-app-v095028-import-template-compatibility.
+
 V0.9.5.27 LEGACY LISTING IMPORT
 - Legacy Price is the sale price; Vehicle Price and structured sticker metadata cannot replace it.
 - Keeps weekly/monthly payments out of vehicle model names and reads colon-separated kilometres.

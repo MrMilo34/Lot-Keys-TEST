@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.28 — import template compatibility
+
+Website recognition is cumulative: Legacy support extends the existing importer, including its Go Auto-style **Your Price**, matching structured vehicle data and gallery rules. A separate payment heading below a sale price is no longer mistaken for that price's payment unit. Go Auto-style and Legacy examples are covered together by regression checks. See [RELEASE-0.9.5.28.md](RELEASE-0.9.5.28.md) and [verification](LotKeys-0.9.5.28-Test-Report.md).
+
+## V0.9.5.27 retained
+
 # LotKeys V0.9.5.27 — Legacy listing import
 
 Imports from Legacy Dodge Wetaskiwin use **Legacy Price** as the selling price. **Vehicle Price** is the sticker/listed amount and is not substituted if a sale price cannot be confirmed. Payment amounts are removed from vehicle model names, colon-separated kilometres are read from specifications, and the listing's own CARFAX View Report link is captured. See [RELEASE-0.9.5.27.md](RELEASE-0.9.5.27.md) and [verification](LotKeys-0.9.5.27-Test-Report.md).
