@@ -1,3 +1,12 @@
+V0.9.5.27 LEGACY LISTING IMPORT
+- Legacy Price is the sale price; Vehicle Price and structured sticker metadata cannot replace it.
+- Keeps weekly/monthly payments out of vehicle model names and reads colon-separated kilometres.
+- Captures each listing's own CARFAX report link from anchors, button attributes or reader output.
+- Retains vehicle identity checks, ambiguous-price review, Call for Price and recent wrong-price feedback.
+- Web-only TEST update; Android connector V0.9.5.12 and Store Processor V0.9.4.76 remain compatible.
+- Build: 095027.
+- Service worker cache: lotkeys-app-v095027-legacy-listing-import.
+
 V0.9.5.26 STORE SYNC AND DISCONNECT RECOVERY
 - An active Store refresh or upload no longer prevents disconnect. The page may briefly reload to stop an active job.
 - Unfinished Store Vehicle Profiles, Listings, deletions, contribution requests and local analytics are retained on this device for a later reconnect to the same Store and Google account.

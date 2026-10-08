@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.27 — Legacy listing import
+
+Imports from Legacy Dodge Wetaskiwin use **Legacy Price** as the selling price. **Vehicle Price** is the sticker/listed amount and is not substituted if a sale price cannot be confirmed. Payment amounts are removed from vehicle model names, colon-separated kilometres are read from specifications, and the listing's own CARFAX View Report link is captured. See [RELEASE-0.9.5.27.md](RELEASE-0.9.5.27.md) and [verification](LotKeys-0.9.5.27-Test-Report.md).
+
+## V0.9.5.26 retained
+
 # LotKeys V0.9.5.26 — Store sync and disconnect recovery
 
 Garage can disconnect from a Store during an automatic refresh. Unfinished Store work stays on this device and returns only when the same Google account reconnects to that Store. The header labels read-only refreshes as “Refreshing…” so they are not confused with uploads. The personal Hub, profile and phone connection remain in place. See [RELEASE-0.9.5.26.md](RELEASE-0.9.5.26.md).

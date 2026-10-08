@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.26",
-  "build": "095026",
-  "release": "store-sync-disconnect-recovery",
+  "version": "0.9.5.27",
+  "build": "095027",
+  "release": "legacy-listing-import",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095026-store-sync-disconnect-recovery",
+  "serviceWorkerCache": "lotkeys-app-v095027-legacy-listing-import",
   "publishedAt": "2026-10-08",
-  "basedOn": "LotKeys V0.9.5.25 Store switching and creation",
+  "basedOn": "LotKeys V0.9.5.26 Store sync and disconnect recovery",
   "androidConnectorVersion": "0.9.5.12"
 }
