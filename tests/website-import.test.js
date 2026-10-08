@@ -22,6 +22,11 @@ const legacyUrl = 'https://www.legacydodgewetaskiwin.com/vehicles/2023/jeep/gran
 const reportUrl = 'https://vhr.carfax.ca/?id=PHaYmcXfU70iH2wRsnrlJWBW6g93B4az';
 const vehicle = { year: '2023', make: 'Jeep', model: 'Grand Wagoneer Series II', stock: 'BT2556' };
 const sticker = { price: 79507, source: 'jsonld', name: '2023 Jeep Grand Wagoneer Series II', stock: 'BT2556', availability: 'https://schema.org/InStock' };
+// Minimized from the Nautilus page retrieved on 2026-10-08. Narrative copy is omitted.
+const nautilus = fs.readFileSync(path.join(__dirname, 'fixtures', 'legacy-nautilus-reader.txt'), 'utf8');
+const nautilusUrl = 'https://www.legacydodgewetaskiwin.com/vehicles/2024/lincoln/nautilus/wetaskiwin/ab/71216856/?sale_class=used';
+const nautilusReport = 'https://vhr.carfax.ca/?id=Gn7slbZVDZagPUkKvrAs6YdajCnkj1oB';
+const nautilusVehicle = { year: '2024', make: 'Lincoln', model: 'Nautilus Reserve', stock: 'BT2550', vin: '5LMPJ8KA5RJ825421' };
 
 test('Legacy import uses sale price and preserves the supplied vehicle facts and report', () => {
   const fields = importer.parseText(listing, legacyUrl, { carfaxUrl: reportUrl }, vehicle);
@@ -50,6 +55,80 @@ test('Legacy sale label outranks matching structured sticker metadata', () => {
   assert.equal(fields.price.value, '70990');
   assert.equal(fields.price.source, 'text');
   assert.equal(fields.price.label, 'legacy price');
+});
+
+test('retrieved Nautilus layout keeps Reserve trim and reads bulleted specifications', () => {
+  const fields = importer.parseText(nautilus, nautilusUrl, { title: '2024 Lincoln Nautilus' }, nautilusVehicle);
+  assert.equal(fields.year.value, '2024');
+  assert.equal(fields.make.value, 'Lincoln');
+  assert.equal(fields.model.value, 'Nautilus Reserve');
+  assert.equal(fields.price.value, '55990');
+  assert.equal(fields.price.ambiguous, false);
+  assert.equal(fields.price.identityBound, true);
+  assert.equal(fields.stock.value, 'BT2550');
+  assert.equal(fields.vin.value, '5LMPJ8KA5RJ825421');
+  assert.equal(fields.odometer.value, '38366');
+  assert.equal(fields.bodyStyle.value, 'SUV');
+  assert.equal(fields.exteriorColor.value, 'White');
+  assert.equal(fields.transmission.value, 'Automatic');
+  assert.equal(fields.fuelType.value, 'Gasoline');
+});
+
+test('Nautilus new import and stock-only verification exclude recommended vehicle prices', () => {
+  for (const expected of [{}, { ...nautilusVehicle, vin: '' }]) {
+    const fields = importer.parseText(nautilus, nautilusUrl, {}, expected);
+    assert.equal(fields.price.value, '55990');
+    assert.equal(fields.price.ambiguous, false);
+    assert.deepEqual(Array.from(fields.price.alternatives, x => x.price), [55990]);
+  }
+  const fields = importer.parseText(`${listing}\n### Similar Vehicles\n2021 Ford Escape\nCall for Price`, legacyUrl, {}, vehicle);
+  assert.equal(fields.price.value, '70990');
+  assert.equal(fields.priceStatus, undefined);
+});
+
+test('a CARFAX request button is distinct from a report and the supplied Nautilus link stays exact', () => {
+  assert.equal(importer.extractCarfaxReportUrl(null, nautilus, nautilusUrl), '');
+  assert.equal(importer.parseText(nautilus, nautilusUrl).carfaxUrl, undefined);
+  const fields = importer.parseText(nautilus, nautilusUrl, { carfaxUrl: nautilusReport });
+  assert.equal(fields.carfaxUrl.value, nautilusReport);
+  assert.notEqual(fields.carfaxUrl.value, reportUrl);
+  assert.equal(fields.carfaxNoAccidents, undefined);
+});
+
+test('Nautilus thumbnail links resolve to original photos without duplicates or page placeholders', () => {
+  const images = importer.extractImagesFromMarkdown(nautilus, nautilusUrl);
+  assert.deepEqual(Array.from(images, x => x.url), [
+    'https://prod.pictures.autoscout24.net/listing-images/3a42266f-c06d-4b0e-89d0-0249266027ef_3afdaba0-1af6-49b2-9ac7-b0a3b85e4172.png',
+    'https://prod.pictures.autoscout24.net/listing-images/3a42266f-c06d-4b0e-89d0-0249266027ef_00daedcc-099f-4430-bda7-fb926b15865f.png'
+  ]);
+  assert.ok(images.every(x => !x.width && !x.height));
+});
+
+test('standard 800-by-600 primary vehicle galleries are recommended after size probing', () => {
+  const images = importer.extractImagesFromMarkdown(nautilus, nautilusUrl);
+  const photos = importer.classifyPhotos(images.map(x => ({ ...x, naturalWidth: 800, naturalHeight: 600 })));
+  assert.equal(photos.length, 2);
+  assert.ok(photos.every(x => x.confidence === 'high' && x.selected));
+});
+
+test('a Recently viewed navigation label cannot hide the primary vehicle', () => {
+  const text = nautilus.replace('Markdown Content:', 'Markdown Content:\n\nRecently viewed');
+  const fields = importer.parseText(text, nautilusUrl);
+  assert.equal(fields.model.value, 'Nautilus Reserve');
+  assert.equal(fields.price.value, '55990');
+  assert.equal(fields.price.ambiguous, false);
+});
+
+test('original-photo resolution does not assume that unrelated CDNs share this format', () => {
+  for (const host of ['dealer.example', 'prod.pictures.autoscout24.net.example']) {
+    const text = `![Thumbnail](https://${host}/listing-images/vehicle.png/133x100.webp)`;
+    assert.equal(importer.extractImagesFromMarkdown(text, nautilusUrl).length, 0);
+  }
+});
+
+test('short reader titles remain a fallback when there is no vehicle heading', () => {
+  assert.equal(importer.headingVehicle('Title: 2024 Lincoln Nautilus').model, 'Nautilus');
+  assert.equal(importer.headingVehicle('2023 Ford F-150 Lariat').model, 'F-150 Lariat');
 });
 
 test('new imports without an expected identity still use Legacy sale price', () => {
@@ -195,4 +274,39 @@ test('reader fallback passes the Legacy URL and extracted report into the real s
   assert.equal(result.fields.price.value, '70990');
   assert.equal(result.fields.carfaxUrl.value, reportUrl);
   assert.equal(result.fields.model.value, 'GRAND WAGONEER SERIES II');
+});
+
+test('a successful fetch of the Legacy JavaScript shell still uses rendered page facts', async () => {
+  context.DOMParser = class {
+    parseFromString() {
+      return { body: { innerText: 'Sales\nInventory\nRequest CARFAX Canada' }, title: '2024 Lincoln Nautilus in Wetaskiwin', querySelector: () => null };
+    }
+  };
+  context.fetch = async url => {
+    if (url === nautilusUrl) return { ok: true, text: async () => '<vehicle-details></vehicle-details>' };
+    assert.equal(url, 'https://r.jina.ai/' + nautilusUrl);
+    return { ok: true, text: async () => nautilus };
+  };
+  const result = await importer.scanFacts(nautilusUrl);
+  assert.equal(result.mode, 'reader');
+  assert.equal(result.fields.model.value, 'Nautilus Reserve');
+  assert.equal(result.fields.price.value, '55990');
+  assert.equal(result.fields.price.ambiguous, false);
+});
+
+test('readable Legacy vehicle pages retain the direct scan path', async () => {
+  const text = '2024 Lincoln Nautilus Reserve\nStock #: BT2550\nLegacy Price $55,990';
+  context.DOMParser = class {
+    parseFromString() {
+      return { body: { innerText: text }, title: '2024 Lincoln Nautilus', querySelector: () => null, querySelectorAll: () => [] };
+    }
+  };
+  context.fetch = async url => {
+    assert.equal(url, nautilusUrl, 'readable pages need no reader request');
+    return { ok: true, text: async () => '<h1>2024 Lincoln Nautilus Reserve</h1>' };
+  };
+  const result = await importer.scanFacts(nautilusUrl);
+  assert.equal(result.mode, 'direct');
+  assert.equal(result.fields.model.value, 'Nautilus Reserve');
+  assert.equal(result.fields.price.value, '55990');
 });

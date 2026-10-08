@@ -1,3 +1,15 @@
+V0.9.5.29 EXPANDED DEALERSHIP RECOGNITION
+- Uses the full primary vehicle heading and reads bulleted specifications from rendered pages.
+- Excludes related vehicles from the current vehicle's price and Call for Price checks.
+- Resolves known AutoScout24 gallery thumbnails to original photos, retaining gallery order and duplicate rejection.
+- Includes standard 800x600 original primary galleries in photo recommendations after probing.
+- Uses the existing rendered-page reader when a Legacy page returns a successful JavaScript shell without vehicle details.
+- Verified against the actual 2024 Lincoln Nautilus Reserve page, alongside prior Go Auto-style and Grand Wagoneer regression cases.
+- CARFAX links remain vehicle-specific; a Request Report button does not create a report URL or history claims.
+- Web-only TEST update; Android connector V0.9.5.12 and Store Processor V0.9.4.76 remain compatible.
+- Build: 095029.
+- Service worker cache: lotkeys-app-v095029-expanded-dealership-recognition.
+
 V0.9.5.28 IMPORT TEMPLATE COMPATIBILITY
 - Preserves a valid Your Price before a separate Weekly, Monthly or Bi-weekly Payment heading.
 - Adds regression coverage for Go Auto-style prices, matching structured data and gallery filtering.

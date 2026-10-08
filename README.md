@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.29 — expanded dealership recognition
+
+The importer now reads the full vehicle heading and bulleted specifications, keeps recommended vehicles out of price recognition, and resolves the known photo CDN's thumbnails to original images. Legacy pages that return a JavaScript shell use the existing rendered-page reader. The actual Nautilus page was checked alongside earlier Go Auto-style and Grand Wagoneer regression examples. Recognition continues to build on previous templates. See [RELEASE-0.9.5.29.md](RELEASE-0.9.5.29.md) and [verification](LotKeys-0.9.5.29-Test-Report.md).
+
+## V0.9.5.28 retained
+
 # LotKeys V0.9.5.28 — import template compatibility
 
 Website recognition is cumulative: Legacy support extends the existing importer, including its Go Auto-style **Your Price**, matching structured vehicle data and gallery rules. A separate payment heading below a sale price is no longer mistaken for that price's payment unit. Go Auto-style and Legacy examples are covered together by regression checks. See [RELEASE-0.9.5.28.md](RELEASE-0.9.5.28.md) and [verification](LotKeys-0.9.5.28-Test-Report.md).

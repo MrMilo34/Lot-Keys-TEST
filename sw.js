@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095028-import-template-compatibility';
+const CACHE='lotkeys-app-v095029-expanded-dealership-recognition';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
