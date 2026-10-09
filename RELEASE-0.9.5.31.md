@@ -17,7 +17,7 @@ The phone transport also coalesces overlapping reads for the same session, nativ
 
 ## Verification and limits
 
-Twelve new behavioral regression cases cover notification-to-chat reuse, overlapping reads, unrelated updates, changed/aged pages, more than six new arrivals, old-response races, privacy clearing, capacity/expiry, independent older cursors, native/relay invalidation, replacement sessions, retry and disconnect.
+Fourteen new behavioral regression cases cover notification-to-chat reuse, overlapping reads, unrelated updates, changed/aged pages, more than six new arrivals, old-response races, privacy clearing, capacity/expiry, independent older cursors, native/relay invalidation, replacement sessions, retry, disconnect, parallel opening and rejecting a phone swap during metadata loading.
 
 The complete existing Node suite and JavaScript syntax checks are required GitHub Actions gates before TEST publication. See [the verification record](LotKeys-0.9.5.31-Test-Report.md) and the release commit's checks.
 

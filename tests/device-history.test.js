@@ -18,13 +18,13 @@ function deferred() {
 
 function hubHistory() {
   let clock = 10000;
-  const calls = [], timers = [], previews = [], paints = [], listeners = {};
+  const calls = [], timers = [], previews = [], paints = [], listeners = {}, historyStarted = deferred();
   const threads = [{ id: 'a', at: 9000, count: 1, preview: 'First', unread: 1 },
     { id: 'b', at: -200000, count: 1, preview: 'Other', unread: 0 }];
   const status = { role: 'pc', deviceName: 'Phone', relayIdentity: 'test', sessionId: 'session-a', connected: true };
   const context = {
     P: { status: () => status, threads: () => threads, history: id => {
-      const job = deferred(); calls.push({ id, ...job }); return job.promise;
+      const job = deferred(); calls.push({ id, ...job }); historyStarted.resolve(); return job.promise;
     } },
     PC, H, Date: { now: () => clock }, console,
     setTimeout: (fn, delay) => { timers.push({ fn, delay }); return timers.length; }, clearTimeout() {},
@@ -45,8 +45,8 @@ function hubHistory() {
     'const DEVICE_HISTORY_CACHE_MS=300000,DEVICE_HISTORY_CACHE_MAX=8,DEVICE_HISTORY_REFRESH_MS=5000;' +
     'const deviceHistoryCache=new Map(),deviceHistoryRequests=new Map(),deviceAlertSignatures=new Map(),deviceNotifiedMessages=new Map();' +
     'let deviceHistoryGeneration=0,deviceBubbleRequest=0;' + cache + key + bubbles + '\n' + listener +
-    ';globalThis.api={deviceHistoryPage,cachedDeviceHistory,clearDeviceHistoryCache,prefetchDeviceHistory,checkDeviceMessageActivity,openDeviceBubble,refreshDeviceBubble};', context);
-  return { ...context.api, calls, timers, previews, paints, threads, status, context, listeners,
+    ';globalThis.api={deviceHistoryKey,deviceHistoryPage,cachedDeviceHistory,clearDeviceHistoryCache,prefetchDeviceHistory,checkDeviceMessageActivity,openDeviceBubble,refreshDeviceBubble};', context);
+  return { ...context.api, calls, timers, previews, paints, threads, status, context, listeners, historyStarted: historyStarted.promise,
     advance: ms => { clock += ms; } };
 }
 
@@ -67,7 +67,7 @@ test('Hub prefetch, preview and chat opening share an overlapping first-page req
 test('opening the notification reuses its phone history without another relay trip', async () => {
   const hub = hubHistory();
   const notification = hub.checkDeviceMessageActivity();
-  await Promise.resolve();
+  await hub.historyStarted;
   assert.equal(hub.calls.length, 1);
   hub.calls[0].resolve(page('incoming'));
   await notification;
@@ -223,4 +223,34 @@ test('failed history releases its slot for retry and disconnect refuses even a p
   phone.state.nativeStatus = null; phone.offline();
   await assert.rejects(phone.history('a'), /disconnected/);
   phone.calls[1].resolve(page('retry')); await retry;
+});
+
+function beginActualConversation(hub, metadata) {
+  const start = hubSource.lastIndexOf('async function openDeviceConversation(threadId){');
+  const end = hubSource.indexOf('let messages=[]', start);
+  assert.ok(start > 0 && end > start);
+  const prefix = hubSource.slice(start, end);
+  const context = { ...hub.context, ...hub, activeDeviceMediaCleanup: null,
+    loadLocal: () => metadata.promise, S: { identity: async () => 'owner' } };
+  vm.runInNewContext(prefix + 'return row;}\nglobalThis.begin=openDeviceConversation;', context);
+  return context.begin('a');
+}
+
+test('actual full-chat opening starts phone history before waiting for Hub metadata', async () => {
+  const hub = hubHistory(), metadata = deferred();
+  const opening = beginActualConversation(hub, metadata);
+  assert.equal(hub.calls.length, 1, 'phone history must already be fetching while metadata is unresolved');
+  hub.calls[0].resolve(page('phone'));
+  metadata.resolve(); await opening;
+  await hub.historyStarted;
+});
+
+test('actual full-chat opening rejects a phone swap while Hub metadata loads', async () => {
+  const hub = hubHistory(), metadata = deferred();
+  const opening = beginActualConversation(hub, metadata);
+  hub.status.sessionId = 'different-phone-session';
+  metadata.resolve();
+  await assert.rejects(opening, /phone connection changed/);
+  hub.calls[0].resolve(page('old-phone'));
+  await hub.historyStarted;
 });
