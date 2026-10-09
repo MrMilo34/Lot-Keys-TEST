@@ -11,10 +11,14 @@ const start = html.indexOf('const WebsiteInfo = (()=>{');
 const end = html.indexOf('\n})();', start) + '\n})();'.length;
 assert.ok(start >= 0 && end > start, 'WebsiteInfo module must exist');
 const normalizers = html.slice(html.indexOf('const FACEBOOK_BODY_STYLE_OPTIONS='), html.indexOf('function seedListingFacebookFields('));
-const source = html.slice(start, end).replace('return{scan,scanFacts,imageBlob};', 'return{scan,scanFacts,imageBlob,parseText,detectVehiclePrice,headingVehicle,carfaxReportUrl,extractCarfaxReportUrl,extractImagesFromMarkdown,classifyPhotos};');
+const source = html.slice(start, end).replace('return{scan,scanFacts,imageBlob,primaryVehicleText};', 'return{scan,scanFacts,imageBlob,primaryVehicleText,parseText,detectVehiclePrice,headingVehicle,carfaxReportUrl,extractCarfaxReportUrl,extractImagesFromMarkdown,classifyPhotos};');
 const context = vm.createContext({ URL, Date, AbortController, setTimeout, clearTimeout });
 vm.runInContext(normalizers + source + '\nglobalThis.importer = WebsiteInfo;', context);
 const importer = context.importer;
+const descriptionStart = html.indexOf('const DescriptionTools = (()=>{');
+const descriptionEnd = html.indexOf('\n})();', descriptionStart) + '\n})();'.length;
+vm.runInContext(html.slice(descriptionStart, descriptionEnd).replace('return{inspect,build};', 'return{inspect,build,parseSupplementary};') + '\nglobalThis.descriptionTools = DescriptionTools;', context);
+const descriptionTools = context.descriptionTools;
 
 // Transcribed from Blair's supplied screenshot; this is not a live-site capture.
 const listing = fs.readFileSync(path.join(__dirname, 'fixtures', 'legacy-listing.txt'), 'utf8');
@@ -22,11 +26,39 @@ const legacyUrl = 'https://www.legacydodgewetaskiwin.com/vehicles/2023/jeep/gran
 const reportUrl = 'https://vhr.carfax.ca/?id=PHaYmcXfU70iH2wRsnrlJWBW6g93B4az';
 const vehicle = { year: '2023', make: 'Jeep', model: 'Grand Wagoneer Series II', stock: 'BT2556' };
 const sticker = { price: 79507, source: 'jsonld', name: '2023 Jeep Grand Wagoneer Series II', stock: 'BT2556', availability: 'https://schema.org/InStock' };
-// Minimized from the Nautilus page retrieved on 2026-10-08. Narrative copy is omitted.
+// Nautilus facts and headings from the live page; the overview uses our own factual wording.
 const nautilus = fs.readFileSync(path.join(__dirname, 'fixtures', 'legacy-nautilus-reader.txt'), 'utf8');
 const nautilusUrl = 'https://www.legacydodgewetaskiwin.com/vehicles/2024/lincoln/nautilus/wetaskiwin/ab/71216856/?sale_class=used';
 const nautilusReport = 'https://vhr.carfax.ca/?id=Gn7slbZVDZagPUkKvrAs6YdajCnkj1oB';
 const nautilusVehicle = { year: '2024', make: 'Lincoln', model: 'Nautilus Reserve', stock: 'BT2550', vin: '5LMPJ8KA5RJ825421' };
+
+test('Nautilus Overview supplies a real profile description before generic metadata', () => {
+  const fields = importer.parseText(nautilus, nautilusUrl, { description: 'Generic dealership metadata that contains no specific vehicle equipment.' });
+  assert.match(fields.description?.value || '', /Nautilus Reserve SUV/);
+  assert.match(fields.description.value, /250HP 2\.0L 4 Cylinder Engine/);
+  assert.match(fields.description.value, /Apple CarPlay/);
+  assert.doesNotMatch(fields.description.value, /Detailed Pricing|\$99,999|Recommended Vehicles|Generic dealership/);
+});
+
+test('plain vehicle descriptions stop before options and pricing sections', () => {
+  for (const label of ['Overview', 'Description', 'Vehicle details']) {
+    const text = `2024 Lincoln Nautilus Reserve\n${label}\nThis vehicle includes Apple CarPlay, adaptive cruise control and cooled front seats.\nOptions\nUnverified optional equipment\nDetailed Pricing\nLegacy Price $55,990`;
+    const fields = importer.parseText(text, nautilusUrl);
+    assert.match(fields.description?.value || '', /Apple CarPlay/);
+    assert.doesNotMatch(fields.description.value, /Unverified|Detailed Pricing|Legacy Price/);
+  }
+});
+
+test('established Go Auto description sections and metadata fallback still work', () => {
+  const url = 'https://www.goauto.ca/vehicles/test-inventory';
+  const copy = 'This SUV includes heated front seats, navigation and a panoramic sunroof.';
+  for (const label of ['Vehicle details', 'Description']) {
+    const fields = importer.parseText(`2023 Infiniti QX60 Luxe\n## Overview\nBody Style: SUV\n## ${label}\n${copy}\n## Location\nDealer address`, url);
+    assert.equal(fields.description?.value, copy);
+  }
+  assert.equal(importer.parseText('2023 Infiniti QX60 Luxe', url, { description: copy }).description.value, copy);
+  assert.equal(importer.parseText('2023 Infiniti QX60 Luxe', url).description, undefined);
+});
 
 test('Legacy import uses sale price and preserves the supplied vehicle facts and report', () => {
   const fields = importer.parseText(listing, legacyUrl, { carfaxUrl: reportUrl }, vehicle);
@@ -309,4 +341,179 @@ test('readable Legacy vehicle pages retain the direct scan path', async () => {
   assert.equal(result.mode, 'direct');
   assert.equal(result.fields.model.value, 'Nautilus Reserve');
   assert.equal(result.fields.price.value, '55990');
+});
+
+test('Description Builder receives the Nautilus overview, equipment and bulleted specifications', async () => {
+  const savedScan = importer.scanFacts;
+  const profile = { ...nautilusVehicle, price: '55990', odometer: '38366', odometerUnit: 'KM', description: '', originalListingUrl: nautilusUrl };
+  importer.scanFacts = async () => ({ fields: importer.parseText(nautilus, nautilusUrl, {}, profile), rawText: nautilus + '\nPanoramic Sunroof on the recommended vehicle only' });
+  try {
+    const result = await descriptionTools.inspect(profile, {});
+    assert.match(result.facts.overviewSource, /Nautilus Reserve SUV/);
+    assert.equal(result.facts.engine, '2.0L 4 Cylinder Engine');
+    assert.equal(result.facts.hp, '250HP');
+    assert.equal(result.facts.drivetrain, 'All Wheel Drive');
+    assert.equal(result.facts.transmission, '8-Speed Automatic');
+    const labels = Array.from(result.features, x => x.label);
+    assert.ok(labels.includes('Power Liftgate'));
+    assert.ok(labels.includes('Ventilated Front Seats'));
+    assert.ok(labels.includes('Apple CarPlay'));
+    assert.ok(!labels.includes('Panoramic Sunroof'));
+    const template = { blocks: [{ type: 'overview', title: 'Overview', useEmojis: false }, { type: 'features', title: 'Features', useEmojis: false }] };
+    const copy = descriptionTools.build(template, result.facts, result.features, 'Blair');
+    assert.match(copy, /2\.0L 4 Cylinder Engine/);
+    assert.match(copy, /Power Liftgate/);
+    assert.doesNotMatch(copy, /Recommended Vehicles|\$99,999|Panoramic Sunroof/);
+    assert.equal(profile.description, '', 'inspection cannot write into the saved profile');
+  } finally { importer.scanFacts = savedScan; }
+});
+
+test('Description Builder keeps an existing personal description and Profile price authoritative', async () => {
+  const savedScan = importer.scanFacts;
+  const ownCopy = 'My existing description contains the equipment and wording I have personally reviewed.';
+  const profile = { ...nautilusVehicle, description: ownCopy, price: '55000', originalListingUrl: nautilusUrl };
+  importer.scanFacts = async () => ({ fields: importer.parseText(nautilus, nautilusUrl, {}, profile), rawText: nautilus });
+  try {
+    const result = await descriptionTools.inspect(profile, {});
+    assert.equal(result.facts.overviewSource, ownCopy);
+    assert.equal(result.facts.priceValue, 55000);
+    assert.equal(profile.description, ownCopy);
+    assert.equal(result.discrepancies.length, 1);
+  } finally { importer.scanFacts = savedScan; }
+});
+
+test('a partial Legacy reader response is refreshed and all 20 returned gallery photos stay ordered', async () => {
+  const saved = { fetch: context.fetch, Image: context.Image };
+  const withoutImages = nautilus.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
+  const gallery = Array.from({ length: 20 }, (_, i) => `![Vehicle photo ${i + 1}](https://prod.pictures.autoscout24.net/listing-images/test-gallery_photo-${i + 1}.png/133x100.webp)`).join('\n');
+  const urls = Array.from({ length: 20 }, (_, i) => `https://prod.pictures.autoscout24.net/listing-images/test-gallery_photo-${i + 1}.png`);
+  const progress = [];
+  let readerCalls = 0;
+  context.Image = class {
+    constructor() { this.naturalWidth = 800; this.naturalHeight = 600; }
+    set src(value) { queueMicrotask(() => this.onload?.()); }
+  };
+  context.fetch = async (url, options) => {
+    if (url === nautilusUrl) throw new Error('CORS blocked');
+    if (url === 'https://r.jina.ai/' + nautilusUrl) {
+      readerCalls++;
+      if (readerCalls === 1) return { ok: true, text: async () => withoutImages };
+      assert.equal(options.headers['X-No-Cache'], 'true');
+      assert.equal(options.headers['X-Wait-For-Selector'], 'img[src*="/listing-images/"]');
+      return { ok: true, text: async () => withoutImages.replace('# 2024 Lincoln Nautilus Reserve', '# 2024 Lincoln Nautilus Reserve\n' + gallery) };
+    }
+    return { ok: false };
+  };
+  try {
+    const result = await importer.scan(nautilusUrl, message => progress.push(message));
+    assert.equal(readerCalls, 2);
+    assert.ok(progress.some(x => /Waiting for the vehicle photo gallery/.test(x)));
+    assert.equal(result.photoWarning, '');
+    assert.match(result.fields.description.value, /Nautilus Reserve SUV/);
+    assert.equal(result.photos.length, 20);
+    assert.deepEqual(Array.from(result.photos, x => x.url), urls);
+    assert.ok(result.photos.every(x => x.selected && x.confidence === 'high'));
+  } finally { Object.assign(context, saved); }
+});
+
+test('an unavailable gallery keeps the vehicle description and reports that photos need another import', async () => {
+  const saved = { fetch: context.fetch, Image: context.Image };
+  const withoutImages = nautilus.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
+  let readerCalls = 0;
+  context.fetch = async url => {
+    if (url === nautilusUrl) throw new Error('CORS blocked');
+    readerCalls++;
+    if (readerCalls === 1) return { ok: true, text: async () => withoutImages };
+    throw new Error('Gallery unavailable');
+  };
+  try {
+    const result = await importer.scan(nautilusUrl);
+    assert.match(result.fields.description.value, /Nautilus Reserve SUV/);
+    assert.equal(result.fields.price.value, '55990');
+    assert.equal(result.photos.length, 0);
+    assert.match(result.photoWarning, /photo gallery.*Try Import again/);
+  } finally { Object.assign(context, saved); }
+});
+
+test('original gallery downloads reuse available image bytes and preserve the generic photo fallback', async () => {
+  const savedFetch = context.fetch;
+  const original = 'https://prod.pictures.autoscout24.net/listing-images/test-gallery_photo-1.png';
+  const image = { type: 'image/png' };
+  const calls = [];
+  context.fetch = async (url, options) => {
+    calls.push({ url, options });
+    if (url === original) return { ok: true, blob: async () => image };
+    if (url.startsWith('https://images.weserv.nl/')) return { ok: true, blob: async () => image };
+    throw new Error('Direct download blocked');
+  };
+  try {
+    assert.equal(await importer.imageBlob(original), image);
+    assert.equal(calls[0].options.cache, 'force-cache');
+    assert.ok(calls[0].options.signal instanceof AbortSignal);
+    assert.equal(await importer.imageBlob('https://dealer.example/vehicle-photo.jpg'), image);
+    assert.equal(calls[1].options.cache, 'no-store');
+    assert.ok(calls[2].url.startsWith('https://images.weserv.nl/'));
+  } finally { context.fetch = savedFetch; }
+});
+
+test('a stalled photo body is aborted and the existing fallback can finish the download', { timeout: 1000 }, async () => {
+  const saved = { fetch: context.fetch, setTimeout: context.setTimeout };
+  const image = { type: 'image/jpeg' };
+  const calls = [];
+  context.setTimeout = callback => setTimeout(callback, 5);
+  context.fetch = async (url, options) => {
+    calls.push({ url, options });
+    if (calls.length === 1) return { ok: true, blob: () => new Promise((resolve, reject) => options.signal.addEventListener('abort', () => reject(new Error('Body download aborted')), { once: true })) };
+    return { ok: true, blob: async () => image };
+  };
+  try {
+    assert.equal(await importer.imageBlob('https://dealer.example/vehicle-photo.jpg'), image);
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0].options.signal.aborted, true);
+    assert.ok(calls[1].url.startsWith('https://images.weserv.nl/'));
+  } finally { Object.assign(context, saved); }
+});
+
+test('distinct original photos at the same resolution survive a similar visual hash', () => {
+  const photos = importer.classifyPhotos([
+    { url: 'https://dealer.example/vehicle-front-a.png', naturalWidth: 800, naturalHeight: 600, fingerprint: '0'.repeat(64), position: 0.1 },
+    { url: 'https://dealer.example/vehicle-front-b.png', naturalWidth: 800, naturalHeight: 600, fingerprint: '0'.repeat(63) + '1', position: 0.2 }
+  ]);
+  assert.equal(photos.length, 2);
+  assert.ok(photos.every(x => x.selected));
+});
+
+test('lower-resolution visual duplicates still yield to the original gallery', () => {
+  const photos = importer.classifyPhotos([
+    { url: 'https://dealer.example/vehicle-front-small.png', naturalWidth: 800, naturalHeight: 600, fingerprint: '0'.repeat(64), position: 0.1 },
+    { url: 'https://dealer.example/vehicle-front-large.png', naturalWidth: 1200, naturalHeight: 900, fingerprint: '0'.repeat(64), position: 0.2 },
+    { url: 'https://dealer.example/vehicle-rear-large.png', naturalWidth: 1200, naturalHeight: 900, fingerprint: '1'.repeat(64), position: 0.3 }
+  ]);
+  assert.equal(photos.length, 2);
+  assert.ok(photos.every(x => x.url.includes('-large.png') && x.selected));
+});
+
+test('readable direct vehicle facts retain their price while the reader supplies a missing gallery', async () => {
+  const saved = { fetch: context.fetch, Image: context.Image, DOMParser: context.DOMParser };
+  const text = '2024 Lincoln Nautilus Reserve\nStock #: BT2550\nLegacy Price $55,990';
+  context.DOMParser = class {
+    parseFromString() { return { body: { innerText: text }, title: '2024 Lincoln Nautilus', querySelector: () => null, querySelectorAll: () => [] }; }
+  };
+  context.Image = class {
+    constructor() { this.naturalWidth = 800; this.naturalHeight = 600; }
+    set src(value) { queueMicrotask(() => this.onload?.()); }
+  };
+  context.fetch = async url => {
+    if (url === nautilusUrl) return { ok: true, text: async () => '<h1>2024 Lincoln Nautilus Reserve</h1>' };
+    if (url === 'https://r.jina.ai/' + nautilusUrl) return { ok: true, text: async () => nautilus.replace('$55,990', '$56,990') };
+    return { ok: false };
+  };
+  try {
+    const result = await importer.scan(nautilusUrl);
+    assert.equal(result.mode, 'direct');
+    assert.equal(result.fields.price.value, '55990');
+    assert.match(result.fields.description.value, /Nautilus Reserve SUV/);
+    assert.equal(result.photos.length, 2);
+    assert.ok(result.photos.every(x => x.selected));
+  } finally { Object.assign(context, saved); }
 });

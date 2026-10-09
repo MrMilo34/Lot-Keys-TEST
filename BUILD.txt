@@ -1,3 +1,17 @@
+V0.9.5.30 WEBSITE DESCRIPTION AND GALLERY RECOVERY
+- Recognizes Overview, Description and Vehicle details in rendered or plain vehicle text; actual sections take precedence over generic metadata.
+- Hands the imported overview to Description Builder while retaining existing Profile wording and price.
+- Reads bulleted engine/drivetrain specifications and preserves decimal engine sizes in description summaries.
+- Refreshes an incomplete Legacy gallery through the existing reader, waiting for listing images to render.
+- Allows original CDN images more time to load, reuses available bytes and bounds photo comparison/download requests through the body read.
+- Preserves distinct same-resolution original views; lower-resolution visual duplicates and thumbnail duplicates remain filtered.
+- Readable direct facts can recover a missing gallery without replacing the directly read price.
+- Shows a retry message if the gallery remains unavailable, retaining the vehicle information already read.
+- Verified the full current Nautilus overview and downloaded all 34 original entries currently supplied by the listing. Blair reports 20 visible photos; the importer follows the supplied gallery count.
+- Web-only TEST update; Android connector V0.9.5.12 and Store Processor V0.9.4.76 remain compatible.
+- Build: 095030.
+- Service worker cache: lotkeys-app-v095030-website-description-gallery-recovery.
+
 V0.9.5.29 EXPANDED DEALERSHIP RECOGNITION
 - Uses the full primary vehicle heading and reads bulleted specifications from rendered pages.
 - Excludes related vehicles from the current vehicle's price and Call for Price checks.

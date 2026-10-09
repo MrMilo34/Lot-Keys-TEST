@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.29",
-  "build": "095029",
-  "release": "expanded-dealership-recognition",
+  "version": "0.9.5.30",
+  "build": "095030",
+  "release": "website-description-gallery-recovery",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095029-expanded-dealership-recognition",
-  "publishedAt": "2026-10-08",
-  "basedOn": "LotKeys V0.9.5.28 import template compatibility",
+  "serviceWorkerCache": "lotkeys-app-v095030-website-description-gallery-recovery",
+  "publishedAt": "2026-10-09",
+  "basedOn": "LotKeys V0.9.5.29 expanded dealership recognition",
   "androidConnectorVersion": "0.9.5.12"
 }

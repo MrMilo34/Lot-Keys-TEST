@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.30 — website description and gallery recovery
+
+Vehicle descriptions now recognize the Legacy **Overview** heading and take precedence over generic metadata. Incomplete galleries are refreshed before photo selection; photo requests have deadlines and original gallery bytes can be reused. Distinct original views remain available even when their small comparison hashes look similar. Description Builder receives the overview and supplementary equipment while retaining existing Profile wording and price. Earlier Go Auto-style and Grand Wagoneer recognition remains covered. See [RELEASE-0.9.5.30.md](RELEASE-0.9.5.30.md) and [verification](LotKeys-0.9.5.30-Test-Report.md).
+
+## V0.9.5.29 retained
+
 # LotKeys V0.9.5.29 — expanded dealership recognition
 
 The importer now reads the full vehicle heading and bulleted specifications, keeps recommended vehicles out of price recognition, and resolves the known photo CDN's thumbnails to original images. Legacy pages that return a JavaScript shell use the existing rendered-page reader. The actual Nautilus page was checked alongside earlier Go Auto-style and Grand Wagoneer regression examples. Recognition continues to build on previous templates. See [RELEASE-0.9.5.29.md](RELEASE-0.9.5.29.md) and [verification](LotKeys-0.9.5.29-Test-Report.md).
