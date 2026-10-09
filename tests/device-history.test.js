@@ -227,7 +227,7 @@ test('failed history releases its slot for retry and disconnect refuses even a p
 
 function beginActualConversation(hub, metadata) {
   const start = hubSource.lastIndexOf('async function openDeviceConversation(threadId){');
-  const end = hubSource.indexOf('let messages=[]', start);
+  const end = hubSource.indexOf('let messages=', start);
   assert.ok(start > 0 && end > start);
   const prefix = hubSource.slice(start, end);
   const context = { ...hub.context, ...hub, activeDeviceMediaCleanup: null,

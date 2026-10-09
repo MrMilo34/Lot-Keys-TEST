@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095031-device-chat-history-reuse';
+const CACHE='lotkeys-app-v095032-personal-listing-storage-sms-receipts';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -14,6 +14,7 @@ const CORE=[
   './lotkeys-messaging.js',
   './lotkeys-hub-core.js',
   './lotkeys-hub-store.js',
+  './lotkeys-listing-storage.js',
   './lotkeys-phone-core.js',
   './lotkeys-phone.js',
   './lotkeys-hub.js',

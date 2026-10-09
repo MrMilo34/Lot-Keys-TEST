@@ -23,6 +23,7 @@ jobs:
           node --check lotkeys-awards.js
           node --check lotkeys-hub-core.js
           node --check lotkeys-hub-store.js
+          node --check lotkeys-listing-storage.js
           node --check lotkeys-phone-core.js
           node --check lotkeys-phone.js
           node --check lotkeys-hub.js

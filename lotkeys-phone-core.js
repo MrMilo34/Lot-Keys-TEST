@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.26 — pure identity, trust, pairing and conversation helpers. */
+/* LotKeys Phone V0.9.5.32 — identity, trust, pairing and SMS receipt helpers. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -192,9 +192,21 @@
     return Number(value.expiresAt) > now && Number(value.expiresAt) <= now + 15 * 60 * 1000;
   }
 
+  function smsSendOutcome(receipt = {}) {
+    const phase = text(receipt.phase), error = text(receipt.error);
+    if (phase === 'sent') return {state:'sent',label:'Sent',error:'',action:''};
+    if (phase === 'sending') return {state:'sending',label:'Sending',error,action:'check'};
+    // The installed connector cannot distinguish an all-part failure from a partial send.
+    // Only explicit pre-submission validation failures permit a brand-new send request.
+    const safeFailure = phase === 'failed' && /^(Allow SMS sending|Allow SMS access|Allow Messages access|Choose the default SMS SIM|Use the phone's messaging app|The phone recipient changed|Enter a message under|This message exceeds|The phone could not reserve|SMS was not submitted)/.test(error);
+    if (safeFailure) return {state:'failed',label:'Failed',error,action:'retry'};
+    return {state:'unconfirmed',label:phase === 'failed'?'Check phone':'Not confirmed',error:error || 'The phone has not confirmed this SMS. Check the phone before sending it again.',action:'check'};
+  }
+
   return {
-    version: '0.9.5.26',
+    version: '0.9.5.32',
     buildMultipartJsonUpload,
+    smsSendOutcome,
     phone,
     contactPhone,
     contactFor,

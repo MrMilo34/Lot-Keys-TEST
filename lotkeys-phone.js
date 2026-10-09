@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.31 — overlapping history reads share one phone request. */
+/* LotKeys Phone V0.9.5.32 — stable SMS receipt checks preserve phone send idempotency. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -1385,16 +1385,23 @@
     return job;
   }
 
-  async function send({ threadId, address, text: body }) {
-    const requestId = randomId(18);
+  async function send({ threadId, address, text: body, requestId = randomId(18) }) {
+    if (!/^[A-Za-z0-9_-]{8,120}$/.test(requestId)) throw Error('Invalid SMS request identifier.');
     const payload = { requestId, threadId, address, text: String(body || ''), transport: 'sms' };
+    const revision = state.nativeRevision, sessionId = state.session?.sessionId;
     let receipt;
-    if (state.nativeStatus) {
-      receipt = await nativeCall('/v1/send', { method: 'POST', body: JSON.stringify(payload) });
-      receipt = await waitForSendReceipt(receipt.requestId);
-    } else if (connected()) receipt = await request('send', payload, 45000);
-    else throw Error('The phone disconnected. Nothing was sent.');
-    event('send-state', { receipt, threadId });
+    if (!state.nativeStatus && !connected()) throw Error('The phone disconnected. Nothing was sent.');
+    try {
+      if (state.nativeStatus) {
+        receipt = await nativeCall('/v1/send', { method: 'POST', body: JSON.stringify(payload) });
+        if (receipt.phase === 'sending') receipt = await waitForSendReceipt(receipt.requestId);
+      } else receipt = await request('send', payload, 45000);
+    } catch (error) {
+      // The phone may have accepted the request even if its reply was lost.
+      receipt = {requestId,phase:'unconfirmed',error:'Send confirmation is unavailable. '+(error.message || 'Reconnect the phone.')+' Use Check status or check the phone before sending again.'};
+    }
+    receipt = {...receipt,requestId};
+    if (revision === state.nativeRevision && sessionId === state.session?.sessionId) event('send-state', { receipt, threadId });
     return receipt;
   }
 
@@ -1511,7 +1518,7 @@
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
     return {
-      version: '0.9.5.31',
+      version: '0.9.5.32',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,

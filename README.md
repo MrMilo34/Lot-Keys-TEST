@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.32 — Personal listing storage and SMS receipts
+
+Personal listings and their photos are grouped by dealership under the existing personal Account Storage folder. Previous Store copies migrate without deleting the originals. Device chat shows the phone’s send error and distinguishes an unconfirmed send; Check status reuses its original request ID. See [release details](RELEASE-0.9.5.32.md) and [verification](LotKeys-0.9.5.32-Test-Report.md).
+
+## V0.9.5.31 retained
+
 # LotKeys V0.9.5.31 — Device chat history reuse
 
 Opening a Device notification reuses its recent phone history instead of starting another relay round trip. Bubble Chat, full chat, prefetch and overlapping phone reads share requests. Changes to another conversation retain the current chat’s warm page; changed or aged pages refresh from the phone. Full-chat history starts while private Hub metadata loads. Older-page cursors, new arrivals, media, read acknowledgements and disconnect privacy remain covered. See [RELEASE-0.9.5.31.md](RELEASE-0.9.5.31.md) and [verification](LotKeys-0.9.5.31-Test-Report.md).

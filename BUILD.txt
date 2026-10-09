@@ -1,3 +1,12 @@
+V0.9.5.32 PERSONAL LISTING STORAGE AND SMS RECEIPTS
+- Personal Account Storage / [Store name] / Listings and Listing Assets.
+- Resumable non-destructive copies, immutable Store identity and scoped indexes.
+- Persistent visible phone errors, unconfirmed-send labels and original-request status checks.
+- Web-only TEST update; Android V0.9.5.12 and Store Processor V0.9.4.76 remain compatible.
+- 177 Node tests pass; physical-phone carrier outcome is not reproduced.
+- Build: 095032.
+- Service worker cache: lotkeys-app-v095032-personal-listing-storage-sms-receipts.
+
 V0.9.5.31 DEVICE CHAT HISTORY REUSE
 - Reuses the notification's recent phone-sourced history when opening Bubble Chat or full chat.
 - Shares overlapping Hub and transport history reads, preserving independent older cursors.
