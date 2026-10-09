@@ -1,4 +1,4 @@
-/* LotKeys Phone V0.9.5.26 — trusted phones recover PC sessions and warm recent Device history. */
+/* LotKeys Phone V0.9.5.31 — overlapping history reads share one phone request. */
 (() => {
   'use strict';
   const Core = window.LotKeysMessagingBridge;
@@ -34,6 +34,8 @@
   const pendingOffers = new Map();
   const processedFrames = new Set();
   const receiptChecks = new Map();
+  const historyRequests = new Map();
+  let historyRevision = 0;
   const state = {
     role: 'pc',
     nativeToken: '',
@@ -1179,6 +1181,7 @@
     if (state.session !== session) return;
     if (payload.kind === 'event') {
       if (payload.event === 'invalidate') {
+        historyRevision++;
         refreshThreads().catch(sessionError);
       }
       if (payload.event === 'disconnect') disconnect({ notify: false, reason: payload.reason || '', movedTo: payload.movedTo || '' }).catch(() => {});
@@ -1364,13 +1367,22 @@
     return { ...page, threads: rows };
   }
 
-  async function history(threadId, before = null) {
-    const query = new URLSearchParams({ threadId: text(threadId) });
+  function history(threadId, before = null) {
+    if (!state.nativeStatus && !connected()) return Promise.reject(Error('The phone disconnected. Message history is locked until it reconnects.'));
+    const id = text(threadId);
+    const key = JSON.stringify([
+      state.nativeStatus ? ['native', state.nativeToken, state.relayIdentity, state.nativeRevision] : ['relay', state.session?.sessionId],
+      historyRevision, P.threadAlertSignature(state.threads.find(row => text(row.id) === id)),
+      id, before?.at || null, text(before?.sort)
+    ]);
+    if (historyRequests.has(key)) return historyRequests.get(key);
+    const query = new URLSearchParams({ threadId: id });
     if (before?.at) query.set('beforeAt', String(before.at));
     if (before?.sort) query.set('beforeSort', text(before.sort));
-    if (state.nativeStatus) return nativeCall('/v1/history?' + query);
-    if (connected()) return request('history', { threadId, before });
-    throw Error('The phone disconnected. Message history is locked until it reconnects.');
+    const job = (state.nativeStatus ? nativeCall('/v1/history?' + query) : request('history', { threadId, before }))
+      .finally(() => { if (historyRequests.get(key) === job) historyRequests.delete(key); });
+    historyRequests.set(key, job);
+    return job;
   }
 
   async function send({ threadId, address, text: body }) {
@@ -1427,6 +1439,8 @@
   }
 
   async function disconnect({ notify = true, forget = false, reason = '', movedTo = '', keepRemembered = false } = {}) {
+    historyRevision++;
+    historyRequests.clear();
     if (state.nativeToken && state.nativeStatus && !state.session) {
       await nativeCall('/v1/relay/disconnect', {
         method: 'POST', body: JSON.stringify({ forget: !!forget }), timeout: 15000
@@ -1497,7 +1511,7 @@
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
     return {
-      version: '0.9.5.26',
+      version: '0.9.5.31',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,

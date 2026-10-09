@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095030-website-description-gallery-recovery';
+const CACHE='lotkeys-app-v095031-device-chat-history-reuse';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

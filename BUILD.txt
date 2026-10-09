@@ -1,3 +1,15 @@
+V0.9.5.31 DEVICE CHAT HISTORY REUSE
+- Reuses the notification's recent phone-sourced history when opening Bubble Chat or full chat.
+- Shares overlapping Hub and transport history reads, preserving independent older cursors.
+- Retains warm pages when another conversation changes and refreshes changed or aged history without dropping new arrivals.
+- Starts the full-chat phone read alongside private Hub metadata loading.
+- Keeps the existing eight-page/five-minute volatile cache and disconnect/account/page-close clearing.
+- Web-only TEST update; Android connector V0.9.5.12 and Store Processor V0.9.4.76 remain compatible.
+- Twelve behavioral regression cases; complete Node/syntax CI is the publication gate.
+- Real phone/Enigma end-to-end latency is not yet measured.
+- Build: 095031.
+- Service worker cache: lotkeys-app-v095031-device-chat-history-reuse.
+
 V0.9.5.30 WEBSITE DESCRIPTION AND GALLERY RECOVERY
 - Recognizes Overview, Description and Vehicle details in rendered or plain vehicle text; actual sections take precedence over generic metadata.
 - Hands the imported overview to Description Builder while retaining existing Profile wording and price.

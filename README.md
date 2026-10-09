@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.31 — Device chat history reuse
+
+Opening a Device notification reuses its recent phone history instead of starting another relay round trip. Bubble Chat, full chat, prefetch and overlapping phone reads share requests. Changes to another conversation retain the current chat’s warm page; changed or aged pages refresh from the phone. Full-chat history starts while private Hub metadata loads. Older-page cursors, new arrivals, media, read acknowledgements and disconnect privacy remain covered. See [RELEASE-0.9.5.31.md](RELEASE-0.9.5.31.md) and [verification](LotKeys-0.9.5.31-Test-Report.md).
+
+## V0.9.5.30 retained
+
 # LotKeys V0.9.5.30 — website description and gallery recovery
 
 Vehicle descriptions now recognize the Legacy **Overview** heading and take precedence over generic metadata. Incomplete galleries are refreshed before photo selection; photo requests have deadlines and original gallery bytes can be reused. Distinct original views remain available even when their small comparison hashes look similar. Description Builder receives the overview and supplementary equipment while retaining existing Profile wording and price. Earlier Go Auto-style and Grand Wagoneer recognition remains covered. See [RELEASE-0.9.5.30.md](RELEASE-0.9.5.30.md) and [verification](LotKeys-0.9.5.30-Test-Report.md).

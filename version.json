@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.30",
-  "build": "095030",
-  "release": "website-description-gallery-recovery",
+  "version": "0.9.5.31",
+  "build": "095031",
+  "release": "device-chat-history-reuse",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095030-website-description-gallery-recovery",
+  "serviceWorkerCache": "lotkeys-app-v095031-device-chat-history-reuse",
   "publishedAt": "2026-10-09",
-  "basedOn": "LotKeys V0.9.5.29 expanded dealership recognition",
+  "basedOn": "LotKeys V0.9.5.30 website description and gallery recovery",
   "androidConnectorVersion": "0.9.5.12"
 }
