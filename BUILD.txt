@@ -1,3 +1,12 @@
+V0.9.5.33 INVENTORY WORKSPACE RECOVERY
+- Inventory and Store setup no longer require personal listing migration.
+- Rebuilds missing approved-user workspace folders and refreshes saved references.
+- Retains device-saved listings for resynchronization after workspace loss.
+- Missing listing files can be recreated; unavailable original photos need restoration or reattachment.
+- Android connector V0.9.5.12 and Store Processor V0.9.4.76 unchanged.
+- Build: 095033.
+- Service worker cache: lotkeys-app-v095033-inventory-workspace-recovery.
+
 V0.9.5.32 PERSONAL LISTING STORAGE AND SMS RECEIPTS
 - Personal Account Storage / [Store name] / Listings and Listing Assets.
 - Resumable non-destructive copies, immutable Store identity and scoped indexes.

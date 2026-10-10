@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.32",
-  "build": "095032",
-  "release": "personal-listing-storage-sms-receipts",
+  "version": "0.9.5.33",
+  "build": "095033",
+  "release": "inventory-workspace-recovery",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095032-personal-listing-storage-sms-receipts",
-  "publishedAt": "2026-10-09",
-  "basedOn": "LotKeys V0.9.5.31 Device chat history reuse",
+  "serviceWorkerCache": "lotkeys-app-v095033-inventory-workspace-recovery",
+  "publishedAt": "2026-10-10",
+  "basedOn": "LotKeys V0.9.5.32 Personal listing storage and SMS receipts",
   "androidConnectorVersion": "0.9.5.12"
 }

@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.33 — Inventory workspace recovery
+
+Inventory sync and Store setup operate independently of personal listing migration. Missing approved-user workspace references are rebuilt without deleting device-saved listings. The personal per-dealership listing location and previous import/chat fixes remain. See [release details](RELEASE-0.9.5.33.md) and [verification](LotKeys-0.9.5.33-Test-Report.md).
+
+## V0.9.5.32 retained
+
 # LotKeys V0.9.5.32 — Personal listing storage and SMS receipts
 
 Personal listings and their photos are grouped by dealership under the existing personal Account Storage folder. Previous Store copies migrate without deleting the originals. Device chat shows the phone’s send error and distinguishes an unconfirmed send; Check status reuses its original request ID. See [release details](RELEASE-0.9.5.32.md) and [verification](LotKeys-0.9.5.32-Test-Report.md).

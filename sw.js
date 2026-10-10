@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095032-personal-listing-storage-sms-receipts';
+const CACHE='lotkeys-app-v095033-inventory-workspace-recovery';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
