@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095034-posting-buddy-listing-title';
+const CACHE='lotkeys-app-v095035-personal-preferences-backup';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -15,6 +15,7 @@ const CORE=[
   './lotkeys-hub-core.js',
   './lotkeys-hub-store.js',
   './lotkeys-listing-storage.js',
+  './lotkeys-personal-preferences.js',
   './lotkeys-phone-core.js',
   './lotkeys-phone.js',
   './lotkeys-hub.js',
