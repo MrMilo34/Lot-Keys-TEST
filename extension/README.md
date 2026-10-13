@@ -1,9 +1,9 @@
 # LotKeys Facebook Posting Buddy
 
-Current beta: **V0.1.23**
+Current beta: **V0.1.24**
 
-V0.1.23 keeps the speed-first horizontal **Video · Photos · Description · Details** workflow and all V0.1.22 replacement-style update behavior. Video discovery now refreshes the Vehicle Profile Videos folder directly from Drive plus the signed-in user's own existing More Media Videos, so adding a walkaround later does not require re-saving the LotKeys Listing. When Video is selected it is prepared early and handed to Facebook first; the remaining selected sections continue while Facebook handles the video. The fields timer completes when Facebook exposes the next Save / Update / Next step.
+Facebook name filling uses the title saved on the LotKeys Listing. A matching Year/Make prefix is removed before filling Model, because the editor has separate controls for those values. Custom wording, punctuation and trim details are preserved. Posting, Details updates and Model retries use the same rule; unchecked Details stay untouched. Existing video, photo, price and description workflows are retained.
 
-[Download the newest Posting Buddy — V0.1.23](./releases/LotKeys-Facebook-Assistant-Beta-v0.1.23.zip)
+[Download Posting Buddy V0.1.24](./releases/LotKeys-Facebook-Assistant-Beta-v0.1.24.zip). Extract it, replace the files in the existing unpacked extension folder, reload the extension and Facebook, then press Sync in Posting Buddy. The package is supplied through the TEST site; the V0.1.23 archive is retained for recovery.
 
-`latest.json` is the live version pointer used by the extension's **Check for update** button.
+[Previous release](./releases/LotKeys-Facebook-Assistant-Beta-v0.1.23.zip).

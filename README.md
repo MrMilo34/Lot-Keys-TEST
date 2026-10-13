@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.34 — Posting Buddy listing names
+
+Garage downloads Posting Buddy V0.1.24. Facebook name filling now uses the saved Listing title instead of the separate Vehicle Profile-derived Model wording. Matching Year/Make prefixes are not repeated; posting, selective Details updates and field retries share the correction. See [release details](RELEASE-0.9.5.34.md) and [verification](LotKeys-0.9.5.34-Test-Report.md).
+
+## V0.9.5.33 retained
+
 # LotKeys V0.9.5.33 — Inventory workspace recovery
 
 Inventory sync and Store setup operate independently of personal listing migration. Missing approved-user workspace references are rebuilt without deleting device-saved listings. The personal per-dealership listing location and previous import/chat fixes remain. See [release details](RELEASE-0.9.5.33.md) and [verification](LotKeys-0.9.5.33-Test-Report.md).

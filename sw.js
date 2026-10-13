@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095033-inventory-workspace-recovery';
+const CACHE='lotkeys-app-v095034-posting-buddy-listing-title';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

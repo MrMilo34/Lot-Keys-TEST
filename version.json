@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.33",
-  "build": "095033",
-  "release": "inventory-workspace-recovery",
+  "version": "0.9.5.34",
+  "build": "095034",
+  "release": "posting-buddy-listing-title",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095033-inventory-workspace-recovery",
-  "publishedAt": "2026-10-10",
-  "basedOn": "LotKeys V0.9.5.32 Personal listing storage and SMS receipts",
+  "serviceWorkerCache": "lotkeys-app-v095034-posting-buddy-listing-title",
+  "publishedAt": "2026-10-13",
+  "basedOn": "LotKeys V0.9.5.33 Inventory workspace recovery",
   "androidConnectorVersion": "0.9.5.12"
 }
