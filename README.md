@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.35 — Personal preferences backup
+
+Description Builder templates, the default template and PC notification sounds now save to personal Account Storage with verified writes, retry state and cross-device restoration. Existing newer device templates and local PC sounds are picked up on reconnect. See [release details](RELEASE-0.9.5.35.md) and [verification](LotKeys-0.9.5.35-Test-Report.md).
+
+## V0.9.5.34 retained
+
 # LotKeys V0.9.5.34 — Posting Buddy listing names
 
 Garage downloads Posting Buddy V0.1.24. Facebook name filling now uses the saved Listing title instead of the separate Vehicle Profile-derived Model wording. Matching Year/Make prefixes are not repeated; posting, selective Details updates and field retries share the correction. See [release details](RELEASE-0.9.5.34.md) and [verification](LotKeys-0.9.5.34-Test-Report.md).

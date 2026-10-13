@@ -1,3 +1,13 @@
+V0.9.5.35 PERSONAL PREFERENCES BACKUP
+- Description Builder and PC notification choices save independently to personal Account Storage.
+- Custom PC audio is private under Notification Sounds; Account.json keeps file metadata.
+- Verifies Account.json writes, retains pending edits, retries and shows backup status.
+- Preserves newer local templates; deletion tombstones stop old recovery files returning.
+- Serializes Account reads/writes and keeps edits made during an in-flight save pending.
+- Posting Buddy V0.1.24, Android V0.9.5.12 and Processor V0.9.4.76 retained.
+- Build: 095035.
+- Service worker cache: lotkeys-app-v095035-personal-preferences-backup.
+
 V0.9.5.34 POSTING BUDDY LISTING NAMES
 - Bundles Posting Buddy V0.1.24; Chrome must load the updated extension files.
 - Facebook name filling follows the saved Listing title, with matching Year/Make prefixes handled once.
