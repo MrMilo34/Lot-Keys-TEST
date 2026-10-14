@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.36 — Website identity and upload recovery
+
+Fixes the RAV4 missing-stock warning, preserves Legacy sale-price recognition, protects newer edits from slow source checks, and improves upload recovery and refresh pacing. See [release details](RELEASE-0.9.5.36.md) and [verification](LotKeys-0.9.5.36-Test-Report.md).
+
+## V0.9.5.35 retained
+
 # LotKeys V0.9.5.35 — Personal preferences backup
 
 Description Builder templates, the default template and PC notification sounds now save to personal Account Storage with verified writes, retry state and cross-device restoration. Existing newer device templates and local PC sounds are picked up on reconnect. See [release details](RELEASE-0.9.5.35.md) and [verification](LotKeys-0.9.5.35-Test-Report.md).
