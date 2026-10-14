@@ -12,7 +12,7 @@ const end = html.indexOf('\n})();', start) + '\n})();'.length;
 assert.ok(start >= 0 && end > start, 'WebsiteInfo module must exist');
 const normalizers = html.slice(html.indexOf('const FACEBOOK_BODY_STYLE_OPTIONS='), html.indexOf('function seedListingFacebookFields('));
 const source = html.slice(start, end).replace('return{scan,scanFacts,imageBlob,primaryVehicleText};', 'return{scan,scanFacts,imageBlob,primaryVehicleText,parseText,detectVehiclePrice,headingVehicle,carfaxReportUrl,extractCarfaxReportUrl,extractImagesFromMarkdown,classifyPhotos};');
-const context = vm.createContext({ URL, Date, AbortController, setTimeout, clearTimeout });
+const context = vm.createContext({ URL, Date, AbortController, setTimeout, clearTimeout, LotKeysWebsiteIdentity: require('../lotkeys-website-identity.js') });
 vm.runInContext(normalizers + source + '\nglobalThis.importer = WebsiteInfo;', context);
 const importer = context.importer;
 const descriptionStart = html.indexOf('const DescriptionTools = (()=>{');
@@ -337,7 +337,7 @@ test('readable Legacy vehicle pages retain the direct scan path', async () => {
     assert.equal(url, nautilusUrl, 'readable pages need no reader request');
     return { ok: true, text: async () => '<h1>2024 Lincoln Nautilus Reserve</h1>' };
   };
-  const result = await importer.scanFacts(nautilusUrl);
+  const result = await importer.scanFacts(nautilusUrl,()=>{},{},{force:true});
   assert.equal(result.mode, 'direct');
   assert.equal(result.fields.model.value, 'Nautilus Reserve');
   assert.equal(result.fields.price.value, '55990');

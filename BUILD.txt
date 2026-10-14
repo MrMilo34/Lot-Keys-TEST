@@ -1,3 +1,14 @@
+V0.9.5.36 WEBSITE IDENTITY AND UPLOAD RECOVERY
+- Missing stock/VIN fields are unknown; exact matching identifiers can verify the primary vehicle.
+- Legacy Price remains the sale price; sticker and related-vehicle prices cannot pass backchecks.
+- Slow website checks merge alert fields into current records, preserving newer edits.
+- Ordinary app switching does not abort uploads; freeze/navigation checkpoints and stale-request recovery remain.
+- Parallel photo/video lanes settle before a retry can start.
+- Refreshes reuse fetched index data; Inventory records appear before cover downloads.
+- Retains personal preferences backup, Posting Buddy V0.1.24, Android V0.9.5.12 and Processor V0.9.4.76.
+- Build: 095036.
+- Service worker cache: lotkeys-app-v095036-website-identity-upload-resume.
+
 V0.9.5.35 PERSONAL PREFERENCES BACKUP
 - Description Builder and PC notification choices save independently to personal Account Storage.
 - Custom PC audio is private under Notification Sounds; Account.json keeps file metadata.

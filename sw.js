@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095035-personal-preferences-backup';
+const CACHE='lotkeys-app-v095036-website-identity-upload-resume';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -16,6 +16,7 @@ const CORE=[
   './lotkeys-hub-store.js',
   './lotkeys-listing-storage.js',
   './lotkeys-personal-preferences.js',
+  './lotkeys-website-identity.js',
   './lotkeys-phone-core.js',
   './lotkeys-phone.js',
   './lotkeys-hub.js',
