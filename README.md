@@ -1,6 +1,6 @@
-# LotKeys V0.9.5.36 — Website identity and upload recovery
+# LotKeys V0.9.5.37 — Store branding isolation
 
-Fixes the RAV4 missing-stock warning, preserves Legacy sale-price recognition, protects newer edits from slow source checks, and improves upload recovery and refresh pacing. See [release details](RELEASE-0.9.5.36.md) and [verification](LotKeys-0.9.5.36-Test-Report.md).
+Keeps cached logos scoped to the active Store and account, validates logo file ownership, and removes the old dealership folder from the Processor template. See [release details](RELEASE-0.9.5.37.md) and [verification](LotKeys-0.9.5.37-Test-Report.md).
 
 ## V0.9.5.35 retained
 

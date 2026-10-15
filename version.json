@@ -1,12 +1,12 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.36",
-  "build": "095036",
-  "release": "website-identity-upload-resume",
+  "version": "0.9.5.37",
+  "build": "095037",
+  "release": "store-branding-isolation",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095036-website-identity-upload-resume",
-  "publishedAt": "2026-10-14",
-  "basedOn": "LotKeys V0.9.5.35 Personal preferences backup",
+  "serviceWorkerCache": "lotkeys-app-v095037-store-branding-isolation",
+  "publishedAt": "2026-10-15",
+  "basedOn": "LotKeys V0.9.5.36 Website identity and upload recovery",
   "androidConnectorVersion": "0.9.5.12"
 }

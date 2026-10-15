@@ -1,13 +1,15 @@
 /**
- * LotKeys Store Processor V0.9.4.76
+ * LotKeys Store Processor V0.9.4.77
  *
  * This script is installed once by an Admin Level 2 account. It is the trusted
  * writer between each user's private More request queue and the official,
  * Viewer-only Inventory. Never deploy it to execute as the visiting web user.
  */
 
-const LOTKEYS_PROCESSOR_VERSION = '0.9.4.76';
-const LOTKEYS_STORE_FOLDER_ID = '1vJRzFWTVtg9o1fRw5dUNsY2JNlIhOf-g';
+const LOTKEYS_PROCESSOR_VERSION = '0.9.4.77';
+// First installation only: configure this or the lotkeysStoreFolderId Script
+// property. Generic updates never select a dealership or replace that binding.
+const LOTKEYS_STORE_FOLDER_ID = '';
 const LK_FOLDER = 'application/vnd.google-apps.folder';
 const LK_SHEET = 'application/vnd.google-apps.spreadsheet';
 const LK_REQUEST_LIMIT = 100;
@@ -40,14 +42,14 @@ function installLotKeysProcessor() {
   ScriptApp.newTrigger('processLotKeysRequests').timeBased().everyMinutes(1).create();
   const result = processLotKeysRequests();
   PropertiesService.getScriptProperties().setProperties({
-    lotkeysStoreFolderId: LOTKEYS_STORE_FOLDER_ID,
+    lotkeysStoreFolderId: state.root.id,
     lotkeysProcessorVersion: LOTKEYS_PROCESSOR_VERSION,
     lotkeysInstalledAt: new Date().toISOString()
   });
   return {
     installed: true,
     version: LOTKEYS_PROCESSOR_VERSION,
-    storeFolderId: LOTKEYS_STORE_FOLDER_ID,
+    storeFolderId: state.root.id,
     firstRun: result
   };
 }
@@ -432,11 +434,21 @@ function lkProcessVehicleState_(state, actor, request, file, context) {
   return 'indexed';
 }
 
-function lkLoadState_() {
-  if (!LOTKEYS_STORE_FOLDER_ID || LOTKEYS_STORE_FOLDER_ID.indexOf('PASTE_') === 0) {
-    throw new Error('Set LOTKEYS_STORE_FOLDER_ID at the top of Code.gs first.');
+function lkConfiguredStoreFolderId_() {
+  const saved = String(PropertiesService.getScriptProperties().getProperty('lotkeysStoreFolderId') || '').trim();
+  const configured = String(LOTKEYS_STORE_FOLDER_ID || '').trim();
+  if (saved && configured && saved !== configured) {
+    throw new Error('The configured Store differs from this processor’s saved Store. Check the lotkeysStoreFolderId Script property before changing Stores.');
   }
-  const root = lkGet_(LOTKEYS_STORE_FOLDER_ID);
+  const id = saved || configured;
+  if (!id || id.indexOf('PASTE_') === 0 || !/^[A-Za-z0-9_-]+$/.test(id)) {
+    throw new Error('Set the lotkeysStoreFolderId Script property to your Store folder ID before installing. No Store was selected.');
+  }
+  return id;
+}
+
+function lkLoadState_() {
+  const root = lkGet_(lkConfiguredStoreFolderId_());
   if (root.mimeType !== LK_FOLDER) throw new Error('LOTKEYS_STORE_FOLDER_ID is not a Google Drive folder.');
   const usersFolder = lkEnsureFolder_(root.id, 'Users', {lotkeysRole: 'users'});
   const adminFolder = lkEnsureFolder_(root.id, 'Administration', {lotkeysRole: 'administration'});
