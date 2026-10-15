@@ -1,3 +1,14 @@
+V0.9.5.37 STORE BRANDING ISOLATION
+- Logos are cached for the active Store and Google account, with the source file and version retained together.
+- Foreign Administration logos and late Store/account responses are rejected.
+- Explicit default branding clears old images; lookup failures retain only verified current-Store bytes.
+- Processor V0.9.4.77 has no preselected dealership and preserves its Script-property Store binding.
+- No seeded South Edmonton posting location on startup. Existing personal locations remain.
+- Retains Android V0.9.5.12, Posting Buddy V0.1.24 and the V0.9.5.36 importer/upload fixes.
+- Push-to-wake remains pending secure zero-cost sender configuration; it is not active in this release.
+- Build: 095037.
+- Service worker cache: lotkeys-app-v095037-store-branding-isolation.
+
 V0.9.5.36 WEBSITE IDENTITY AND UPLOAD RECOVERY
 - Missing stock/VIN fields are unknown; exact matching identifiers can verify the primary vehicle.
 - Legacy Price remains the sale price; sticker and related-vehicle prices cannot pass backchecks.
