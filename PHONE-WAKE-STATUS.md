@@ -1,4 +1,4 @@
-# Phone wake-up continuation — 2026-10-15
+# Phone wake-up continuation — 2026-10-16
 
 Blair wants no intentional polling wait: a trusted PC opening LotKeys should wake the phone; keep the existing quick SMS/MMS relay active while the PC is reachable; after a recovery grace period with no PC, let the connector sleep. Opening LotKeys on the phone can also initiate work. Preserve trusted pairing and the working active messaging path.
 
@@ -11,3 +11,7 @@ Enigma already has a separate Firebase account/backend project and remains under
 Android high-priority push and foreground-service launch rules apply, including user-visible notification requirements and possible delivery delays. Do not promise guaranteed instantaneous wake or successful reception while the phone is offline or force-stopped. Test deep idle, reboot, PC suspension, ordinary network blips, token rotation, revocation and duplicate wake requests before allowing the current idle loop to stop.
 
 References: https://firebase.google.com/pricing ; https://firebase.google.com/docs/cloud-messaging/server-environment ; https://firebase.google.com/docs/cloud-messaging/android-message-priority ; https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start .
+
+## V0.9.5.38 setup check
+
+The two supplied google-services JSON files both contain only the Enigma Android client `ca.enigma.messages.alpha2` in its Firebase project. Neither registers `ca.lotkeys.connector.test`. Do not substitute Enigma resources or claim that its current setup activates LotKeys wake. A LotKeys Android app entry/configuration, native receiver and secure sender deployment are still required. The .38 web cache is independent of this setup and retains the installed .12 connector.

@@ -42,10 +42,8 @@ function hubHistory() {
   const bubbles = hubSource.slice(hubSource.indexOf('async function refreshDeviceBubble('), hubSource.indexOf('function bindCategoryReorder('));
   const listener = hubSource.split('\n').find(line => line.startsWith("window.addEventListener('lotkeys-phone-data'"));
   vm.runInNewContext(
-    'const DEVICE_HISTORY_CACHE_MS=300000,DEVICE_HISTORY_CACHE_MAX=8,DEVICE_HISTORY_REFRESH_MS=5000;' +
-    'const deviceHistoryCache=new Map(),deviceHistoryRequests=new Map(),deviceAlertSignatures=new Map(),deviceNotifiedMessages=new Map();' +
-    'let deviceHistoryGeneration=0,deviceBubbleRequest=0;' + cache + key + bubbles + '\n' + listener +
-    ';globalThis.api={deviceHistoryKey,deviceHistoryPage,cachedDeviceHistory,clearDeviceHistoryCache,prefetchDeviceHistory,checkDeviceMessageActivity,openDeviceBubble,refreshDeviceBubble};', context);
+    hubSource.slice(hubSource.indexOf('const DEVICE_DRAFT_PREFIX='), hubSource.indexOf('let groupState=')) + cache + key + bubbles + '\n' + listener +
+    ';globalThis.api={deviceHistoryKey,deviceHistoryPage,cachedDeviceHistory,clearDeviceHistoryCache,prefetchDeviceHistory,prefetchRecentDeviceHistory,checkDeviceMessageActivity,openDeviceBubble,refreshDeviceBubble};', context);
   return { ...context.api, calls, timers, previews, paints, threads, status, context, listeners, historyStarted: historyStarted.promise,
     advance: ms => { clock += ms; } };
 }
@@ -100,7 +98,7 @@ test('changed history paints the previous page immediately and separately fetche
   const arrivals = Array.from({ length: 12 }, (_, i) => ({ id: 'new-' + i, at: 10000 + i, text: 'New' }));
   hub.calls[1].resolve({ ...page('old'), messages: [...arrivals, ...page('old').messages] });
   assert.equal((await fresh).messages.length, 13);
-  assert.equal(hub.cachedDeviceHistory('a').page.messages.length, 13);
+  assert.equal(hub.cachedDeviceHistory('a').page.messages.length, 6);
 });
 
 test('a delayed old response cannot overwrite newer cached history', async () => {
@@ -138,16 +136,110 @@ test('disconnect and account clearing prevent a late request from repopulating m
   hub.calls[1].resolve(page('other-phone')); await next;
 });
 
-test('history cache remains limited to eight pages and expires after five minutes', async () => {
+test('history cache remains limited to ten conversations and expires after five minutes', async () => {
   const hub = hubHistory();
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 11; i++) {
     const job = hub.deviceHistoryPage(String(i));
     hub.calls.at(-1).resolve(page(String(i))); await job;
   }
   assert.equal(hub.cachedDeviceHistory('0'), null);
-  assert.ok(hub.cachedDeviceHistory('8'));
+  assert.ok(hub.cachedDeviceHistory('10'));
   hub.advance(300001);
-  assert.equal(hub.cachedDeviceHistory('8'), null);
+  assert.equal(hub.cachedDeviceHistory('10'), null);
+});
+
+function recentPage(id, count = 40) {
+  return { messages: Array.from({ length: count }, (_, i) => ({
+    id: id + '-' + i, sort: 'sms-' + String(i).padStart(20, '0'), at: 1000 + i,
+    text: 'Message ' + i, attachments: [{ id: 'part-' + i, type: 'image/jpeg', _file: 'temporary-bytes' }]
+  })).reverse(), hasMore: true, nextBefore: { at: 1000, sort: 'sms-00000000000000000000' } };
+}
+
+test('connected Hub warms six messages for ten most recent chats without opening Hub home', async () => {
+  const hub = hubHistory();
+  hub.threads.splice(0, hub.threads.length, ...Array.from({ length: 12 }, (_, i) => ({ id: String(i), at: 20000 - i, count: 40 })));
+  for (let i = 0; i < 10; i++) {
+    const job = hub.prefetchRecentDeviceHistory();
+    assert.equal(hub.calls.length, i + 1, 'only one warm request at a time');
+    assert.equal(hub.calls[i].id, String(i));
+    hub.calls[i].resolve(recentPage(String(i))); await job;
+  }
+  await hub.prefetchRecentDeviceHistory();
+  assert.equal(hub.calls.length, 10, 'unchanged thread updates do not refetch ten pages');
+  for (let i = 0; i < 10; i++) {
+    const cached = hub.cachedDeviceHistory(String(i));
+    assert.equal(cached.page.messages.length, 6);
+    assert.equal(cached.page.messages[0].text, 'Message 34');
+    assert.equal(cached.page.messages.at(-1).text, 'Message 39');
+    assert.equal(cached.page.messages[0].attachments[0]._file, undefined);
+    assert.equal(cached.page.hasMore, true);
+    assert.equal(cached.page.nextBefore.at, 1034, 'older loading starts before the retained six, not the discarded forty');
+    await hub.deviceHistoryPage(String(i));
+  }
+  assert.equal(hub.calls.length, 10, 'all ten cached chats open without another phone request');
+  assert.equal(hub.cachedDeviceHistory('10'), null);
+  const old = hub.deviceHistoryPage('11'); hub.calls.at(-1).resolve(recentPage('old')); await old;
+  assert.ok(hub.cachedDeviceHistory('9'), 'opening an older chat does not evict a pinned recent chat');
+  assert.equal(hub.cachedDeviceHistory('11'), null);
+});
+
+test('foreground reads precede the next background chat and an incoming thread joins the recent ten', async () => {
+  const hub = hubHistory();
+  const foreground = hub.deviceHistoryPage('a');
+  await hub.prefetchRecentDeviceHistory();
+  assert.equal(hub.calls.length, 1, 'background warming yields to an outstanding foreground page');
+  hub.calls[0].resolve(recentPage('a')); await foreground;
+  const warm = hub.prefetchRecentDeviceHistory(); hub.calls[1].resolve(recentPage('b')); await warm;
+  hub.threads.unshift({ id: 'new', at: 30000, count: 6 });
+  const incoming = hub.prefetchRecentDeviceHistory();
+  assert.equal(hub.calls.at(-1).id, 'new'); hub.calls.at(-1).resolve(recentPage('new', 6)); await incoming;
+  assert.equal(hub.cachedDeviceHistory('new').page.messages.length, 6);
+});
+
+test('one failed warm chat cannot starve other chats and retries after its own backoff', async () => {
+  const hub = hubHistory();
+  const failed = hub.prefetchRecentDeviceHistory(); hub.calls[0].reject(Error('Unavailable thread')); await failed;
+  const next = hub.prefetchRecentDeviceHistory();
+  assert.equal(hub.calls[1].id, 'b'); hub.calls[1].resolve(recentPage('b')); await next;
+  await hub.prefetchRecentDeviceHistory(); assert.equal(hub.calls.length, 2);
+  hub.advance(30000);
+  const retry = hub.prefetchRecentDeviceHistory(); assert.equal(hub.calls[2].id, 'a');
+  hub.calls[2].resolve(recentPage('a')); await retry;
+});
+
+test('warm cache skips blocked, hidden, locked and disconnected reads', async () => {
+  const hub = hubHistory();
+  hub.context.deviceRows = () => [{ id: 'a', live: true, blocked: true }, { id: 'b', live: true, at: 2 }];
+  hub.context.document.visibilityState = 'hidden'; await hub.prefetchRecentDeviceHistory();
+  hub.context.document.visibilityState = 'visible'; hub.context.document.body.dataset.lotkeysLocked = 'true'; await hub.prefetchRecentDeviceHistory();
+  hub.context.document.body.dataset.lotkeysLocked = 'false'; hub.status.connected = false; await hub.prefetchRecentDeviceHistory();
+  assert.equal(hub.calls.length, 0);
+  hub.status.connected = true;
+  const warm = hub.prefetchRecentDeviceHistory(); assert.equal(hub.calls[0].id, 'b');
+  hub.calls[0].resolve(recentPage('b')); await warm;
+});
+
+test('warm requests cannot refill after disconnect and an expiry cycle refreshes retained chats', async () => {
+  const hub = hubHistory();
+  const old = hub.prefetchRecentDeviceHistory(); hub.clearDeviceHistoryCache(); hub.status.connected = false;
+  hub.calls[0].resolve(recentPage('old')); await old;
+  assert.equal(hub.cachedDeviceHistory('a'), null);
+  hub.status.connected = true;
+  const first = hub.prefetchRecentDeviceHistory(); hub.calls[1].resolve(recentPage('fresh')); await first;
+  hub.advance(240000);
+  const renewed = hub.prefetchRecentDeviceHistory(); assert.equal(hub.calls[2].id, 'a');
+  hub.calls[2].resolve(recentPage('renewed')); await renewed;
+  assert.equal(hub.cachedDeviceHistory('a').page.messages[0].id, 'renewed-34');
+});
+
+test('cache trimming uses the native tie-break order and gives a correct six-message cursor', async () => {
+  const hub = hubHistory(), data = recentPage('same', 12);
+  data.messages.forEach((message, i) => { message.at = 5000; message.id = 'sms-' + (11 - i); });
+  const opening = hub.deviceHistoryPage('a'); hub.calls[0].resolve(data);
+  assert.equal((await opening).messages.length, 12, 'the active fetch still receives its full page');
+  const cached = hub.cachedDeviceHistory('a').page;
+  assert.equal(cached.messages[0].id, 'sms-6');
+  assert.equal(cached.nextBefore.sort, 'sms-00000000000000000006');
 });
 
 function phoneHistory() {

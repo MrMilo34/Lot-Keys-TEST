@@ -1,4 +1,4 @@
-/* LotKeys Hub V0.9.5.32. Personal listing storage and explicit SMS send receipts. */
+/* LotKeys Hub V0.9.5.38. Six recent messages ready for ten Device conversations. */
 (()=>{'use strict';
 const H=window.LotKeysHubCore,S=window.LotKeysHubStore,M=window.LotKeysMessaging,Core=window.LotKeysMessagingBridge,P=window.LotKeysPhone,PC=window.LotKeysPhoneCore;
 if(!H||!S||!M||!P||!PC)return;
@@ -19,15 +19,26 @@ const time=x=>{if(!x)return'';const value=new Date(x);if(!Number.isFinite(value.
 const when=x=>x?(H.localDay(x)===H.localDay()?time(x):new Date(x).toLocaleDateString([],{month:'short',day:'numeric'})):'';
 const btn=(text,cls='')=>`<button type="button" class="hub-btn ${cls}">${text}</button>`;
 const pcEnterSends=event=>event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&!event.repeat&&!!window.matchMedia?.('(min-width: 760px) and (pointer: fine)').matches;
-const DEVICE_DRAFT_PREFIX='lotkeys-device-draft-v1:',DEVICE_DRAFT_MAX_AGE=30*24*60*60*1000,GROUP_STATE_KEY='lotkeys-hub-group-state-v1',AUTO_PAIRING_FALLBACK_MS=8000,DEVICE_INITIAL_MESSAGE_COUNT=6,DEVICE_OLDER_MESSAGE_CHUNK=20,DEVICE_HISTORY_CACHE_MS=5*60*1000,DEVICE_HISTORY_CACHE_MAX=8,DEVICE_HISTORY_REFRESH_MS=5000;
+const DEVICE_DRAFT_PREFIX='lotkeys-device-draft-v1:',DEVICE_DRAFT_MAX_AGE=30*24*60*60*1000,GROUP_STATE_KEY='lotkeys-hub-group-state-v1',AUTO_PAIRING_FALLBACK_MS=8000,DEVICE_INITIAL_MESSAGE_COUNT=6,DEVICE_OLDER_MESSAGE_CHUNK=20,DEVICE_HISTORY_CACHE_MS=5*60*1000,DEVICE_HISTORY_CACHE_MAX=10,DEVICE_HISTORY_REFRESH_MS=5000,DEVICE_HISTORY_WARM_MS=4*60*1000;
 const deviceHistoryCache=new Map(),deviceHistoryRequests=new Map(),deviceBubbleSent=new Map(),deviceAlertSignatures=new Map(),deviceNotifiedMessages=new Map();let deviceHistoryGeneration=0,deviceBubbleRequest=0;
+let deviceHistoryWarmTimer=0,deviceHistoryWarmJob=null;const deviceHistoryPinned=new Set(),deviceHistoryWarmFailures=new Map();
 let groupState=readGroupState();
 function deviceHistoryKey(threadId){const status=P.status();return[status.role,status.deviceName,status.relayIdentity,status.sessionId||'native',String(threadId)].join('|');}
 function deviceHistorySignature(threadId){return PC.threadAlertSignature(P.threads().find(thread=>String(thread.id)===String(threadId)));}
 function forgetDeviceHistory(key){const entry=deviceHistoryCache.get(key);if(entry?.expiryTimer)clearTimeout(entry.expiryTimer);deviceHistoryCache.delete(key);}
-function clearDeviceHistoryCache(){deviceHistoryGeneration++;for(const key of deviceHistoryCache.keys())forgetDeviceHistory(key);}
+function clearDeviceHistoryCache(){deviceHistoryGeneration++;clearTimeout(deviceHistoryWarmTimer);deviceHistoryWarmTimer=0;deviceHistoryWarmJob=null;deviceHistoryPinned.clear();deviceHistoryWarmFailures.clear();for(const key of deviceHistoryCache.keys())forgetDeviceHistory(key);}
 function cachedDeviceHistory(threadId){const key=deviceHistoryKey(threadId),entry=deviceHistoryCache.get(key);if(!entry)return null;if(Date.now()-entry.cachedAt>DEVICE_HISTORY_CACHE_MS){forgetDeviceHistory(key);return null;}deviceHistoryCache.delete(key);deviceHistoryCache.set(key,entry);return entry;}
-function rememberDeviceHistory(threadId,page,key=deviceHistoryKey(threadId),signature=deviceHistorySignature(threadId)){forgetDeviceHistory(key);const entry={page,signature,cachedAt:Date.now(),expiryTimer:0};entry.expiryTimer=setTimeout(()=>{if(deviceHistoryCache.get(key)===entry)deviceHistoryCache.delete(key);},DEVICE_HISTORY_CACHE_MS);deviceHistoryCache.set(key,entry);while(deviceHistoryCache.size>DEVICE_HISTORY_CACHE_MAX)forgetDeviceHistory(deviceHistoryCache.keys().next().value);return entry;}
+function rememberDeviceHistory(threadId,page,key=deviceHistoryKey(threadId),signature=deviceHistorySignature(threadId)){
+  // Retain only six phone-sourced messages per recent conversation. Older
+  // messages remain in the open chat's existing buffer, or load via its cursor.
+  const sorted=H.sortDeviceMessages(page.messages||[]).sort((a,b)=>(Number(a.at)||0)-(Number(b.at)||0)||String(a.sort||a.id).localeCompare(String(b.sort||b.id))),recent=sorted.slice(-DEVICE_INITIAL_MESSAGE_COUNT),oldest=recent[0];
+  const messages=recent.map(message=>({...message,...(Array.isArray(message.attachments)?{attachments:message.attachments.map(({_file,...part})=>({...part}))}:{})}));
+  const trimmed=sorted.length>messages.length,cursor=trimmed&&oldest?{at:oldest.at,sort:oldest.sort||oldest.id}:page.nextBefore;
+  const entry={page:{...page,messages,hasMore:trimmed||!!page.hasMore,nextBefore:cursor||null},threadId:String(threadId),signature,cachedAt:Date.now(),expiryTimer:0};
+  if(deviceHistoryPinned.size>=DEVICE_HISTORY_CACHE_MAX&&!deviceHistoryPinned.has(String(threadId)))return entry;
+  forgetDeviceHistory(key);entry.expiryTimer=setTimeout(()=>{if(deviceHistoryCache.get(key)===entry)deviceHistoryCache.delete(key);},DEVICE_HISTORY_CACHE_MS);
+  deviceHistoryCache.set(key,entry);while(deviceHistoryCache.size>DEVICE_HISTORY_CACHE_MAX)forgetDeviceHistory(deviceHistoryCache.keys().next().value);return entry;
+}
 function deviceHistoryPage(threadId,{fresh=false}={}){
   const key=deviceHistoryKey(threadId),signature=deviceHistorySignature(threadId),cached=cachedDeviceHistory(threadId);
   if(cached&&(!fresh||(cached.signature===signature&&Date.now()-cached.cachedAt<DEVICE_HISTORY_REFRESH_MS)))return Promise.resolve(cached.page);
@@ -41,7 +52,28 @@ function deviceHistoryPage(threadId,{fresh=false}={}){
   deviceHistoryRequests.set(key,request);return request.promise;
 }
 function prefetchDeviceHistory(threadId){if(!threadId||(!P.status().connected&&!P.status().native))return;const cached=cachedDeviceHistory(threadId);if(cached&&cached.signature===deviceHistorySignature(threadId)&&Date.now()-cached.cachedAt<DEVICE_HISTORY_REFRESH_MS)return;deviceHistoryPage(threadId,{fresh:true}).catch(()=>{});}
-function prefetchRecentDeviceHistory(){if(!home())return;const row=deviceRows().filter(item=>item.live&&!item.blocked).sort((a,b)=>(b.at||0)-(a.at||0))[0];prefetchDeviceHistory(row?.id);}
+function scheduleDeviceHistoryWarm(delay){clearTimeout(deviceHistoryWarmTimer);deviceHistoryWarmTimer=setTimeout(()=>{deviceHistoryWarmTimer=0;prefetchRecentDeviceHistory();},delay);}
+function deviceHistoryCanWarm(){return document.visibilityState!=='hidden'&&document.body.dataset.lotkeysLocked!=='true'&&(P.status().connected||P.status().native);}
+function prefetchRecentDeviceHistory(){
+  if(!deviceHistoryCanWarm()){clearTimeout(deviceHistoryWarmTimer);deviceHistoryWarmTimer=0;return Promise.resolve();}
+  if(deviceHistoryWarmJob)return deviceHistoryWarmJob;
+  const rows=deviceRows().filter(item=>item.live&&!item.blocked).sort((a,b)=>(b.at||0)-(a.at||0)),seen=new Set();
+  const recent=rows.filter(row=>{const id=String(row.id);if(!id||seen.has(id))return false;seen.add(id);return true;}).slice(0,DEVICE_HISTORY_CACHE_MAX);
+  deviceHistoryPinned.clear();for(const row of recent)deviceHistoryPinned.add(String(row.id));
+  for(const [key,entry] of deviceHistoryCache)if(!deviceHistoryPinned.has(entry.threadId))forgetDeviceHistory(key);
+  for(const id of deviceHistoryWarmFailures.keys())if(!deviceHistoryPinned.has(id))deviceHistoryWarmFailures.delete(id);
+  const dueIn=row=>{const signature=deviceHistorySignature(row.id),failed=deviceHistoryWarmFailures.get(String(row.id));if(failed&&failed.signature===signature&&failed.until>Date.now())return failed.until-Date.now();const cached=cachedDeviceHistory(row.id);return !cached||cached.signature!==signature?0:Math.max(0,DEVICE_HISTORY_WARM_MS-(Date.now()-cached.cachedAt));};
+  const row=recent.find(row=>dueIn(row)===0);
+  if(!row){scheduleDeviceHistoryWarm(Math.max(100,Math.min(DEVICE_HISTORY_WARM_MS,...recent.map(dueIn))));return Promise.resolve();}
+  // The existing Android relay is sequential. Never enqueue ten warm reads
+  // ahead of a user opening a chat: yield between each background request.
+  if([...deviceHistoryRequests.values()].some(request=>request.generation===deviceHistoryGeneration)){scheduleDeviceHistoryWarm(250);return Promise.resolve();}
+  const generation=deviceHistoryGeneration,signature=deviceHistorySignature(row.id);
+  const job=deviceHistoryPage(row.id,{fresh:true}).then(()=>{if(generation===deviceHistoryGeneration)deviceHistoryWarmFailures.delete(String(row.id));}).catch(()=>{if(generation===deviceHistoryGeneration)deviceHistoryWarmFailures.set(String(row.id),{signature,until:Date.now()+30000});}).finally(()=>{
+    if(deviceHistoryWarmJob!==job)return;deviceHistoryWarmJob=null;
+    if(generation===deviceHistoryGeneration&&deviceHistoryCanWarm())scheduleDeviceHistoryWarm(100);
+  });deviceHistoryWarmJob=job;return job;
+}
 function currentDeviceKey(){const status=P.status();return[status.role,status.deviceName,status.relayIdentity].join('|');}
 async function sendDeviceBubbleText(threadId,row,key,text){
   if(key!==currentDeviceKey()||(!P.status().connected&&!P.status().native))throw Error('Reconnect the phone before replying.');
@@ -735,7 +767,7 @@ openDeviceConversation=async function openDeviceConversationWithInterestedVehicl
 
 document.addEventListener('click',event=>{if(!event.target.closest?.('.hub-smart-note-options,.hub-smart-note-trigger'))$$('.hub-smart-note-options').forEach(node=>node.hidden=true);if(!event.target.closest?.('.hub-gesture-menu,.hub-gesture-anchor'))closeGestureMenu();const target=event.target.closest?.('[data-calendar-day]');if(!target)return;event.preventDefault();event.stopPropagation();calendar(target.dataset.calendarDay,'week');});
 async function publicReminderBellState(){await S.identity();const [stored,legacyAppointments]=await Promise.all([S.list('reminder'),S.list('appointment')]),known=new Set(stored.map(reminder=>reminder.id)),rows=[...stored,...legacyAppointments.filter(appointment=>appointment.kind==='Reminder'&&!known.has(appointment.id)).map(H.legacyAppointmentToReminder)];if(legacyAppointments.some(appointment=>appointment.kind==='Reminder'))scheduleLegacyReminderMigration();return H.reminderBellState(rows,new Date());}
-window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,calendar,plus:plusMenu,openDeviceConversation,openDeviceBubble,refreshDeviceBubble,pending:S.pending,openReminders,newReminder:options=>editReminder(null,options||{}),reminderBellState:publicReminderBellState,version:'0.9.5.32'};
+window.LotKeysHub={open,refresh:scheduleRefresh,decorateInternal,calendar,plus:plusMenu,openDeviceConversation,openDeviceBubble,refreshDeviceBubble,pending:S.pending,openReminders,newReminder:options=>editReminder(null,options||{}),reminderBellState:publicReminderBellState,version:'0.9.5.38'};
 window.addEventListener('lotkeys-hub-data',scheduleRefresh);
 window.addEventListener('lotkeys-hub-internal',scheduleRefresh);
 window.addEventListener('lotkeys-phone-pair-request',event=>showPairRequest(event.detail?.offer));
@@ -744,7 +776,8 @@ window.addEventListener('lotkeys-phone-pairing',event=>{if(event.detail?.status?
 window.addEventListener('lotkeys-phone-data',event=>{scheduleRefresh();if(event.detail?.reason==='threads'){setTimeout(prefetchRecentDeviceHistory,0);checkDeviceMessageActivity().catch(console.warn);const active=$('#lotkeys-message-bubble');if(active?.dataset.source==='device'&&!active.hidden)refreshDeviceBubble(active.dataset.threadId).catch(console.warn);}if(event.detail?.reason!=='read')activeDeviceChatRefresh?.();});
 window.addEventListener('lotkeys-phone-send-state',event=>{const receipt=event.detail?.receipt,threadId=event.detail?.threadId;if(receipt?.phase==='sent'&&threadId)M.rememberReply('device',threadId,currentDeviceKey()).catch(console.warn);});
 window.addEventListener('lotkeys-phone-status',()=>{if(home())paintStatus();});
-window.addEventListener('lotkeys-phone-connected',()=>{clearDeviceHistoryCache();if(home()){paintStatus();P.refreshThreads().then(()=>{scheduleRefresh();setTimeout(prefetchRecentDeviceHistory,0);}).catch(()=>{});}});
+window.addEventListener('lotkeys-phone-connected',()=>{clearDeviceHistoryCache();if(home())paintStatus();P.refreshThreads().then(async()=>{await loadBadgeData();scheduleRefresh();setTimeout(prefetchRecentDeviceHistory,0);}).catch(()=>{});});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')prefetchRecentDeviceHistory();else{clearTimeout(deviceHistoryWarmTimer);deviceHistoryWarmTimer=0;}});
 window.addEventListener('lotkeys-phone-disconnected',()=>{clearDeviceHistoryCache();deviceBubbleSent.clear();deviceAlertSignatures.clear();deviceNotifiedMessages.clear();const bubble=$('#lotkeys-message-bubble');if(bubble?.dataset.source==='device')M.collapseBubble();if(home()){paintStatus();paintRows();}});
 window.addEventListener('lotkeys-hub-identity',()=>{clearDeviceHistoryCache();deviceBubbleSent.clear();deviceAlertSignatures.clear();deviceNotifiedMessages.clear();const bubble=$('#lotkeys-message-bubble');if(bubble?.dataset.source==='device')M.collapseBubble();contacts=[];phoneSorting=[];appointments=[];reminders=[];categories=[];internal=[];selectedCategories=[];clearTimeout(legacyMigrationTimer);legacyMigrationTimer=null;clearThumbs();$$('dialog.hub-dialog').forEach(d=>d.close());if(home())open({refresh:false});});
 window.addEventListener('lotkeys-phone-disconnected',()=>activeDeviceMediaCleanup?.());
