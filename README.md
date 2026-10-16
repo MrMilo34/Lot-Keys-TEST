@@ -1,3 +1,9 @@
+# LotKeys V0.9.5.38 — Recent Device conversation cache
+
+While the phone is connected, six recent messages are kept ready for ten recent conversations in temporary browser memory. Background warming yields between reads, and earlier history retains its phone cursor. See [release details](RELEASE-0.9.5.38.md), [verification](LotKeys-0.9.5.38-Test-Report.md) and [current project state](CURRENT-STATE.md).
+
+## V0.9.5.37 retained
+
 # LotKeys V0.9.5.37 — Store branding isolation
 
 Keeps cached logos scoped to the active Store and account, validates logo file ownership, and removes the old dealership folder from the Processor template. See [release details](RELEASE-0.9.5.37.md) and [verification](LotKeys-0.9.5.37-Test-Report.md).

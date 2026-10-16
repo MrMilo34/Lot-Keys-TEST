@@ -8,17 +8,17 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.37 while Android remains V0.9.5.12', () => {
+test('release metadata is consistently V0.9.5.38 while Android remains V0.9.5.12', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.37');
-  assert.equal(version.build, '095037');
+  assert.equal(version.version, '0.9.5.38');
+  assert.equal(version.build, '095038');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'store-branding-isolation');
+  assert.equal(version.release, 'recent-device-cache');
   assert.equal(version.androidConnectorVersion, '0.9.5.12');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095037-store-branding-isolation');
-  assert.match(read('index.html'), /V0\.9\.5\.37/);
-  assert.match(read('manifest.webmanifest'), /build=095037/);
-  assert.match(read('sw.js'), /lotkeys-app-v095037-store-branding-isolation/);
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095038-recent-device-cache');
+  assert.match(read('index.html'), /V0\.9\.5\.38/);
+  assert.match(read('manifest.webmanifest'), /build=095038/);
+  assert.match(read('sw.js'), /lotkeys-app-v095038-recent-device-cache/);
   assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.12/);
   assert.match(read('android/app/build.gradle'), /versionCode 95012/);
   assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.12 TEST/);
@@ -174,7 +174,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095037/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095038/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -268,8 +268,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095037/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095037/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095038/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095038/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {
@@ -815,13 +815,13 @@ test('an open Device chat refreshes when the phone reports new messages', () => 
   assert.match(hub, /else if\(!live\|\|!loadedOlder\)\{const visibleIds=.*bufferedOlder=split\.buffered\.filter\(.*remoteHasMore=!!page\.hasMore;nextBefore=page\.nextBefore\|\|null;\}/);
 });
 
-test('Device history warms the newest chat and reveals six messages before buffered chunks', () => {
+test('Device history warms ten recent chats and reveals six messages before buffered chunks', () => {
   const hub = read('lotkeys-hub.js');
   const core = read('lotkeys-hub-core.js');
   assert.match(hub, /DEVICE_INITIAL_MESSAGE_COUNT=6/);
   assert.match(hub, /DEVICE_OLDER_MESSAGE_CHUNK=20/);
   assert.match(hub, /DEVICE_HISTORY_CACHE_MS=5\*60\*1000/);
-  assert.match(hub, /DEVICE_HISTORY_CACHE_MAX=8/);
+  assert.match(hub, /DEVICE_HISTORY_CACHE_MAX=10/);
   assert.match(hub, /prefetchRecentDeviceHistory/);
   assert.match(hub, /deviceHistoryCache=new Map\(\),deviceHistoryRequests=new Map\(\)/);
   assert.match(hub, /setTimeout\(\(\)=>\{if\(deviceHistoryCache\.get\(key\)===entry\)deviceHistoryCache\.delete\(key\);\},DEVICE_HISTORY_CACHE_MS\)/);

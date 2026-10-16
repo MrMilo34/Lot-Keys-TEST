@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095037-store-branding-isolation';
+const CACHE='lotkeys-app-v095038-recent-device-cache';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

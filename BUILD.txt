@@ -1,3 +1,12 @@
+V0.9.5.38 RECENT DEVICE CONVERSATION CACHE
+- Latest six phone messages retained for ten most recent conversations.
+- Background warming operates outside Hub home, yields between reads and retries failed threads independently.
+- Older-message cursors, active history, drafts, unread handling and privacy clearing retained.
+- Android V0.9.5.12, Posting Buddy V0.1.24 and Processor binding unchanged.
+- Phone wake remains pending LotKeys-specific Firebase registration and secure sender setup.
+- Build: 095038.
+- Service worker cache: lotkeys-app-v095038-recent-device-cache.
+
 V0.9.5.37 STORE BRANDING ISOLATION
 - Logos are cached for the active Store and Google account, with the source file and version retained together.
 - Foreign Administration logos and late Store/account responses are rejected.
