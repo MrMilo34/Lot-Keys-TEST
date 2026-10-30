@@ -68,12 +68,12 @@ The Google Drive APK analysis observed native JobService/foreground content-sync
 wrappers, not its private transfer protocol or a performance benchmark. This
 implementation uses public Android scheduling and Drive resumable APIs.
 
-Web: 307 tests and inline/module JavaScript syntax pass. Android compilation,
-lint and seven recovery/security tests passed on 4986f63; final conflict/recovery
-changes require the next CI run. The CI job does not receive stable TEST signing
+Web: 307 tests and inline/module JavaScript syntax pass. Android assembly, lint
+and all eight recovery/security tests pass on code commit e3e4187 (Android CI
+41143008309; web CI 41143015580). The CI job does not receive stable TEST signing
 secrets, so it intentionally publishes no installable APK. Restore the existing
 signing identity to preserve update compatibility. No real-device verification
-or deployment has been claimed. Later CI results are recorded in the PR.
+or deployment has been claimed. See PR #9 for the reviewable candidate.
 
 Real-device gates: locked screen and browser swipe-away; interrupted staging;
 airplane mode during a chunk; process death/reboot; consent expiry; same-Store
