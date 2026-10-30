@@ -34,7 +34,8 @@ or acknowledged foreground reconciliation. Batches are limited to 500 files /
 4 GiB and require enough phone storage for all retained originals.
 
 Core profile data is saved before media. The native finalizer updates only the
-matching Inventory cover field using a fresh read and ETag precondition. A newer
+matching Inventory cover field using a fresh read and Drive v2 File ETag
+precondition (not an assumed v3 media write precondition). A newer
 edit, missing index or missing ETag produces **needs_reconcile**, retaining
 confirmed media IDs for foreground repair. It never overwrites a whole stale
 profile/index. Sheets has no values compare-and-swap: the native job deliberately
@@ -67,9 +68,12 @@ The Google Drive APK analysis observed native JobService/foreground content-sync
 wrappers, not its private transfer protocol or a performance benchmark. This
 implementation uses public Android scheduling and Drive resumable APIs.
 
-Web: 301 tests passing at initial candidate checkpoint. Android compilation,
-lint and recovery/security tests are required before presenting an installable
-APK. Later CI results are recorded in the PR/current-state checkpoint.
+Web: 307 tests and inline/module JavaScript syntax pass. Android compilation,
+lint and seven recovery/security tests passed on 4986f63; final conflict/recovery
+changes require the next CI run. The CI job does not receive stable TEST signing
+secrets, so it intentionally publishes no installable APK. Restore the existing
+signing identity to preserve update compatibility. No real-device verification
+or deployment has been claimed. Later CI results are recorded in the PR.
 
 Real-device gates: locked screen and browser swipe-away; interrupted staging;
 airplane mode during a chunk; process death/reboot; consent expiry; same-Store

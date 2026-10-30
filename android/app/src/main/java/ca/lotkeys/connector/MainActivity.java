@@ -232,6 +232,7 @@ public final class MainActivity extends Activity {
         authorization.execute(() -> {
             try {
                 TransferAuth.authorize(this, new Account(name, "com.google"));
+                new TransferStore(this).retryFailed(name);
                 runOnUiThread(() -> { boolean scheduled = TransferJobService.schedule(this, true); render(); alert(scheduled ? "Background saves are ready. Open LotKeys to save a Vehicle Profile." : "Android could not schedule saves yet. Try Resume Drive Saves again."); });
             } catch (UserRecoverableAuthException consent) {
                 runOnUiThread(() -> startActivityForResult(consent.getIntent(), REQUEST_UPLOAD_AUTHORIZATION));

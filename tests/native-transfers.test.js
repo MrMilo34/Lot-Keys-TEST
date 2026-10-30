@@ -49,3 +49,13 @@ test('existing Android copies resume from the retained offset, and paused author
   await Native.handoff(plan, sources, { phone }); assert.deepEqual(offsets, [Native.chunkSize]);
   await assert.rejects(Native.wait('batch-1', context, { phone }), /Restore Drive access/);
 });
+test('a resumed held batch requeues its retained originals without staging another copy', async () => {
+  const { plan } = fixture(); let commits = 0;
+  const phone = { uploadCall: async op => {
+    if (op === 'prepare') return { ...plan, id: 'batch-1', state: 'queued' };
+    if (op === 'commit') { commits++; return { ...plan, state: 'queued' }; }
+    throw Error('Retained originals must not be staged again');
+  } };
+  await Native.handoff(plan, new Map(), { phone }); assert.equal(commits, 1);
+  await assert.rejects(Native.wait('batch-1', context, { phone: { uploadCall: async () => ({ ...plan, state: 'queued', held: true }) } }), /paused/);
+});

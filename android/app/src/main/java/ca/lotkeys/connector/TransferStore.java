@@ -65,7 +65,7 @@ final class TransferStore {
             require(new StatFs(root.getAbsolutePath()).getAvailableBytes() > total + 32L * 1024 * 1024, "There is not enough phone storage to retain the original files for background upload.");
             for (JSONObject previous : all()) {
                 JSONObject old = previous.getJSONObject("context");
-                if (scope.optString("account").equalsIgnoreCase(old.optString("account")) && scope.optString("store").equals(old.optString("store")) && scope.optString("record").equals(old.optString("record")) && !terminal(previous.optString("state"))) {
+                if (scope.optString("account").equalsIgnoreCase(old.optString("account")) && scope.optString("store").equals(old.optString("store")) && scope.optString("record").equals(old.optString("record")) && !"complete".equals(previous.optString("state")) && !"cancelled".equals(previous.optString("state"))) {
                     previous.put("held", true); save(previous);
                 }
             }
@@ -152,12 +152,17 @@ final class TransferStore {
         synchronized (LOCK) {
             for (JSONObject batch : all()) {
                 JSONObject scope = batch.getJSONObject("context");
-                if (account.equalsIgnoreCase(scope.optString("account")) && store.equals(scope.optString("store")) && !terminal(batch.optString("state"))) {
+                if (account.equalsIgnoreCase(scope.optString("account")) && store.equals(scope.optString("store")) && !"complete".equals(batch.optString("state")) && !"cancelled".equals(batch.optString("state"))) {
                     batch.put("held", true); save(batch);
                 }
             }
         }
     }
+    void retryFailed(String account) throws Exception { synchronized (LOCK) {
+        for (JSONObject batch : all()) if ("failed".equals(batch.optString("state")) && !batch.optBoolean("held") && account.equalsIgnoreCase(batch.getJSONObject("context").optString("account"))) {
+            batch.put("state", "queued").put("error", ""); save(batch);
+        }
+    } }
     List<JSONObject> pending() throws Exception {
         List<JSONObject> rows = new ArrayList<>();
         synchronized (LOCK) {

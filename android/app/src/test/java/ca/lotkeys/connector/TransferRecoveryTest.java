@@ -94,4 +94,26 @@ public class TransferRecoveryTest {
         assertThrows(IllegalArgumentException.class, () -> client.upload(store, batch, 0));
         assertFalse(store.itemState(batch.getString("id"), 0).has("result"));
     }
+    @Test public void indexConflictRereadsFreshRowsAndNeverWritesTheSheetOrUsesAnUnguardedUpdate() throws Exception {
+        JSONObject batch = staged(8), op = new JSONObject().put("type", "vehicle-cover").put("sheetId", "sheet-file-123").put("sheetUpdated", "2026-10-30T12:00:00Z")
+            .put("indexId", "index-file-123").put("recordUpdated", 1).put("coverId", "photo-drive-123");
+        batch.put("finalizers", new JSONArray().put(op)); final int[] writes = {0};
+        DriveUploadClient client = new DriveUploadClient(null, "User@example.test", null, () -> {}) {
+            @Override Reply request(String method, String url, String type, byte[] bytes, File file, long offset, long length, String range, String match) throws Exception {
+                Reply reply = new Reply(); reply.status = 200;
+                if (url.contains("sheets.googleapis.com")) { assertEquals("GET", method); reply.text = "{\"values\":[[\"Profile ID\",\"vehicle-123\"],[\"Updated\",\"2026-10-30T12:00:00Z\"],[\"Cover Photo File ID\",\"\"]]}"; }
+                else if (url.contains("fields=id,etag")) reply.text = "{\"etag\":\"generation-" + writes[0] + "\"}";
+                else if (url.contains("alt=media")) reply.text = "{\"vehicles\":[{\"id\":\"vehicle-123\",\"updatedAt\":1,\"drive\":{}},{\"id\":\"other\",\"description\":\"fresh-" + writes[0] + "\"}]}";
+                else {
+                    assertEquals("PUT", method); assertTrue(url.contains("/upload/drive/v2/")); assertEquals("generation-" + writes[0], match);
+                    JSONObject content = new JSONObject(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+                    assertEquals("fresh-" + writes[0], content.getJSONArray("vehicles").getJSONObject(1).getString("description"));
+                    assertEquals("photo-drive-123", content.getJSONArray("vehicles").getJSONObject(0).getJSONObject("drive").getString("coverPhotoFileId"));
+                    if (writes[0]++ == 0) reply.status = 412;
+                }
+                return reply;
+            }
+        };
+        new TransferFinalizer(client, () -> {}).finish(store, batch); assertEquals(2, writes[0]);
+    }
 }

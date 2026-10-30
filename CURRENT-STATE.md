@@ -13,8 +13,12 @@ Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
 - PC doorbell, FCM receiver and separate Apps Script sender implemented in source.
   Activation blocked on LotKeys Firebase registration and owner sender setup.
   Enigma-only JSON is invalid for this package. No billing/resources activated.
-- 301 Node tests pass at initial checkpoint. Android compile/lint/recovery tests
-  pending CI. No real-device verification. Do not call this deployed or proven.
+- 307 Node tests and JS syntax checks pass. Android compile/lint and seven native
+  recovery/security tests passed on 4986f63; the final index-conflict test/code
+  awaits the next CI run. No real-device verification or deployment.
+- PR: https://github.com/MrMilo34/Lot-Keys-TEST/pull/9 (draft). CI does not receive
+  the stable TEST signing secrets, so no matching installable APK is published.
+  Restore the existing TEST signing identity; do not generate a replacement key.
 - Marketplace Listings, More contributions and Account assets retain existing
   foreground paths. See RELEASE-0.9.5.39.md and wake-sender/README.md for limits.
 - Preserve all prior .38 behavior below. Do not stop idle relay recovery until

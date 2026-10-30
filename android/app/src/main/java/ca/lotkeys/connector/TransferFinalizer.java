@@ -54,14 +54,20 @@ final class TransferFinalizer {
         // Sheets values has no compare-and-swap revision API. Do not let a delayed
         // worker overwrite a newer sheet between the check and a write. The core
         // profile was saved before handoff; its cover cell is refreshed by the next
-        // foreground sync. Only the Drive index below has an atomic ETag guard.
+        // foreground sync. Only the Drive index below uses a conditional update.
         String index = op.optString("indexId"); if (index.isEmpty()) throw new Reconcile("Files are saved. Reopen LotKeys to refresh the Inventory preview.");
         TransferStore.fileId(index);
         for (int attempt = 0; attempt < 3; attempt++) {
             String endpoint = "https://www.googleapis.com/drive/v3/files/" + index;
+            // Drive v3 removed the File.etag resource field. Use the documented v2
+            // file ETag and v2 conditional update for this one shared JSON write;
+            // do not assume a v3 media response's ETag is a supported write lock.
+            String conditional = "https://www.googleapis.com/drive/v2/files/" + index;
+            String etag = json("GET", conditional + "?fields=id,etag&supportsAllDrives=true", null, null).json().optString("etag");
+            if (etag.isEmpty()) throw new Reconcile("Files are saved. Reopen LotKeys to refresh the Inventory preview safely.");
             DriveUploadClient.Reply reply = json("GET", endpoint + "?alt=media&supportsAllDrives=true", null, null);
-            // Never replace a shared index without a server-side precondition.
-            if (reply.etag == null || reply.etag.isEmpty()) throw new Reconcile("Files are saved. Reopen LotKeys to refresh the Inventory preview safely.");
+            String after = json("GET", conditional + "?fields=id,etag&supportsAllDrives=true", null, null).json().optString("etag");
+            if (!etag.equals(after)) continue;
             JSONObject data = reply.json(); JSONArray entries = data.getJSONArray("vehicles"); boolean found = false;
             for (int j = 0; j < entries.length(); j++) {
                 JSONObject row = entries.getJSONObject(j);
@@ -71,7 +77,7 @@ final class TransferFinalizer {
                 drive.put("coverPhotoFileId", cover); found = true;
             }
             if (!found) throw new Reconcile("Files are saved. This profile is no longer in the Inventory index.");
-            check.run(); DriveUploadClient.Reply write = client.request("PATCH", "https://www.googleapis.com/upload/drive/v3/files/" + index + "?uploadType=media&supportsAllDrives=true", "application/json", data.toString().getBytes(StandardCharsets.UTF_8), null, 0, 0, null, reply.etag);
+            check.run(); DriveUploadClient.Reply write = client.request("PUT", "https://www.googleapis.com/upload/drive/v2/files/" + index + "?uploadType=media&supportsAllDrives=true", "application/json", data.toString().getBytes(StandardCharsets.UTF_8), null, 0, 0, null, etag);
             if (write.status == 412) continue;
             DriveUploadClient.success(write); return;
         }

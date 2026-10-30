@@ -2602,7 +2602,13 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
     const existingFor=item=>(item.driveFileId&&remotes.find(x=>x.id===item.driveFileId))||byAsset.get(item.id)||null;
     const uploadable=[];
     for(let i=0;i<items.length;i++){
-      const item=items[i]; const existing=existingFor(item);
+      const item=items[i]; let existing=existingFor(item);
+      // A fresh listing can lag a confirmed create. Check its known ID before
+      // creating another copy; a permission failure must never become a reupload.
+      if(!existing&&item.driveFileId){
+        try{const known=await driveGet(item.driveFileId,'id,name,parents,trashed,appProperties');if(!known.trashed){if(!known.parents?.includes(folderId))throw new Error('This saved file moved outside its Vehicle folder. Review it before uploading another copy.');existing=known}}
+        catch(error){if(Number(error?.status)!==404)throw error}
+      }
       const prefix=kind==='photo'?String(i+1).padStart(2,'0')+' - ':'';
       const baseName=kind==='photo'?stripPhotoOrderPrefix(item.name||existing?.name||(`${kind}-${i+1}`)):(item.name||(`${kind}-${i+1}`));
       const wanted=safeName(prefix+baseName,`${kind}-${i+1}`);
@@ -2631,7 +2637,7 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
   // Native background saves are opt-in through the Android connector. The browser
   // still prepares folders, core profile data and the directory before handing off
   // ALL original media. No "background ready" claim is made during source staging.
-  async function nativeVehicleTransfer(v,s,reportProgress,{resumeOnly=false}={}){
+  async function nativeVehicleTransfer(v,s,reportProgress,{resumeOnly=false,force=false}={}){
     const Native=window.LotKeysNativeTransfers,Core=window.LotKeysTransferCore,phone=window.LotKeysPhone;
     if(!Native||!Core||!phone?.uploadCall)return false;
     const account=String(await setting('currentAccountEmail','')).toLowerCase(),scope=Core.context({account,store:s.rootId,record:v.id,revision:String(v.updatedAt||0)});
@@ -2641,6 +2647,16 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
     if(receipt&&!Core.sameContext(receipt.context,scope)){
       await phone.uploadCall('cancel',{id:receipt.id});delete v.drive.nativeTransfer;receipt=null;
       await DB.put('vehicles',v);saveVehicleSyncState(v);
+    }
+    if(receipt&&force){
+      const failed=await phone.uploadCall('status',{id:receipt.id});
+      if(['failed','cancelled'].includes(failed.state)){
+        if((failed.assets||[]).some(row=>!row.result?.id&&!sources.has(row.key)))throw new Error('Android retained the original files. Restore Drive access and use Resume Drive Saves in Android setup before repairing this profile.');
+        const confirmed=Core.completed({...failed,state:'complete',assets:(failed.assets||[]).filter(row=>row.result?.id)},scope);
+        for(const row of items){const saved=confirmed[`${row.kind}:${row.item.id}`];if(saved)row.item.driveFileId=saved.id}
+        await phone.uploadCall('cancel',{id:receipt.id});delete v.drive.nativeTransfer;receipt=null;v.updatedAt=Math.max(Date.now(),Number(v.updatedAt||0)+1);scope.revision=String(v.updatedAt);
+        await DB.put('vehicles',v);saveVehicleSyncState(v);
+      }
     }
     if(!receipt&&(resumeOnly||!await Native.available(account)))return false;
     const check=async()=>{
@@ -2654,7 +2670,9 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
       for(const [kind,parent,list] of [['photo',v.drive.photosFolderId,v.photos||[]],['video',v.drive.videosFolderId,v.videos||[]],['document',v.drive.documentsFolderId,v.attachments||[]]]){
         await check();const remotes=await listFiles(`'${qEscape(parent)}' in parents and trashed = false`,'files(id,name,appProperties)');
         for(let i=0;i<list.length;i++){
-          const item=list[i],existing=remotes.find(file=>file.id===item.driveFileId||file.appProperties?.lotkeysAssetId===item.id),base=kind==='photo'?stripPhotoOrderPrefix(item.name||existing?.name||`photo-${i+1}`):(item.name||`${kind}-${i+1}`),name=safeName((kind==='photo'?String(i+1).padStart(2,'0')+' - ':'')+base);
+          await check();const item=list[i];let existing=remotes.find(file=>file.id===item.driveFileId||file.appProperties?.lotkeysAssetId===item.id);
+          if(!existing&&item.driveFileId){try{const known=await driveGet(item.driveFileId,'id,name,parents,trashed,appProperties');if(!known.trashed){if(!known.parents?.includes(parent))throw new Error('This saved file moved outside its Vehicle folder. Review it before uploading another copy.');existing=known}}catch(error){if(Number(error?.status)!==404)throw error}}
+          const base=kind==='photo'?stripPhotoOrderPrefix(item.name||existing?.name||`photo-${i+1}`):(item.name||`${kind}-${i+1}`),name=safeName((kind==='photo'?String(i+1).padStart(2,'0')+' - ':'')+base);
           if(kind==='photo')item.name=base;
           if(existing){item.driveFileId=existing.id;item.driveName=name;if(existing.name!==name)await patchMetadata(existing.id,{name});continue}
           if(!item.blob)throw new Error(`The original ${kind} file is missing. Restore it before saving this profile.`);
@@ -2664,7 +2682,11 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
       if(!assets.length)return false;
       const first=v.photos?.[0],coverKey=first&&assets.some(row=>row.key===`photo:${first.id}`)?`photo:${first.id}`:'',index=await findInventoryIndex(s);
       if(!v.drive.lastSheetUpdatedAt||!index?.id)return false;
-      const plan=Core.batch(scope,assets,[{type:'vehicle-cover',sheetId:v.drive.adminSheetId,sheetUpdated:v.drive.lastSheetUpdatedAt,indexId:index.id,recordUpdated:Number(v.updatedAt)||0,assetKey:coverKey,coverId:first?.driveFileId||''}]);
+      const plan=Core.batch(scope,assets,[{type:'vehicle-cover',sheetId:v.drive.adminSheetId,sheetUpdated:v.drive.lastSheetUpdatedAt,indexId:index.id,recordUpdated:Number(v.updatedAt)||0,assetKey:coverKey,coverId:first?.driveFileId||(!Array.isArray(v.photos)?v.drive.coverPhotoFileId:'')||''}]);
+      plan.inventory=[];
+      for(const [kind,list] of [['photo',v.photos||[]],['video',v.videos||[]],['document',v.attachments||[]]])for(let position=0;position<list.length;position++){
+        const item=list[position];plan.inventory.push({id:item.id,kind,position,name:item.name||'',driveFileId:item.driveFileId||'',driveName:item.driveName||'',size:item.blob?.size??item.size??0,type:item.blob?.type||item.type||''});
+      }
       receipt={context:scope,plan,id:''};
     }
     const onProgress=state=>reportProgress({status:'uploading',percent:state.phase==='staging'?42+Math.round(state.percent*0.08):50+Math.round(state.percent*0.44),message:state.phase==='staging'?'Preparing originals for Android · keep LotKeys open':state.phase==='queued'?'Android has the originals · save continues with the browser closed':state.phase==='finalizing'?'Files saved · updating Inventory preview':'Android is saving to Drive · originals retained'});
@@ -2679,7 +2701,17 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
       // refresh. Reuse the confirmed IDs instead of uploading the originals again.
       results=Core.completed({...error.snapshot,state:'complete'},scope);receipt.reconcile=true;
     }
-    for(const row of items){const result=results[`${row.kind}:${row.item.id}`];if(result){row.item.driveFileId=result.id;row.item.driveName=result.name||row.item.name}}
+    if(!Array.isArray(receipt.plan?.inventory))throw new Error('The retained save is missing its original media inventory. Keep its files and review it before reconciling.');
+    // A browser restart may restore the profile before the new Drive media appears
+    // in a listing. Recover the entire saved edit (including earlier Drive files),
+    // otherwise the normal cleanup could mistake those files for deleted photos.
+    for(const [kind,field] of [['photo','photos'],['video','videos'],['document','attachments']]){
+      const current=new Map((v[field]||[]).map(item=>[item.id,item]));
+      v[field]=receipt.plan.inventory.filter(row=>row.kind===kind).sort((a,b)=>a.position-b.position).map(row=>{
+        const item=current.get(row.id)||{id:row.id,name:row.name,size:row.size,type:row.type},result=results[`${kind}:${row.id}`];
+        item.driveFileId=result?.id||item.driveFileId||row.driveFileId;item.driveName=result?.name||item.driveName||row.driveName||row.name;return item;
+      });
+    }
     v.drive.nativeTransfer=receipt;await DB.put('vehicles',v);saveVehicleSyncState(v,{stage:'native-files-saved',percent:94});return true;
   }
   async function syncVehicle(v,{force=false,onProgress=()=>{}}={}){
@@ -2688,7 +2720,7 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
     const reportProgress=state=>{try{onProgress({kind:'profile',folder:'Vehicle Profile',status:'processing',...state})}catch(error){console.warn('Vehicle synchronization progress could not be painted',error)}};
     reportProgress({percent:2,message:'Preparing Vehicle Profile'});
     const adminLevel=Number(await setting('currentUserAdminLevel',0))||0;if(adminLevel<1){const error=new Error('Official Inventory is protected. This change must use the user More request path.');error.code='INVENTORY_BROKER_REQUIRED';throw error}
-    v.name=buildVehicleProfileName(v);const s=await structure();const c=await config();v.drive=v.drive||{};if(!Number(v.updatedAt))v.updatedAt=Date.now();const resumedNative=await nativeVehicleTransfer(v,s,reportProgress,{resumeOnly:true});
+    v.name=buildVehicleProfileName(v);const s=await structure();const c=await config();v.drive=v.drive||{};if(!Number(v.updatedAt))v.updatedAt=Date.now();const resumedNative=await nativeVehicleTransfer(v,s,reportProgress,{resumeOnly:true,force});
     reportProgress({percent:7,message:'Checking Inventory folders'});
     let profile=v.drive.profileFolderId&&!force?{id:v.drive.profileFolderId,name:v.name}:null;
     if(!profile&&v.drive.profileFolderId)profile=await driveGet(v.drive.profileFolderId,'id,name,mimeType,webViewLink,appProperties').catch(()=>null);
