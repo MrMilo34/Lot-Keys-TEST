@@ -22,7 +22,8 @@
     // Persist the receipt BEFORE transferring bytes. A refresh resumes staging instead
     // of making a second batch while Android already owns part of the originals.
     await onPrepared(snapshot);
-    if (snapshot.state !== 'staging') return snapshot;
+    if (Core.terminal(snapshot.state)) return snapshot;
+    if (snapshot.state !== 'staging') return phone.uploadCall('commit', { id: snapshot.id }, 180000);
     const total = plan.assets.reduce((sum, row) => sum + row.size, 0); let staged = 0;
     for (let item = 0; item < plan.assets.length; item++) {
       const source = sources.get(plan.assets[item].key);
@@ -50,6 +51,7 @@
       await check(); const snapshot = await phone.uploadCall('status', { id });
       const result = Core.completed(snapshot, context); onProgress({ phase: snapshot.state, ...Core.progress(snapshot) });
       if (result) return result;
+      if (snapshot.held) { const error = Error('This save is paused for its original account, Store or edit. Resume it from that context.'); error.nativeTransfer = true; error.nativeState = 'paused_context'; throw error; }
       if (Core.terminal(snapshot.state) || snapshot.state.startsWith('paused_')) {
         const error = Error(snapshot.error || 'The Android save needs attention. Reopen Android setup to resume.');
         error.nativeTransfer = true; error.nativeState = snapshot.state; error.snapshot = snapshot; throw error;

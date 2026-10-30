@@ -40,7 +40,7 @@ jobs:
           fi
       - name: Build and lint Android test layer
         working-directory: android
-        run: gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+        run: gradle --no-daemon --continue :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
       - name: Verify registered TEST certificate
         if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
         run: |

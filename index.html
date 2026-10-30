@@ -2670,7 +2670,7 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
     const onProgress=state=>reportProgress({status:'uploading',percent:state.phase==='staging'?42+Math.round(state.percent*0.08):50+Math.round(state.percent*0.44),message:state.phase==='staging'?'Preparing originals for Android · keep LotKeys open':state.phase==='queued'?'Android has the originals · save continues with the browser closed':state.phase==='finalizing'?'Files saved · updating Inventory preview':'Android is saving to Drive · originals retained'});
     // Resuming staging reuses the exact original plan, including its revision guards.
     const snapshot=receipt.id?await phone.uploadCall('status',{id:receipt.id}):null;
-    if(!snapshot||snapshot.state==='staging')await Native.handoff(receipt.plan,sources,{check,onProgress,onPrepared:async value=>{receipt.id=value.id;v.drive.nativeTransfer=receipt;await DB.put('vehicles',v);saveVehicleSyncState(v,{stage:'native-staging',percent:42})}});
+    if(!snapshot||(!Core.terminal(snapshot.state)))await Native.handoff(receipt.plan,sources,{check,onProgress,onPrepared:async value=>{receipt.id=value.id;v.drive.nativeTransfer=receipt;await DB.put('vehicles',v);saveVehicleSyncState(v,{stage:'native-staging',percent:42})}});
     let results;
     try{results=await Native.wait(receipt.id,scope,{check,onProgress})}
     catch(error){

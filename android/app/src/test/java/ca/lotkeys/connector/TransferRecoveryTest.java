@@ -17,7 +17,11 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class) @Config(sdk = 35)
 public class TransferRecoveryTest {
     private TransferStore store;
-    @Before public void before() { store = new TransferStore(RuntimeEnvironment.getApplication()); }
+    @Before public void before() {
+        Context context = RuntimeEnvironment.getApplication();
+        org.robolectric.shadows.ShadowStatFs.registerStats(new File(context.getFilesDir(), "transfers").getAbsolutePath(), 1024 * 1024, 512 * 1024, 512 * 1024);
+        store = new TransferStore(context);
+    }
     private JSONObject plan(int size) throws Exception {
         return new JSONObject().put("key", UUID.randomUUID().toString())
             .put("context", new JSONObject().put("account", "User@example.test").put("store", "store-folder-123").put("record", "vehicle-123").put("revision", "1"))
@@ -69,9 +73,25 @@ public class TransferRecoveryTest {
         assertEquals("stable-drive-id-123", client.upload(store, batch, 0).getString("id"));
         assertEquals(1, creates[0]); assertEquals(8, store.itemState(batch.getString("id"), 0).getLong("confirmed"));
     }
-    @Test public void missingRangeNeverConfirmsBytesAndWrongChecksumNeverCompletes() {
+    @Test public void missingRangeNeverConfirmsBytes() {
         assertEquals(0, DriveUploadClient.confirmed(null, 8000000));
         assertEquals(262144, DriveUploadClient.confirmed("bytes=0-262143", 8000000));
         assertThrows(IllegalArgumentException.class, () -> DriveUploadClient.confirmed("bytes=0-9000000", 8000000));
+    }
+    @Test public void lowDiskIsRejectedBeforeAcceptingAnyOriginal() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        org.robolectric.shadows.ShadowStatFs.registerStats(new File(context.getFilesDir(), "transfers").getAbsolutePath(), 1024, 1, 1);
+        assertThrows(IllegalArgumentException.class, () -> store.prepare(plan(4)));
+    }
+    @Test public void wrongRemoteBytesCannotBeAdoptedEvenWithTheSameAssetIdentifier() throws Exception {
+        JSONObject batch = staged(8);
+        DriveUploadClient client = new DriveUploadClient(null, "User@example.test", null, () -> {}) {
+            @Override Reply request(String method, String url, String type, byte[] bytes, File file, long offset, long length, String range, String match) {
+                Reply reply = new Reply(); reply.status = 200;
+                reply.text = "{\"files\":[{\"id\":\"existing-file-123\",\"size\":8,\"md5Checksum\":\"wrong\"}]}"; return reply;
+            }
+        };
+        assertThrows(IllegalArgumentException.class, () -> client.upload(store, batch, 0));
+        assertFalse(store.itemState(batch.getString("id"), 0).has("result"));
     }
 }

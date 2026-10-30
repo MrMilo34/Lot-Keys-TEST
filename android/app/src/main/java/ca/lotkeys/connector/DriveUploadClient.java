@@ -75,6 +75,7 @@ class DriveUploadClient {
                     while ((read = in.read(buffer)) >= 0) { if (out.size() + read > 8 * 1024 * 1024) throw new java.io.IOException("Google returned an oversized response."); out.write(buffer, 0, read); }
                     reply.text = new String(out.toByteArray(), StandardCharsets.UTF_8);
                 }
+                check.run();
                 if (reply.status != 401) return reply;
                 GoogleAuthUtil.clearToken(context, token); token = null;
             } finally { connection.disconnect(); }

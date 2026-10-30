@@ -29,9 +29,11 @@ final class TransferStore {
     JSONObject prepare(JSONObject input) throws Exception {
         synchronized (LOCK) {
             JSONObject scope = input.getJSONObject("context");
+            require(input.toString().length() <= 1024 * 1024, "Upload plan is too large.");
             require(!scope.optString("account").trim().isEmpty(), "An upload account is required.");
             fileId(scope.optString("store"));
             require(!scope.optString("record").isEmpty() && scope.optString("record").length() <= 200, "An upload record is required.");
+            require(!scope.optString("revision").isEmpty() && scope.optString("revision").length() <= 200, "An upload edit is required.");
             String id = digest(input.getString("key"));
             String planHash = digest(input.toString());
             File manifest = manifest(id);
@@ -57,6 +59,7 @@ final class TransferStore {
                 long size = asset.getLong("size");
                 require(size >= 0 && size <= MAX_BATCH && total <= MAX_BATCH - size, "This upload exceeds the available batch limit.");
                 total += size;
+                if (asset.optJSONObject("properties") == null) asset.put("properties", new JSONObject());
                 asset.put("staged", 0).put("confirmed", 0);
             }
             require(new StatFs(root.getAbsolutePath()).getAvailableBytes() > total + 32L * 1024 * 1024, "There is not enough phone storage to retain the original files for background upload.");
@@ -128,7 +131,7 @@ final class TransferStore {
     JSONObject state(String id, String value, String error) throws Exception {
         synchronized (LOCK) {
             JSONObject batch = get(id);
-            if (!"cancelled".equals(batch.optString("state"))) batch.put("state", value).put("error", error == null ? "" : error);
+            if (!terminal(batch.optString("state"))) batch.put("state", value).put("error", error == null ? "" : error);
             save(batch); return snapshot(batch);
         }
     }
