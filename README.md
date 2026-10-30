@@ -1,3 +1,11 @@
+# V0.9.5.39 candidate work
+
+Background Vehicle Profile media transfers and authenticated phone doorbell are
+prepared on a separate work branch. The native queue needs a signed connector
+update; the doorbell additionally needs LotKeys Firebase and private sender
+configuration. Existing recovery remains active. This is not a deployed or
+real-device-verified release. See [RELEASE-0.9.5.39.md](RELEASE-0.9.5.39.md).
+
 # LotKeys V0.9.5.38 — Recent Device conversation cache
 
 While the phone is connected, six recent messages are kept ready for ten recent conversations in temporary browser memory. Background warming yields between reads, and earlier history retains its phone cursor. See [release details](RELEASE-0.9.5.38.md), [verification](LotKeys-0.9.5.38-Test-Report.md) and [current project state](CURRENT-STATE.md).

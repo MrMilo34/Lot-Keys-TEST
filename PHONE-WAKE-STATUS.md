@@ -1,3 +1,14 @@
+# Phone wake-up candidate — 2026-10-30
+
+The .39 work branch adds native FCM reception, encrypted per-PC wake grants,
+PC dispatch and a separate authenticated Apps Script sender. It is source only,
+not activated or real-device verified. Import requires a genuine LotKeys Android
+Firebase registration and a private owner sender setup. Existing idle polling
+remains intact. See wake-sender/README.md and RELEASE-0.9.5.39.md. No billing,
+Store Processor exposure or Enigma identity reuse is authorized.
+
+## Earlier baseline and constraints (still applicable)
+
 # Phone wake-up continuation — 2026-10-16
 
 Blair wants no intentional polling wait: a trusted PC opening LotKeys should wake the phone; keep the existing quick SMS/MMS relay active while the PC is reachable; after a recovery grace period with no PC, let the connector sleep. Opening LotKeys on the phone can also initiate work. Preserve trusted pairing and the working active messaging path.

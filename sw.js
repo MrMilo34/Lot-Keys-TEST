@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095038-recent-device-cache';
+const CACHE='lotkeys-app-v095039-background-transfers-doorbell';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -17,6 +17,9 @@ const CORE=[
   './lotkeys-listing-storage.js',
   './lotkeys-personal-preferences.js',
   './lotkeys-website-identity.js',
+  './lotkeys-doorbell-core.js',
+  './lotkeys-transfer-core.js',
+  './lotkeys-native-transfers.js',
   './lotkeys-phone-core.js',
   './lotkeys-phone.js',
   './lotkeys-hub.js',

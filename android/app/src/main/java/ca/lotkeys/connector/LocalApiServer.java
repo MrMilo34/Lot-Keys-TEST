@@ -127,7 +127,28 @@ final class LocalApiServer {
             JSONObject relay = service.relayStatus();
             status.put("relay", relay);
             status.getJSONObject("capabilities").put("backgroundRelay", relay.optBoolean("authorized"));
+            status.getJSONObject("capabilities").put("backgroundUploads", TransferAuth.ready(service));
+            status.put("uploadAccount", TransferAuth.account(service));
             return status;
+        }
+        if ("POST".equals(method) && path.startsWith("/v1/transfers/")) {
+            TransferStore transfers = new TransferStore(service);
+            if ("/v1/transfers/prepare".equals(path)) {
+                String account = body.getJSONObject("context").getString("account");
+                if (!TransferAuth.ready(service) || !account.equalsIgnoreCase(TransferAuth.account(service))) throw new SecurityException("Approve background uploads for this Google account in Android setup first.");
+                return transfers.prepare(body);
+            }
+            if ("/v1/transfers/hold".equals(path)) { transfers.hold(body.getString("account"), body.getString("store")); return new JSONObject().put("ok", true); }
+            String id = body.optString("id");
+            if ("/v1/transfers/chunk".equals(path)) return transfers.append(id, body.getInt("item"), body.getLong("offset"), body.getString("base64"));
+            if ("/v1/transfers/commit".equals(path)) {
+                JSONObject batch = transfers.commit(id);
+                if (!TransferStore.terminal(batch.optString("state")) && !TransferJobService.schedule(service, false)) throw new IllegalStateException("Android could not schedule this save. Open Android setup and tap Resume Drive Saves.");
+                return batch;
+            }
+            if ("/v1/transfers/status".equals(path)) return transfers.snapshot(transfers.get(id));
+            if ("/v1/transfers/cancel".equals(path)) return transfers.cancel(id);
+            if ("/v1/transfers/acknowledge".equals(path)) return transfers.acknowledge(id);
         }
         if ("GET".equals(method) && "/v1/threads".equals(path)) {
             return store.conversations(integer(query.get("offset"), 0));

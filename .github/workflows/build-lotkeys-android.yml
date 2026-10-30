@@ -40,7 +40,7 @@ jobs:
           fi
       - name: Build and lint Android test layer
         working-directory: android
-        run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+        run: gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
       - name: Verify registered TEST certificate
         if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
         run: |
@@ -50,7 +50,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
         with:
-          name: LotKeys-Android-V0.9.5.12
+          name: LotKeys-Android-V0.9.5.39
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
       - uses: actions/upload-artifact@v4

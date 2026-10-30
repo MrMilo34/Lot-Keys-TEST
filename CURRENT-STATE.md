@@ -1,4 +1,27 @@
-# LotKeys current state — TEST V0.9.5.38
+# LotKeys current work — TEST V0.9.5.39 candidate
+
+Current main baseline: d8caf710905bd26ddb540489052ba387428ee9a0 (.38).
+Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
+
+- Native original-file queue and Vehicle Profile media handoff implemented in
+  source, with resumable Drive checkpoints, final size/checksum validation and
+  stable allocated file IDs. Up to three photos + one video; documents first.
+- Separate upload consent; existing pairing app-data scope unchanged. Web/older
+  connector fallback preserved. Native queue needs a matching signed .39 APK.
+- Shared Inventory cover finalization uses ETag/revision guards. Sheets cover,
+  rename/delete reconciliation finishes in the foreground; no native deletions.
+- PC doorbell, FCM receiver and separate Apps Script sender implemented in source.
+  Activation blocked on LotKeys Firebase registration and owner sender setup.
+  Enigma-only JSON is invalid for this package. No billing/resources activated.
+- 301 Node tests pass at initial checkpoint. Android compile/lint/recovery tests
+  pending CI. No real-device verification. Do not call this deployed or proven.
+- Marketplace Listings, More contributions and Account assets retain existing
+  foreground paths. See RELEASE-0.9.5.39.md and wake-sender/README.md for limits.
+- Preserve all prior .38 behavior below. Do not stop idle relay recovery until
+  real-device push wake gates pass.
+
+## Deployed baseline checkpoint (historical .38)
+
 
 This is the short continuation reference. Verify current main/version.json before
 changing it. Historical release files remain available for a specific question.

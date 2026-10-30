@@ -37,6 +37,13 @@ public final class PhoneConnectorService extends Service {
         PhoneConnectorService current = instance;
         if (current != null && current.relay != null) current.relay.phoneDataChanged();
     }
+    static boolean wakeRunning() {
+        PhoneConnectorService current = instance;
+        if (current == null || current.relay == null) return false;
+        current.status = "Trusted computer connecting · encrypted relay";
+        current.getSystemService(NotificationManager.class).notify(NOTIFICATION_ID, current.notification());
+        current.relay.wake(); return true;
+    }
 
     @Override public IBinder onBind(Intent intent) { return null; }
 
@@ -88,6 +95,8 @@ public final class PhoneConnectorService extends Service {
                     intent.getStringExtra(EXTRA_ACCOUNT_NAME),
                     intent.getStringExtra(EXTRA_ACCOUNT_TYPE),
                     intent.getStringExtra(EXTRA_ACCESS_TOKEN));
+            } else if ("TRUSTED_PC_WAKE".equals(intent.getAction())) {
+                wakeRunning();
             } else if ("APPROVE_PAIR".equals(intent.getAction())) {
                 relay.approve(sessionId == null ? "" : sessionId, intent.getStringExtra("trustMode"));
             } else if ("DECLINE_PAIR".equals(intent.getAction())) {

@@ -77,6 +77,7 @@ final class DriveRelay {
     private volatile String lastError = "";
     private volatile boolean stopped;
     private volatile boolean invalidationPending;
+    private final java.util.concurrent.atomic.AtomicBoolean wakeQueued = new java.util.concurrent.atomic.AtomicBoolean();
     private long lastCleanup;
 
     DriveRelay(PhoneConnectorService service) {
@@ -97,6 +98,23 @@ final class DriveRelay {
 
     void phoneDataChanged() {
         invalidationPending = true;
+        wake();
+    }
+    void wake() {
+        if (stopped || !wakeQueued.compareAndSet(false, true)) return;
+        try { worker.execute(() -> { try { tickSafely(); } finally { wakeQueued.set(false); } }); }
+        catch (java.util.concurrent.RejectedExecutionException stoppedWorker) { wakeQueued.set(false); }
+    }
+    static boolean wakeTrusted(Context context, String browser) {
+        if (browser == null || browser.isEmpty() || !wasAuthorized(context)) return false;
+        try {
+            JSONArray rows = new JSONArray(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(TRUSTS, "[]"));
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject row = rows.getJSONObject(i);
+                if (browser.equals(row.optString("browserId")) && ("until-disconnect".equals(row.optString("mode")) || (!"ask".equals(row.optString("mode")) && row.optLong("expiresAt") > System.currentTimeMillis()))) return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     static String account(Context context) {
@@ -144,6 +162,7 @@ final class DriveRelay {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .remove(GOOGLE_ACCOUNT).remove(GOOGLE_ACCOUNT_TYPE).remove(GOOGLE_AUTHORIZED_AT).remove(SESSION)
             .remove(GOOGLE_NEEDS_AUTH).remove(TRUSTS).remove(PENDING).commit();
+        WakeDoorbell.revokeUntrusted(context);
     }
 
     void accountAuthorized(String email, String accountType, String token) {
@@ -461,8 +480,13 @@ final class DriveRelay {
             else if ("send".equals(operation)) data = waitForSend(store.send(input));
             else if ("media".equals(operation)) data = store.mediaHandoff(input);
             else if ("attachment".equals(operation)) data = store.attachment(input.optString("partId"));
-            else if ("foreground".equals(operation)) data = new JSONObject()
-                .put("ok", true).put("trustExpiresAt", renewTrust(session));
+            else if ("foreground".equals(operation)) {
+                long expiry = renewTrust(session);
+                JSONObject foreground = new JSONObject().put("ok", true).put("trustExpiresAt", expiry);
+                JSONObject wakeGrant = WakeDoorbell.grant(service, session.optString("browserId"), expiry);
+                if (wakeGrant != null) foreground.put("wakeGrant", wakeGrant);
+                data = foreground;
+            }
             else throw new IllegalArgumentException("Unsupported phone request.");
             response.put("ok", true).put("data", data);
         } catch (Exception error) {
@@ -636,6 +660,7 @@ final class DriveRelay {
 
     private void saveTrusts(JSONArray rows) {
         prefs.edit().putString(TRUSTS, rows.toString()).apply();
+        WakeDoorbell.revokeUntrusted(service);
     }
 
     private JSONObject session() {

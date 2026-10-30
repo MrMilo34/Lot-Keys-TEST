@@ -15,6 +15,8 @@
   const TRUST_NAMES_KEY = 'lotkeys-phone-trusted-pc-names-v1';
   const SESSION_KEY = 'lotkeys-phone-active-session-v1';
   const REMEMBERED_PAIR_KEY = 'lotkeys-phone-remembered-pair-v1';
+  const WAKE_GRANT_KEY = 'lotkeys-phone-wake-grant-v1';
+  let lastDoorbellAt = 0;
   const READ_RECEIPTS_KEY = 'lotkeys-phone-read-receipts-v1';
   const READ_RECEIPT_MAX_AGE = 180 * 24 * 60 * 60 * 1000;
   const encoder = new TextEncoder();
@@ -248,6 +250,7 @@
   }
 
   function forgetRememberedPair() {
+    localStorage.removeItem(WAKE_GRANT_KEY);
     localStorage.removeItem(REMEMBERED_PAIR_KEY);
   }
 
@@ -775,6 +778,21 @@
     }
   }
 
+  async function ringPhoneDoorbell(sessionId, deviceId) {
+    const Doorbell = window.LotKeysDoorbellCore;
+    if (!Doorbell || state.nativeToken || !state.relayIdentity || now() - lastDoorbellAt < 10000) return;
+    try {
+      const grant = JSON.parse(localStorage.getItem(WAKE_GRANT_KEY) || 'null');
+      if (!Doorbell.validGrant(grant, { deviceId, browserId: browserId(), account: state.relayIdentity })) return;
+      const envelope = await Doorbell.envelope(grant, sessionId);
+      lastDoorbellAt = now();
+      // Apps Script ContentService responses are opaque in Chrome. Dispatch is NOT
+      // a phone acknowledgement: only the encrypted relay reply marks connected.
+      await fetch(grant.endpoint, { method: 'POST', mode: 'no-cors', credentials: 'omit', cache: 'no-store',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify(envelope), signal: AbortSignal.timeout(10000) });
+    } catch { /* Keep the established pairing/recovery path available. */ }
+  }
+
   async function startPairing({ trustMode = '36h', automatic = false } = {}) {
     if (state.nativeToken) {
       if (!state.nativeStatus) throw Error(state.nativeError || 'Reconnect this phone before pairing a computer.');
@@ -811,6 +829,7 @@
     state.relayDiagnostic = '';
     event('pairing', { code, sessionId, expiresAt });
     schedulePairPoll(100);
+    if (automatic) ringPhoneDoorbell(sessionId, offer.targetDeviceId);
     return { code, sessionId, expiresAt };
   }
 
@@ -1192,7 +1211,10 @@
     if (!pending) return;
     pendingRpc.delete(payload.requestId);
     clearTimeout(pending.timer);
-    if (payload.ok) pending.resolve(payload.data);
+    if (payload.ok) {
+      if (pending.op === 'foreground' && window.LotKeysDoorbellCore?.validGrant(payload.data?.wakeGrant, { deviceId: session.deviceId, browserId: browserId(), account: state.relayIdentity })) localStorage.setItem(WAKE_GRANT_KEY, JSON.stringify(payload.data.wakeGrant));
+      pending.resolve(payload.data);
+    }
     else pending.reject(Error(payload.error || 'The phone could not complete that request.'));
   }
 
@@ -1204,8 +1226,11 @@
         pendingRpc.delete(id);
         reject(Error('The phone did not answer in time. Check that LotKeys is connected on the phone.'));
       }, timeout);
-      pendingRpc.set(id, { resolve, reject, timer });
-      sendFrame('phone', { kind: 'request', id, op, payload }).then(() => scheduleFramePoll(100)).catch(error => {
+      pendingRpc.set(id, { resolve, reject, timer, op });
+      sendFrame('phone', { kind: 'request', id, op, payload }).then(() => {
+        scheduleFramePoll(100);
+        if (['send','media'].includes(op) || (op === 'status' && now() - state.lastPhoneSeenAt > 12000)) ringPhoneDoorbell(state.session?.sessionId, state.session?.deviceId);
+      }).catch(error => {
         pendingRpc.delete(id);
         clearTimeout(timer);
         reject(error);
@@ -1586,7 +1611,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.26',
+    version: '0.9.5.39',
     init,
     status,
     subscribe,
@@ -1615,6 +1640,11 @@
     forgetDevice,
     disconnectAll,
     clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; state.relayReady = false; state.relayIdentity = ''; state.relayError = ''; state.role = 'pc'; clearStoredSession(); event('status'); }
+    ,uploadCall: (operation, payload = {}, timeout = 20000) => {
+      if (!['prepare', 'chunk', 'commit', 'status', 'cancel', 'hold', 'acknowledge'].includes(operation)) throw Error('Unknown background save operation.');
+      return nativeCall('/v1/transfers/' + operation, { method: 'POST', body: JSON.stringify(payload), timeout });
+    }
+    ,uploadCapabilities: () => nativeCall('/v1/status')
   };
 
   function initAfterBase() {
