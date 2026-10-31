@@ -1612,7 +1612,7 @@
     const registered = state.nativeToken ? !!(state.nativeStatus && state.relayReady) : !!rememberedPair() || connected();
     const connection = P.connectionStatus({ connected: connected(), registered, role: state.nativeToken ? 'phone' : 'pc' });
     return {
-      version: '0.9.5.32',
+      version: '0.9.5.40',
       role: state.nativeToken ? 'phone' : 'pc',
       nativeLinked: !!state.nativeToken,
       native: !!state.nativeStatus,
@@ -1705,7 +1705,7 @@
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.39',
+    version: '0.9.5.40',
     init,
     status,
     subscribe,

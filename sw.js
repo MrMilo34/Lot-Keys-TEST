@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095039-background-transfers-doorbell';
+const CACHE='lotkeys-app-v095040-phone-pairing-status';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

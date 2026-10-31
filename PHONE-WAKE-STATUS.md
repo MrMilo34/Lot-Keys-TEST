@@ -1,3 +1,9 @@
+# .40 connection UI candidate
+
+Add a PC, live blue status and visible-only native UI refresh are being validated.
+The .39 approved active/hourly scheduling policy below is unchanged. UI refresh
+reads local snapshots only while the activity is visible and stops onPause.
+
 # Adaptive phone checks — approved revision, 2026-10-30
 
 Blair explicitly permits hourly idle recovery instead of the old two-second

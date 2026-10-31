@@ -1,3 +1,10 @@
+# V0.9.5.40 candidate — phone connection polish
+
+Add a PC / Check for code on the phone, blue live connection dots and settings,
+visible-only Android status refresh, and durable Background ready upload wording.
+See [release details](RELEASE-0.9.5.40.md). Candidate validation is in progress;
+keep the original TEST signing identity and update the existing connector.
+
 # LotKeys TEST V0.9.5.39 — background uploads and active/idle Hub
 
 The PC page automatically calls its registered phone. Green means registered

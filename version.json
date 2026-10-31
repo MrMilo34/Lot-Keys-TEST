@@ -1,15 +1,15 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.39",
-  "build": "095039",
-  "release": "background-transfers-doorbell",
+  "version": "0.9.5.40",
+  "build": "095040",
+  "release": "phone-pairing-status",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095039-background-transfers-doorbell",
-  "publishedAt": "2026-10-30",
-  "basedOn": "LotKeys V0.9.5.38 recent Device cache",
-  "androidConnectorVersion": "0.9.5.39",
+  "serviceWorkerCache": "lotkeys-app-v095040-phone-pairing-status",
+  "publishedAt": null,
+  "basedOn": "LotKeys V0.9.5.39 background transfers and active/idle Hub",
+  "androidConnectorVersion": "0.9.5.40",
   "preparedAt": "2026-10-30",
-  "deploymentStatus": "test-release",
-  "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.39.apk"
+  "deploymentStatus": "candidate",
+  "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.40.apk"
 }

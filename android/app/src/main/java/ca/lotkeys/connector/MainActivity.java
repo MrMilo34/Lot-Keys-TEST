@@ -42,9 +42,19 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_UPLOAD_AUTHORIZATION = 46;
     private static final int REQUEST_WAKE_SETUP = 47;
     private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
-    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095039";
+    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095040";
     private LinearLayout body;
     private Account pendingGoogleAccount;
+    private TextView pcRelayStatus;
+    private String displayedPairRequest = "";
+    private final android.os.Handler connectionUi = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable refreshConnectionUi = new Runnable() {
+        @Override public void run() {
+            if (!displayedPairRequest.equals(pairRequestId())) render();
+            updatePcRelayStatus();
+            connectionUi.postDelayed(this, 1000);
+        }
+    };
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -55,13 +65,18 @@ public final class MainActivity extends Activity {
         super.onResume();
         PhoneConnectorService.setSetupVisible(true);
         render();
+        connectionUi.removeCallbacks(refreshConnectionUi);
+        connectionUi.post(refreshConnectionUi);
     }
     @Override public void onPause() {
+        connectionUi.removeCallbacks(refreshConnectionUi);
         PhoneConnectorService.setSetupVisible(false);
         super.onPause();
     }
 
     private void render() {
+        pcRelayStatus = null;
+        displayedPairRequest = pairRequestId();
         ScrollView scroll = new ScrollView(this);
         body = new LinearLayout(this);
         body.setOrientation(LinearLayout.VERTICAL);
@@ -71,7 +86,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.5.39 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.5.40 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();
@@ -131,11 +146,8 @@ public final class MainActivity extends Activity {
         statusLine("Contact names", contacts, contacts ? "allowed" : "using phone numbers");
         statusLine("Coverage", false, "SMS/MMS only · RCS watcher comes later");
         statusLine("Messaging app", true, store.sourceApp());
-        JSONObject relayStatus = PhoneConnectorService.relaySnapshot();
-        String relayError = relayStatus == null ? "" : relayStatus.optString("lastError");
-        statusLine("PC relay", relayError.isEmpty(), relayError.isEmpty()
-            ? "ready · " + relayAccount
-            : "needs attention · " + relayError);
+        pcRelayStatus = text("", 15, Color.LTGRAY, false);
+        updatePcRelayStatus();
         PowerManager power = getSystemService(PowerManager.class);
         boolean unrestricted = power != null && power.isIgnoringBatteryOptimizations(getPackageName());
         statusLine("Locked-phone messaging", unrestricted,
@@ -384,6 +396,22 @@ public final class MainActivity extends Activity {
     private void statusLine(String label, boolean good, String detail) {
         text((good ? "● " : "● ") + label + " · " + detail, 15,
             good ? Color.rgb(63, 210, 122) : Color.rgb(255, 183, 77), false);
+    }
+
+    private String pairRequestId() {
+        JSONObject pending = DriveRelay.pendingRequest(this);
+        return pending != null && pending.optLong("expiresAt") > System.currentTimeMillis() ? pending.optString("sessionId") : "";
+    }
+
+    private void updatePcRelayStatus() {
+        if (pcRelayStatus == null) return;
+        JSONObject relay = PhoneConnectorService.relaySnapshot();
+        boolean connected = relay != null && relay.optBoolean("authorized") && relay.optBoolean("connected");
+        String error = relay == null ? "" : relay.optString("lastError");
+        String detail = connected ? "connected · " + relay.optString("peerName", "Computer")
+            : !error.isEmpty() ? "needs attention · " + error : "ready · waiting for a PC";
+        pcRelayStatus.setText("● PC relay · " + detail);
+        pcRelayStatus.setTextColor(connected ? Color.rgb(22, 137, 232) : error.isEmpty() ? Color.rgb(63, 210, 122) : Color.rgb(255, 183, 77));
     }
 
     private void button(String label, Runnable action, boolean primary) {
