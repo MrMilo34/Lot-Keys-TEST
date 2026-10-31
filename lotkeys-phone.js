@@ -1044,9 +1044,9 @@
 
   function scheduleFramePoll(delay = framePollDelay()) {
     clearTimeout(frameTimer);
-    if (!pagePresent || !state.session) return;
+    if (!pagePresent || !state.session || state.nativeToken && document.visibilityState !== 'visible') return;
     frameTimer = setTimeout(async () => {
-      if (!pagePresent || !state.session) return;
+      if (!pagePresent || !state.session || state.nativeToken && document.visibilityState !== 'visible') return;
       await pollFrames().catch(sessionError);
       if (state.session) scheduleFramePoll(framePollDelay());
     }, Math.max(100, Number(delay) || FRAME_POLL_ACTIVE_MS));

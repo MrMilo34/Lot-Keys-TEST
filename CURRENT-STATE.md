@@ -21,11 +21,10 @@ Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
 - This policy needs no Firebase. An idle phone may take about an hour (or longer
   under Android/network deferral) to notice a newly opened PC; opening the phone
   app checks promptly. Optional FCM remains inactive. No resources/billing enabled.
-- Adaptive scheduling tests/build are pending the current CI run. Prior PC changes
-  passed 315 Node tests and syntax checks. Android assembly, lint and all eight
-  recovery/security tests passed on e3e4187. No real-device verification or
-  deployment. Latest PC web CI: run 41149415473 on f50b6f1 (315 passing).
-  Unchanged Android code CI: run 41143008309 on e3e4187.
+- 317 Node tests and syntax checks pass. Android assembly, all 16 native tests
+  (including presence/idle policy and persisted hourly-job tests) and lint pass
+  on 3117449. Android CI 41151832055; web CI 41151836376. No deployment or
+  real-device battery/locked-phone verification is claimed.
 - PR: https://github.com/MrMilo34/Lot-Keys-TEST/pull/9 (draft). CI does not receive
   the stable TEST signing secrets, so no matching installable APK is published.
   Restore the existing TEST signing identity; do not generate a replacement key.

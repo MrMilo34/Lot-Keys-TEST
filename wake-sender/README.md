@@ -52,7 +52,7 @@ Before removing idle recovery, validate real-device locked/deep-idle delivery,
 the owner's Firebase authorization, reboot and token rotation, network loss,
 revocation, duplicate requests, downgraded FCM priority and notification behavior.
 Android force-stop prevents ordinary push reception until the app is reopened.
-Keep the old recovery loop while these checks are pending. No paid-resource
+Keep the approved hourly recovery fallback while these checks are pending. No paid-resource
 fallback is authorized by this setup.
 
 Primary references:

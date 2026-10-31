@@ -1,10 +1,17 @@
 # V0.9.5.39 candidate work
 
-Background Vehicle Profile media transfers and authenticated phone doorbell are
-prepared on a separate work branch. The native queue needs a signed connector
-update; the doorbell additionally needs LotKeys Firebase and private sender
-configuration. Existing recovery remains active. This is not a deployed or
-real-device-verified release. See [RELEASE-0.9.5.39.md](RELEASE-0.9.5.39.md).
+Background Vehicle Profile media transfers and PC-led calling are prepared in
+PR #9. The phone uses fast checks during visible app use / live PC activity,
+hourly recovery while idle with a trusted PC, and no idle checks without one.
+This policy needs no Firebase setup. Opening only the PC site may wait for the
+idle phone's next check; opening the phone app checks promptly. Manual PC retry
+lives in the status-light connection settings. Green means registered; blue
+requires a fresh connection acknowledgement.
+
+317 web tests and Android assembly, 16 native tests and lint pass. A signed
+connector update is still needed; the build does not receive the existing TEST
+signing secrets. This is not deployed or real-device verified. The separate FCM
+prototype remains inactive/optional. See [RELEASE-0.9.5.39.md](RELEASE-0.9.5.39.md).
 
 # LotKeys V0.9.5.38 — Recent Device conversation cache
 

@@ -90,8 +90,8 @@ forgetting a PC invalidates them locally and attempts broker revocation.
 
 No Firebase config, sender deployment, billing change or Enigma identity is
 included. See wake-sender/README.md. Without setup, the push receiver stays
-inactive. Existing two-second idle recovery remains until locked/deep-idle
-tests prove wake delivery. FCM priority can be downgraded; restricted foreground
+inactive. The approved hourly fallback remains available; optional push wake still needs
+locked/deep-idle delivery tests before activation. FCM priority can be downgraded; restricted foreground
 launches produce an open-connector notification rather than assuming an
 exemption. Do not promise zero latency, force-stop delivery or a sleeping laptop
 wake: this feature wakes the Android phone connection, not the REA laptop.
@@ -102,9 +102,9 @@ The Google Drive APK analysis observed native JobService/foreground content-sync
 wrappers, not its private transfer protocol or a performance benchmark. This
 implementation uses public Android scheduling and Drive resumable APIs.
 
-Web: 315 tests and inline/module JavaScript syntax pass. Android assembly, lint
-and all eight recovery/security tests pass on code commit e3e4187 (Android CI
-41143008309; web CI 41143015580). The CI job does not receive stable TEST signing
+Web: 317 tests and inline/module JavaScript syntax pass. Android assembly, all
+16 recovery/security/presence/job tests and lint pass on 3117449 (Android CI
+41151832055; web CI 41151836376). The CI job does not receive stable TEST signing
 secrets, so it intentionally publishes no installable APK. Restore the existing
 signing identity to preserve update compatibility. No real-device verification
 or deployment has been claimed. See PR #9 for the reviewable candidate.
