@@ -30,7 +30,7 @@ the phone initiates a prompt check. The hourly job is a useful recovery fallback
 it is not needed when no PC is registered. Existing optional FCM code stays off.
 
 Source implemented in PR #9. Android assembly, all 16 native tests and lint pass
-on 3117449 (CI 41151832055); 317 Node tests pass. Real-device power/locked-phone
+on 6910d5c (CI 41152261823); 317 Node tests pass (web CI 41152267890). Real-device power/locked-phone
 verification remains outstanding. Existing TEST signing is still
 required to publish an APK that updates the installed connector safely.
 

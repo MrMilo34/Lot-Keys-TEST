@@ -23,7 +23,8 @@ Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
   app checks promptly. Optional FCM remains inactive. No resources/billing enabled.
 - 317 Node tests and syntax checks pass. Android assembly, all 16 native tests
   (including presence/idle policy and persisted hourly-job tests) and lint pass
-  on 3117449. Android CI 41151832055; web CI 41151836376. No deployment or
+  on 6910d5c, including the final setup labels. Android CI 41152261823; web CI
+  41152267890. No deployment or
   real-device battery/locked-phone verification is claimed.
 - PR: https://github.com/MrMilo34/Lot-Keys-TEST/pull/9 (draft). CI does not receive
   the stable TEST signing secrets, so no matching installable APK is published.

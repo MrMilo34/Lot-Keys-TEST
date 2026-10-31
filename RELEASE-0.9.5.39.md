@@ -103,8 +103,8 @@ wrappers, not its private transfer protocol or a performance benchmark. This
 implementation uses public Android scheduling and Drive resumable APIs.
 
 Web: 317 tests and inline/module JavaScript syntax pass. Android assembly, all
-16 recovery/security/presence/job tests and lint pass on 3117449 (Android CI
-41151832055; web CI 41151836376). The CI job does not receive stable TEST signing
+16 recovery/security/presence/job tests and lint pass on 6910d5c (Android CI
+41152261823; web CI 41152267890). The CI job does not receive stable TEST signing
 secrets, so it intentionally publishes no installable APK. Restore the existing
 signing identity to preserve update compatibility. No real-device verification
 or deployment has been claimed. See PR #9 for the reviewable candidate.
