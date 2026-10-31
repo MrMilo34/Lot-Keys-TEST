@@ -51,7 +51,7 @@ test('trusted reconnection and local phone revocation survive an idle browser', 
   assert.match(relay, /sameBrowserRecovery/);
   assert.match(relay, /targetDeviceId/);
   assert.match(phone, /targetDeviceId: automatic \? text\(rememberedPair\(\)\?\.deviceId\) : ''/);
-  assert.match(relay, /if \(revoked != null\) prefs\.edit\(\)\.remove\(SESSION\)\.commit\(\)/);
+  assert.match(relay, /if \(revoked != null\) \{ prefs\.edit\(\)\.remove\(SESSION\)\.commit\(\); workPolicy\.clearPc\(\)/);
   assert.match(setup, /Locked-Phone Battery Settings/);
 });
 

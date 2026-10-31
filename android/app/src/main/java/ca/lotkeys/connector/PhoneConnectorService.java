@@ -26,6 +26,10 @@ public final class PhoneConnectorService extends Service {
     private static final int NOTIFICATION_ID = 9484;
     private static final AtomicLong REVISION = new AtomicLong(1);
     private static volatile PhoneConnectorService instance;
+    private static volatile boolean setupVisible;
+    private android.os.PowerManager.WakeLock activeConnectionLock;
+    private Boolean idleJobNeeded;
+    private volatile boolean destroyed;
     private LocalApiServer server;
     private DriveRelay relay;
     private ContentObserver observer;
@@ -42,7 +46,18 @@ public final class PhoneConnectorService extends Service {
         if (current == null || current.relay == null) return false;
         current.status = "Trusted computer connecting · encrypted relay";
         current.getSystemService(NotificationManager.class).notify(NOTIFICATION_ID, current.notification());
-        current.relay.wake(); return true;
+        current.relay.incomingWake(); return true;
+    }
+
+    static void setSetupVisible(boolean visible) {
+        setupVisible = visible;
+        PhoneConnectorService current = instance;
+        if (current != null && current.relay != null) current.relay.setupVisible(visible);
+    }
+    void browserVisible(boolean visible) { if (relay != null) relay.browserVisible(visible); }
+    static java.util.concurrent.CompletableFuture<Boolean> hourlyRecovery() {
+        PhoneConnectorService current = instance;
+        return current == null || current.relay == null ? null : current.relay.hourlyRecovery();
     }
 
     @Override public IBinder onBind(Intent intent) { return null; }
@@ -50,6 +65,11 @@ public final class PhoneConnectorService extends Service {
     @Override public void onCreate() {
         super.onCreate();
         instance = this;
+        android.os.PowerManager power = getSystemService(android.os.PowerManager.class);
+        if (power != null) {
+            activeConnectionLock = power.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "LotKeys:ActivePcRelay");
+            activeConnectionLock.setReferenceCounted(false);
+        }
         NotificationManager manager = getSystemService(NotificationManager.class);
         manager.createNotificationChannel(new NotificationChannel(
             CHANNEL, "LotKeys phone connection", NotificationManager.IMPORTANCE_LOW));
@@ -71,7 +91,7 @@ public final class PhoneConnectorService extends Service {
             server = new LocalApiServer(this);
             server.start();
             relay = new DriveRelay(this);
-            relay.start();
+            relay.start(setupVisible);
         } catch (Exception error) {
             reportLocalError("Phone connection could not start. Reopen the LotKeys Android setup.");
         }
@@ -95,6 +115,8 @@ public final class PhoneConnectorService extends Service {
                     intent.getStringExtra(EXTRA_ACCOUNT_NAME),
                     intent.getStringExtra(EXTRA_ACCOUNT_TYPE),
                     intent.getStringExtra(EXTRA_ACCESS_TOKEN));
+            } else if ("HOURLY_RECOVERY".equals(intent.getAction())) {
+                relay.hourlyRecovery();
             } else if ("TRUSTED_PC_WAKE".equals(intent.getAction())) {
                 wakeRunning();
             } else if ("APPROVE_PAIR".equals(intent.getAction())) {
@@ -116,8 +138,16 @@ public final class PhoneConnectorService extends Service {
     }
 
     void relayChanged() {
+        if (destroyed) return;
         try {
             org.json.JSONObject value = relay == null ? null : relay.status();
+            boolean active = value != null && "active".equals(value.optString("pollMode"));
+            if (activeConnectionLock != null) {
+                if (active) activeConnectionLock.acquire(120000L);
+                else if (activeConnectionLock.isHeld()) activeConnectionLock.release();
+            }
+            boolean needed = DriveRelay.hasTrustedComputer(this) && getSharedPreferences("lotkeys-connector", MODE_PRIVATE).getBoolean("enabled", false);
+            if (idleJobNeeded == null || idleJobNeeded != needed) { idleJobNeeded = needed; PhoneRelayIdleJob.sync(this, needed); }
             if (value != null && !value.optString("lastError").isEmpty()) {
                 status = "PC relay needs attention · " + value.optString("lastError");
             } else if (value != null && value.optBoolean("connected")) {
@@ -128,7 +158,7 @@ public final class PhoneConnectorService extends Service {
             } else if (value != null && value.optBoolean("authorized")) {
                 org.json.JSONArray trusts = value.optJSONArray("trusts");
                 status = trusts != null && trusts.length() > 0
-                    ? "Trusted PC auto-reconnect ready · SMS/MMS coverage"
+                    ? (active ? "Waiting for computer · active connection checks" : "Connection idle · hourly recovery checks")
                     : "Ready for PC pairing · SMS/MMS coverage";
             } else {
                 status = "SMS/MMS ready · finish PC pairing setup";
@@ -205,7 +235,10 @@ public final class PhoneConnectorService extends Service {
     }
 
     @Override public void onDestroy() {
+        destroyed = true;
         if (relay != null) relay.stop();
+        if (activeConnectionLock != null && activeConnectionLock.isHeld()) activeConnectionLock.release();
+        if (!getSharedPreferences("lotkeys-connector", MODE_PRIVATE).getBoolean("enabled", false)) PhoneRelayIdleJob.sync(this, false);
         if (server != null) server.stop();
         if (observer != null) {
             try { getContentResolver().unregisterContentObserver(observer); }

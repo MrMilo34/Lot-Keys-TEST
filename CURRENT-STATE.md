@@ -13,11 +13,16 @@ Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
 - PC auto retry/status changes: open page calls the saved phone, retries every
   15 seconds, shares one valid offer, and stops on pagehide. Manual retry lives
   inside status-light connection settings. Green = registered; blue = fresh ack.
-- FCM receiver/Apps Script sender remain an inactive optional prototype. Blair
-  prefers avoiding Firebase. The incoming signal transport is unresolved; the
-  phone still has two-second fallback checks. No battery fix is claimed.
-  Enigma config remains invalid for LotKeys. No billing/resources activated.
-- 315 Node tests and JS syntax checks pass for the latest PC changes. Android assembly, lint and all eight
+- Blair now permits hourly idle checks. Adaptive native scheduling is implemented
+  in source: two seconds during visible phone use or a live PC activity lease,
+  hourly while idle with a trusted PC, no idle checks without trusted PCs.
+  Hidden phone-browser polling stops; idle SMS events do not restart cloud work.
+  A bounded active wake lock is released on idle. Android hourly jobs are inexact.
+- This policy needs no Firebase. An idle phone may take about an hour (or longer
+  under Android/network deferral) to notice a newly opened PC; opening the phone
+  app checks promptly. Optional FCM remains inactive. No resources/billing enabled.
+- Adaptive scheduling tests/build are pending the current CI run. Prior PC changes
+  passed 315 Node tests and syntax checks. Android assembly, lint and all eight
   recovery/security tests passed on e3e4187. No real-device verification or
   deployment. Latest PC web CI: run 41149415473 on f50b6f1 (315 passing).
   Unchanged Android code CI: run 41143008309 on e3e4187.
@@ -26,8 +31,9 @@ Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
   Restore the existing TEST signing identity; do not generate a replacement key.
 - Marketplace Listings, More contributions and Account assets retain existing
   foreground paths. See RELEASE-0.9.5.39.md and wake-sender/README.md for limits.
-- Preserve all prior .38 behavior below. Do not stop idle relay recovery until
-  real-device push wake gates pass.
+- Preserve prior .38 behaviour except the explicitly approved idle polling policy.
+  Validate locked/deep-idle/reboot behaviour and power use on a real phone before
+  claiming measured battery savings or guaranteed reconnection timing.
 
 ## Deployed baseline checkpoint (historical .38)
 

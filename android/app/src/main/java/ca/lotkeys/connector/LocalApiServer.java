@@ -123,13 +123,19 @@ final class LocalApiServer {
         if (queryAt >= 0) path = target.substring(0, queryAt);
         Map<String, String> query = queryAt < 0 ? new HashMap<>() : query(target.substring(queryAt + 1));
         if ("GET".equals(method) && "/v1/status".equals(path)) {
+            if (query.containsKey("foreground")) service.browserVisible("1".equals(query.get("foreground")));
             JSONObject status = store.status(PhoneConnectorService.revision(), PORT);
             JSONObject relay = service.relayStatus();
             status.put("relay", relay);
             status.getJSONObject("capabilities").put("backgroundRelay", relay.optBoolean("authorized"));
             status.getJSONObject("capabilities").put("backgroundUploads", TransferAuth.ready(service));
+            status.getJSONObject("capabilities").put("adaptiveRelayPolling", true);
             status.put("uploadAccount", TransferAuth.account(service));
             return status;
+        }
+        if ("POST".equals(method) && "/v1/presence".equals(path)) {
+            service.browserVisible(body.optBoolean("foreground"));
+            return new JSONObject().put("ok", true);
         }
         if ("POST".equals(method) && path.startsWith("/v1/transfers/")) {
             TransferStore transfers = new TransferStore(service);

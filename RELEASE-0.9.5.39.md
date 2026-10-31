@@ -54,9 +54,27 @@ resumes them. Hidden open tabs remain eligible, with normal browser throttling.
 Expired/revoked trust still requires approval. Pending uncertain sends are not
 interrupted or resent by this retry loop.
 
-This PC-side work does not stop idle phone polling. That battery-saving part
-still needs a reachable receiver path. Blair prefers avoiding Firebase; the
-prototype below is optional and has not been activated.
+The approved adaptive scheduling policy below replaces continuous idle phone
+polling with hourly recovery. Immediate wake from a PC-only arrival would still
+need an incoming signal path. The Firebase prototype remains optional/inactive.
+
+## Adaptive phone checks (new approved policy)
+
+The phone now uses a native presence policy instead of an unconditional
+fixed-delay loop. Visible phone UI keeps two-second checks. Authenticated PC
+activity renews a 90-second recovery grace; visible phone-browser pulses have a
+15-second lease and clear on hiding/leaving. When idle with a trusted PC, an
+hourly timer and inexact Android periodic network job provide recovery. Without
+a trusted PC, idle checks are unnecessary and stop. Idle SMS events do not
+restart Drive polling. The active connection wake lock is released on idle.
+A short startup recovery window preserves reboot/process recovery.
+
+This needs no Firebase setup. The tradeoff is that opening only the PC site can
+wait about an hour, or longer with Android/network deferral, before the idle
+phone discovers it. Opening the phone app checks promptly. A PC request existing
+in Drive is not itself a push notification. Actual battery savings and locked/
+deep-idle behaviour need real-device verification. This replaces the earlier
+fast-idle fallback restriction by explicit user instruction.
 
 ## Optional phone doorbell receiver prototype (inactive)
 

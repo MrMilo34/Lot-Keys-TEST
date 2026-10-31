@@ -1,3 +1,40 @@
+# Adaptive phone checks — approved revision, 2026-10-30
+
+Blair explicitly permits hourly idle recovery instead of the old two-second
+idle loop. This supersedes the earlier requirement to retain fast idle polling
+until push wake exists. This implementation requires no Firebase activation.
+
+- Native setup foreground or a visible linked phone browser: fast two-second
+  Drive checks. Browser presence renews a 15-second lease and clears on hiding
+  or leaving; hidden phone-browser refresh loops stop.
+- Fresh authenticated PC frames / newly approved pairing: fast checks through
+  a 90-second recovery grace, renewed by PC activity. The PC continues owning
+  retries and keeps its existing heartbeat. A registered connector gets a bounded
+  30-second startup recovery window after service/process restart.
+- Neither side active, with a still-trusted PC: an hourly timer plus an inexact
+  persisted Android hourly network job provide recovery. A 45-minute duplicate
+  guard accommodates periodic-job flex without repeated scans. Android may defer
+  the job; this is not an exact clock alarm or an immediate remote wake.
+- No valid trusted PC and no visible phone UI: no idle Drive checks or hourly job.
+- Incoming SMS/MMS changes retain invalidation but do not restart idle cloud
+  polling. The connection's partial wake lock is held only during active use and
+  released when the activity leases expire or the service is destroyed.
+- The periodic job can nudge the running connector. If it must restart a stopped
+  service, Android background-start rules still apply: use the existing battery
+  exemption when available, otherwise request an owner open via notification.
+
+Tradeoff: opening only the PC site cannot immediately notify an hourly-idle
+phone through the current Drive mailbox. Initial reconnection can wait about an
+hour, or longer if Android/network conditions defer recovery. Opening LotKeys on
+the phone initiates a prompt check. The hourly job is a useful recovery fallback;
+it is not needed when no PC is registered. Existing optional FCM code stays off.
+
+Source implemented in PR #9; Android build/tests/lint and real-device power/
+locked-phone verification are tracked separately. Existing TEST signing is still
+required to publish an APK that updates the installed connector safely.
+
+## Earlier PC behaviour and history
+
 # PC-led connection contract — latest clarification, 2026-10-30
 
 - Opening the PC site automatically calls its registered/trusted phone. While

@@ -75,9 +75,10 @@ final class DriveRelay {
     private final Set<String> processedFrames = new HashSet<>();
     private volatile String accessToken = "";
     private volatile String lastError = "";
-    private volatile boolean stopped;
+    private volatile boolean stopped = true;
+    private final RelayWorkPolicy workPolicy = new RelayWorkPolicy();
+    private java.util.concurrent.ScheduledFuture<?> nextPoll;
     private volatile boolean invalidationPending;
-    private final java.util.concurrent.atomic.AtomicBoolean wakeQueued = new java.util.concurrent.atomic.AtomicBoolean();
     private long lastCleanup;
 
     DriveRelay(PhoneConnectorService service) {
@@ -86,25 +87,91 @@ final class DriveRelay {
         this.prefs = service.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
-    void start() {
+    void start(boolean setupVisible) {
         stopped = false;
-        worker.scheduleWithFixedDelay(this::tickSafely, 0, 2, TimeUnit.SECONDS);
+        workPolicy.setupVisible(setupVisible);
+        workPolicy.start(elapsed(), hasTrustedComputer(service));
+        scheduleNext();
     }
 
-    void stop() {
+    synchronized void stop() {
         stopped = true;
+        if (nextPoll != null) nextPoll.cancel(false);
         worker.shutdownNow();
     }
 
     void phoneDataChanged() {
         invalidationPending = true;
-        wake();
+        // An SMS arriving while nobody uses Hub must not restart cloud polling.
+        if (workPolicy.active(elapsed())) wake();
     }
-    void wake() {
-        if (stopped || !wakeQueued.compareAndSet(false, true)) return;
-        try { worker.execute(() -> { try { tickSafely(); } finally { wakeQueued.set(false); } }); }
-        catch (java.util.concurrent.RejectedExecutionException stoppedWorker) { wakeQueued.set(false); }
+
+    void setupVisible(boolean visible) {
+        boolean wasActive = workPolicy.active(elapsed());
+        workPolicy.setupVisible(visible);
+        if (visible && !wasActive) wake(); else if (!visible) scheduleNext();
     }
+
+    void browserVisible(boolean visible) {
+        boolean wasActive = workPolicy.active(elapsed());
+        workPolicy.browserVisible(elapsed(), visible);
+        if (visible && !wasActive) wake(); else if (!visible) scheduleNext();
+    }
+
+    void incomingWake() { workPolicy.pcSeen(elapsed()); wake(); }
+    void wake() { schedule(0, true); }
+
+    java.util.concurrent.CompletableFuture<Boolean> hourlyRecovery() {
+        java.util.concurrent.CompletableFuture<Boolean> result = new java.util.concurrent.CompletableFuture<>();
+        if (stopped) { result.complete(false); return result; }
+        try { worker.execute(() -> {
+            try {
+                boolean due = !stopped && workPolicy.hourlyRecoveryDue(elapsed(), hasTrustedComputer(service));
+                if (due) pollNow();
+                result.complete(due);
+            } catch (Exception error) { result.completeExceptionally(error); }
+            finally { scheduleNext(); }
+        }); } catch (java.util.concurrent.RejectedExecutionException stoppedWorker) { result.complete(false); }
+        return result;
+    }
+
+    private static long elapsed() { return android.os.SystemClock.elapsedRealtime(); }
+    private void pollNow() {
+        if (stopped) return;
+        workPolicy.polled(elapsed());
+        if (!wasAuthorized(service) || (!workPolicy.active(elapsed()) && !hasTrustedComputer(service))) { service.relayChanged(); return; }
+        tickSafely();
+    }
+    private void scheduleNext() { schedule(workPolicy.delay(elapsed(), hasTrustedComputer(service)), false); }
+    private synchronized void schedule(long delay, boolean force) {
+        if (stopped) return;
+        if (nextPoll != null) nextPoll.cancel(false);
+        nextPoll = null;
+        if (delay < 0) { service.relayChanged(); return; }
+        try { nextPoll = worker.schedule(() -> {
+            synchronized (DriveRelay.this) { nextPoll = null; }
+            if (stopped) return;
+            try {
+                long due = workPolicy.delay(elapsed(), hasTrustedComputer(service));
+                if (force || due == 0) pollNow();
+                else service.relayChanged(); // Drop an expired active wake lock without a cloud read.
+            } finally { scheduleNext(); }
+        }, delay, TimeUnit.MILLISECONDS); }
+        catch (java.util.concurrent.RejectedExecutionException stoppedWorker) { nextPoll = null; }
+    }
+
+    static boolean hasTrustedComputer(Context context) {
+        if (!wasAuthorized(context)) return false;
+        try {
+            JSONArray rows = new JSONArray(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(TRUSTS, "[]"));
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject row = rows.getJSONObject(i);
+                if ("until-disconnect".equals(row.optString("mode")) || (!"ask".equals(row.optString("mode")) && row.optLong("expiresAt") > System.currentTimeMillis())) return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
+    }
+
     static boolean wakeTrusted(Context context, String browser) {
         if (browser == null || browser.isEmpty() || !wasAuthorized(context)) return false;
         try {
@@ -235,7 +302,7 @@ final class DriveRelay {
                 saveTrusts(next);
                 JSONObject session = session();
                 revoked = session != null && browserId.equals(session.optString("browserId")) ? session : null;
-                if (revoked != null) prefs.edit().remove(SESSION).commit();
+                if (revoked != null) { prefs.edit().remove(SESSION).commit(); workPolicy.clearPc(); }
             }
             // Revoke locally before returning from the phone API, even if the
             // Drive worker is waiting for a network timeout on a locked phone.
@@ -260,6 +327,8 @@ final class DriveRelay {
             .put("authorized", wasAuthorized(service))
             .put("account", account(service))
             .put("connected", connected)
+            .put("pollMode", workPolicy.active(elapsed()) ? "active" : hasTrustedComputer(service) ? "hourly" : "quiet")
+            .put("nextCheckInMs", workPolicy.delay(elapsed(), hasTrustedComputer(service)))
             .put("peerName", session == null ? "" : session.optString("peerName"))
             .put("browserId", session == null ? "" : session.optString("browserId"))
             .put("trustMode", session == null ? "" : session.optString("trustMode"))
@@ -404,6 +473,7 @@ final class DriveRelay {
             .put("connectedAt", now()).put("lastSeenAt", now())
             .put("automatic", automatic);
         saveSession(active);
+        workPolicy.pcSeen(elapsed());
         pendingOffers.remove(sessionId);
         deleteFile(offer.optString("_fileId"));
         updatePendingPreference();
@@ -442,6 +512,7 @@ final class DriveRelay {
                 synchronized (this) {
                     JSONObject activeSession = session();
                     if (activeSession == null || !sessionId.equals(activeSession.optString("sessionId"))) return;
+                    workPolicy.pcSeen(elapsed());
                     session.put("lastSeenAt", now());
                     saveSession(session);
                 }
@@ -525,6 +596,7 @@ final class DriveRelay {
             removeTrust(session.optString("browserId"));
         }
         prefs.edit().remove(SESSION).apply();
+        workPolicy.clearPc();
         service.relayChanged();
     }
 

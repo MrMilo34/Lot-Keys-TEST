@@ -322,7 +322,7 @@
     try {
       const wasConnected = connected();
       const previous = state.nativeRevision;
-      const native = await nativeCall('/v1/status', { timeout: 2500, diagnose: userInitiated });
+      const native = await nativeCall('/v1/status?foreground=' + (pagePresent && document.visibilityState === 'visible' ? '1' : '0'), { timeout: 2500, diagnose: userInitiated });
       state.nativeStatus = native;
       state.nativeError = '';
       state.nativeRevision = Number(native.revision) || 0;
@@ -1024,7 +1024,9 @@
 
   function scheduleNativeTick(delay = phonePollDelay()) {
     clearTimeout(nativeTimer);
+    if (!pagePresent || document.visibilityState !== 'visible') return;
     nativeTimer = setTimeout(async () => {
+      if (!pagePresent || document.visibilityState !== 'visible') return;
       await nativeTick().catch(() => {});
       scheduleNativeTick(phonePollDelay());
     }, Math.max(100, Number(delay) || PHONE_POLL_IDLE_MS));
@@ -1032,7 +1034,9 @@
 
   function scheduleOfferPoll(delay = phonePollDelay()) {
     clearTimeout(offerTimer);
+    if (!state.nativeToken || !pagePresent || document.visibilityState !== 'visible') return;
     offerTimer = setTimeout(async () => {
+      if (!pagePresent || document.visibilityState !== 'visible') return;
       await pollOffers().catch(() => {});
       scheduleOfferPoll(phonePollDelay());
     }, Math.max(100, Number(delay) || PHONE_POLL_IDLE_MS));
@@ -1614,6 +1618,7 @@
       native: !!state.nativeStatus,
       nativeError: state.nativeError,
       relayReady: !!state.relayReady,
+      relayPollMode: state.nativeStatus?.relay?.pollMode || '',
       relayIdentity: state.relayIdentity,
       relayError: state.relayError,
       relayTransport: state.relayTransport,
@@ -1667,15 +1672,23 @@
     schedulePcDoorbell();
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
+        if (state.nativeToken) scheduleNativeTick(100);
         if (state.nativeStatus && state.relayReady) {
-          pollOffers().catch(() => {});
+          scheduleOfferPoll(100);
           if (state.session) scheduleFramePoll(100);
         } else if (!state.nativeToken && !state.session) reconnectTrustedComputer().then(connected => { if (!connected) scheduleTrustedReconnect(); }).catch(() => scheduleTrustedReconnect());
         else if (state.session?.role === 'pc') scheduleHeartbeat(100);
-      } else if (state.session) persistSession();
+      } else {
+        clearTimeout(nativeTimer);
+        if (state.nativeToken) { clearTimeout(offerTimer); clearTimeout(frameTimer); }
+        if (state.nativeToken) nativeCall('/v1/presence', { method: 'POST', body: JSON.stringify({ foreground: false }), keepalive: true, timeout: 2000 }).catch(() => {});
+        if (state.session) persistSession();
+      }
     });
     window.addEventListener('pagehide', () => {
       pagePresent = false; pcAcknowledged = false;
+      clearTimeout(nativeTimer); clearTimeout(offerTimer);
+      if (state.nativeToken) nativeCall('/v1/presence', { method: 'POST', body: JSON.stringify({ foreground: false }), keepalive: true, timeout: 2000 }).catch(() => {});
       clearTimeout(pcDoorbellTimer); clearTimeout(automaticReconnectTimer); clearTimeout(pairTimer); clearTimeout(heartbeatTimer); clearTimeout(frameTimer);
       if (state.session) persistSession();
     });
@@ -1683,6 +1696,7 @@
       const returning = !pagePresent; pagePresent = true;
       if (!returning) return;
       pcAcknowledged = false;
+      if (state.nativeToken) { scheduleNativeTick(100); scheduleOfferPoll(100); }
       schedulePcDoorbell(100);
       if (state.pairing) schedulePairPoll(100);
       if (state.session?.role === 'pc') { scheduleHeartbeat(100); scheduleFramePoll(100); }

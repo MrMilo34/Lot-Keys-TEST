@@ -53,7 +53,12 @@ public final class MainActivity extends Activity {
 
     @Override public void onResume() {
         super.onResume();
+        PhoneConnectorService.setSetupVisible(true);
         render();
+    }
+    @Override public void onPause() {
+        PhoneConnectorService.setSetupVisible(false);
+        super.onPause();
     }
 
     private void render() {

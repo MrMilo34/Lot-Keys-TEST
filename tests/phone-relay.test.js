@@ -15,6 +15,7 @@ function phoneWithNativeRelay(relay) {
   const sessions = new Map([['lotkeys-phone-active-session-v1', '{"role":"phone"}']]);
   const storage = map => ({ getItem: key => map.get(key) ?? null, setItem: (key, value) => map.set(key, String(value)), removeItem: key => map.delete(key) });
   const calls = { authorize: 0, restore: 0, fetch: [] };
+  const events = new Map(), documentEvents = new Map(), timers = [];
   const native = { deviceName: 'Test phone', capabilities: { smsHistory: true }, relay };
   const context = {
     LotKeysPhoneCore: PhoneCore,
@@ -27,13 +28,14 @@ function phoneWithNativeRelay(relay) {
     crypto: webcrypto, TextEncoder, TextDecoder, Headers, AbortController, URLSearchParams,
     localStorage: storage(values), sessionStorage: storage(sessions),
     location: { hash: '', pathname: '/', search: '' }, history: { replaceState() {} },
-    navigator: {}, document: { readyState: 'loading', visibilityState: 'visible', addEventListener() {} },
+    navigator: {}, document: { readyState: 'loading', visibilityState: 'visible', addEventListener(name, fn) { documentEvents.set(name, fn); } },
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } },
-    dispatchEvent() {}, addEventListener() {},
-    setTimeout: () => 1, clearTimeout() {},
-    fetch: async url => {
+    dispatchEvent() {}, addEventListener(name, fn) { events.set(name, fn); },
+    setTimeout(fn, delay) { timers.push({ fn, delay }); return timers.length; }, clearTimeout(id) { if (timers[id - 1]) timers[id - 1].cancelled = true; },
+    fetch: async (url, options = {}) => {
       calls.fetch.push(String(url));
-      if (String(url).endsWith('/v1/status')) return { ok: true, json: async () => native };
+      if (String(url).endsWith('/v1/presence')) { calls.lastPresence = JSON.parse(options.body); return { ok: true, json: async () => ({ ok: true }) }; }
+      if (String(url).includes('/v1/status')) return { ok: true, json: async () => native };
       if (String(url).includes('/v1/threads?')) return { ok: true, json: async () => ({ threads: [] }) };
       if (String(url).endsWith('/v1/pairings')) return { ok: true, json: async () => ({ pairings: [] }) };
       throw Error('Unexpected network request: ' + url);
@@ -41,7 +43,7 @@ function phoneWithNativeRelay(relay) {
   };
   context.window = context;
   vm.runInNewContext(source, context, { filename: 'lotkeys-phone.js' });
-  return { phone: context.LotKeysPhone, calls, sessions };
+  return { phone: context.LotKeysPhone, calls, sessions, context, events, documentEvents, timers };
 }
 
 function pcWithRememberedTrust({ savedSession = false } = {}) {
@@ -109,6 +111,25 @@ test('the phone refuses browser-only pairing even with a browser Drive grant', a
   assert.equal(calls.authorize, 0, 'browser Drive authorization must not substitute for Android relay');
   assert.equal(calls.restore, 1, 'Hub records can still restore their browser grant');
   assert.equal(calls.fetch.some(url => url.includes('googleapis.com')), false);
+});
+
+test('only the visible phone browser renews active presence; hiding it releases presence and local polling', async () => {
+  const f = phoneWithNativeRelay({ authorized: true, account: 'phone@example.test', trusts: [] });
+  await f.phone.init();
+  assert.ok(f.calls.fetch.some(url => url.endsWith('/v1/status?foreground=1')));
+  assert.ok(f.timers.some(timer => timer.delay === 3000 && !timer.cancelled));
+  f.context.document.visibilityState = 'hidden'; f.documentEvents.get('visibilitychange')();
+  assert.equal(f.calls.lastPresence.foreground, false);
+  assert.equal(f.timers.filter(timer => timer.delay === 3000 && !timer.cancelled).length, 0);
+  f.context.document.visibilityState = 'visible'; f.documentEvents.get('visibilitychange')();
+  assert.ok(f.timers.some(timer => timer.delay === 100 && !timer.cancelled));
+});
+
+test('leaving the phone page releases foreground presence even when visibilitychange was missed', async () => {
+  const f = phoneWithNativeRelay({ authorized: true, account: 'phone@example.test', trusts: [] });
+  await f.phone.init(); f.events.get('pagehide')();
+  assert.equal(f.calls.lastPresence.foreground, false);
+  assert.equal(f.timers.filter(timer => timer.delay === 3000 && !timer.cancelled).length, 0);
 });
 
 test('a native relay error survives a successful local SMS refresh', async () => {
