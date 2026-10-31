@@ -20,6 +20,9 @@ and tested before those checks can stop. PC retry logic alone cannot deliver a
 signal to an unreachable/suspended receiver. The user prefers avoiding Firebase;
 the FCM prototype below is optional, not a requirement approved for activation.
 Do not describe the PC UI/retry change as fixing idle phone battery use.
+Before activating the optional prototype, also verify that wake dispatch restores
+the current Google account identity after a full PC page reload; it must not
+require the manual pairing-access repair flow to populate that identity.
 
 ## Earlier .39 receiver prototype (inactive)
 

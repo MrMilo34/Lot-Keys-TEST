@@ -19,7 +19,8 @@ Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
   Enigma config remains invalid for LotKeys. No billing/resources activated.
 - 315 Node tests and JS syntax checks pass for the latest PC changes. Android assembly, lint and all eight
   recovery/security tests passed on e3e4187. No real-device verification or
-  deployment. Web CI: run 41143015580; Android CI: run 41143008309.
+  deployment. Latest PC web CI: run 41149415473 on f50b6f1 (315 passing).
+  Unchanged Android code CI: run 41143008309 on e3e4187.
 - PR: https://github.com/MrMilo34/Lot-Keys-TEST/pull/9 (draft). CI does not receive
   the stable TEST signing secrets, so no matching installable APK is published.
   Restore the existing TEST signing identity; do not generate a replacement key.
