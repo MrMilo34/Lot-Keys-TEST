@@ -1,3 +1,16 @@
+V0.9.5.39 BACKGROUND VEHICLE UPLOADS AND ACTIVE/IDLE HUB
+- Optional native original-file queue for administrator Vehicle Profile photos, videos and documents; separate Drive approval.
+- Keep LotKeys open through Preparing originals; Android has the originals confirms durable handoff, not upload completion.
+- Uploads have their own queue and do not wait for hourly Hub checks.
+- PC owns automatic phone connection retries; green means registered, blue requires a fresh acknowledgement.
+- Matching Android .39: two-second checks during visible phone use or live PC activity; hourly idle recovery with trusted PCs; no idle checks without one.
+- A newly opened PC alone may wait for the idle phone check. No Firebase setup is required.
+- Existing .12 remains website-compatible; .39 native features require the same-key APK update over the installed connector.
+- 317 web tests, 16 Android tests, assembly and lint pass. Real-device verification remains outstanding.
+- Posting Buddy V0.1.24 and Processor binding unchanged.
+- Build: 095039.
+- Service worker cache: lotkeys-app-v095039-background-transfers-doorbell.
+
 V0.9.5.38 RECENT DEVICE CONVERSATION CACHE
 - Latest six phone messages retained for ten most recent conversations.
 - Background warming operates outside Hub home, yields between reads and retries failed threads independently.

@@ -1,4 +1,45 @@
-# LotKeys current state — TEST V0.9.5.38
+# LotKeys current work — TEST V0.9.5.39 release
+
+Current main baseline: d8caf710905bd26ddb540489052ba387428ee9a0 (.38).
+Release branch: codex/background-transfer-doorbell-v095039; PR #9.
+Website and matching original-key APK prepared for the authorized TEST deployment.
+
+- Native original-file queue and Vehicle Profile media handoff implemented in
+  source, with resumable Drive checkpoints, final size/checksum validation and
+  stable allocated file IDs. Up to three photos + one video; documents first.
+- Separate upload consent; existing pairing app-data scope unchanged. Web/older
+  connector fallback preserved. Native features require the matching signed .39 APK.
+- Shared Inventory cover finalization uses ETag/revision guards. Sheets cover,
+  rename/delete reconciliation finishes in the foreground; no native deletions.
+- PC auto retry/status changes: open page calls the saved phone, retries every
+  15 seconds, shares one valid offer, and stops on pagehide. Manual retry lives
+  inside status-light connection settings. Green = registered; blue = fresh ack.
+- Blair now permits hourly idle checks. Adaptive native scheduling is implemented
+  in source: two seconds during visible phone use or a live PC activity lease,
+  hourly while idle with a trusted PC, no idle checks without trusted PCs.
+  Hidden phone-browser polling stops; idle SMS events do not restart cloud work.
+  A bounded active wake lock is released on idle. Android hourly jobs are inexact.
+- This policy needs no Firebase. An idle phone may take about an hour (or longer
+  under Android/network deferral) to notice a newly opened PC; opening the phone
+  app checks promptly. Optional FCM remains inactive. No resources/billing enabled.
+- 317 Node tests and syntax checks pass. Android assembly, all 16 native tests
+  (including presence/idle policy and persisted hourly-job tests) and lint pass
+  including final setup labels. The distributed APK is built from b50ea6a (Android CI 41153938625) and
+  signed with the recovered original TEST key, verified against SHA-1
+  6CAE202927D7884907C25147FE7FA0E11D87B741. Real-device verification is outstanding.
+- PR: https://github.com/MrMilo34/Lot-Keys-TEST/pull/9. Signed APK/checksum live in
+  downloads/. Install over the existing connector; preserve app data and trust.
+  CI signing secrets are still unavailable: its UNSIGNED signing-candidate artifact
+  is not an installable release. Use the original-key signed download instead.
+  Never commit the private keystore/recovery password or generate a replacement key.
+- Marketplace Listings, More contributions and Account assets retain existing
+  foreground paths. See RELEASE-0.9.5.39.md and wake-sender/README.md for limits.
+- Preserve prior .38 behaviour except the explicitly approved idle polling policy.
+  Validate locked/deep-idle/reboot behaviour and power use on a real phone before
+  claiming measured battery savings or guaranteed reconnection timing.
+
+## Deployed baseline checkpoint (historical .38)
+
 
 This is the short continuation reference. Verify current main/version.json before
 changing it. Historical release files remain available for a specific question.

@@ -419,8 +419,8 @@ dialog.sale-celebration-layer .sale-celebration{position:fixed;inset:0;z-index:1
 
 </style>
   <title>LotKeys</title>
-  <script src="./lotkeys-personal-preferences.js?v=095038"></script>
-  <script src="./lotkeys-website-identity.js?v=095038"></script>
+  <script src="./lotkeys-personal-preferences.js?v=095039"></script>
+  <script src="./lotkeys-website-identity.js?v=095039"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js" async defer></script>
 
@@ -527,7 +527,7 @@ body[data-theme="dark"] .sync-status-text.good.phone-paired{color:#60b8ff}
 </style>
 <script>
 (() => {
-  const build='095038';
+  const build='095039';
   const secure=location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
   if(!secure||!('serviceWorker' in navigator))return;
   const buildNumber=value=>Number(String(value||'').replace(/[^0-9]/g,''))||0;
@@ -572,7 +572,7 @@ body[data-theme="dark"] .sync-status-text.good.phone-paired{color:#60b8ff}
       </div>
     </header>
 
-    <div id="local-test-note" class="protocol-warning"><strong>LotKeys Drive Test · V0.9.5.38</strong> — Starting…<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button></div>
+    <div id="local-test-note" class="protocol-warning"><strong>LotKeys Drive Test · V0.9.5.39</strong> — Starting…<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button></div>
     <main id="main"><div class="lotkeys-boot-placeholder" aria-live="polite"><div class="lotkeys-boot-brand"><img src="./assets/lotkeys-default-logo.png" alt="" aria-hidden="true"><div><strong>Loading LotKeys…</strong><span>Restoring your Store and saved data</span></div></div><div class="lotkeys-boot-search"></div><div class="lotkeys-boot-stats"><i></i><i></i></div><div class="lotkeys-boot-lines"><i></i><i></i><i></i></div></div></main>
 
     <nav class="bottom-nav" aria-label="Primary">
@@ -880,7 +880,16 @@ const DriveSync = (() => {
   function pauseActiveUploads(){let count=0;for(const request of [...activeUploadRequests]){try{request.abort();count++}catch{}}return count}
 
   async function setting(id,def=''){const row=await DB.get('settings',id);return configuredSettingValue(id,row?.value,def)}
-  async function setSetting(id,value){ return DB.put('settings',{id,value}); }
+  async function setSetting(id,value){
+    if(['currentAccountEmail','storeFolderId'].includes(id)&&window.LotKeysNativeTransfers){
+      const old=await DB.get('settings',id);
+      if(String(old?.value||'')!==String(value||'')){
+        const account=(await DB.get('settings','currentAccountEmail'))?.value,store=(await DB.get('settings','storeFolderId'))?.value;
+        await window.LotKeysNativeTransfers.hold(account,store).catch(()=>{});
+      }
+    }
+    return DB.put('settings',{id,value});
+  }
   const LISTING_DELETE_TOMBSTONES='listingDeletionTombstonesV1';
   async function getListingDeleteTombstones(){const raw=await setting(LISTING_DELETE_TOMBSTONES,{});return raw&&typeof raw==='object'&&!Array.isArray(raw)?{...raw}:{}}
   async function saveListingDeleteTombstones(map){const rows=Object.entries(map||{}).sort((a,b)=>Number(b[1]?.createdAt||0)-Number(a[1]?.createdAt||0)).slice(0,250);await setSetting(LISTING_DELETE_TOMBSTONES,Object.fromEntries(rows));return Object.fromEntries(rows)}
@@ -1187,7 +1196,7 @@ const DriveSync = (() => {
   function writeLightweightRows(key,rows){try{localStorage.setItem(key,JSON.stringify(rows||{}))}catch{}}
   function saveVehicleSyncState(v,checkpoint={}){
     if(!v?.id)return;const rows=readLightweightRows(VEHICLE_SYNC_STATE_STORAGE),source=v.drive||{},drive={};
-    for(const key of ['profileFolderId','adminSheetId','adminSheetUrl','sharedFolderId','photosFolderId','videosFolderId','documentsFolderId','directoryPdfId','directoryPdfUrl','lastSheetFingerprint','lastDirectoryFingerprint','lastPhotoAssetFingerprint','lastDocumentAssetFingerprint','lastVideoAssetFingerprint','lastAssetFingerprint','publicShareReady'])if(source[key]!==undefined)drive[key]=source[key];
+    for(const key of ['profileFolderId','adminSheetId','adminSheetUrl','sharedFolderId','photosFolderId','videosFolderId','documentsFolderId','directoryPdfId','directoryPdfUrl','lastSheetFingerprint','lastSheetUpdatedAt','nativeTransfer','lastDirectoryFingerprint','lastPhotoAssetFingerprint','lastDocumentAssetFingerprint','lastVideoAssetFingerprint','lastAssetFingerprint','publicShareReady'])if(source[key]!==undefined)drive[key]=source[key];
     rows[String(v.id)]={drive,sharedFolderUrl:v.sharedFolderUrl||'',checkpoint:{...(source.syncCheckpoint||{}),...(checkpoint||{})},updatedAt:Date.now()};writeLightweightRows(VEHICLE_SYNC_STATE_STORAGE,rows);
   }
   function restoreVehicleSyncState(v){
@@ -1200,7 +1209,7 @@ const DriveSync = (() => {
   function getOwnerRequestDraft(vehicleId){const rows=readLightweightRows(OWNER_REQUEST_DRAFT_STORAGE),saved=rows[String(vehicleId)];if(!saved)return null;if(Date.now()-(Number(saved.updatedAt)||0)>7*86400000){delete rows[String(vehicleId)];writeLightweightRows(OWNER_REQUEST_DRAFT_STORAGE,rows);return null}return saved.request||null}
   function saveOwnerRequestDraft(vehicleId,request){if(!vehicleId||!request)return;const rows=readLightweightRows(OWNER_REQUEST_DRAFT_STORAGE);rows[String(vehicleId)]={request,updatedAt:Date.now()};writeLightweightRows(OWNER_REQUEST_DRAFT_STORAGE,rows)}
   function clearOwnerRequestDraft(vehicleId){if(!vehicleId)return;const rows=readLightweightRows(OWNER_REQUEST_DRAFT_STORAGE);if(rows[String(vehicleId)]){delete rows[String(vehicleId)];writeLightweightRows(OWNER_REQUEST_DRAFT_STORAGE,rows)}}
-  function acceptedOffsetFromRange(range,fallback=0){const m=String(range||'').match(/bytes\s*=\s*0-(\d+)/i);return m?Number(m[1])+1:fallback}
+  function acceptedOffsetFromRange(range){if(!range)return 0;const m=String(range).match(/^bytes\s*=\s*0-(\d+)$/i);if(!m)throw new Error('Drive returned an invalid confirmed upload range.');return Number(m[1])+1}
   async function queryResumableOffset(uploadUrl,total,token){
     return new Promise((resolve,reject)=>{
       const xhr=new XMLHttpRequest(),done=()=>activeUploadRequests.delete(xhr);xhr.open('PUT',uploadUrl,true);xhr.responseType='json';xhr.timeout=45000;xhr.setRequestHeader('Authorization',`Bearer ${token}`);xhr.setRequestHeader('Content-Range',`bytes */${total}`);xhr.lotkeysLastProgressAt=Date.now();activeUploadRequests.add(xhr);
@@ -1282,7 +1291,7 @@ const DriveSync = (() => {
           xhr.onload=()=>{
             done();
             if(xhr.status===200||xhr.status===201){onProgress(blob.size,blob.size);let body=xhr.response;if(!body){try{body=JSON.parse(xhr.responseText||'{}')}catch{body={}}}resolve({offset:blob.size,body,complete:true});return}
-            if(xhr.status===308){const accepted=Math.max(startOffset,Math.min(blob.size,acceptedOffsetFromRange(xhr.getResponseHeader('Range'),end)));onProgress(accepted,blob.size);resolve({offset:accepted,body:null,complete:false});return}
+            if(xhr.status===308){const accepted=acceptedOffsetFromRange(xhr.getResponseHeader('Range'));if(accepted<=startOffset||accepted>blob.size){reject(new Error('Drive has not confirmed additional bytes. Retrying from the saved checkpoint.'));return;}onProgress(accepted,blob.size);resolve({offset:accepted,body:null,complete:false});return}
             const er=new Error(xhr.response?.error?.message||`Drive upload failed (${xhr.status})`);er.status=xhr.status;reject(er);
           };
           xhr.onerror=()=>{done();reject(Object.assign(new Error('Media upload was interrupted. LotKeys saved the upload checkpoint and will retry.'),{code:'MEDIA_UPLOAD_INTERRUPTED'}))};
@@ -1534,7 +1543,7 @@ const DriveSync = (() => {
   }
   function storeWorkspaceAccessError(rootName='',identityEmail='',cause=null){
     const store=String(rootName||'That LotKeys Store'),account=String(identityEmail||'this Google account');
-    const error=new Error(`${store} recognizes ${account}, but the account's private LotKeys workspace is not writable yet. Ask a Store Administrator to open LotKeys V0.9.5.38, run Repair Store Structure, and then reconnect. The Inventory can stay View only.`);
+    const error=new Error(`${store} recognizes ${account}, but the account's private LotKeys workspace is not writable yet. Ask a Store Administrator to open LotKeys V0.9.5.39, run Repair Store Structure, and then reconnect. The Inventory can stay View only.`);
     error.code='STORE_WORKSPACE_ACCESS_REQUIRED';if(cause)error.cause=cause;return error;
   }
   const storeStructureJobs=new Map();
@@ -2320,7 +2329,7 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
     return createMetadata({name:'Vehicle Data - Administrative',mimeType:SHEET_MIME,parents:[parentId],appProperties:{lotkeysVehicleSheet:vehicleId}},'id,name,mimeType,webViewLink,appProperties');
   }
   async function writeVehicleSheet(sheetId,v){
-    const d=v.drive||{};
+    const d=v.drive||{}, sheetUpdated=new Date().toISOString();
     const values=[
       ['Field','Value'],
       ['Profile Name',v.name||''],['Year',v.year||''],['Make',v.make||''],['Model',v.model||''],['Body Style',v.bodyStyle||''],['Exterior Color',v.exteriorColor||''],['Interior Color',v.interiorColor||''],['Vehicle Condition',v.vehicleCondition||''],['Transmission',v.transmission||''],['Fuel Type',v.fuelType||''],['Engine Size',v.engineSize||''],['Horsepower',v.horsepower||''],['Price',v.price??''],
@@ -2333,11 +2342,12 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
       ['Vehicle Info Directory',d.directoryPdfUrl||''],
       ['Original Vehicle Listing URL',v.originalListingUrl||''],['CARFAX URL',v.carfaxUrl||''],
       ['CARFAX - One Owner',v.carfaxOneOwner?'TRUE':'FALSE'],['CARFAX - Low Odometer',v.carfaxLowKm?'TRUE':'FALSE'],['CARFAX - No Accidents',v.carfaxNoAccidents?'TRUE':'FALSE'],
-      ['Description',v.description||''],['Profile ID',v.id],['Created By User',v.createdByUserName||''],['Created By Email',v.createdByEmail||''],['Created By Google Sub',v.createdByGoogleSub||''],['Created At',v.createdAt?new Date(v.createdAt).toISOString():''],['Pending Deal',v.pendingDeal?'TRUE':'FALSE'],['Pending Deal Requests JSON',JSON.stringify(Array.isArray(v.pendingDealRequests)?v.pendingDealRequests:[])],['Pending Deal Updated At',v.pendingDealUpdatedAt||''],['Pending Deal Updated By',v.pendingDealUpdatedByUserName||''],['Deletion Requests JSON',JSON.stringify(Array.isArray(v.deletionRequests)?v.deletionRequests:[])],['Price Change Requests JSON',JSON.stringify(Array.isArray(v.priceChangeRequests)?v.priceChangeRequests:[])],['Price Change Awards JSON',JSON.stringify(Array.isArray(v.priceChangeAwards)?v.priceChangeAwards:[])],['Contribution Requests JSON',JSON.stringify(contributionRequestsForStorage(v))],['Contribution Resolutions JSON',JSON.stringify(contributionResolutionRows(v.contributionResolutions))],['Website Price Finding JSON',JSON.stringify(v.websitePriceFinding||null)],['Cover Photo File ID',v.photos?.[0]?.driveFileId||''],['Updated',new Date().toISOString()]
+      ['Description',v.description||''],['Profile ID',v.id],['Created By User',v.createdByUserName||''],['Created By Email',v.createdByEmail||''],['Created By Google Sub',v.createdByGoogleSub||''],['Created At',v.createdAt?new Date(v.createdAt).toISOString():''],['Pending Deal',v.pendingDeal?'TRUE':'FALSE'],['Pending Deal Requests JSON',JSON.stringify(Array.isArray(v.pendingDealRequests)?v.pendingDealRequests:[])],['Pending Deal Updated At',v.pendingDealUpdatedAt||''],['Pending Deal Updated By',v.pendingDealUpdatedByUserName||''],['Deletion Requests JSON',JSON.stringify(Array.isArray(v.deletionRequests)?v.deletionRequests:[])],['Price Change Requests JSON',JSON.stringify(Array.isArray(v.priceChangeRequests)?v.priceChangeRequests:[])],['Price Change Awards JSON',JSON.stringify(Array.isArray(v.priceChangeAwards)?v.priceChangeAwards:[])],['Contribution Requests JSON',JSON.stringify(contributionRequestsForStorage(v))],['Contribution Resolutions JSON',JSON.stringify(contributionResolutionRows(v.contributionResolutions))],['Website Price Finding JSON',JSON.stringify(v.websitePriceFinding||null)],['Cover Photo File ID',v.photos?.[0]?.driveFileId||''],['Updated',sheetUpdated]
     ];
-    return apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}/values/A1:B${values.length}?valueInputOption=RAW`,{
+    const result=await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}/values/A1:B${values.length}?valueInputOption=RAW`,{
       method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values})
     });
+    v.drive=v.drive||{};v.drive.lastSheetUpdatedAt=sheetUpdated;return result;
   }
   async function readSheetValues(sheetId,range='A1:B50'){
     const r=await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}/values/${encodeURIComponent(range)}`);
@@ -2592,7 +2602,13 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
     const existingFor=item=>(item.driveFileId&&remotes.find(x=>x.id===item.driveFileId))||byAsset.get(item.id)||null;
     const uploadable=[];
     for(let i=0;i<items.length;i++){
-      const item=items[i]; const existing=existingFor(item);
+      const item=items[i]; let existing=existingFor(item);
+      // A fresh listing can lag a confirmed create. Check its known ID before
+      // creating another copy; a permission failure must never become a reupload.
+      if(!existing&&item.driveFileId){
+        try{const known=await driveGet(item.driveFileId,'id,name,parents,trashed,appProperties');if(!known.trashed){if(!known.parents?.includes(folderId))throw new Error('This saved file moved outside its Vehicle folder. Review it before uploading another copy.');existing=known}}
+        catch(error){if(Number(error?.status)!==404)throw error}
+      }
       const prefix=kind==='photo'?String(i+1).padStart(2,'0')+' - ':'';
       const baseName=kind==='photo'?stripPhotoOrderPrefix(item.name||existing?.name||(`${kind}-${i+1}`)):(item.name||(`${kind}-${i+1}`));
       const wanted=safeName(prefix+baseName,`${kind}-${i+1}`);
@@ -2618,13 +2634,93 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
   function assetFingerprint(items){return (items||[]).map(x=>`${x.id||''}:${x.driveFileId||''}:${x.name||''}`).join('|');}
   function directoryFingerprint(v,c,templateId){return JSON.stringify(['v071-text-only',templateId,c.storeName,c.directoryStoreAddress,c.directoryDirectionsUrl,v.year,v.make,v.model,v.stock,v.odometer,v.odometerUnit,v.originalListingUrl,v.carfaxUrl,!!v.carfaxOneOwner,!!v.carfaxLowKm,!!v.carfaxNoAccidents,v.drive?.photosFolderId,v.drive?.videosFolderId,v.drive?.documentsFolderId]);}
   function sheetFingerprint(v){return JSON.stringify([v.name,v.year,v.make,v.model,v.bodyStyle||'',v.exteriorColor||'',v.interiorColor||'',v.vehicleCondition||'',v.transmission||'',v.fuelType||'',v.engineSize||'',v.horsepower||'',v.price,v.odometer,v.odometerUnit,v.vin,v.stock,v.originalListingUrl,v.carfaxUrl,!!v.carfaxOneOwner,!!v.carfaxLowKm,!!v.carfaxNoAccidents,v.description,v.createdByUserName||'',v.createdByEmail||'',v.createdAt||0,!!v.pendingDeal,JSON.stringify(v.pendingDealRequests||[]),v.pendingDealUpdatedAt||'',v.pendingDealUpdatedByUserName||'',JSON.stringify(v.priceChangeRequests||[]),JSON.stringify(v.priceChangeAwards||[]),JSON.stringify(contributionRequestsForStorage(v)),JSON.stringify(contributionResolutionRows(v.contributionResolutions)),JSON.stringify(v.websitePriceFinding||null),v.photos?.[0]?.driveFileId,v.drive?.directoryPdfUrl]);}
+  // Native background saves are opt-in through the Android connector. The browser
+  // still prepares folders, core profile data and the directory before handing off
+  // ALL original media. No "background ready" claim is made during source staging.
+  async function nativeVehicleTransfer(v,s,reportProgress,{resumeOnly=false,force=false}={}){
+    const Native=window.LotKeysNativeTransfers,Core=window.LotKeysTransferCore,phone=window.LotKeysPhone;
+    if(!Native||!Core||!phone?.uploadCall)return false;
+    const account=String(await setting('currentAccountEmail','')).toLowerCase(),scope=Core.context({account,store:s.rootId,record:v.id,revision:String(v.updatedAt||0)});
+    const items=[...(v.photos||[]).map(item=>({item,kind:'photo',parent:v.drive.photosFolderId})),...(v.videos||[]).map(item=>({item,kind:'video',parent:v.drive.videosFolderId})),...(v.attachments||[]).map(item=>({item,kind:'document',parent:v.drive.documentsFolderId}))];
+    const sources=new Map(items.filter(row=>row.item.blob).map(row=>[`${row.kind}:${row.item.id}`,row.item.blob]));
+    let receipt=v.drive.nativeTransfer;
+    if(receipt&&!Core.sameContext(receipt.context,scope)){
+      await phone.uploadCall('cancel',{id:receipt.id});delete v.drive.nativeTransfer;receipt=null;
+      await DB.put('vehicles',v);saveVehicleSyncState(v);
+    }
+    if(receipt&&force){
+      const failed=await phone.uploadCall('status',{id:receipt.id});
+      if(['failed','cancelled'].includes(failed.state)){
+        if((failed.assets||[]).some(row=>!row.result?.id&&!sources.has(row.key)))throw new Error('Android retained the original files. Restore Drive access and use Resume Drive Saves in Android setup before repairing this profile.');
+        const confirmed=Core.completed({...failed,state:'complete',assets:(failed.assets||[]).filter(row=>row.result?.id)},scope);
+        for(const row of items){const saved=confirmed[`${row.kind}:${row.item.id}`];if(saved)row.item.driveFileId=saved.id}
+        await phone.uploadCall('cancel',{id:receipt.id});delete v.drive.nativeTransfer;receipt=null;v.updatedAt=Math.max(Date.now(),Number(v.updatedAt||0)+1);scope.revision=String(v.updatedAt);
+        await DB.put('vehicles',v);saveVehicleSyncState(v);
+      }
+    }
+    if(!receipt&&(resumeOnly||!await Native.available(account)))return false;
+    const check=async()=>{
+      const current=await DB.get('vehicles',v.id);
+      if(String(await setting('storeFolderId',''))!==scope.store||String(await setting('currentAccountEmail','')).toLowerCase()!==scope.account||(current&&String(current.updatedAt||0)!==scope.revision)){
+        await Native.hold(scope.account,scope.store).catch(()=>{});const error=new Error('The account, Store or Vehicle edit changed. Its background save is paused.');error.nativeTransfer=true;throw error;
+      }
+    };
+    if(!receipt){
+      const assets=[];
+      for(const [kind,parent,list] of [['photo',v.drive.photosFolderId,v.photos||[]],['video',v.drive.videosFolderId,v.videos||[]],['document',v.drive.documentsFolderId,v.attachments||[]]]){
+        await check();const remotes=await listFiles(`'${qEscape(parent)}' in parents and trashed = false`,'files(id,name,appProperties)');
+        for(let i=0;i<list.length;i++){
+          await check();const item=list[i];let existing=remotes.find(file=>file.id===item.driveFileId||file.appProperties?.lotkeysAssetId===item.id);
+          if(!existing&&item.driveFileId){try{const known=await driveGet(item.driveFileId,'id,name,parents,trashed,appProperties');if(!known.trashed){if(!known.parents?.includes(parent))throw new Error('This saved file moved outside its Vehicle folder. Review it before uploading another copy.');existing=known}}catch(error){if(Number(error?.status)!==404)throw error}}
+          const base=kind==='photo'?stripPhotoOrderPrefix(item.name||existing?.name||`photo-${i+1}`):(item.name||`${kind}-${i+1}`),name=safeName((kind==='photo'?String(i+1).padStart(2,'0')+' - ':'')+base);
+          if(kind==='photo')item.name=base;
+          if(existing){item.driveFileId=existing.id;item.driveName=name;if(existing.name!==name)await patchMetadata(existing.id,{name});continue}
+          if(!item.blob)throw new Error(`The original ${kind} file is missing. Restore it before saving this profile.`);
+          assets.push({key:`${kind}:${item.id}`,parent,name,size:item.blob.size,type:item.blob.type||'application/octet-stream',properties:{lotkeysAssetId:item.id,lotkeysVehicleId:v.id,lotkeysAssetKind:kind}});
+        }
+      }
+      if(!assets.length)return false;
+      const first=v.photos?.[0],coverKey=first&&assets.some(row=>row.key===`photo:${first.id}`)?`photo:${first.id}`:'',index=await findInventoryIndex(s);
+      if(!v.drive.lastSheetUpdatedAt||!index?.id)return false;
+      const plan=Core.batch(scope,assets,[{type:'vehicle-cover',sheetId:v.drive.adminSheetId,sheetUpdated:v.drive.lastSheetUpdatedAt,indexId:index.id,recordUpdated:Number(v.updatedAt)||0,assetKey:coverKey,coverId:first?.driveFileId||(!Array.isArray(v.photos)?v.drive.coverPhotoFileId:'')||''}]);
+      plan.inventory=[];
+      for(const [kind,list] of [['photo',v.photos||[]],['video',v.videos||[]],['document',v.attachments||[]]])for(let position=0;position<list.length;position++){
+        const item=list[position];plan.inventory.push({id:item.id,kind,position,name:item.name||'',driveFileId:item.driveFileId||'',driveName:item.driveName||'',size:item.blob?.size??item.size??0,type:item.blob?.type||item.type||''});
+      }
+      receipt={context:scope,plan,id:''};
+    }
+    const onProgress=state=>reportProgress({status:'uploading',percent:state.phase==='staging'?42+Math.round(state.percent*0.08):50+Math.round(state.percent*0.44),message:state.phase==='staging'?'Preparing originals for Android · keep LotKeys open':state.phase==='queued'?'Android has the originals · save continues with the browser closed':state.phase==='finalizing'?'Files saved · updating Inventory preview':'Android is saving to Drive · originals retained'});
+    // Resuming staging reuses the exact original plan, including its revision guards.
+    const snapshot=receipt.id?await phone.uploadCall('status',{id:receipt.id}):null;
+    if(!snapshot||(!Core.terminal(snapshot.state)))await Native.handoff(receipt.plan,sources,{check,onProgress,onPrepared:async value=>{receipt.id=value.id;v.drive.nativeTransfer=receipt;await DB.put('vehicles',v);saveVehicleSyncState(v,{stage:'native-staging',percent:42})}});
+    let results;
+    try{results=await Native.wait(receipt.id,scope,{check,onProgress})}
+    catch(error){
+      if(error.nativeState!=='needs_reconcile')throw error;
+      // Google already accepted these files; only shared metadata needs a foreground
+      // refresh. Reuse the confirmed IDs instead of uploading the originals again.
+      results=Core.completed({...error.snapshot,state:'complete'},scope);receipt.reconcile=true;
+    }
+    if(!Array.isArray(receipt.plan?.inventory))throw new Error('The retained save is missing its original media inventory. Keep its files and review it before reconciling.');
+    // A browser restart may restore the profile before the new Drive media appears
+    // in a listing. Recover the entire saved edit (including earlier Drive files),
+    // otherwise the normal cleanup could mistake those files for deleted photos.
+    for(const [kind,field] of [['photo','photos'],['video','videos'],['document','attachments']]){
+      const current=new Map((v[field]||[]).map(item=>[item.id,item]));
+      v[field]=receipt.plan.inventory.filter(row=>row.kind===kind).sort((a,b)=>a.position-b.position).map(row=>{
+        const item=current.get(row.id)||{id:row.id,name:row.name,size:row.size,type:row.type},result=results[`${kind}:${row.id}`];
+        item.driveFileId=result?.id||item.driveFileId||row.driveFileId;item.driveName=result?.name||item.driveName||row.driveName||row.name;return item;
+      });
+    }
+    v.drive.nativeTransfer=receipt;await DB.put('vehicles',v);saveVehicleSyncState(v,{stage:'native-files-saved',percent:94});return true;
+  }
   async function syncVehicle(v,{force=false,onProgress=()=>{}}={}){
     if(!v?.id) throw new Error('Vehicle ID missing.');
     restoreVehicleSyncState(v);
     const reportProgress=state=>{try{onProgress({kind:'profile',folder:'Vehicle Profile',status:'processing',...state})}catch(error){console.warn('Vehicle synchronization progress could not be painted',error)}};
     reportProgress({percent:2,message:'Preparing Vehicle Profile'});
     const adminLevel=Number(await setting('currentUserAdminLevel',0))||0;if(adminLevel<1){const error=new Error('Official Inventory is protected. This change must use the user More request path.');error.code='INVENTORY_BROKER_REQUIRED';throw error}
-    v.name=buildVehicleProfileName(v);const s=await structure();const c=await config();v.drive=v.drive||{};
+    v.name=buildVehicleProfileName(v);const s=await structure();const c=await config();v.drive=v.drive||{};if(!Number(v.updatedAt))v.updatedAt=Date.now();const resumedNative=await nativeVehicleTransfer(v,s,reportProgress,{resumeOnly:true,force});
     reportProgress({percent:7,message:'Checking Inventory folders'});
     let profile=v.drive.profileFolderId&&!force?{id:v.drive.profileFolderId,name:v.name}:null;
     if(!profile&&v.drive.profileFolderId)profile=await driveGet(v.drive.profileFolderId,'id,name,mimeType,webViewLink,appProperties').catch(()=>null);
@@ -2653,6 +2749,7 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
 
     reportProgress({percent:42,message:'Checking documents, photos and videos'});
     const photoFp=assetFingerprint(v.photos),documentFp=assetFingerprint(v.attachments),videoFp=assetFingerprint(v.videos),currentAssetFp=[photoFp,documentFp,videoFp].join('||'),mappedMediaProgress=(state,start,end)=>{const raw=Math.max(0,Math.min(100,Number(state?.percent)||0));reportProgress({...state,status:state?.status==='complete'?'processing':state?.status||'uploading',percent:Math.round(start+((end-start)*raw/100))})},legacy=String(v.drive.lastAssetFingerprint||'').split('||'),prevPhoto=v.drive.lastPhotoAssetFingerprint??legacy[0]??'',prevDocument=v.drive.lastDocumentAssetFingerprint??legacy[1]??'',prevVideo=v.drive.lastVideoAssetFingerprint??legacy[2]??'',checkpoint=async(stage,percent,message,{refreshSheet=false}={})=>{v.drive.syncCheckpoint={stage,percent,updatedAt:new Date().toISOString()};if(refreshSheet){const nextSheetFingerprint=sheetFingerprint(v);if(force||v.drive.lastSheetFingerprint!==nextSheetFingerprint){await writeVehicleSheet(sheet.id,v);v.drive.lastSheetFingerprint=nextSheetFingerprint}}saveVehicleSyncState(v,v.drive.syncCheckpoint);reportProgress({percent,message})};
+    if(!resumedNative)await nativeVehicleTransfer(v,s,reportProgress);
     if(force||v.drive.lastAssetFingerprint!==currentAssetFp){
       // Keep Documents first for recovery, then let Photos and the single large-video lane
       // run together. This preserves the three-worker photo path while removing the old
@@ -2670,7 +2767,7 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
     // Final metadata is saved only after every active media lane has completed.
     reportProgress({percent:96,message:'Finalizing Vehicle Profile'});
     sfp=sheetFingerprint(v);if(force||v.drive.lastSheetFingerprint!==sfp){await writeVehicleSheet(sheet.id,v);v.drive.lastSheetFingerprint=sfp;}
-    v.syncStatus='synced';v.recoveryNeeded=false;v.recoveryReason='';v.mediaUpload=null;delete v.drive.syncCheckpoint;v.lastDriveSyncAt=Date.now();v.syncError='';await DB.put('vehicles',v);await updateInventoryIndex(v,s).catch(e=>console.warn('Inventory index update failed',e));clearVehicleSyncState(v.id);reportProgress({status:'complete',percent:100,message:'Vehicle Profile synchronized'});return v;
+    v.syncStatus='synced';v.recoveryNeeded=false;v.recoveryReason='';v.mediaUpload=null;delete v.drive.syncCheckpoint;v.lastDriveSyncAt=Date.now();v.syncError='';await DB.put('vehicles',v);if(v.drive.nativeTransfer?.reconcile){await updateInventoryIndex(v,s);await window.LotKeysPhone.uploadCall('acknowledge',{id:v.drive.nativeTransfer.id})}else await updateInventoryIndex(v,s).catch(e=>console.warn('Inventory index update failed',e));delete v.drive.nativeTransfer;await DB.put('vehicles',v);clearVehicleSyncState(v.id);reportProgress({status:'complete',percent:100,message:'Vehicle Profile synchronized'});return v;
   }
   async function syncVehicleState(v){
     if(!v?.id)throw new Error('Vehicle ID missing.');
@@ -3383,7 +3480,16 @@ const App = (()=>{
   function vehiclePlaceholderHtml(alt='Vehicle photo unavailable'){return `<img class="vehicle-placeholder-image" src="${VEHICLE_PLACEHOLDER_URL}" alt="${esc(alt)}" loading="lazy" decoding="async">`}
   function vehicleThumbHtml(photo,alt='Vehicle photo'){return photo?.blob?`<img src="${blobUrl(photo.blob)}" alt="${esc(alt)}">`:photo?.driveFileId?'<span class="vehicle-thumb-loading" role="img" aria-label="Vehicle photo loading"></span>':vehiclePlaceholderHtml()}
   async function setting(id,def=''){const row=await DB.get('settings',id);return configuredSettingValue(id,row?.value,def)}
-  async function setSetting(id,value){return DB.put('settings',{id,value})}
+  async function setSetting(id,value){
+    if(['currentAccountEmail','storeFolderId'].includes(id)&&window.LotKeysNativeTransfers){
+      const old=await DB.get('settings',id);
+      if(String(old?.value||'')!==String(value||'')){
+        const account=(await DB.get('settings','currentAccountEmail'))?.value,store=(await DB.get('settings','storeFolderId'))?.value;
+        await window.LotKeysNativeTransfers.hold(account,store).catch(()=>{});
+      }
+    }
+    return DB.put('settings',{id,value});
+  }
   const FORM_DRAFT_PREFIX='lotkeys-form-draft-v1',ACTIVE_FORM_DRAFT_KEY='lotkeys-active-form-draft-v1',FORM_DRAFT_TTL_MS=7*24*60*60*1000;
   let storeDraftScope='no-store';
   function formDraftSafe(value=''){return String(value||'').trim().toLowerCase().replace(/[^a-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'')||'user'}
@@ -3535,7 +3641,7 @@ const App = (()=>{
 renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#description-add-type').value,block=DescriptionTemplates.defaultBlock(type);if(type==='price')block.config.text='{{PRICE}} + GST';if(type==='financing')block.config.text='Flexible financing options\nOAC (On Approved Credit)\nExtended warranty options available';if(type==='signature')block.config.text='Message {{USER_NAME}} to set up a viewing or to book.';t.blocks.push(block);renderBlocks()};$('#description-template-form').onsubmit=async e=>{e.preventDefault();t.name=$('#description-template-name').value.trim()||'My Marketplace Template';await DescriptionTemplates.save(t);await setSetting('lastDescriptionTemplateId',t.id);const driveSaved=await DriveSync.savePersonalPreferences('defaultTemplate');modal.close();toast(driveSaved?'Description template saved to your personal Drive folder ✓':'Description template saved on this device · Drive backup pending');if(route==='profile')render()};if(!modal.open)modal.showModal()}
 
 
-  function paintProtocolState(st){const n=$('#local-test-note');if(!n||!st)return;const cls=st.level==='good'?'protocol-good':st.level==='bad'?'protocol-bad protocol-attention':'protocol-attention',label=st.level==='good'?'Authorized':st.level==='warn'?'Attention':'Action needed';n.className=`protocol-warning ${cls}`;n.innerHTML=`<strong>LotKeys Drive Test · V0.9.5.38</strong> — ${label}<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button>`;$('#version-info-btn')?.addEventListener('click',showVersionInfo);window.LotKeysPlatformInfo?.bindHeaderButton?.();bindLockControls()}
+  function paintProtocolState(st){const n=$('#local-test-note');if(!n||!st)return;const cls=st.level==='good'?'protocol-good':st.level==='bad'?'protocol-bad protocol-attention':'protocol-attention',label=st.level==='good'?'Authorized':st.level==='warn'?'Attention':'Action needed';n.className=`protocol-warning ${cls}`;n.innerHTML=`<strong>LotKeys Drive Test · V0.9.5.39</strong> — ${label}<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button>`;$('#version-info-btn')?.addEventListener('click',showVersionInfo);window.LotKeysPlatformInfo?.bindHeaderButton?.();bindLockControls()}
   async function updateProtocolNote(){paintProtocolState(await getReadinessState())}
   async function showVersionInfoV09450(){const signed=!!(await setting('currentAccountEmail','')),st=await getReadinessState();modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.4.50</div><h2>What’s new</h2></div><button class="close">×</button></div><div class="card" style="box-shadow:none"><div class="readiness-hero ${st.level}" style="margin-bottom:10px"><span class="readiness-big-dot ${st.level}"></span><div><strong>${esc(st.title)}</strong><div class="small" style="margin-top:4px">${esc(st.summary)}</div></div></div>${st.issues?.length?`<ul class="points-info-list">${st.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<ul class="points-info-list"><li><strong>V0.9.4.50 · Awards display repair:</strong> Primary Award changes now repaint Account and Store identity rows immediately. Small Primary Award artwork appears before the user name, and the five displayed Awards can be reordered by dragging the full badge on mouse or touch.</li><li><strong>Lock Screen:</strong> Set a local password or 4-digit PIN in Account, lock manually from the version bar, or choose PC Only, Phone Only or PC &amp; Phone idle locking. A refresh keeps the blurred LotKeys lock surface active.</li><li><strong>Account onboarding and installs:</strong> First-time users receive Google Account, personal Drive folder and Store Code/new Store guidance. Phone users receive an Install LotKeys App action.</li><li><strong>Garage organization:</strong> personal posting locations and FaceBook Listings Analytics now sit beneath Administrator &amp; Users; Store Saved Locations and highlighted reveal controls live in Advanced Google / Store controls. Awards Administration sits before User Reports.</li><li><strong>Post Buddy access:</strong> Garage now shows the accent-colored FaceBook Post Buddy panel immediately below Google &amp; Store Connection. Admin Level 2 can connect the current installer and website links.</li><li><strong>Listing workflow:</strong> Build Description now builds on the first press. Show Vehicle Details expands only when the user wants to edit or disable source facts, with checkboxes placed to the left. Existing Vehicle Profiles use a compact review-photo grid.</li><li><strong>Award inactivity rule:</strong> Iced Iced Baby now requires an established account returning after 30 inactive days and clears after five consecutive active days.</li><li><strong>New LotKeys icon:</strong> the supplied black-and-blue key/tag artwork is now the canonical default throughout the app, Chat, loading view, installed Android/PWA icon, Apple touch icon and favicon. Uploaded Store logos remain Store-specific overrides.</li><li><strong>Chat isolation repair:</strong> Chat now hides the live Home/Inventory route behind an opaque surface sized to the real bottom navigation, so Vehicle cards cannot show through while the Chat tab remains highlighted.</li>
 <li><strong>Registered contact lookup:</strong> Add Contact has a corrected person/plus control and accepts either an exact registered email address or phone number. This test build searches the current Store and saved conversations; global discovery still needs the future LotKeys account directory.</li>
@@ -3596,7 +3702,7 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
 <li>Unchanged photo/document folders are skipped when only a video changed, so video transfer starts sooner.</li>
 <li>LotKeys requests a temporary screen wake lock during an active video transfer when the browser supports it, helping prevent an accidental screen lock from pausing the upload.</li></ul>${signed?'':'<div class="notice warning"><strong>New here?</strong><div class="small muted" style="margin-top:5px">Open Account and tap <strong>Click to Sign In</strong>, then use the Store Code your management team gives you.</div></div>'}</div>`;modalBody.querySelector('.close').onclick=()=>modal.close();if(!modal.open)modal.showModal()}
 
-  async function showVersionInfo(){modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.5.38</div><h2>What’s new</h2></div><div class="modal-head-actions"><button class="btn ghost version-help-btn" id="version-help" type="button">Help❓</button><button class="close" aria-label="Close">×</button></div></div><div class="card release-notes-card" style="box-shadow:none"><ul class="points-info-list"><li><strong>Faster Device chats:</strong> while connected, LotKeys keeps the latest six messages ready for your ten most recent conversations. Recent chats open from this temporary cache while phone updates and older history load.</li><li><strong>Background loading:</strong> recent conversations warm one at a time across LotKeys. Opening a chat gets priority over the next background read; one unavailable conversation does not hold up the others.</li><li><strong>Private cache:</strong> message snapshots stay in temporary memory and clear on disconnect, account changes and page closure. Photos still use the existing preview/save controls.</li><li><strong>Store branding:</strong> cached logos belong to your current Store and Google account. Old dealership images and late responses cannot replace the current Store’s logo.</li><li><strong>Store setup:</strong> new installs use dealership-neutral guidance and no longer create a South Edmonton posting location. Processor upgrades preserve the saved Store folder.</li><li><strong>Website verification:</strong> a missing stock/VIN field is treated as unknown. Matching identifiers can verify the vehicle; explicit removal and conflicting primary vehicles remain checked.</li><li><strong>Saving &amp; refresh:</strong> ordinary app switching no longer deliberately aborts media uploads. Frozen or stalled transfers retain checkpoints and resume; Inventory refresh shows records before downloading thumbnails.</li><li><strong>Personal settings backup:</strong> Description Builder templates, the selected template and PC notification sounds save to your personal Account Storage folder. Drive saves are verified, pending backups retry, and Account shows their status.</li><li><strong>Posting Buddy V0.1.24:</strong> Facebook names use the title saved on your Listing. A matching Year/Make prefix is kept in the separate controls without repeating it in Model.</li><li><strong>Extension update:</strong> download the current Posting Buddy from Garage, replace the files in its Chrome extension folder, reload it and Facebook, then Sync the Listings.</li><li><strong>Inventory recovery:</strong> missing Store workspace references are rebuilt for the approved account. Inventory no longer waits for personal listing migration.</li><li><strong>Saved Listings:</strong> device-saved listing information is kept for resynchronization after workspace loss. Missing original photos must be restored or added again.</li><li><strong>Device chat opening:</strong> notification previews, Bubble Chat and full Device conversations reuse recent phone history and share overlapping requests. Other conversations changing no longer discard the current chat’s cached page. New arrivals still refresh from the phone, and older messages remain available.</li><li><strong>Website descriptions and photos:</strong> imports read the vehicle’s Overview as its description, including equipment details. An incomplete photo gallery is refreshed before photo selection. Distinct original views stay available, and missing galleries show a retry message. Existing Profile wording and price remain authoritative in Description Builder.</li><li><strong>Expanded dealership recognition:</strong> imports prefer the full vehicle heading and read bulleted specifications. Recommended vehicles cannot supply the current vehicle’s price. Known gallery thumbnails resolve to their original photos, and pages that load vehicle details with JavaScript use the rendered-page reader.</li><li><strong>Website template compatibility:</strong> Legacy recognition builds on the existing importer. A separate Weekly or Monthly Payment heading no longer hides the selling price above it; the existing Your Price, structured vehicle data and gallery rules remain available.</li><li><strong>Legacy website imports:</strong> Legacy Price is the selling price; Vehicle Price is the sticker/listed amount. Imports keep payment amounts out of the vehicle name, read kilometres from the specifications, and capture each vehicle’s CARFAX View Report link. If the selling price cannot be confirmed, it stays blank for review.</li><li><strong>Store sync and disconnect:</strong> Garage can leave a Store even when a background refresh is active. Unfinished Vehicle Profiles, Listings, deletions and contribution requests are saved on this device for that Store and return when you reconnect with the same Google account. Read-only refreshes show “Refreshing…” in the header.</li><li><strong>Store switching:</strong> open the Connected to Store button in Garage to disconnect while keeping your Google account, Hub, phone, profile and personal settings. Join another Store with its code, or create a fresh Store as its Owner / Admin Level 2. Your former Store stays saved for a later reconnect.</li><li><strong>Hub reminder bell:</strong> the Hub shortcut remains visible and opens all reminders. Its button turns grey when nothing needs attention; the bell glyph stays slightly smaller.</li><li><strong>Incoming previews:</strong> when Hub is open, chat messages update there without a second in-app pop-up. Elsewhere, the colored preview starts at the Hub tab and fills only the right-side area, clear of the PC scrollbar.</li><li><strong>Quiet Device sends:</strong> sending an SMS no longer raises a duplicate success pop-up; the message’s SMS Sent or MMS Sent label remains, and failures still show an error.</li><li><strong>Chat layout and type:</strong> full LotKeys Chat uses the available conversation width, incoming messages use the Device chat card color, and Device message text matches the LotKeys 14px type and spacing.</li><li><strong>Page headers:</strong> Home, Inventory, Listings, Garage and Account have white headers in light theme and black headers in dark theme.</li><li><strong>Grey Device chat frame:</strong> the expanded Bubble Chat has a neutral grey outline and header divider, while its alerts and message bubbles keep the conversation color. The phone number sits below the contact name.</li><li><strong>One Bubble Chat:</strong> hold Hub to open the last conversation you replied to, whether LotKeys Chat or connected Device SMS. A new reply makes that chat the next quick conversation.</li><li><strong>Quick incoming preview:</strong> a compact bubble shows the contact name and message, using its Device organization color. Tap it to read and reply without leaving your current screen.</li><li><strong>Live Device replies:</strong> when the connected phone reports a new reply, an open Device Bubble Chat refreshes with it. Device messages remain on the phone.</li><li><strong>Bell alignment:</strong> the main-page alert is centered, and the Hub reminder bell is larger.</li><li><strong>Hub actions:</strong> Alert, Calendar, Phone and Add stay in their existing order and spacing near the lower-right edge, clear of the scrollbar and navigation.</li><li><strong>Phone compatibility:</strong> keep the V0.9.5.12 Android connector; no APK reinstall or re-pairing is required.</li></ul></div>`;modalBody.querySelector('.close').onclick=()=>modal.close();$('#version-help').onclick=()=>{modal.close();showHelpMenu()};if(!modal.open)modal.showModal()}
+  async function showVersionInfo(){modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.5.39</div><h2>What’s new</h2></div><div class="modal-head-actions"><button class="btn ghost version-help-btn" id="version-help" type="button">Help❓</button><button class="close" aria-label="Close">×</button></div></div><div class="card release-notes-card" style="box-shadow:none"><ul class="points-info-list"><li><strong>PC calls your phone:</strong> an open PC page automatically retries its registered phone. Green means registered and waiting; blue means the phone has acknowledged the connection. Retry is in the status-light connection settings.</li><li><strong>Quieter idle phone:</strong> the updated Android connector checks every two seconds during phone use or an active PC connection, then about hourly while idle with a trusted PC. Opening the phone app checks promptly; a PC arriving alone may wait for that idle check.</li><li><strong>Background Vehicle uploads:</strong> with the updated connector and separate Drive approval, Vehicle Profile originals can continue uploading after Android has received them. Keep LotKeys open through Preparing originals. Uploads use their own queue and do not wait for hourly Hub checks.</li><li><strong>Faster Device chats:</strong> while connected, LotKeys keeps the latest six messages ready for your ten most recent conversations. Recent chats open from this temporary cache while phone updates and older history load.</li><li><strong>Background loading:</strong> recent conversations warm one at a time across LotKeys. Opening a chat gets priority over the next background read; one unavailable conversation does not hold up the others.</li><li><strong>Private cache:</strong> message snapshots stay in temporary memory and clear on disconnect, account changes and page closure. Photos still use the existing preview/save controls.</li><li><strong>Store branding:</strong> cached logos belong to your current Store and Google account. Old dealership images and late responses cannot replace the current Store’s logo.</li><li><strong>Store setup:</strong> new installs use dealership-neutral guidance and no longer create a South Edmonton posting location. Processor upgrades preserve the saved Store folder.</li><li><strong>Website verification:</strong> a missing stock/VIN field is treated as unknown. Matching identifiers can verify the vehicle; explicit removal and conflicting primary vehicles remain checked.</li><li><strong>Saving &amp; refresh:</strong> ordinary app switching no longer deliberately aborts media uploads. Frozen or stalled transfers retain checkpoints and resume; Inventory refresh shows records before downloading thumbnails.</li><li><strong>Personal settings backup:</strong> Description Builder templates, the selected template and PC notification sounds save to your personal Account Storage folder. Drive saves are verified, pending backups retry, and Account shows their status.</li><li><strong>Posting Buddy V0.1.24:</strong> Facebook names use the title saved on your Listing. A matching Year/Make prefix is kept in the separate controls without repeating it in Model.</li><li><strong>Extension update:</strong> download the current Posting Buddy from Garage, replace the files in its Chrome extension folder, reload it and Facebook, then Sync the Listings.</li><li><strong>Inventory recovery:</strong> missing Store workspace references are rebuilt for the approved account. Inventory no longer waits for personal listing migration.</li><li><strong>Saved Listings:</strong> device-saved listing information is kept for resynchronization after workspace loss. Missing original photos must be restored or added again.</li><li><strong>Device chat opening:</strong> notification previews, Bubble Chat and full Device conversations reuse recent phone history and share overlapping requests. Other conversations changing no longer discard the current chat’s cached page. New arrivals still refresh from the phone, and older messages remain available.</li><li><strong>Website descriptions and photos:</strong> imports read the vehicle’s Overview as its description, including equipment details. An incomplete photo gallery is refreshed before photo selection. Distinct original views stay available, and missing galleries show a retry message. Existing Profile wording and price remain authoritative in Description Builder.</li><li><strong>Expanded dealership recognition:</strong> imports prefer the full vehicle heading and read bulleted specifications. Recommended vehicles cannot supply the current vehicle’s price. Known gallery thumbnails resolve to their original photos, and pages that load vehicle details with JavaScript use the rendered-page reader.</li><li><strong>Website template compatibility:</strong> Legacy recognition builds on the existing importer. A separate Weekly or Monthly Payment heading no longer hides the selling price above it; the existing Your Price, structured vehicle data and gallery rules remain available.</li><li><strong>Legacy website imports:</strong> Legacy Price is the selling price; Vehicle Price is the sticker/listed amount. Imports keep payment amounts out of the vehicle name, read kilometres from the specifications, and capture each vehicle’s CARFAX View Report link. If the selling price cannot be confirmed, it stays blank for review.</li><li><strong>Store sync and disconnect:</strong> Garage can leave a Store even when a background refresh is active. Unfinished Vehicle Profiles, Listings, deletions and contribution requests are saved on this device for that Store and return when you reconnect with the same Google account. Read-only refreshes show “Refreshing…” in the header.</li><li><strong>Store switching:</strong> open the Connected to Store button in Garage to disconnect while keeping your Google account, Hub, phone, profile and personal settings. Join another Store with its code, or create a fresh Store as its Owner / Admin Level 2. Your former Store stays saved for a later reconnect.</li><li><strong>Hub reminder bell:</strong> the Hub shortcut remains visible and opens all reminders. Its button turns grey when nothing needs attention; the bell glyph stays slightly smaller.</li><li><strong>Incoming previews:</strong> when Hub is open, chat messages update there without a second in-app pop-up. Elsewhere, the colored preview starts at the Hub tab and fills only the right-side area, clear of the PC scrollbar.</li><li><strong>Quiet Device sends:</strong> sending an SMS no longer raises a duplicate success pop-up; the message’s SMS Sent or MMS Sent label remains, and failures still show an error.</li><li><strong>Chat layout and type:</strong> full LotKeys Chat uses the available conversation width, incoming messages use the Device chat card color, and Device message text matches the LotKeys 14px type and spacing.</li><li><strong>Page headers:</strong> Home, Inventory, Listings, Garage and Account have white headers in light theme and black headers in dark theme.</li><li><strong>Grey Device chat frame:</strong> the expanded Bubble Chat has a neutral grey outline and header divider, while its alerts and message bubbles keep the conversation color. The phone number sits below the contact name.</li><li><strong>One Bubble Chat:</strong> hold Hub to open the last conversation you replied to, whether LotKeys Chat or connected Device SMS. A new reply makes that chat the next quick conversation.</li><li><strong>Quick incoming preview:</strong> a compact bubble shows the contact name and message, using its Device organization color. Tap it to read and reply without leaving your current screen.</li><li><strong>Live Device replies:</strong> when the connected phone reports a new reply, an open Device Bubble Chat refreshes with it. Device messages remain on the phone.</li><li><strong>Bell alignment:</strong> the main-page alert is centered, and the Hub reminder bell is larger.</li><li><strong>Hub actions:</strong> Alert, Calendar, Phone and Add stay in their existing order and spacing near the lower-right edge, clear of the scrollbar and navigation.</li><li><strong>Phone update:</strong> V0.9.5.12 remains compatible with the website. Install the <a href="./downloads/LotKeys-Connector-TEST-V0.9.5.39.apk">V0.9.5.39 TEST connector</a> over it for hourly idle checks and background Vehicle uploads; preserve the installed app and its data.</li></ul></div>`;modalBody.querySelector('.close').onclick=()=>modal.close();$('#version-help').onclick=()=>{modal.close();showHelpMenu()};if(!modal.open)modal.showModal()}
   function readLiveProgressRows(){try{return JSON.parse(localStorage.getItem(LIVE_MEDIA_PROGRESS_STORAGE)||'{}')||{}}catch{return {}}}
   function writeLiveProgressRows(rows){try{localStorage.setItem(LIVE_MEDIA_PROGRESS_STORAGE,JSON.stringify(rows||{}))}catch{}}
   function restoreLiveMediaProgress(){const rows=readLiveProgressRows(),now=Date.now();let changed=false;for(const [id,row] of Object.entries(rows)){if(!row||now-(Number(row.updatedAt)||0)>7*86400000||row.status==='complete'){delete rows[id];changed=true;continue}const restored={...row,status:['queued','processing','uploading'].includes(row.status)?'paused':row.status};if(restored.status!==row.status){rows[id]=restored;changed=true}liveMediaProgress.set(id,restored)}if(changed)writeLiveProgressRows(rows)}
@@ -3608,7 +3714,7 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
   function activeLiveMediaProgress(){let best=null;for(const [vehicleId,state] of liveMediaProgress){if(!liveProgressIsActive(state))continue;if(!best||Number(state.updatedAt||0)>Number(best.state.updatedAt||0))best={vehicleId,state}}return best}
   function activeLiveListingProgress(){let best=null;for(const [listingId,state] of liveListingProgress){if(!liveProgressIsActive(state))continue;if(!best||Number(state.updatedAt||0)>Number(best.state.updatedAt||0))best={listingId,state}}return best}
   function activeSyncProgress(){const vehicle=activeLiveMediaProgress(),listing=activeLiveListingProgress();if(!vehicle)return listing;if(!listing)return vehicle;return Number(listing.state.updatedAt||0)>Number(vehicle.state.updatedAt||0)?listing:vehicle}
-  function phoneHeaderPaired(){const phone=window.LotKeysPhone?.status?.();return !!(phone?.role==='phone'&&phone.native&&phone.relayReady&&phone.paired&&!phone.relayError)}
+  function phoneHeaderPaired(){const phone=window.LotKeysPhone?.status?.();return !!(phone?.connected&&(phone.role!=='phone'||phone.native&&phone.relayReady&&!phone.relayError))}
   function paintLiveUploadHeader(){const active=activeSyncProgress(),label=$('#sync-status-text'),dot=$('#sync-readiness');if(!active||!label)return false;const pct=Math.max(0,Math.min(100,Number(active.state.percent)||0)),detail=active.state.message||active.state.fileName||active.state.folder||'Synchronization',paired=phoneHeaderPaired()?' phone-paired':'';label.textContent=`Sync ${pct}%`;label.className=`sync-status-text good${paired}`;label.title=`${detail} · ${pct}%`;if(dot){dot.className=`readiness-btn good${paired}`;dot.title=`LotKeys is ready · ${detail} · ${pct}%`;dot.setAttribute('aria-label',`LotKeys is ready · synchronization ${pct}%`)}return true}
   function mediaBytesText(value){const n=Math.max(0,Number(value)||0);if(n<1024)return n?`${Math.round(n)} B`:'';if(n<1024*1024)return `${(n/1024).toFixed(n<10240?1:0)} KB`;return `${(n/(1024*1024)).toFixed(n<10*1024*1024?1:0)} MB`}
   function mediaProgressText(media){if(!media)return'';const pct=Math.max(0,Math.min(100,Number(media.percent)||0)),folder=String(media.folder||'Synchronization'),message=String(media.message||'').trim(),fileName=String(media.fileName||'').trim(),fileIndex=Math.max(0,Number(media.fileIndex)||0),fileCount=Math.max(0,Number(media.fileCount)||0),item=fileCount?`${folder} ${Math.min(fileCount,Math.max(1,fileIndex))} of ${fileCount}${fileName?` · ${fileName}`:''}`:(message||folder),loaded=Math.max(0,Number(media.loadedBytes)||0),total=Math.max(0,Number(media.totalBytes)||0),bytes=total&&String(media.kind||'').toLowerCase().includes('video')?` · ${mediaBytesText(Math.min(total,loaded))} / ${mediaBytesText(total)}`:'';if(media.status==='paused')return `${item}${bytes} · paused at ${pct}%`;if(media.status==='error')return `${item}${bytes} · needs attention at ${pct}%`;if(media.status==='complete')return `${message||folder+' complete'} · 100%`;return `${item} · ${pct}%${bytes}`}
@@ -5035,16 +5141,19 @@ async function resumePendingContributionSubmissions(){if(storeTransitionBusy)ret
 window.addEventListener('DOMContentLoaded',App.boot);
 
   </script>
-  <script src="./lotkeys-listing-storage.js?v=095038"></script>
-  <script src="./lotkeys-info.js?v=095038"></script>
-  <script src="./lotkeys-messaging.js?v=095038"></script>
-  <script src="./lotkeys-awards.js?v=095038"></script>
-   <link rel="stylesheet" href="./lotkeys-hub.css?v=095038">
-   <script src="./lotkeys-hub-core.js?v=095038"></script>
-   <script src="./lotkeys-hub-store.js?v=095038"></script>
-   <script src="./lotkeys-phone-core.js?v=095038"></script>
-   <script src="./lotkeys-phone.js?v=095038"></script>
-   <script src="./lotkeys-hub.js?v=095038"></script>
+  <script src="./lotkeys-listing-storage.js?v=095039"></script>
+  <script src="./lotkeys-info.js?v=095039"></script>
+  <script src="./lotkeys-messaging.js?v=095039"></script>
+  <script src="./lotkeys-awards.js?v=095039"></script>
+   <link rel="stylesheet" href="./lotkeys-hub.css?v=095039">
+   <script src="./lotkeys-hub-core.js?v=095039"></script>
+   <script src="./lotkeys-hub-store.js?v=095039"></script>
+   <script src="./lotkeys-doorbell-core.js?v=095039"></script>
+   <script src="./lotkeys-transfer-core.js?v=095039"></script>
+   <script src="./lotkeys-native-transfers.js?v=095039"></script>
+   <script src="./lotkeys-phone-core.js?v=095039"></script>
+   <script src="./lotkeys-phone.js?v=095039"></script>
+   <script src="./lotkeys-hub.js?v=095039"></script>
   <script>
   if(!window.LotKeysMessaging){
     const chatButton=document.getElementById('chat-nav-btn');
@@ -5054,7 +5163,7 @@ window.addEventListener('DOMContentLoaded',App.boot);
         panel=document.createElement('div');
         panel.id='lotkeys-messages-load-error';
         panel.style.cssText='position:fixed;inset:0;z-index:2147483600;background:var(--bg);color:var(--ink);padding:calc(20px + env(safe-area-inset-top)) 16px;';
-        panel.innerHTML='<div style="max-width:620px;margin:0 auto"><button id="lotkeys-messages-load-error-close" class="btn ghost" type="button">← Back</button><div class="card" style="margin-top:18px"><h2 style="margin-top:0">Chat did not finish updating</h2><div class="help">Install every file from the complete LotKeys V0.9.5.38 release, including the Hub and Phone scripts beside index.html, then reopen LotKeys.</div></div></div>';
+        panel.innerHTML='<div style="max-width:620px;margin:0 auto"><button id="lotkeys-messages-load-error-close" class="btn ghost" type="button">← Back</button><div class="card" style="margin-top:18px"><h2 style="margin-top:0">Chat did not finish updating</h2><div class="help">Install every file from the complete LotKeys V0.9.5.39 release, including the Hub and Phone scripts beside index.html, then reopen LotKeys.</div></div></div>';
         document.body.appendChild(panel);
         panel.querySelector('#lotkeys-messages-load-error-close').onclick=()=>panel.remove()
       }

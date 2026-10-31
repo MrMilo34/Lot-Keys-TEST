@@ -1,3 +1,26 @@
+# LotKeys TEST V0.9.5.39 — background uploads and active/idle Hub
+
+The PC page automatically calls its registered phone. Green means registered
+and waiting; blue requires a fresh phone acknowledgement. Retry is inside the
+status-light connection settings.
+
+The matching Android connector checks every two seconds during visible phone
+use or a live PC connection, then about hourly while idle with a trusted PC.
+There are no idle checks without a trusted PC. Opening only the PC site can wait
+for the idle phone check; opening the phone app checks promptly. No Firebase
+setup is needed.
+
+[Install the V0.9.5.39 TEST connector](downloads/LotKeys-Connector-TEST-V0.9.5.39.apk)
+over the installed connector, keeping its data. The APK uses the original TEST
+certificate. V0.9.5.12 remains compatible with the website but does not gain the
+new native features until updated. Background Vehicle Profile uploads require
+separate Drive approval; keep LotKeys open until Android has the originals.
+Uploads have their own queue and do not wait for hourly Hub checks.
+
+317 web tests, Android assembly, 16 native tests and lint pass. Real-device
+battery, locked-phone and upload verification remains outstanding. The optional
+FCM prototype stays inactive. See [release details](RELEASE-0.9.5.39.md).
+
 # LotKeys V0.9.5.38 — Recent Device conversation cache
 
 While the phone is connected, six recent messages are kept ready for ten recent conversations in temporary browser memory. Background warming yields between reads, and earlier history retains its phone cursor. See [release details](RELEASE-0.9.5.38.md), [verification](LotKeys-0.9.5.38-Test-Report.md) and [current project state](CURRENT-STATE.md).

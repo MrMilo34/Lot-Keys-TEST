@@ -39,8 +39,10 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_NOTIFICATIONS = 43;
     private static final int REQUEST_GOOGLE_ACCOUNT = 44;
     private static final int REQUEST_GOOGLE_AUTHORIZATION = 45;
+    private static final int REQUEST_UPLOAD_AUTHORIZATION = 46;
+    private static final int REQUEST_WAKE_SETUP = 47;
     private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
-    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095012";
+    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095039";
     private LinearLayout body;
     private Account pendingGoogleAccount;
 
@@ -51,7 +53,12 @@ public final class MainActivity extends Activity {
 
     @Override public void onResume() {
         super.onResume();
+        PhoneConnectorService.setSetupVisible(true);
         render();
+    }
+    @Override public void onPause() {
+        PhoneConnectorService.setSetupVisible(false);
+        super.onPause();
     }
 
     private void render() {
@@ -64,7 +71,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.5.12 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.5.39 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();
@@ -134,6 +141,15 @@ public final class MainActivity extends Activity {
         statusLine("Locked-phone messaging", unrestricted,
             unrestricted ? "unrestricted background access" : "Android may pause the PC relay during deep idle");
         button("Open LotKeys & Link This Phone", this::openLotKeys, true);
+        statusLine("Background Drive saves", TransferAuth.ready(this), TransferAuth.ready(this) ? "authorized · " + TransferAuth.account(this) : "optional · approve separately to save while the browser is closed");
+        button(TransferAuth.ready(this) ? "Resume Drive Saves" : "Enable Background Drive Saves", this::authorizeUploads, false);
+        statusLine("Connection checks", true, "fast while in use · hourly idle recovery for trusted computers");
+        text("A PC reconnecting while this phone is idle may wait for the next hourly check. Open LotKeys on this phone to check promptly.", 14, Color.rgb(145, 151, 161), false);
+        if (WakeDoorbell.configured(this)) statusLine("Optional instant wake", true, "configured · hourly recovery remains available");
+        if (prefs().getBoolean("experimentalWakeSetup", false) && !WakeDoorbell.configured(this)) button("Import Optional Wake Setup", () -> {
+            Intent document = new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE);
+            startActivityForResult(document, REQUEST_WAKE_SETUP);
+        }, false);
         button("Android App Permissions", this::openAppSettings, false);
         button("Locked-Phone Battery Settings", () -> new AlertDialog.Builder(this)
             .setTitle("Keep PC messages available while locked")
@@ -213,6 +229,23 @@ public final class MainActivity extends Activity {
         } catch (Exception error) {
             alert("Android could not open the Google account chooser. Update Google Play services and try again.");
         }
+    }
+
+    private void authorizeUploads() {
+        String name = DriveRelay.account(this);
+        if (name.isEmpty()) { alert("Choose the PC pairing account first."); return; }
+        text("Preparing background Drive saves…", 14, Color.rgb(100, 181, 246), true);
+        java.util.concurrent.ExecutorService authorization = Executors.newSingleThreadExecutor();
+        authorization.execute(() -> {
+            try {
+                TransferAuth.authorize(this, new Account(name, "com.google"));
+                new TransferStore(this).retryFailed(name);
+                runOnUiThread(() -> { boolean scheduled = TransferJobService.schedule(this, true); render(); alert(scheduled ? "Background saves are ready. Open LotKeys to save a Vehicle Profile." : "Android could not schedule saves yet. Try Resume Drive Saves again."); });
+            } catch (UserRecoverableAuthException consent) {
+                runOnUiThread(() -> startActivityForResult(consent.getIntent(), REQUEST_UPLOAD_AUTHORIZATION));
+            } catch (Exception error) { runOnUiThread(() -> alert(error.getMessage() == null ? "Google Drive access could not be approved." : error.getMessage())); }
+            finally { authorization.shutdown(); }
+        });
     }
 
     private void authorizeGoogleAccount(Account account) {
@@ -311,6 +344,19 @@ public final class MainActivity extends Activity {
         if (requestCode == REQUEST_GOOGLE_AUTHORIZATION) {
             if (resultCode == RESULT_OK && pendingGoogleAccount != null) authorizeGoogleAccount(pendingGoogleAccount);
             else { pendingGoogleAccount = null; alert("Google pairing access was not approved."); }
+        }
+        if (requestCode == REQUEST_UPLOAD_AUTHORIZATION) {
+            if (resultCode == RESULT_OK) authorizeUploads();
+            else alert("Background Drive saves were not approved. Browser uploads remain available.");
+        }
+        if (requestCode == REQUEST_WAKE_SETUP && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            try (java.io.InputStream in = getContentResolver().openInputStream(data.getData()); java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                if (in == null) throw new java.io.IOException("The wake setup file could not be opened.");
+                byte[] buffer = new byte[4096]; int count;
+                while ((count = in.read(buffer)) != -1) { if (out.size() + count > 65536) throw new java.io.IOException("Wake setup must be smaller than 64 KB."); out.write(buffer, 0, count); }
+                WakeDoorbell.configure(this, new JSONObject(new String(out.toByteArray(), java.nio.charset.StandardCharsets.UTF_8)));
+                render(); alert("Wake setup imported. Connect the trusted computer once to exchange its private doorbell grant.");
+            } catch (Exception error) { alert(error.getMessage() == null ? "Wake setup could not be imported." : error.getMessage()); }
         }
     }
 

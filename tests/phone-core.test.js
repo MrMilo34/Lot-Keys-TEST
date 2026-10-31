@@ -4,6 +4,13 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const Phone = require('../lotkeys-phone-core.js');
 
+test('connection light distinguishes registration from a live acknowledged connection', () => {
+  assert.equal(Phone.connectionStatus({ registered: true }).level, 'green');
+  assert.equal(Phone.connectionStatus({ registered: true, connected: true }).level, 'blue');
+  assert.equal(Phone.connectionStatus({ registered: false, connected: false }).level, 'red');
+  assert.match(Phone.connectionStatus({ role: 'phone', registered: true }).label, /ready/);
+});
+
 const contacts = [{
   id: 'c1',
   name: 'LotKeys Custom Name',

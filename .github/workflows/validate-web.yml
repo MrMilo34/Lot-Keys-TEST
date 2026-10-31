@@ -26,6 +26,10 @@ jobs:
           node --check lotkeys-listing-storage.js
           node --check lotkeys-personal-preferences.js
           node --check lotkeys-website-identity.js
+          node --check lotkeys-transfer-core.js
+          node --check lotkeys-native-transfers.js
+          node --check lotkeys-doorbell-core.js
+          node --check wake-sender/Code.js
           node --check lotkeys-phone-core.js
           node --check lotkeys-phone.js
           node --check lotkeys-hub.js

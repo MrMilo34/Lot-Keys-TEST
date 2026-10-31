@@ -15,6 +15,8 @@
   const TRUST_NAMES_KEY = 'lotkeys-phone-trusted-pc-names-v1';
   const SESSION_KEY = 'lotkeys-phone-active-session-v1';
   const REMEMBERED_PAIR_KEY = 'lotkeys-phone-remembered-pair-v1';
+  const WAKE_GRANT_KEY = 'lotkeys-phone-wake-grant-v1';
+  let lastDoorbellAt = 0;
   const READ_RECEIPTS_KEY = 'lotkeys-phone-read-receipts-v1';
   const READ_RECEIPT_MAX_AGE = 180 * 24 * 60 * 60 * 1000;
   const encoder = new TextEncoder();
@@ -70,6 +72,11 @@
   let monitoringGraceUntil = 0;
   let lastAutomaticPairAttemptAt = 0;
   let automaticReconnectTimer = 0;
+  let pcDoorbellTimer = 0;
+  let pcDoorbellBusy = false;
+  let pairingStartJob = null;
+  let pagePresent = true;
+  let pcAcknowledged = false;
   let heartbeatFailures = 0;
   let lastStatusEventSignature = '';
   let readReceipts = loadReadReceipts();
@@ -248,6 +255,7 @@
   }
 
   function forgetRememberedPair() {
+    localStorage.removeItem(WAKE_GRANT_KEY);
     localStorage.removeItem(REMEMBERED_PAIR_KEY);
   }
 
@@ -314,7 +322,7 @@
     try {
       const wasConnected = connected();
       const previous = state.nativeRevision;
-      const native = await nativeCall('/v1/status', { timeout: 2500, diagnose: userInitiated });
+      const native = await nativeCall('/v1/status?foreground=' + (pagePresent && document.visibilityState === 'visible' ? '1' : '0'), { timeout: 2500, diagnose: userInitiated });
       state.nativeStatus = native;
       state.nativeError = '';
       state.nativeRevision = Number(native.revision) || 0;
@@ -375,6 +383,7 @@
 
   async function reconnectTrustedComputer({ force = false } = {}) {
     const remembered = rememberedPair();
+    if (!pagePresent) return false;
     if (!P.automaticReconnectReady({
       nativeToken: !!state.nativeToken,
       session: !!state.session,
@@ -401,11 +410,55 @@
 
   function scheduleTrustedReconnect(delay = AUTO_RECONNECT_RETRY_MS) {
     clearTimeout(automaticReconnectTimer);
-    if (state.nativeToken || state.session || state.pairing || !rememberedPair()) return;
+    if (!pagePresent || state.nativeToken || state.session || state.pairing || !rememberedPair()) return;
     automaticReconnectTimer = setTimeout(() => {
       automaticReconnectTimer = 0;
       reconnectTrustedComputer().catch(sessionError);
     }, delay);
+  }
+
+  // The open PC page owns retries. Reuse a live offer instead of creating a new
+  // pairing code or filling Drive with requests on each attempt. Hidden tabs still
+  // count as open; pagehide stops this loop, and pageshow restores it.
+  async function retryPhoneConnection({ automatic = false } = {}) {
+    if (!pagePresent || state.nativeToken) return false;
+    if (!rememberedPair() && state.session?.role !== 'pc') {
+      if (automatic) return false;
+      throw Error('Connect a phone and approve this computer first.');
+    }
+    if (!Drive.connected?.()) {
+      if (automatic) return false;
+      await Drive.authorize(false);
+    }
+    if (connected()) return true;
+    if (state.pairing) {
+      if (state.pairing.automatic) await ringPhoneDoorbell(state.pairing.sessionId, state.pairing.targetDeviceId);
+      return false;
+    }
+    if (state.session?.role === 'pc') {
+      // Do not interrupt a send whose receipt is still uncertain.
+      if (pendingRpc.size) return false;
+      const sessionId = state.session.sessionId;
+      if (await reconnectExistingSession({ forceProbe: true })) return true;
+      if (state.session?.sessionId === sessionId && !pendingRpc.size) await recoverStaleSession(sessionId);
+    } else await reconnectTrustedComputer({ force: !automatic });
+    return connected();
+  }
+
+  function schedulePcDoorbell(delay = AUTO_RECONNECT_RETRY_MS) {
+    clearTimeout(pcDoorbellTimer);
+    if (!pagePresent || state.nativeToken || !rememberedPair()) return;
+    pcDoorbellTimer = setTimeout(async () => {
+      pcDoorbellTimer = 0;
+      if (!pagePresent) return;
+      if (!pcDoorbellBusy) {
+        pcDoorbellBusy = true;
+        try { await retryPhoneConnection({ automatic: true }); }
+        catch (error) { pairingError(error); }
+        finally { pcDoorbellBusy = false; }
+      }
+      schedulePcDoorbell();
+    }, Math.max(100, Number(delay) || AUTO_RECONNECT_RETRY_MS));
   }
 
   async function recoverStaleSession(sessionId = state.session?.sessionId) {
@@ -775,7 +828,29 @@
     }
   }
 
-  async function startPairing({ trustMode = '36h', automatic = false } = {}) {
+  async function ringPhoneDoorbell(sessionId, deviceId) {
+    const Doorbell = window.LotKeysDoorbellCore;
+    if (!Doorbell || state.nativeToken || !state.relayIdentity || now() - lastDoorbellAt < 10000) return;
+    try {
+      const grant = JSON.parse(localStorage.getItem(WAKE_GRANT_KEY) || 'null');
+      if (!Doorbell.validGrant(grant, { deviceId, browserId: browserId(), account: state.relayIdentity })) return;
+      const envelope = await Doorbell.envelope(grant, sessionId);
+      lastDoorbellAt = now();
+      // Apps Script ContentService responses are opaque in Chrome. Dispatch is NOT
+      // a phone acknowledgement: only the encrypted relay reply marks connected.
+      await fetch(grant.endpoint, { method: 'POST', mode: 'no-cors', credentials: 'omit', cache: 'no-store',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify(envelope), signal: AbortSignal.timeout(10000) });
+    } catch { /* Keep the established pairing/recovery path available. */ }
+  }
+
+  async function startPairing(options = {}) {
+    if (pairingStartJob) return pairingStartJob;
+    const job = startPairingNow(options); pairingStartJob = job;
+    try { return await job; } finally { if (pairingStartJob === job) pairingStartJob = null; }
+  }
+
+  async function startPairingNow({ trustMode = '36h', automatic = false } = {}) {
+    if (!pagePresent) throw Error('Reopen LotKeys to connect the phone.');
     if (state.nativeToken) {
       if (!state.nativeStatus) throw Error(state.nativeError || 'Reconnect this phone before pairing a computer.');
       throw Error('This is the phone. Start Connect Phone from the computer instead.');
@@ -805,12 +880,14 @@
       lotkeysRole: 'lotkeysPairOffer', sessionId, browserId: offer.browserId,
       reconnect: automatic ? 'true' : 'false', expiresAt: String(expiresAt)
     });
+    if (!pagePresent) { deleteFile(file.id).catch(() => {}); throw Error('Reopen LotKeys to connect the phone.'); }
     state.pairing = { ...offer, pair, fileId: file.id, automatic: !!automatic };
     state.lastError = '';
     state.lastErrorCode = '';
     state.relayDiagnostic = '';
     event('pairing', { code, sessionId, expiresAt });
     schedulePairPoll(100);
+    if (automatic) { ringPhoneDoorbell(sessionId, offer.targetDeviceId); schedulePcDoorbell(); }
     return { code, sessionId, expiresAt };
   }
 
@@ -823,7 +900,7 @@
 
   function schedulePairPoll(delay = 1600) {
     clearTimeout(pairTimer);
-    if (!state.pairing) return;
+    if (!pagePresent || !state.pairing) return;
     pairTimer = setTimeout(async () => {
       if (!state.pairing || pairBusy) return schedulePairPoll();
       pairBusy = true;
@@ -871,6 +948,7 @@
       lastSeenAt: now()
     };
     state.role = 'pc';
+    pcAcknowledged = true;
     state.lastPhoneSeenAt = now();
     state.pairing = null;
     clearTimeout(pairTimer);
@@ -946,7 +1024,9 @@
 
   function scheduleNativeTick(delay = phonePollDelay()) {
     clearTimeout(nativeTimer);
+    if (!pagePresent || document.visibilityState !== 'visible') return;
     nativeTimer = setTimeout(async () => {
+      if (!pagePresent || document.visibilityState !== 'visible') return;
       await nativeTick().catch(() => {});
       scheduleNativeTick(phonePollDelay());
     }, Math.max(100, Number(delay) || PHONE_POLL_IDLE_MS));
@@ -954,7 +1034,9 @@
 
   function scheduleOfferPoll(delay = phonePollDelay()) {
     clearTimeout(offerTimer);
+    if (!state.nativeToken || !pagePresent || document.visibilityState !== 'visible') return;
     offerTimer = setTimeout(async () => {
+      if (!pagePresent || document.visibilityState !== 'visible') return;
       await pollOffers().catch(() => {});
       scheduleOfferPoll(phonePollDelay());
     }, Math.max(100, Number(delay) || PHONE_POLL_IDLE_MS));
@@ -962,9 +1044,9 @@
 
   function scheduleFramePoll(delay = framePollDelay()) {
     clearTimeout(frameTimer);
-    if (!state.session) return;
+    if (!pagePresent || !state.session || state.nativeToken && document.visibilityState !== 'visible') return;
     frameTimer = setTimeout(async () => {
-      if (!state.session) return;
+      if (!pagePresent || !state.session || state.nativeToken && document.visibilityState !== 'visible') return;
       await pollFrames().catch(sessionError);
       if (state.session) scheduleFramePoll(framePollDelay());
     }, Math.max(100, Number(delay) || FRAME_POLL_ACTIVE_MS));
@@ -972,9 +1054,9 @@
 
   function scheduleHeartbeat(delay = heartbeatDelay()) {
     clearTimeout(heartbeatTimer);
-    if (state.session?.role !== 'pc') return;
+    if (!pagePresent || state.session?.role !== 'pc') return;
     heartbeatTimer = setTimeout(async () => {
-      if (state.session?.role !== 'pc') return;
+      if (!pagePresent || state.session?.role !== 'pc') return;
       await heartbeat().catch(sessionError);
       if (state.session?.role === 'pc') scheduleHeartbeat(heartbeatDelay());
     }, Math.max(100, Number(delay) || HEARTBEAT_IDLE_MS));
@@ -1190,10 +1272,16 @@
     if (payload.kind !== 'response') return;
     const pending = pendingRpc.get(payload.requestId);
     if (!pending) return;
+    const firstAcknowledgement = !pcAcknowledged;
+    pcAcknowledged = true; state.lastPhoneSeenAt = now(); session.lastSeenAt = now();
     pendingRpc.delete(payload.requestId);
     clearTimeout(pending.timer);
-    if (payload.ok) pending.resolve(payload.data);
+    if (payload.ok) {
+      if (pending.op === 'foreground' && window.LotKeysDoorbellCore?.validGrant(payload.data?.wakeGrant, { deviceId: session.deviceId, browserId: browserId(), account: state.relayIdentity })) localStorage.setItem(WAKE_GRANT_KEY, JSON.stringify(payload.data.wakeGrant));
+      pending.resolve(payload.data);
+    }
     else pending.reject(Error(payload.error || 'The phone could not complete that request.'));
+    if (firstAcknowledgement && pagePresent) event('connected', { deviceName: session.peerName, restored: true });
   }
 
   function request(op, payload = {}, timeout = 35000) {
@@ -1204,8 +1292,11 @@
         pendingRpc.delete(id);
         reject(Error('The phone did not answer in time. Check that LotKeys is connected on the phone.'));
       }, timeout);
-      pendingRpc.set(id, { resolve, reject, timer });
-      sendFrame('phone', { kind: 'request', id, op, payload }).then(() => scheduleFramePoll(100)).catch(error => {
+      pendingRpc.set(id, { resolve, reject, timer, op });
+      sendFrame('phone', { kind: 'request', id, op, payload }).then(() => {
+        scheduleFramePoll(100);
+        if (['send','media'].includes(op) || (op === 'status' && now() - state.lastPhoneSeenAt > 12000)) ringPhoneDoorbell(state.session?.sessionId, state.session?.deviceId);
+      }).catch(error => {
         pendingRpc.delete(id);
         clearTimeout(timer);
         reject(error);
@@ -1439,7 +1530,7 @@
 
   function connected() {
     if (state.nativeToken) return !!(state.backgroundRelay && state.nativeStatus?.relay?.connected);
-    if (!state.session) return false;
+    if (!state.session || (state.session.role === 'pc' && !pcAcknowledged)) return false;
     const staleAfter = monitoringState().heavy || now() < monitoringGraceUntil ? 90000 : state.session.role === 'phone' ? 35000 : 22000;
     if (state.session.role === 'phone' && (!state.nativeStatus || !state.relayReady)) return false;
     return now() - Math.max(state.session.lastSeenAt || 0, state.lastPhoneSeenAt || 0) < staleAfter;
@@ -1466,6 +1557,7 @@
       saveTrusts(trusts().filter(row => row.browserId !== session.browserId));
     }
     state.session = null;
+    pcAcknowledged = false;
     clearStoredSession();
     if (session?.role === 'pc' && !keepRemembered) forgetRememberedPair();
     state.threads = [];
@@ -1517,6 +1609,8 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
+    const registered = state.nativeToken ? !!(state.nativeStatus && state.relayReady) : !!rememberedPair() || connected();
+    const connection = P.connectionStatus({ connected: connected(), registered, role: state.nativeToken ? 'phone' : 'pc' });
     return {
       version: '0.9.5.32',
       role: state.nativeToken ? 'phone' : 'pc',
@@ -1524,6 +1618,7 @@
       native: !!state.nativeStatus,
       nativeError: state.nativeError,
       relayReady: !!state.relayReady,
+      relayPollMode: state.nativeStatus?.relay?.pollMode || '',
       relayIdentity: state.relayIdentity,
       relayError: state.relayError,
       relayTransport: state.relayTransport,
@@ -1531,10 +1626,12 @@
       connected: connected(),
       sessionId: state.session?.sessionId || '',
       sessionRestorable: state.session?.role === 'pc',
+      registered,
+      connection,
       paired: connected() || pairedCount > 0,
       pairedCount,
       pairing: state.pairing ? { code: state.pairing.code, sessionId: state.pairing.sessionId, expiresAt: state.pairing.expiresAt, automatic: !!state.pairing.automatic } : null,
-      deviceName: state.nativeStatus?.deviceName || state.session?.peerName || '',
+      deviceName: state.nativeStatus?.deviceName || state.session?.peerName || rememberedPair()?.phoneName || '',
       sourceApp: state.nativeStatus?.sourceApp || state.session?.phoneStatus?.sourceApp || '',
       peerName: state.nativeToken ? trustedComputerName(state.nativeStatus?.relay?.browserId || state.session?.browserId, state.nativeStatus?.relay?.peerName || state.session?.peerName || '') : state.session?.peerName || '',
       trustMode: state.nativeStatus?.relay?.trustMode || state.session?.trustMode || '',
@@ -1572,21 +1669,43 @@
     }
     cleanupStale().catch(() => {});
     if (!state.nativeToken && !state.session) setTimeout(() => reconnectTrustedComputer().then(connected => { if (!connected) scheduleTrustedReconnect(); }).catch(() => scheduleTrustedReconnect()), 500);
+    schedulePcDoorbell();
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
+        if (state.nativeToken) scheduleNativeTick(100);
         if (state.nativeStatus && state.relayReady) {
-          pollOffers().catch(() => {});
+          scheduleOfferPoll(100);
           if (state.session) scheduleFramePoll(100);
         } else if (!state.nativeToken && !state.session) reconnectTrustedComputer().then(connected => { if (!connected) scheduleTrustedReconnect(); }).catch(() => scheduleTrustedReconnect());
         else if (state.session?.role === 'pc') scheduleHeartbeat(100);
-      } else if (state.session) persistSession();
+      } else {
+        clearTimeout(nativeTimer);
+        if (state.nativeToken) { clearTimeout(offerTimer); clearTimeout(frameTimer); }
+        if (state.nativeToken) nativeCall('/v1/presence', { method: 'POST', body: JSON.stringify({ foreground: false }), keepalive: true, timeout: 2000 }).catch(() => {});
+        if (state.session) persistSession();
+      }
     });
-    window.addEventListener('pagehide', () => { if (state.session) persistSession(); });
+    window.addEventListener('pagehide', () => {
+      pagePresent = false; pcAcknowledged = false;
+      clearTimeout(nativeTimer); clearTimeout(offerTimer);
+      if (state.nativeToken) nativeCall('/v1/presence', { method: 'POST', body: JSON.stringify({ foreground: false }), keepalive: true, timeout: 2000 }).catch(() => {});
+      clearTimeout(pcDoorbellTimer); clearTimeout(automaticReconnectTimer); clearTimeout(pairTimer); clearTimeout(heartbeatTimer); clearTimeout(frameTimer);
+      if (state.session) persistSession();
+    });
+    window.addEventListener('pageshow', () => {
+      const returning = !pagePresent; pagePresent = true;
+      if (!returning) return;
+      pcAcknowledged = false;
+      if (state.nativeToken) { scheduleNativeTick(100); scheduleOfferPoll(100); }
+      schedulePcDoorbell(100);
+      if (state.pairing) schedulePairPoll(100);
+      if (state.session?.role === 'pc') { scheduleHeartbeat(100); scheduleFramePoll(100); }
+    });
     event('ready');
   }
 
   window.LotKeysPhone = {
-    version: '0.9.5.26',
+    version: '0.9.5.39',
     init,
     status,
     subscribe,
@@ -1594,6 +1713,7 @@
     preparePhonePairing,
     repairPairingAccess,
     reconnectTrustedComputer,
+    retryPhoneConnection,
     reconnectExistingSession,
     startPairing,
     cancelPairing,
@@ -1615,6 +1735,11 @@
     forgetDevice,
     disconnectAll,
     clearNativeLink: () => { localStorage.removeItem(TOKEN_KEY); state.nativeToken = ''; state.nativeStatus = null; state.relayReady = false; state.relayIdentity = ''; state.relayError = ''; state.role = 'pc'; clearStoredSession(); event('status'); }
+    ,uploadCall: (operation, payload = {}, timeout = 20000) => {
+      if (!['prepare', 'chunk', 'commit', 'status', 'cancel', 'hold', 'acknowledge'].includes(operation)) throw Error('Unknown background save operation.');
+      return nativeCall('/v1/transfers/' + operation, { method: 'POST', body: JSON.stringify(payload), timeout });
+    }
+    ,uploadCapabilities: () => nativeCall('/v1/status')
   };
 
   function initAfterBase() {
