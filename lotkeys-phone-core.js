@@ -183,6 +183,12 @@
     return { level: 'red', label: 'Messages unavailable', detail: 'Repair Android Messages access.' };
   }
 
+  function connectionStatus({ connected = false, registered = false, role = 'pc' } = {}) {
+    if (connected) return { level: 'blue', label: role === 'phone' ? 'Computer connected' : 'Phone connected', detail: 'The paired device has acknowledged the live connection.' };
+    if (registered) return { level: 'green', label: role === 'phone' ? 'Phone ready' : 'Phone registered', detail: role === 'phone' ? 'Waiting for a trusted computer to connect.' : 'Not connected yet. This PC automatically retries while LotKeys is open.' };
+    return { level: 'red', label: 'Phone setup needed', detail: role === 'phone' ? 'Finish the Android phone connection setup.' : 'Connect a phone once and approve this computer.' };
+  }
+
   function validatePairOffer(value, now = Date.now()) {
     if (!value || value.version !== 1 || value.type !== 'offer') return false;
     if (!/^[A-Za-z0-9_-]{16,80}$/.test(text(value.sessionId))) return false;
@@ -225,6 +231,7 @@
     automaticReconnectReady,
     validateStoredSession,
     coverage,
+    connectionStatus,
     validatePairOffer
   };
 });

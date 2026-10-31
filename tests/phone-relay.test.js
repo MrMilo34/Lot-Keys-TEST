@@ -44,7 +44,7 @@ function phoneWithNativeRelay(relay) {
   return { phone: context.LotKeysPhone, calls, sessions };
 }
 
-function pcWithRememberedTrust() {
+function pcWithRememberedTrust({ savedSession = false } = {}) {
   const browserId = 'trusted-browser-1234567890';
   const values = new Map([
     ['lotkeys-phone-browser-id-v1', browserId],
@@ -57,6 +57,8 @@ function pcWithRememberedTrust() {
   const sessions = new Map();
   const storage = map => ({ getItem: key => map.get(key) ?? null, setItem: (key, value) => map.set(key, String(value)), removeItem: key => map.delete(key) });
   const timers = [];
+  const events = new Map();
+  if (savedSession) sessions.set('lotkeys-phone-active-session-v1', JSON.stringify({ version: 1, role: 'pc', sessionId: 'saved-session-1234567890', browserId, deviceId: 'trusted-phone-1234567890', key: Buffer.alloc(32, 7).toString('base64url'), savedAt: Date.now(), lastSeenAt: Date.now(), trustMode: '36h', trustExpiresAt: Date.now() + 3600000 }));
   const uploads = [];
   const response = (body, status = 200) => ({
     ok: status >= 200 && status < 300,
@@ -79,9 +81,9 @@ function pcWithRememberedTrust() {
     navigator: { platform: 'Test PC', userAgent: 'Chrome/1' },
     document: { readyState: 'loading', visibilityState: 'hidden', addEventListener() {} },
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } },
-    dispatchEvent() {}, addEventListener() {},
+    dispatchEvent() {}, addEventListener(name, fn) { events.set(name, fn); },
     setTimeout(fn, delay) { timers.push({ fn, delay }); return timers.length; },
-    clearTimeout() {},
+    clearTimeout(id) { if (timers[id - 1]) timers[id - 1].cancelled = true; },
     fetch: async (url, options = {}) => {
       if (String(url).includes('/upload/drive/v3/files')) {
         uploads.push({ url: String(url), options });
@@ -93,7 +95,7 @@ function pcWithRememberedTrust() {
   };
   context.window = context;
   vm.runInNewContext(source, context, { filename: 'lotkeys-phone.js' });
-  return { phone: context.LotKeysPhone, timers, uploads };
+  return { phone: context.LotKeysPhone, timers, uploads, events, values, context };
 }
 
 test('the phone refuses browser-only pairing even with a browser Drive grant', async () => {
@@ -134,4 +136,56 @@ test('a trusted PC starts fresh background pairing without a reconnect tap', asy
   assert.match(body, /"reconnect":true/);
   assert.match(body, /"browserId":"trusted-browser-1234567890"/);
   assert.match(body, /"targetDeviceId":"trusted-phone-1234567890"/);
+});
+
+test('a registered phone stays green while the open PC retries without a new approval or duplicate offers', async () => {
+  const f = pcWithRememberedTrust(); await f.phone.init();
+  assert.equal(f.phone.status().registered, true);
+  assert.equal(f.phone.status().connection.level, 'green');
+  const tick = f.timers.find(timer => timer.delay === 15000 && !timer.cancelled);
+  assert.ok(tick); await tick.fn();
+  assert.equal(f.phone.status().pairing.automatic, true);
+  assert.equal(f.uploads.length, 1);
+  const retry = f.timers.filter(timer => timer.delay === 15000 && !timer.cancelled).at(-1);
+  await retry.fn();
+  assert.equal(f.uploads.length, 1, 'reuse the valid offer while retrying');
+  assert.equal(f.phone.status().connected, false);
+  assert.equal(f.phone.status().connection.level, 'green', 'sending an offer is not a connection acknowledgement');
+});
+
+test('manual retry and an automatic attempt share one fresh session offer', async () => {
+  const f = pcWithRememberedTrust(); await f.phone.init();
+  await Promise.all([f.phone.retryPhoneConnection(), f.phone.retryPhoneConnection()]);
+  assert.equal(f.uploads.length, 1);
+  assert.equal(f.phone.status().pairing.automatic, true);
+});
+
+test('leaving the PC page stops retries and returning resumes them, including an open hidden tab', async () => {
+  const f = pcWithRememberedTrust(); await f.phone.init();
+  const tick = f.timers.find(timer => timer.delay === 15000 && !timer.cancelled);
+  f.events.get('pagehide')();
+  assert.equal(tick.cancelled, true);
+  await tick.fn(); assert.equal(f.uploads.length, 0);
+  f.events.get('pageshow')();
+  const resumed = f.timers.filter(timer => timer.delay === 100 && !timer.cancelled).at(-1);
+  assert.ok(resumed); await resumed.fn();
+  assert.equal(f.uploads.length, 1, 'hidden but open PC pages still reconnect');
+});
+
+test('expired registration stops the PC loop and manual retry never invents a new trusted phone', async () => {
+  const f = pcWithRememberedTrust(); await f.phone.init();
+  const tick = f.timers.find(timer => timer.delay === 15000 && !timer.cancelled);
+  const key = 'lotkeys-phone-remembered-pair-v1', row = JSON.parse(f.values.get(key)); row.trustExpiresAt = Date.now() - 1; f.values.set(key, JSON.stringify(row));
+  await tick.fn();
+  assert.equal(f.uploads.length, 0); assert.equal(f.phone.status().registered, false);
+  assert.equal(f.phone.status().connection.level, 'red');
+  await assert.rejects(f.phone.retryPhoneConnection(), /approve this computer first/);
+});
+
+test('a restored recent session remains green until this page receives a fresh acknowledgement', async () => {
+  const f = pcWithRememberedTrust({ savedSession: true }); await f.phone.init();
+  assert.equal(f.phone.status().sessionRestorable, true);
+  assert.equal(f.phone.status().registered, true);
+  assert.equal(f.phone.status().connected, false);
+  assert.equal(f.phone.status().connection.level, 'green');
 });

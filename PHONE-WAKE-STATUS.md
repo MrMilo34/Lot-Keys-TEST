@@ -1,3 +1,28 @@
+# PC-led connection contract — latest clarification, 2026-10-30
+
+- Opening the PC site automatically calls its registered/trusted phone. While
+  the page remains open and trust is valid, the PC retries until acknowledged.
+- A single manual **Retry phone connection** action lives inside the existing
+  status-light / connection settings, not a new standalone Doorbell control.
+- Green means registered and awaiting connection. Blue requires a fresh phone
+  acknowledgement on the current page. A cached session/offer is not proof.
+- PC attempts reuse the current valid offer and are spaced at 15 seconds. A
+  manual attempt shares in-flight work; neither path silently starts a new
+  approval process for an already trusted phone. Expired trust needs approval.
+- Hidden but open tabs remain eligible, subject to browser timer throttling.
+  Pagehide stops retry timers; pageshow resumes. PC suspension/network loss is
+  handled by the existing session heartbeat/expiry, not a guaranteed close event.
+
+These PC-side changes are implemented/tested in draft PR #9, not deployed.
+The idle-phone battery fix is still incomplete: Android DriveRelay continues
+its two-second fallback checks. A reachable inbound signal path must be working
+and tested before those checks can stop. PC retry logic alone cannot deliver a
+signal to an unreachable/suspended receiver. The user prefers avoiding Firebase;
+the FCM prototype below is optional, not a requirement approved for activation.
+Do not describe the PC UI/retry change as fixing idle phone battery use.
+
+## Earlier .39 receiver prototype (inactive)
+
 # Phone wake-up candidate — 2026-10-30
 
 The .39 work branch adds native FCM reception, encrypted per-PC wake grants,

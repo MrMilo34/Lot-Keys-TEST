@@ -42,7 +42,23 @@ profile/index. Sheets has no values compare-and-swap: the native job deliberatel
 does not overwrite its cover cell. The next foreground sync refreshes that cell,
 photo names/order and stale-asset cleanup. Native jobs never delete remote media.
 
-## Phone doorbell (configuration pending)
+## PC calling and connection status
+
+Opening the PC site calls its saved phone automatically. While the page remains
+open, valid-trust retries run every 15 seconds and reuse one current offer.
+Concurrent manual/automatic attempts share the same pairing-start work. Manual
+retry appears inside the existing status light connection details. A registered
+phone is green; only a fresh acknowledgement makes it blue. Restored session
+metadata alone stays green. Leaving the page stops retry timers; returning
+resumes them. Hidden open tabs remain eligible, with normal browser throttling.
+Expired/revoked trust still requires approval. Pending uncertain sends are not
+interrupted or resent by this retry loop.
+
+This PC-side work does not stop idle phone polling. That battery-saving part
+still needs a reachable receiver path. Blair prefers avoiding Firebase; the
+prototype below is optional and has not been activated.
+
+## Optional phone doorbell receiver prototype (inactive)
 
 The PC writes its normal encrypted-relay pairing offer/request, then sends a
 small signed doorbell to a **separate** Apps Script sender. Only an encrypted
@@ -68,7 +84,7 @@ The Google Drive APK analysis observed native JobService/foreground content-sync
 wrappers, not its private transfer protocol or a performance benchmark. This
 implementation uses public Android scheduling and Drive resumable APIs.
 
-Web: 307 tests and inline/module JavaScript syntax pass. Android assembly, lint
+Web: 315 tests and inline/module JavaScript syntax pass. Android assembly, lint
 and all eight recovery/security tests pass on code commit e3e4187 (Android CI
 41143008309; web CI 41143015580). The CI job does not receive stable TEST signing
 secrets, so it intentionally publishes no installable APK. Restore the existing

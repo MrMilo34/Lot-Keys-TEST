@@ -72,6 +72,11 @@
   let monitoringGraceUntil = 0;
   let lastAutomaticPairAttemptAt = 0;
   let automaticReconnectTimer = 0;
+  let pcDoorbellTimer = 0;
+  let pcDoorbellBusy = false;
+  let pairingStartJob = null;
+  let pagePresent = true;
+  let pcAcknowledged = false;
   let heartbeatFailures = 0;
   let lastStatusEventSignature = '';
   let readReceipts = loadReadReceipts();
@@ -378,6 +383,7 @@
 
   async function reconnectTrustedComputer({ force = false } = {}) {
     const remembered = rememberedPair();
+    if (!pagePresent) return false;
     if (!P.automaticReconnectReady({
       nativeToken: !!state.nativeToken,
       session: !!state.session,
@@ -404,11 +410,55 @@
 
   function scheduleTrustedReconnect(delay = AUTO_RECONNECT_RETRY_MS) {
     clearTimeout(automaticReconnectTimer);
-    if (state.nativeToken || state.session || state.pairing || !rememberedPair()) return;
+    if (!pagePresent || state.nativeToken || state.session || state.pairing || !rememberedPair()) return;
     automaticReconnectTimer = setTimeout(() => {
       automaticReconnectTimer = 0;
       reconnectTrustedComputer().catch(sessionError);
     }, delay);
+  }
+
+  // The open PC page owns retries. Reuse a live offer instead of creating a new
+  // pairing code or filling Drive with requests on each attempt. Hidden tabs still
+  // count as open; pagehide stops this loop, and pageshow restores it.
+  async function retryPhoneConnection({ automatic = false } = {}) {
+    if (!pagePresent || state.nativeToken) return false;
+    if (!rememberedPair() && state.session?.role !== 'pc') {
+      if (automatic) return false;
+      throw Error('Connect a phone and approve this computer first.');
+    }
+    if (!Drive.connected?.()) {
+      if (automatic) return false;
+      await Drive.authorize(false);
+    }
+    if (connected()) return true;
+    if (state.pairing) {
+      if (state.pairing.automatic) await ringPhoneDoorbell(state.pairing.sessionId, state.pairing.targetDeviceId);
+      return false;
+    }
+    if (state.session?.role === 'pc') {
+      // Do not interrupt a send whose receipt is still uncertain.
+      if (pendingRpc.size) return false;
+      const sessionId = state.session.sessionId;
+      if (await reconnectExistingSession({ forceProbe: true })) return true;
+      if (state.session?.sessionId === sessionId && !pendingRpc.size) await recoverStaleSession(sessionId);
+    } else await reconnectTrustedComputer({ force: !automatic });
+    return connected();
+  }
+
+  function schedulePcDoorbell(delay = AUTO_RECONNECT_RETRY_MS) {
+    clearTimeout(pcDoorbellTimer);
+    if (!pagePresent || state.nativeToken || !rememberedPair()) return;
+    pcDoorbellTimer = setTimeout(async () => {
+      pcDoorbellTimer = 0;
+      if (!pagePresent) return;
+      if (!pcDoorbellBusy) {
+        pcDoorbellBusy = true;
+        try { await retryPhoneConnection({ automatic: true }); }
+        catch (error) { pairingError(error); }
+        finally { pcDoorbellBusy = false; }
+      }
+      schedulePcDoorbell();
+    }, Math.max(100, Number(delay) || AUTO_RECONNECT_RETRY_MS));
   }
 
   async function recoverStaleSession(sessionId = state.session?.sessionId) {
@@ -793,7 +843,14 @@
     } catch { /* Keep the established pairing/recovery path available. */ }
   }
 
-  async function startPairing({ trustMode = '36h', automatic = false } = {}) {
+  async function startPairing(options = {}) {
+    if (pairingStartJob) return pairingStartJob;
+    const job = startPairingNow(options); pairingStartJob = job;
+    try { return await job; } finally { if (pairingStartJob === job) pairingStartJob = null; }
+  }
+
+  async function startPairingNow({ trustMode = '36h', automatic = false } = {}) {
+    if (!pagePresent) throw Error('Reopen LotKeys to connect the phone.');
     if (state.nativeToken) {
       if (!state.nativeStatus) throw Error(state.nativeError || 'Reconnect this phone before pairing a computer.');
       throw Error('This is the phone. Start Connect Phone from the computer instead.');
@@ -823,13 +880,14 @@
       lotkeysRole: 'lotkeysPairOffer', sessionId, browserId: offer.browserId,
       reconnect: automatic ? 'true' : 'false', expiresAt: String(expiresAt)
     });
+    if (!pagePresent) { deleteFile(file.id).catch(() => {}); throw Error('Reopen LotKeys to connect the phone.'); }
     state.pairing = { ...offer, pair, fileId: file.id, automatic: !!automatic };
     state.lastError = '';
     state.lastErrorCode = '';
     state.relayDiagnostic = '';
     event('pairing', { code, sessionId, expiresAt });
     schedulePairPoll(100);
-    if (automatic) ringPhoneDoorbell(sessionId, offer.targetDeviceId);
+    if (automatic) { ringPhoneDoorbell(sessionId, offer.targetDeviceId); schedulePcDoorbell(); }
     return { code, sessionId, expiresAt };
   }
 
@@ -842,7 +900,7 @@
 
   function schedulePairPoll(delay = 1600) {
     clearTimeout(pairTimer);
-    if (!state.pairing) return;
+    if (!pagePresent || !state.pairing) return;
     pairTimer = setTimeout(async () => {
       if (!state.pairing || pairBusy) return schedulePairPoll();
       pairBusy = true;
@@ -890,6 +948,7 @@
       lastSeenAt: now()
     };
     state.role = 'pc';
+    pcAcknowledged = true;
     state.lastPhoneSeenAt = now();
     state.pairing = null;
     clearTimeout(pairTimer);
@@ -981,9 +1040,9 @@
 
   function scheduleFramePoll(delay = framePollDelay()) {
     clearTimeout(frameTimer);
-    if (!state.session) return;
+    if (!pagePresent || !state.session) return;
     frameTimer = setTimeout(async () => {
-      if (!state.session) return;
+      if (!pagePresent || !state.session) return;
       await pollFrames().catch(sessionError);
       if (state.session) scheduleFramePoll(framePollDelay());
     }, Math.max(100, Number(delay) || FRAME_POLL_ACTIVE_MS));
@@ -991,9 +1050,9 @@
 
   function scheduleHeartbeat(delay = heartbeatDelay()) {
     clearTimeout(heartbeatTimer);
-    if (state.session?.role !== 'pc') return;
+    if (!pagePresent || state.session?.role !== 'pc') return;
     heartbeatTimer = setTimeout(async () => {
-      if (state.session?.role !== 'pc') return;
+      if (!pagePresent || state.session?.role !== 'pc') return;
       await heartbeat().catch(sessionError);
       if (state.session?.role === 'pc') scheduleHeartbeat(heartbeatDelay());
     }, Math.max(100, Number(delay) || HEARTBEAT_IDLE_MS));
@@ -1209,6 +1268,8 @@
     if (payload.kind !== 'response') return;
     const pending = pendingRpc.get(payload.requestId);
     if (!pending) return;
+    const firstAcknowledgement = !pcAcknowledged;
+    pcAcknowledged = true; state.lastPhoneSeenAt = now(); session.lastSeenAt = now();
     pendingRpc.delete(payload.requestId);
     clearTimeout(pending.timer);
     if (payload.ok) {
@@ -1216,6 +1277,7 @@
       pending.resolve(payload.data);
     }
     else pending.reject(Error(payload.error || 'The phone could not complete that request.'));
+    if (firstAcknowledgement && pagePresent) event('connected', { deviceName: session.peerName, restored: true });
   }
 
   function request(op, payload = {}, timeout = 35000) {
@@ -1464,7 +1526,7 @@
 
   function connected() {
     if (state.nativeToken) return !!(state.backgroundRelay && state.nativeStatus?.relay?.connected);
-    if (!state.session) return false;
+    if (!state.session || (state.session.role === 'pc' && !pcAcknowledged)) return false;
     const staleAfter = monitoringState().heavy || now() < monitoringGraceUntil ? 90000 : state.session.role === 'phone' ? 35000 : 22000;
     if (state.session.role === 'phone' && (!state.nativeStatus || !state.relayReady)) return false;
     return now() - Math.max(state.session.lastSeenAt || 0, state.lastPhoneSeenAt || 0) < staleAfter;
@@ -1491,6 +1553,7 @@
       saveTrusts(trusts().filter(row => row.browserId !== session.browserId));
     }
     state.session = null;
+    pcAcknowledged = false;
     clearStoredSession();
     if (session?.role === 'pc' && !keepRemembered) forgetRememberedPair();
     state.threads = [];
@@ -1542,6 +1605,8 @@
     const sms = !!(state.nativeStatus?.capabilities?.smsHistory || state.session?.phoneStatus?.capabilities?.smsHistory || connected());
     const coverage = P.coverage({ connected: connected(), native: !!state.nativeStatus, sms, rcs: false });
     const pairedCount = (state.nativeToken ? trusts() : []).filter(row => P.trustValid(row, row.browserId)).length;
+    const registered = state.nativeToken ? !!(state.nativeStatus && state.relayReady) : !!rememberedPair() || connected();
+    const connection = P.connectionStatus({ connected: connected(), registered, role: state.nativeToken ? 'phone' : 'pc' });
     return {
       version: '0.9.5.32',
       role: state.nativeToken ? 'phone' : 'pc',
@@ -1556,10 +1621,12 @@
       connected: connected(),
       sessionId: state.session?.sessionId || '',
       sessionRestorable: state.session?.role === 'pc',
+      registered,
+      connection,
       paired: connected() || pairedCount > 0,
       pairedCount,
       pairing: state.pairing ? { code: state.pairing.code, sessionId: state.pairing.sessionId, expiresAt: state.pairing.expiresAt, automatic: !!state.pairing.automatic } : null,
-      deviceName: state.nativeStatus?.deviceName || state.session?.peerName || '',
+      deviceName: state.nativeStatus?.deviceName || state.session?.peerName || rememberedPair()?.phoneName || '',
       sourceApp: state.nativeStatus?.sourceApp || state.session?.phoneStatus?.sourceApp || '',
       peerName: state.nativeToken ? trustedComputerName(state.nativeStatus?.relay?.browserId || state.session?.browserId, state.nativeStatus?.relay?.peerName || state.session?.peerName || '') : state.session?.peerName || '',
       trustMode: state.nativeStatus?.relay?.trustMode || state.session?.trustMode || '',
@@ -1597,6 +1664,7 @@
     }
     cleanupStale().catch(() => {});
     if (!state.nativeToken && !state.session) setTimeout(() => reconnectTrustedComputer().then(connected => { if (!connected) scheduleTrustedReconnect(); }).catch(() => scheduleTrustedReconnect()), 500);
+    schedulePcDoorbell();
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         if (state.nativeStatus && state.relayReady) {
@@ -1606,7 +1674,19 @@
         else if (state.session?.role === 'pc') scheduleHeartbeat(100);
       } else if (state.session) persistSession();
     });
-    window.addEventListener('pagehide', () => { if (state.session) persistSession(); });
+    window.addEventListener('pagehide', () => {
+      pagePresent = false; pcAcknowledged = false;
+      clearTimeout(pcDoorbellTimer); clearTimeout(automaticReconnectTimer); clearTimeout(pairTimer); clearTimeout(heartbeatTimer); clearTimeout(frameTimer);
+      if (state.session) persistSession();
+    });
+    window.addEventListener('pageshow', () => {
+      const returning = !pagePresent; pagePresent = true;
+      if (!returning) return;
+      pcAcknowledged = false;
+      schedulePcDoorbell(100);
+      if (state.pairing) schedulePairPoll(100);
+      if (state.session?.role === 'pc') { scheduleHeartbeat(100); scheduleFramePoll(100); }
+    });
     event('ready');
   }
 
@@ -1619,6 +1699,7 @@
     preparePhonePairing,
     repairPairingAccess,
     reconnectTrustedComputer,
+    retryPhoneConnection,
     reconnectExistingSession,
     startPairing,
     cancelPairing,

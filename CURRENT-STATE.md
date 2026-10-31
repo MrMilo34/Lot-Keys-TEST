@@ -10,10 +10,14 @@ Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
   connector fallback preserved. Native queue needs a matching signed .39 APK.
 - Shared Inventory cover finalization uses ETag/revision guards. Sheets cover,
   rename/delete reconciliation finishes in the foreground; no native deletions.
-- PC doorbell, FCM receiver and separate Apps Script sender implemented in source.
-  Activation blocked on LotKeys Firebase registration and owner sender setup.
-  Enigma-only JSON is invalid for this package. No billing/resources activated.
-- 307 Node tests and JS syntax checks pass. Android assembly, lint and all eight
+- PC auto retry/status changes: open page calls the saved phone, retries every
+  15 seconds, shares one valid offer, and stops on pagehide. Manual retry lives
+  inside status-light connection settings. Green = registered; blue = fresh ack.
+- FCM receiver/Apps Script sender remain an inactive optional prototype. Blair
+  prefers avoiding Firebase. The incoming signal transport is unresolved; the
+  phone still has two-second fallback checks. No battery fix is claimed.
+  Enigma config remains invalid for LotKeys. No billing/resources activated.
+- 315 Node tests and JS syntax checks pass for the latest PC changes. Android assembly, lint and all eight
   recovery/security tests passed on e3e4187. No real-device verification or
   deployment. Web CI: run 41143015580; Android CI: run 41143008309.
 - PR: https://github.com/MrMilo34/Lot-Keys-TEST/pull/9 (draft). CI does not receive

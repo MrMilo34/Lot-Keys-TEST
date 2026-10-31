@@ -29,12 +29,12 @@ test('paired phone UI shows the trusted PC and can forget it', () => {
   const hub = read('lotkeys-hub.js');
   const html = read('index.html');
   assert.match(phone, /pairedCount = \(state\.nativeToken \? trusts\(\) : \[\]\)\.filter\(row => P\.trustValid/);
-  assert.match(hub, /hub-phone-indicator \$\{paired\?'green':e\(c\.level\)\}/);
+  assert.match(hub, /hub-phone-indicator \$\{e\(c\.level\)\}/);
   assert.match(hub, /id="hub-connected-pcs">🖥️ \$\{phone.connected\?'Connected':phone.paired\?'Paired':'Computers'\}/);
   assert.match(hub, /data-forget-browser=.*?Forget/);
   assert.match(hub, /Android Settings → Apps → LotKeys Connector TEST → Battery and choose Unrestricted/);
   assert.match(html, /\.readiness-btn\.good\.phone-paired\{background:#1689e8\}/);
-  assert.match(html, /phone\.native&&phone\.relayReady&&phone\.paired/);
+  assert.match(html, /phone\?\.connected&&\(phone\.role!=='phone'\|\|phone\.native&&phone\.relayReady/);
 });
 
 test('trusted reconnection and local phone revocation survive an idle browser', () => {
