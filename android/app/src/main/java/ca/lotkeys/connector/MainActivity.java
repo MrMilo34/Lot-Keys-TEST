@@ -143,8 +143,10 @@ public final class MainActivity extends Activity {
         button("Open LotKeys & Link This Phone", this::openLotKeys, true);
         statusLine("Background Drive saves", TransferAuth.ready(this), TransferAuth.ready(this) ? "authorized · " + TransferAuth.account(this) : "optional · approve separately to save while the browser is closed");
         button(TransferAuth.ready(this) ? "Resume Drive Saves" : "Enable Background Drive Saves", this::authorizeUploads, false);
-        statusLine("Phone doorbell", WakeDoorbell.configured(this), WakeDoorbell.configured(this) ? "configured · existing relay recovery remains active" : "awaiting LotKeys Firebase registration and private sender setup");
-        if (!WakeDoorbell.configured(this)) button("Import LotKeys Wake Setup", () -> {
+        statusLine("Connection checks", true, "fast while in use · hourly idle recovery for trusted computers");
+        text("A PC reconnecting while this phone is idle may wait for the next hourly check. Open LotKeys on this phone to check promptly.", 14, Color.rgb(145, 151, 161), false);
+        if (WakeDoorbell.configured(this)) statusLine("Optional instant wake", true, "configured · hourly recovery remains available");
+        if (prefs().getBoolean("experimentalWakeSetup", false) && !WakeDoorbell.configured(this)) button("Import Optional Wake Setup", () -> {
             Intent document = new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(document, REQUEST_WAKE_SETUP);
         }, false);
