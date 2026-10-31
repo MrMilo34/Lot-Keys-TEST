@@ -1,6 +1,6 @@
 # LotKeys TEST V0.9.5.40 — Add a PC and matching live connection status
 
-Prepared from .39 main ec11dfba417375c02933afa30051983809c8cf86.
+Released from .39 main ec11dfba417375c02933afa30051983809c8cf86.
 
 Phone Hub connection settings now have Add a PC. It checks the native connector
 for a pending request and shows the matching four-digit code. A new PC still
@@ -25,6 +25,11 @@ original package/certificate and updates the installed connector in place.
 Native upload protocol, encrypted pairing, trust, accounts and Store data remain.
 
 Validation: 321 Node tests and focused real-function UI/handoff tests pass.
-Android assembly, lint and 16 native tests will be checked before release.
+Android assembly, lint and all 16 native tests pass on 0baaddd (CI 41157648791).
+The signed APK's v2/v3 signatures, original certificate, package and version are
+verified. A SHA-256 companion is included with the download. Install it over the
+existing connector to retain trust and app data.
 Physical phone tests are still needed for these UI adjustments and app-switch
 uploads. Blair's .39 report is encouraging, not a completed device test matrix.
+
+[Download the signed phone update](downloads/LotKeys-Connector-TEST-V0.9.5.40.apk).

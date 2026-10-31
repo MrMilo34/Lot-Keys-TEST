@@ -1,9 +1,19 @@
-# V0.9.5.40 candidate — phone connection polish
+# LotKeys TEST V0.9.5.40 — phone connection polish
 
-Add a PC / Check for code on the phone, blue live connection dots and settings,
-visible-only Android status refresh, and durable Background ready upload wording.
-See [release details](RELEASE-0.9.5.40.md). Candidate validation is in progress;
-keep the original TEST signing identity and update the existing connector.
+Phone connection settings have Add a PC / Check for code. Both devices show blue
+for a live connection, including the dots and open connection details. The native
+connector updates its PC relay status while visible and stops UI refresh onPause.
+Store sync warnings remain separate; active/hourly Hub polling is unchanged.
+
+Vehicle upload status says Background ready · you can switch apps only after
+Android has confirmed every original. Preparation before that boundary still
+needs the browser. Upload scheduling is independent of Hub checks.
+
+[Download the .40 TEST connector](downloads/LotKeys-Connector-TEST-V0.9.5.40.apk)
+and install it over the existing connector to retain app data/pairing. Web .40
+remains compatible with .39. 321 web tests, 16 native tests, Android build/lint,
+APK certificate/signatures/package/version and ZIP contents pass verification.
+Real-device follow-up remains necessary. [Release details](RELEASE-0.9.5.40.md).
 
 # LotKeys TEST V0.9.5.39 — background uploads and active/idle Hub
 

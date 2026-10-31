@@ -1,7 +1,9 @@
-# LotKeys TEST V0.9.5.40 candidate — phone pairing and live status
+# LotKeys TEST V0.9.5.40 — phone pairing and live status
 
 Baseline main: ec11dfba417375c02933afa30051983809c8cf86 (released .39).
-Branch: codex/phone-pairing-status-v095040. Not deployed yet.
+Release branch: codex/phone-pairing-status-v095040; PR #10.
+Signed .40 APK/checksum: downloads/LotKeys-Connector-TEST-V0.9.5.40.apk.
+The original TEST certificate/package are preserved; update the installed app.
 
 - Blair installed .39, authorized background Drive saves and reports that it
   appears to work. Thorough locked-phone/upload testing is not yet confirmed.
@@ -18,8 +20,10 @@ Branch: codex/phone-pairing-status-v095040. Not deployed yet.
   until returning. Upload work after handoff stays separate from Hub polling.
 - Web .40 works with .39; only the connector's new native status UI needs its .40 APK.
   Preserve package, original TEST signing identity, pairing, Store and account data.
-- Focused UI/handoff tests and 321 Node tests pass. Android build/lint and the 16
-  existing native tests are pending for this candidate. No real-device claim.
+- Focused UI/handoff tests and 321 Node tests pass. Android assembly/lint and
+  all 16 native tests pass on 0baaddd (CI 41157648791; web CI 41157651453).
+  The APK signatures, original certificate, package, version and ZIP contents
+  are verified. No real-device claim for these .40 adjustments.
 
 ## Released .39 checkpoint
 

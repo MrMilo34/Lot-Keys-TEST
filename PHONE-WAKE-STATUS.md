@@ -1,6 +1,8 @@
-# .40 connection UI candidate
+# .40 connection UI update
 
-Add a PC, live blue status and visible-only native UI refresh are being validated.
+Add a PC, live blue status and visible-only native UI refresh pass source checks.
+321 web tests and Android assembly/lint plus 16 native tests pass; real-device
+verification is pending. The matching APK uses the original TEST certificate.
 The .39 approved active/hourly scheduling policy below is unchanged. UI refresh
 reads local snapshots only while the activity is visible and stops onPause.
 
