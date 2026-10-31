@@ -182,4 +182,4 @@ body[data-theme="dark"] .hub-device-row.blocked{border-color:#fff}body[data-them
 .hub-send-error{display:block;margin:5px 0;white-space:normal;line-height:1.35;overflow-wrap:anywhere}
 
 /* Connection acknowledgement is distinct from registration and SMS/RCS coverage. */
-.hub-phone-indicator.blue{--hub-status:#1689e8}.hub-status.phone.blue{background:color-mix(in srgb,#1689e8 12%,var(--card));border-color:#1689e8;color:#1689e8}
+.hub-phone-indicator.blue{--hub-status:#1689e8}.hub-status.phone.blue{--hub-status:#1689e8;background:color-mix(in srgb,#1689e8 12%,var(--card));border-color:#1689e8;color:#1689e8}

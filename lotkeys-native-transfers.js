@@ -23,7 +23,7 @@
     // of making a second batch while Android already owns part of the originals.
     await onPrepared(snapshot);
     if (Core.terminal(snapshot.state)) return snapshot;
-    if (snapshot.state !== 'staging') return phone.uploadCall('commit', { id: snapshot.id }, 180000);
+    if (snapshot.state !== 'staging') { snapshot = await phone.uploadCall('commit', { id: snapshot.id }, 180000); onProgress({ phase: 'queued', ...Core.progress(snapshot) }); return snapshot; }
     const total = plan.assets.reduce((sum, row) => sum + row.size, 0); let staged = 0;
     for (let item = 0; item < plan.assets.length; item++) {
       const source = sources.get(plan.assets[item].key);

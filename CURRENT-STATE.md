@@ -1,3 +1,32 @@
+# LotKeys TEST V0.9.5.40 — phone pairing and live status
+
+Baseline main: ec11dfba417375c02933afa30051983809c8cf86 (released .39).
+Release branch: codex/phone-pairing-status-v095040; PR #10.
+Signed .40 APK/checksum: downloads/LotKeys-Connector-TEST-V0.9.5.40.apk.
+The original TEST certificate/package are preserved; update the installed app.
+
+- Blair installed .39, authorized background Drive saves and reports that it
+  appears to work. Thorough locked-phone/upload testing is not yet confirmed.
+- Phone connection settings / connected devices gain Add a PC and Check for code.
+  New-PC approval remains mandatory; existing trusted PCs can reconnect silently.
+- Blue live-connection cards now colour their actual dots, open settings update
+  as connection state changes, and the header light uses actual phone connectivity
+  independently of Store readiness. Store warnings remain in their own text/details.
+- Android connector PC relay text updates blue/green while the activity is visible.
+  Pending approval screens refresh when a request arrives; the UI refresh stops
+  onPause and adds no idle network polling.
+- Background-ready upload status appears only after Android confirms all originals.
+  Preparing originals still needs the browser; early switching can pause preparation
+  until returning. Upload work after handoff stays separate from Hub polling.
+- Web .40 works with .39; only the connector's new native status UI needs its .40 APK.
+  Preserve package, original TEST signing identity, pairing, Store and account data.
+- Focused UI/handoff tests and 321 Node tests pass. Android assembly/lint and
+  all 16 native tests pass on 0baaddd (CI 41157648791; web CI 41157651453).
+  The APK signatures, original certificate, package, version and ZIP contents
+  are verified. No real-device claim for these .40 adjustments.
+
+## Released .39 checkpoint
+
 # LotKeys current work — TEST V0.9.5.39 release
 
 TEST release merged through PR #9 at c2ae85b98795265ebbd3d7535f99495b7aa4a5ef.

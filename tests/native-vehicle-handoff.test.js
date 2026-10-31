@@ -77,3 +77,10 @@ test('returning before Drive media listing catches up restores the whole saved e
   assert.equal(returned.photos[0].id, 'photo-0'); assert.equal(returned.photos[10].id, 'photo-10');
   assert.ok(returned.photos.every(row => row.driveFileId));
 });
+
+test('background-ready progress is reported only after all originals are committed and the durable receipt is retained',async()=>{
+  const f=fixture(),progress=[];await f.context.nativeVehicleTransfer(f.vehicle,{rootId:f.store},p=>progress.push(p));
+  assert.ok(progress.filter(p=>/Preparing originals/.test(p.message)).every(p=>p.backgroundReady===false));
+  const ready=progress.findIndex(p=>/Android has the originals/.test(p.message));assert.ok(ready>=0);
+  assert.ok(progress.slice(ready).every(p=>p.backgroundReady===true));assert.equal(f.getPersisted().drive.nativeTransfer.handoffComplete,true);
+});

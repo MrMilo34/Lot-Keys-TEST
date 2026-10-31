@@ -1,3 +1,11 @@
+# .40 connection UI update
+
+Add a PC, live blue status and visible-only native UI refresh pass source checks.
+321 web tests and Android assembly/lint plus 16 native tests pass; real-device
+verification is pending. The matching APK uses the original TEST certificate.
+The .39 approved active/hourly scheduling policy below is unchanged. UI refresh
+reads local snapshots only while the activity is visible and stops onPause.
+
 # Adaptive phone checks — approved revision, 2026-10-30
 
 Blair explicitly permits hourly idle recovery instead of the old two-second

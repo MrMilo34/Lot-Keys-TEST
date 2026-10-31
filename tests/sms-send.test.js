@@ -71,7 +71,7 @@ test('the actual phone connection panel separates saved pairing, active connecti
   const source=hub.slice(hub.indexOf('async function phoneStatusDetails('),hub.indexOf('function paintRows('));
   for(const connected of [false,true]){
     let shown='';const status={role:'phone',native:true,nativeLinked:true,relayReady:true,paired:true,pairedCount:1,connected,capabilities:{smsSend:false},coverage:{level:'amber',label:'SMS/MMS live',detail:'History ready'}};
-    const context={S:{pending:async()=>0},P:{status:()=>status},e:String,phonePrimaryLabel:()=> 'Details',modal:(_,html)=>{shown=html;return{}},$:()=>null,action(){}};
+    const context={S:{pending:async()=>0},P:{status:()=>status},e:String,phonePrimaryLabel:()=> 'Details',bindConnectionStatus(){},modal:(_,html)=>{shown=html;return{}},$:()=>null,action(){}};
     vm.runInNewContext(source,context);await context.phoneStatusDetails();
     assert.match(shown,connected?/id="hub-connected-pcs">🖥️ Connected/:/id="hub-connected-pcs">🖥️ Paired/);assert.match(shown,/SMS sending permission:<\/strong> Off/);
   }

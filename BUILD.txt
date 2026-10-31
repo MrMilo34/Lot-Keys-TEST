@@ -1,3 +1,10 @@
+V0.9.5.40 PHONE PAIRING AND LIVE CONNECTION STATUS
+- Add a PC / Check for code on the phone; trusted reconnections remain automatic.
+- Blue phone/PC live connection status; open status dialogs and native UI refresh.
+- Store warnings remain separate; no additional idle network polling.
+- Background ready appears after durable original-file handoff; early switching may pause staging.
+- Build: 095040. Cache: lotkeys-app-v095040-phone-pairing-status.
+
 V0.9.5.39 BACKGROUND VEHICLE UPLOADS AND ACTIVE/IDLE HUB
 - Optional native original-file queue for administrator Vehicle Profile photos, videos and documents; separate Drive approval.
 - Keep LotKeys open through Preparing originals; Android has the originals confirms durable handoff, not upload completion.
