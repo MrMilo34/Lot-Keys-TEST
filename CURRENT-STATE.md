@@ -1,8 +1,10 @@
 # LotKeys current work — TEST V0.9.5.39 release
 
-Current main baseline: d8caf710905bd26ddb540489052ba387428ee9a0 (.38).
-Release branch: codex/background-transfer-doorbell-v095039; PR #9.
-Website and matching original-key APK prepared for the authorized TEST deployment.
+TEST release merged through PR #9 at c2ae85b98795265ebbd3d7535f99495b7aa4a5ef.
+Previous baseline: d8caf710905bd26ddb540489052ba387428ee9a0 (.38).
+Website: https://mrmilo34.github.io/Lot-Keys-TEST/ (build 095039).
+Matching signed APK: downloads/LotKeys-Connector-TEST-V0.9.5.39.apk.
+Real-phone installation and testing remain the next owner step.
 
 - Native original-file queue and Vehicle Profile media handoff implemented in
   source, with resumable Drive checkpoints, final size/checksum validation and
