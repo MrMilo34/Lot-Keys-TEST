@@ -104,6 +104,8 @@ self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const url=new URL(event.request.url);
   if(url.origin!==location.origin)return;
+  // Installers/checksums must not enter the app cache or replace its navigation fallback.
+  if(/\.(?:apk|sha256)$/i.test(url.pathname))return;
   const navigation=event.request.mode==='navigate';
   const cacheKey=scopedCacheKey(url,{navigation});
   if(navigation){

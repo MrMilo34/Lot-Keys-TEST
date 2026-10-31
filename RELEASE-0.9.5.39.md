@@ -1,7 +1,12 @@
-# LotKeys TEST V0.9.5.39 candidate — background transfers and phone doorbell
+# LotKeys TEST V0.9.5.39 — background transfers and phone doorbell
 
 Prepared from main d8caf710905bd26ddb540489052ba387428ee9a0 (web .38,
-Android .12). This branch is not a deployed or real-device-verified release.
+Android .12). The matching .39 TEST APK uses the original signing certificate
+and updates the existing connector in place. Real-device verification is
+still outstanding.
+
+[Download the phone update](downloads/LotKeys-Connector-TEST-V0.9.5.39.apk).
+Keep the installed app and its data; do not uninstall it first.
 
 ## Vehicle Profile saves
 
@@ -10,7 +15,7 @@ for administrator Vehicle Profiles, including original photos, videos and
 document attachments. The existing browser path remains available with older
 connectors and when background uploads have not been authorized. Personal
 Marketplace Listings, non-admin More contributions and Account assets retain
-their existing foreground paths in this candidate.
+their existing foreground paths in this release.
 
 The browser prepares folders, core profile information and the Vehicle Info
 Directory first, then hands every pending original to app-private Android
@@ -103,11 +108,13 @@ wrappers, not its private transfer protocol or a performance benchmark. This
 implementation uses public Android scheduling and Drive resumable APIs.
 
 Web: 317 tests and inline/module JavaScript syntax pass. Android assembly, all
-16 recovery/security/presence/job tests and lint pass on 6910d5c (Android CI
-41152261823; web CI 41152267890). The CI job does not receive stable TEST signing
-secrets, so it intentionally publishes no installable APK. Restore the existing
-signing identity to preserve update compatibility. No real-device verification
-or deployment has been claimed. See PR #9 for the reviewable candidate.
+16 recovery/security/presence/job tests and lint pass. The distributed APK is
+built from b50ea6a (Android CI 41153938625) and signed locally with the recovered original TEST key; its
+certificate is checked against SHA-1 6CAE202927D7884907C25147FE7FA0E11D87B741.
+The download has a companion SHA-256 file. CI signing secrets remain unavailable;
+its explicitly labeled UNSIGNED artifact is for signing only and must not be
+installed. Use the signed download in this release. Real-device verification
+has not been claimed. PR #9 records the implementation.
 
 Real-device gates: locked screen and browser swipe-away; interrupted staging;
 airplane mode during a chunk; process death/reboot; consent expiry; same-Store

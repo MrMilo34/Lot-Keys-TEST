@@ -29,10 +29,12 @@ hour, or longer if Android/network conditions defer recovery. Opening LotKeys on
 the phone initiates a prompt check. The hourly job is a useful recovery fallback;
 it is not needed when no PC is registered. Existing optional FCM code stays off.
 
-Source implemented in PR #9. Android assembly, all 16 native tests and lint pass
-on 6910d5c (CI 41152261823); 317 Node tests pass (web CI 41152267890). Real-device power/locked-phone
-verification remains outstanding. Existing TEST signing is still
-required to publish an APK that updates the installed connector safely.
+Implemented in PR #9. Android assembly, all 16 native tests and lint pass;
+317 Node tests pass. The matching .39 APK is signed with the recovered original
+TEST key and verified against its registered certificate. Install the signed
+download over the existing connector, preserving app data. CI secrets remain
+unavailable; do not install its UNSIGNED artifact. Real-device power/locked-phone
+verification remains outstanding.
 
 ## Earlier PC behaviour and history
 

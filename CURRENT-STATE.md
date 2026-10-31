@@ -1,13 +1,14 @@
-# LotKeys current work — TEST V0.9.5.39 candidate
+# LotKeys current work — TEST V0.9.5.39 release
 
 Current main baseline: d8caf710905bd26ddb540489052ba387428ee9a0 (.38).
-Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
+Release branch: codex/background-transfer-doorbell-v095039; PR #9.
+Website and matching original-key APK prepared for the authorized TEST deployment.
 
 - Native original-file queue and Vehicle Profile media handoff implemented in
   source, with resumable Drive checkpoints, final size/checksum validation and
   stable allocated file IDs. Up to three photos + one video; documents first.
 - Separate upload consent; existing pairing app-data scope unchanged. Web/older
-  connector fallback preserved. Native queue needs a matching signed .39 APK.
+  connector fallback preserved. Native features require the matching signed .39 APK.
 - Shared Inventory cover finalization uses ETag/revision guards. Sheets cover,
   rename/delete reconciliation finishes in the foreground; no native deletions.
 - PC auto retry/status changes: open page calls the saved phone, retries every
@@ -23,12 +24,14 @@ Work branch: codex/background-transfer-doorbell-v095039. Prepared, not deployed.
   app checks promptly. Optional FCM remains inactive. No resources/billing enabled.
 - 317 Node tests and syntax checks pass. Android assembly, all 16 native tests
   (including presence/idle policy and persisted hourly-job tests) and lint pass
-  on 6910d5c, including the final setup labels. Android CI 41152261823; web CI
-  41152267890. No deployment or
-  real-device battery/locked-phone verification is claimed.
-- PR: https://github.com/MrMilo34/Lot-Keys-TEST/pull/9 (draft). CI does not receive
-  the stable TEST signing secrets, so no matching installable APK is published.
-  Restore the existing TEST signing identity; do not generate a replacement key.
+  including final setup labels. The distributed APK is built from b50ea6a (Android CI 41153938625) and
+  signed with the recovered original TEST key, verified against SHA-1
+  6CAE202927D7884907C25147FE7FA0E11D87B741. Real-device verification is outstanding.
+- PR: https://github.com/MrMilo34/Lot-Keys-TEST/pull/9. Signed APK/checksum live in
+  downloads/. Install over the existing connector; preserve app data and trust.
+  CI signing secrets are still unavailable: its UNSIGNED signing-candidate artifact
+  is not an installable release. Use the original-key signed download instead.
+  Never commit the private keystore/recovery password or generate a replacement key.
 - Marketplace Listings, More contributions and Account assets retain existing
   foreground paths. See RELEASE-0.9.5.39.md and wake-sender/README.md for limits.
 - Preserve prior .38 behaviour except the explicitly approved idle polling policy.

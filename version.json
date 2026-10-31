@@ -6,9 +6,10 @@
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
   "serviceWorkerCache": "lotkeys-app-v095039-background-transfers-doorbell",
-  "publishedAt": null,
+  "publishedAt": "2026-10-30",
   "basedOn": "LotKeys V0.9.5.38 recent Device cache",
   "androidConnectorVersion": "0.9.5.39",
   "preparedAt": "2026-10-30",
-  "deploymentStatus": "candidate"
+  "deploymentStatus": "test-release",
+  "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.39.apk"
 }
