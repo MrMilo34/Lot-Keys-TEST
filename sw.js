@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095041-background-save-recovery-guard';
+const CACHE='lotkeys-app-v095042-posting-buddy-media';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

@@ -1,3 +1,13 @@
+V0.9.5.42 POSTING BUDDY V0.1.25 MEDIA UPDATES
+- Empty Facebook uploaders no longer require removal controls for an Update Photos transfer.
+- Prepare every image first, scope and verify removals, reacquire the current picker after grid rebuilds.
+- Preserve the mixed-picker video; actual photo counts survive input resets and exclude video-only files.
+- Saved Listing titles, unchecked fields, permissions and user Save/Update/Publish control retained.
+- Replace files in the same unpacked extension folder; Reload extension + Facebook; Sync.
+- 355 Node tests; 16 web/eight inline/three packaged script syntax checks pass. Live Facebook check pending.
+- Android .40, .41 native Drive recovery, Hub and recent-conversation cache unchanged.
+- Build: 095042. Cache: lotkeys-app-v095042-posting-buddy-media.
+
 V0.9.5.41 BACKGROUND-SAVE RECOVERY
 - Pending Profiles and Inventory refreshes preserve native upload receipts and local media.
 - Conditional database writes protect newer edits; delayed thumbnails merge image bytes only.

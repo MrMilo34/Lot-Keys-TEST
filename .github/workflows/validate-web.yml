@@ -36,3 +36,15 @@ jobs:
           node --check sw.js
       - name: Hub and release contract tests
         run: node --test tests/*.test.js
+      - name: Posting Buddy packaged JavaScript
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, subprocess, tempfile, zipfile
+          version = json.loads(pathlib.Path('extension/latest.json').read_text())['version']
+          with zipfile.ZipFile(f'extension/releases/LotKeys-Facebook-Assistant-Beta-v{version}.zip') as bundle:
+              for name in ['background.js', 'facebook.js', 'sidepanel.js']:
+                  with tempfile.NamedTemporaryFile(suffix='.js') as script:
+                      script.write(bundle.read(name))
+                      script.flush()
+                      subprocess.run(['node', '--check', script.name], check=True)
+          PY

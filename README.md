@@ -1,3 +1,15 @@
+# LotKeys TEST V0.9.5.42 — Posting Buddy V0.1.25
+
+Fixes Update Photos on an empty Facebook uploader, reacquires its file picker
+when the photo grid rebuilds, and preserves a selected video. Progress counts
+photos separately and recognizes accepted photos after FileList clears.
+
+[Download Posting Buddy V0.1.25](extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.25.zip).
+Replace files in the same unpacked folder, Reload the extension at
+chrome://extensions, reload Facebook and Sync. Review before manually saving.
+355 tests pass; a real Facebook check is still needed. Android stays .40.
+[Release details](RELEASE-0.9.5.42.md) · [Verification](LotKeys-0.9.5.42-Test-Report.md).
+
 # LotKeys TEST V0.9.5.41 — background-save recovery
 
 Opening a Vehicle Profile or refreshing Inventory now preserves its unfinished
