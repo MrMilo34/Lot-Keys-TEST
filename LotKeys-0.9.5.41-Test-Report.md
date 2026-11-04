@@ -12,8 +12,8 @@ flag, an edit arriving during sheet loading, and an edit arriving during delayed
 thumbnail loading. They pass with .41. Healthy completed Profiles still hydrate.
 These are source-level reproductions, not a recording of Blair's physical phone.
 
-The full Node suite passes **339/339** tests, zero failures/skips. The 18 added
-cases cover nine hydration/status/error-handler behaviors, four native handoff
+The full Node suite passes **340/340** tests, zero failures/skips. The 19 added
+cases cover nine hydration/status/error-handler behaviors, five native handoff
 and recovery behaviors, two Inventory races and three database fallback cases.
 The existing release, Store, account, Listings, website importer, phone relay,
 message cache, consent, pairing and native transfer contract checks also pass.
@@ -22,7 +22,8 @@ Recovery coverage reproduces the .40 sheet timestamp overwrite with a retained
 native plan. Explicit retry restores eleven photo records, one video and one
 document in their original order, using confirmed Android file IDs. The original
 plan is reused unchanged; no source chunks are restaged and no cancel is issued.
-A changed price fails that recovery proof. New edits made while Android prepares
+A changed price fails that recovery proof. A mismatched job with an emptied
+gallery is retained for review without cancellation or normal media cleanup. New edits made while Android prepares
 or cancels a receipt survive, and the error handler cannot overwrite them.
 
 ## Release checks
@@ -30,7 +31,7 @@ or cancels a receipt survive, and the error handler cannot overwrite them.
 - JavaScript syntax: 16 standalone files plus eight executable index.html scripts.
 - `git diff --check`: clean.
 - Website version, asset query strings, manifest and service worker agree on
-  build 095041; the cache is lotkeys-app-v095041-background-save-recovery.
+  build 095041; the cache is lotkeys-app-v095041-background-save-recovery-guard.
 - Android sources/workflow, downloadable APKs, phone/Hub/message modules,
   native transfer protocol, wake sender and extension source are unchanged.
 - CHECKSUMS.txt covers every release file except itself. The complete ZIP is

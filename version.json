@@ -5,7 +5,7 @@
   "release": "background-save-recovery",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095041-background-save-recovery",
+  "serviceWorkerCache": "lotkeys-app-v095041-background-save-recovery-guard",
   "publishedAt": "2026-11-03",
   "basedOn": "LotKeys V0.9.5.40 phone pairing and original-file handoff",
   "androidConnectorVersion": "0.9.5.40",

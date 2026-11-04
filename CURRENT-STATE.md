@@ -1,7 +1,7 @@
 # LotKeys TEST V0.9.5.41 — background-save recovery
 
 Baseline main: 3b7ce5ce814e0b812f70f66b1e064340b68ba17e (.40).
-Release branch: codex/background-save-recovery-v095041.
+Release: PR #11 plus codex/retained-media-guard-v095041 follow-up.
 Web build 095041; keep the signed .40 connector and existing app/browser data.
 
 - Reproduced .40: opening a pending Profile hydrated its incomplete Drive sheet,
@@ -10,12 +10,14 @@ Web build 095041; keep the signed .40 connector and existing app/browser data.
 - Hydration skips unfinished/error/native records. Conditional IndexedDB writes
   reject intervening edits; delayed photos merge bytes only. Inventory refresh
   preserves native receipts; native handoff writes reject newer/deleted records.
+- A mismatched native job with an emptied media list is kept for review if the
+  exact recovery proof fails; an empty list cannot silently replace its originals.
 - Profile status prioritizes errors and unfinished native work. Completion keeps
   the cover file ID and queues a thumbnail if needed.
 - Explicit Sync Vehicle can repair the exact .40 overwrite using retained Android
   originals, only with matching account/Store/record/field snapshot/self-written
   sheet timestamp/error evidence. Genuine newer edits cannot use this recovery.
-- 339 Node tests, 16 standalone/eight inline syntax checks and diff checks pass.
+- 340 Node tests, 16 standalone/eight inline syntax checks and diff checks pass.
   Six .40 reproduction cases failed before the fix. No physical-phone result;
   real IndexedDB browser verification was blocked by local Chromium startup.
 - Android/APKs, pairing, active/hourly Hub, six-message/ten-chat cache, Listings,

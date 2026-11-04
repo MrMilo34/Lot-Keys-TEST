@@ -15,10 +15,10 @@ test('release metadata is consistently V0.9.5.41 with Android V0.9.5.40', () => 
   assert.equal(version.channel, 'test');
   assert.equal(version.release, 'background-save-recovery');
   assert.equal(version.androidConnectorVersion, '0.9.5.40');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095041-background-save-recovery');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095041-background-save-recovery-guard');
   assert.match(read('index.html'), /V0\.9\.5\.41/);
   assert.match(read('manifest.webmanifest'), /build=095041/);
-  assert.match(read('sw.js'), /lotkeys-app-v095041-background-save-recovery/);
+  assert.match(read('sw.js'), /lotkeys-app-v095041-background-save-recovery-guard/);
   assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.40/);
   assert.match(read('android/app/build.gradle'), /versionCode 95040/);
   assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.40 TEST/);
