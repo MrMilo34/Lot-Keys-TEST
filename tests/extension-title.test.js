@@ -17,7 +17,7 @@ function zipFiles(relative){
   return files;
 }
 const old=zipFiles('extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.23.zip');
-const packed=zipFiles('extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.24.zip');
+const packed=zipFiles('extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.25.zip');
 const fb=packed.get('facebook.js').toString();
 const helper=fb.slice(fb.indexOf('  function listingModelValue('),fb.indexOf('  const labelsForKey'));
 function name(listing){const ctx={};vm.createContext(ctx);vm.runInContext(helper,ctx);return ctx.listingModelValue(listing)}
@@ -78,15 +78,15 @@ test('unchecked Details never change the Facebook name',async()=>{
 test('a prefix-only saved name asks for manual Model completion instead of inventing profile wording',async()=>{
   const f=form(),result=await f.ctx.fill(listing({title:'2024 Lincoln'}));assert.ok(result.manualKeys.includes('model'));assert.deepEqual(f.controls.get('model').values,[]);
 });
-test('the shipped extension keeps its permissions and media/UI assets, with consistent V0.1.24 metadata',()=>{
-  const before=JSON.parse(old.get('manifest.json')),after=JSON.parse(packed.get('manifest.json'));assert.equal(after.version,'0.1.24');assert.deepEqual(after.permissions,before.permissions);assert.deepEqual(after.host_permissions,before.host_permissions);
+test('the shipped extension keeps its permissions and media/UI assets, with consistent V0.1.25 metadata',()=>{
+  const before=JSON.parse(old.get('manifest.json')),after=JSON.parse(packed.get('manifest.json'));assert.equal(after.version,'0.1.25');assert.deepEqual(after.permissions,before.permissions);assert.deepEqual(after.host_permissions,before.host_permissions);
   for(const file of ['icon.png','sidepanel.css','sidepanel.js','vehicle-placeholder.webp'])assert.ok(packed.get(file).equals(old.get(file)),file);
-  assert.match(packed.get('background.js').toString(),/HELPER_VERSION = '0\.1\.24'/);assert.match(fb,/version:'0\.1\.24'/);assert.match(packed.get('sidepanel.html').toString(),/V0\.1\.24/);
-  const pointer=JSON.parse(fs.readFileSync(path.join(root,'extension/latest.json'),'utf8'));assert.equal(pointer.version,after.version);assert.ok(pointer.downloadUrl.endsWith('/LotKeys-Facebook-Assistant-Beta-v0.1.24.zip'));assert.match(fs.readFileSync(path.join(root,'index.html'),'utf8'),/BUNDLED_POST_BUDDY_VERSION = '0\.1\.24'/);
+  assert.match(packed.get('background.js').toString(),/HELPER_VERSION = '0\.1\.25'/);assert.match(fb,/version:'0\.1\.25'/);assert.match(packed.get('sidepanel.html').toString(),/V0\.1\.25/);
+  const pointer=JSON.parse(fs.readFileSync(path.join(root,'extension/latest.json'),'utf8'));assert.equal(pointer.version,after.version);assert.ok(pointer.downloadUrl.endsWith('/LotKeys-Facebook-Assistant-Beta-v0.1.25.zip'));assert.match(fs.readFileSync(path.join(root,'index.html'),'utf8'),/BUNDLED_POST_BUDDY_VERSION = '0\.1\.25'/);
 });
 test('Garage reports the bundled version it actually downloads when a saved release pointer is older',async()=>{
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),source=html.slice(html.indexOf('async function openPostBuddyDownload('),html.indexOf('const LISTING_PROFILE_RETENTION_MS'));
-  const bundle='https://example.test/extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.24.zip',links=[],notices=[];
-  const ctx={URL,location:{href:'https://example.test/'},BUNDLED_POST_BUDDY_ZIP_URL:bundle,BUNDLED_POST_BUDDY_VERSION:'0.1.24',resolvePostBuddyDownloadUrl:async()=>({url:'https://example.test/old.zip',version:'0.1.23'}),fetch:async url=>{assert.equal(url,bundle);return{ok:true,blob:async()=>new Blob([packed.get('manifest.json')])}},document:{body:{appendChild:x=>links.push(x)},createElement:()=>({click(){},remove(){}})},setTimeout:()=>{},showPostBuddyNotice:x=>notices.push(x),alert:x=>{throw Error(x)}};
-  vm.createContext(ctx);vm.runInContext(source,ctx);await ctx.openPostBuddyDownload('https://example.test/latest.json');assert.equal(links[0].download,'LotKeys-Facebook-Assistant-Beta-v0.1.24.zip');assert.ok(notices[0].includes('V0.1.24'));
+  const bundle='https://example.test/extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.25.zip',links=[],notices=[];
+  const ctx={URL,location:{href:'https://example.test/'},BUNDLED_POST_BUDDY_ZIP_URL:bundle,BUNDLED_POST_BUDDY_VERSION:'0.1.25',resolvePostBuddyDownloadUrl:async()=>({url:'https://example.test/old.zip',version:'0.1.23'}),fetch:async url=>{assert.equal(url,bundle);return{ok:true,blob:async()=>new Blob([packed.get('manifest.json')])}},document:{body:{appendChild:x=>links.push(x)},createElement:()=>({click(){},remove(){}})},setTimeout:()=>{},showPostBuddyNotice:x=>notices.push(x),alert:x=>{throw Error(x)}};
+  vm.createContext(ctx);vm.runInContext(source,ctx);await ctx.openPostBuddyDownload('https://example.test/latest.json');assert.equal(links[0].download,'LotKeys-Facebook-Assistant-Beta-v0.1.25.zip');assert.ok(notices[0].includes('V0.1.25'));
 });

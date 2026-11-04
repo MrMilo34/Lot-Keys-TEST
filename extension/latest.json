@@ -1,15 +1,15 @@
 {
   "name": "LotKeys Facebook Posting Buddy",
   "channel": "beta",
-  "version": "0.1.24",
-  "downloadUrl": "https://raw.githubusercontent.com/MrMilo34/Lot-Keys-TEST/main/extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.24.zip",
+  "version": "0.1.25",
+  "downloadUrl": "https://raw.githubusercontent.com/MrMilo34/Lot-Keys-TEST/main/extension/releases/LotKeys-Facebook-Assistant-Beta-v0.1.25.zip",
   "releaseNotesUrl": "https://github.com/MrMilo34/Lot-Keys-TEST/tree/main/extension",
-  "publishedAt": "2026-10-13T19:31:54Z",
+  "publishedAt": "2026-11-04",
   "minimumLotKeysVersion": "0.9.4.81",
   "notes": [
-    "Uses the saved LotKeys Listing name for Facebook Model/name filling, preserving custom wording.",
-    "Avoids repeating the matching Year/Make prefix in the Model input.",
-    "New posts, Details updates and Model retries use the same title rule.",
-    "Field retries correctly derive their update/replacement mode."
+    "Fixes Update Photos on an empty Facebook photo uploader.",
+    "Reacquires the live picker after photo removals and preserves the selected video in a mixed picker.",
+    "Prepares every replacement before removing existing photos and stops safely when controls are unavailable.",
+    "Uses actual photo counts for progress; a video alone cannot satisfy Photos."
   ]
 }

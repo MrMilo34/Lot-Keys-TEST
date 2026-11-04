@@ -1,3 +1,29 @@
+# LotKeys TEST V0.9.5.42 — Posting Buddy media updates
+
+Baseline main: 246b49696911bc447f7b7b7d27032cd402d2692d (.41).
+Branch: codex/posting-buddy-media-v0125. Web build 095042; extension V0.1.25.
+
+- Reproduced .24 extension's empty-uploader replacement failure: saved Facebook
+  URL enabled replacement mode, which required a removal even for Photos 0/20.
+  Old picker references also became detached when Facebook rebuilt the grid.
+- .25 prepares/decodes all replacements first, scopes controls to the uploader,
+  handles an explicitly empty uploader, verifies bounded removals and reacquires
+  its current input. A mixed picker's selected video is retained.
+- Progress uses actual image counts after FileList reset; video alone cannot
+  satisfy Photos. Blocked unchanged old photos stay flagged for review.
+- 355 Node tests, 16 web/eight inline/three packaged JS syntax checks pass.
+  Seven of the first 12 media reproductions failed on .24; 15 final cases pass.
+- Install into the SAME unpacked extension folder, Reload at chrome://extensions,
+  reload Facebook and Sync. Verify V0.1.25; website update alone is insufficient.
+- No live Facebook edits were performed. Check empty/existing uploaders and
+  photo+video selection, order, previews and unchecked fields before saving.
+- Retain .40 Android/APKs, .41 Drive recovery, Hub/phone/cache, permissions,
+  saved Listing titles and final user Save/Update/Publish control.
+- See RELEASE-0.9.5.42.md and LotKeys-0.9.5.42-Test-Report.md. Read this checkpoint
+  before historical notes; use bounded source reads to avoid repeating work.
+
+## Released .41 checkpoint
+
 # LotKeys TEST V0.9.5.41 — background-save recovery
 
 Baseline main: 3b7ce5ce814e0b812f70f66b1e064340b68ba17e (.40).
