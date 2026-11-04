@@ -1,3 +1,13 @@
+V0.9.5.41 BACKGROUND-SAVE RECOVERY
+- Pending Profiles and Inventory refreshes preserve native upload receipts and local media.
+- Conditional database writes protect newer edits; delayed thumbnails merge image bytes only.
+- Explicit retry can recover the evidenced .40 sheet overwrite with retained Android originals.
+- Errors/native saves override stale Synced flags; completed saves restore their cover thumbnail.
+- Web-only: original Android .40, pairing, active/hourly Hub and conversation cache retained.
+- 339 Node tests, 16 JavaScript/eight inline syntax checks and diff checks pass.
+- Physical-phone confirmation outstanding; no connector reinstall or data clearing.
+- Build: 095041. Cache: lotkeys-app-v095041-background-save-recovery.
+
 V0.9.5.40 PHONE PAIRING AND LIVE CONNECTION STATUS
 - Add a PC / Check for code on the phone; trusted reconnections remain automatic.
 - Blue phone/PC live connection status; open status dialogs and native UI refresh.
