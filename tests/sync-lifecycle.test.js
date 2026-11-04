@@ -33,7 +33,7 @@ test('the real lifecycle listeners distinguish app switching from freezing and n
 function inventoryFixture({unchanged=false}={}){
   const timers=[],writes=[],rows=new Map(),events=[],counts={reads:0,covers:0};let resolveCover;
   const cover=new Promise(resolve=>resolveCover=resolve),entry={id:'vehicle',name:'RAV4',price:19888,updatedAt:10,drive:{profileFolderId:'profile',coverPhotoFileId:'cover'}},local={...entry,syncStatus:'synced',photos:[{id:'photo',driveFileId:'cover',blob:new Blob(['cached'])}]};if(unchanged)rows.set('vehicle',local);
-  const ctx={console,Date,Map,Set,window:{dispatchEvent:e=>events.push(e)},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail}},setTimeout:fn=>{timers.push(fn);return timers.length},activeUploadRequests:new Set(),structure:async()=>({inventoryId:'inventory'}),listInventoryProfileFolders:async()=>[{id:'profile'}],readInventoryIndex:async()=>{counts.reads++;return{file:{id:'index'},entries:[entry]}},incompleteDriveVehicle:()=>false,clearVehicleSyncState:()=>{},clearOwnerRequestDraft:()=>{},clearVehicleUiProgressState:()=>{},protectPopulatedLocalVehicle:()=>false,contributionResolutionRows:x=>x,pendingContributionRequests:x=>x,indexEntry:v=>({id:v.id,name:v.name,price:v.price,updatedAt:v.updatedAt,drive:v.drive}),DB:{all:async()=>[...rows.values()],get:async(type,id)=>rows.get(id),put:async(type,v)=>{writes.push(v.id);rows.set(v.id,v)},del:async(type,id)=>rows.delete(id)},fetchFileBlob:async()=>{counts.covers++;return cover},reconcileListingVehicleProfiles:async()=>{},inventoryIndexSignature:()=> 'index-signature',inventoryFolderSignature:()=> 'folder-signature',setSetting:async()=>{}};
+  const ctx={console,Date,Map,Set,window:{dispatchEvent:e=>events.push(e)},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail}},setTimeout:fn=>{timers.push(fn);return timers.length},activeUploadRequests:new Set(),structure:async()=>({inventoryId:'inventory'}),listInventoryProfileFolders:async()=>[{id:'profile'}],readInventoryIndex:async()=>{counts.reads++;return{file:{id:'index'},entries:[entry]}},incompleteDriveVehicle:()=>false,clearVehicleSyncState:()=>{},clearOwnerRequestDraft:()=>{},clearVehicleUiProgressState:()=>{},protectPopulatedLocalVehicle:()=>false,contributionResolutionRows:x=>x,pendingContributionRequests:x=>x,indexEntry:v=>({id:v.id,name:v.name,price:v.price,updatedAt:v.updatedAt,drive:v.drive}),DB:{all:async()=>[...rows.values()],get:async(type,id)=>rows.get(id),put:async(type,v)=>{writes.push(v.id);rows.set(v.id,v)},update:async(type,id,change)=>{const next=change(rows.get(id));if(next!==undefined){writes.push(id);rows.set(id,next);}return rows.get(id);},del:async(type,id)=>rows.delete(id)},fetchFileBlob:async()=>{counts.covers++;return cover},reconcileListingVehicleProfiles:async()=>{},inventoryIndexSignature:()=> 'index-signature',inventoryFolderSignature:()=> 'folder-signature',setSetting:async()=>{}};
   vm.createContext(ctx);vm.runInContext(html.slice(html.indexOf('  const inventoryCoverJobs='),html.indexOf('  async function quickRefreshInventoryFromDrive(')),ctx);return {ctx,timers,writes,rows,events,counts,resolveCover,entry};
 }
 test('Inventory refresh reuses the fetched index and returns metadata before a slow cover download',async()=>{
@@ -44,6 +44,24 @@ test('unchanged Inventory rows do not rewrite their cached photo blobs',async()=
 });
 test('a late thumbnail download cannot replace a newer locally edited Vehicle Profile',async()=>{
   const f=inventoryFixture();await f.ctx.refreshInventoryFromDrive({indexHint:{file:{id:'index'},entries:[f.entry]}});f.timers.shift()();f.rows.get('vehicle').syncStatus='pending';f.rows.get('vehicle').price=17999;f.resolveCover(new Blob(['late-cover']));await new Promise(r=>setImmediate(r));assert.equal(f.rows.get('vehicle').price,17999);assert.equal(f.rows.get('vehicle').photos[0].blob,undefined);assert.equal(f.events.length,0);
+});
+test('Inventory refresh preserves an unfinished native job even with an old synced flag',async()=>{
+  const f=inventoryFixture({unchanged:true}),local=f.rows.get('vehicle');
+  local.drive.nativeTransfer={id:'retained-native-job'};local.syncError='A retained save needs attention';
+  f.entry.updatedAt=200;f.entry.drive.coverPhotoFileId='';
+  await f.ctx.refreshInventoryFromDrive({indexHint:{file:{id:'index'},entries:[f.entry]}});
+  assert.equal(f.writes.length,0);assert.equal(local.drive.nativeTransfer.id,'retained-native-job');
+  assert.ok(f.rows.get('vehicle').photos[0].blob);assert.equal(f.rows.get('vehicle').updatedAt,10);
+});
+test('a pending save arriving after Inventory metadata was read wins the atomic refresh write',async()=>{
+  const f=inventoryFixture({unchanged:true}),update=f.ctx.DB.update;f.entry.price=17000;
+  f.ctx.DB.update=async(type,id,change)=>{
+    f.rows.set(id,{...f.rows.get(id),price:18500,updatedAt:300,syncStatus:'pending',drive:{...f.rows.get(id).drive,nativeTransfer:{id:'new-job'}}});
+    return update(type,id,change);
+  };
+  await f.ctx.refreshInventoryFromDrive({indexHint:{file:{id:'index'},entries:[f.entry]}});
+  assert.equal(f.rows.get('vehicle').price,18500);assert.equal(f.rows.get('vehicle').syncStatus,'pending');
+  assert.equal(f.rows.get('vehicle').drive.nativeTransfer.id,'new-job');assert.equal(f.writes.length,0);
 });
 test('foreground resume starts saved vehicle uploads before preference backups and directory scans',async()=>{
   const calls=[],ctx={document:{visibilityState:'visible'},navigator:{onLine:true},storeTransitionBusy:false,foregroundResumeBusy:false,DriveSync:{resumeStalledUploads:()=>calls.push('recover-stalled'),syncPersonalPreferences:async()=>calls.push('preferences'),refreshStoreDirectory:async()=>calls.push('directory')},resumePendingVehicleSyncs:async()=>calls.push('vehicles'),resumePendingContributionSubmissions:async()=>calls.push('contributions'),resumePendingListingSyncs:async()=>calls.push('listings'),refreshInventoryIfDue:async()=>calls.push('inventory-refresh'),refreshListingsIfDue:async()=>calls.push('listing-refresh'),storeProfileThumbCache:{clear:()=>{}},route:'home',modal:{open:false},console};vm.createContext(ctx);vm.runInContext(html.slice(html.indexOf('  async function resumeForegroundWork('),html.indexOf('  let baseReadySignaled=')),ctx);await ctx.resumeForegroundWork();assert.ok(calls.indexOf('vehicles')<calls.indexOf('preferences'));assert.ok(calls.indexOf('inventory-refresh')<calls.indexOf('directory'));assert.equal(ctx.foregroundResumeBusy,false);

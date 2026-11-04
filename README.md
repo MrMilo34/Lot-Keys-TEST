@@ -1,3 +1,16 @@
+# LotKeys TEST V0.9.5.41 — background-save recovery
+
+Opening a Vehicle Profile or refreshing Inventory now preserves its unfinished
+Android save, local edit and photo list. A retained error or native upload cannot
+appear as Synced. For the .40 paused-save issue, load .41 and tap Sync Vehicle
+once on the affected Profile; verified recovery reuses Android's retained files.
+
+Keep your installed .40 TEST connector. No APK reinstall or data clearing is
+needed. 339 Node tests and syntax checks pass; physical-phone confirmation is
+still required. [Release details](RELEASE-0.9.5.41.md),
+[verification](LotKeys-0.9.5.41-Test-Report.md),
+[current project state](CURRENT-STATE.md).
+
 # LotKeys TEST V0.9.5.40 — phone connection polish
 
 Phone connection settings have Add a PC / Check for code. Both devices show blue
