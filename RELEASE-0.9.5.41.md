@@ -25,13 +25,16 @@ Recovery requires the same account, Store, record, original field snapshot,
 matching self-written sheet timestamp and the reported pause error. A genuine
 newer edit does not qualify. Missing evidence or unavailable Android/Drive access
 still requires review; this is not a guarantee that every previously damaged
-record can be repaired automatically. Do not clear browser or connector data.
+record can be repaired automatically. If a changed record has an empty media
+list while the native plan retained media, retry preserves the job for review
+instead of cancelling it and treating missing media as intentional deletions.
+Do not clear browser or connector data.
 
 The signed .40 APK, original certificate/package, pairing, active/hourly Hub
 policy, six-message/ten-conversation cache, Marketplace, Processor and extension
 files are retained. No connector installation is required for this website fix.
 
-Validation: **339 Node tests pass**, including the real hydration/handoff
+Validation: **340 Node tests pass**, including the real hydration/handoff
 functions, .40 recovery, newer-edit races and the temporary database fallback.
 Syntax checks pass for 16 JavaScript files and eight executable inline scripts;
 `git diff --check` passes. Browser/physical-phone end-to-end upload testing remains

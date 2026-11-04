@@ -115,6 +115,13 @@ test('a real changed price never qualifies as repair of the old sheet overwrite'
   assert.equal(await f.context.nativeVehicleTransfer(changed,{rootId:f.store},()=>{},{resumeOnly:true,force:true}),false);
   assert.equal(cancelled,true);assert.equal(changed.price,48000);assert.equal(changed.updatedAt,sheetAt);
 });
+test('an emptied gallery without sufficient recovery evidence keeps the native job instead of treating missing originals as deletions',async()=>{
+  const f=fixture();await f.context.nativeVehicleTransfer(f.vehicle,{rootId:f.store},()=>{});
+  const current={...f.getPersisted(),updatedAt:200,price:48000,photos:[],videos:[],attachments:[]};await f.context.DB.put('vehicles',current);
+  f.context.window.LotKeysPhone.uploadCall=async()=>{throw Error('The retained job must not be cancelled or replaced');};
+  await assert.rejects(f.context.nativeVehicleTransfer(current,{rootId:f.store},()=>{},{resumeOnly:true,force:true}),error=>error.nativeTransfer&&/save has been kept/.test(error.message));
+  assert.equal(f.getPersisted().drive.nativeTransfer.id,'native-batch-1');assert.equal(f.getPersisted().price,48000);assert.equal(f.getPersisted().updatedAt,200);
+});
 test('a newer edit made while Android prepares its receipt cannot be replaced by the old browser object',async()=>{
   const f=fixture(),phone=f.context.window.LotKeysPhone,call=phone.uploadCall;
   phone.uploadCall=async(op,input)=>{

@@ -2703,7 +2703,9 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
       }
     }
     if(receipt&&!Core.sameContext(receipt.context,scope)){
-      await check();await phone.uploadCall('cancel',{id:receipt.id});await check();delete v.drive.nativeTransfer;receipt=null;
+      await check();
+      if(receipt.plan?.inventory?.length&&!items.length){const error=new Error('This Profile has an empty media list while Android retains its earlier save. That save has been kept. Review the Profile media before replacing it.');error.nativeTransfer=true;throw error;}
+      await phone.uploadCall('cancel',{id:receipt.id});await check();delete v.drive.nativeTransfer;receipt=null;
       const persisted=await DB.update('vehicles',v.id,current=>current&&String(current.updatedAt||0)===scope.revision?v:undefined);
       if(!persisted||String(persisted.updatedAt||0)!==scope.revision)await check();saveVehicleSyncState(v);
     }
