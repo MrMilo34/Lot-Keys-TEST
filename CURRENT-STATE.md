@@ -1,24 +1,29 @@
-# LotKeys TEST .44 — early background handoff (validation in progress)
+# LotKeys TEST .44 — earlier Android handoff
 
-Working branch: codex/early-background-handoff-v095044; baseline main
-4d27b49c7018b6386bdbafa9dfc6e20629d87c00 (.43). Do not claim .44 deployed yet.
-Blair confirmed .43 uploads continued after switching apps: retain this milestone.
+Release: PR #15; web build 095044; Android 0.9.5.44-test / 95044; extension .25.
+Baseline .43: 4d27b49c7018b6386bdbafa9dfc6e20629d87c00.
+Blair confirmed .43 uploads continued after switching apps. Preserve that milestone.
 
-- New protocol-2 work plan keeps PDF generation, sharing and Inventory completion
-  in Android. The browser saves folders, essential Sheet/Index data and stable
-  reserved media/PDF IDs, then hands off every original and the complete plan.
-- Independent folders run concurrently. Protocol-2 staging uses bounded 1 MiB
-  chunks; old .40 connectors retain the established full browser path.
-- Native PDF rendering preserves text, links and three CARFAX badges, checkpoints
-  export bytes, verifies uploaded size/MD5 and uses conditional PDF/index updates.
-  Genuine newer Vehicle/PDF/index revisions stop reconciliation; originals remain.
-- Media removals, renames/unlisted files and duplicate PDFs keep the conservative
-  existing path. No native media deletions. Pending cross-device rows are guarded.
-- Website tests: 381 pass; web/inline syntax passes. Android build/tests/lint and
-  original-key APK packaging are pending. Thirty-second readiness is a target,
-  not measured or guaranteed, especially for large original videos.
-- .44 also fixes visible Resume not upgrading an existing ordinary upload job.
-  Hub idle/active policy, extension .25, pairing, consent and .43 recovery stay.
+- Browser establishes folders, core Sheet/Index and stable media/PDF IDs first.
+  Android retains every original plus the complete PDF/Inventory finishing plan.
+  Ready to switch apps appears only after commit confirms all sources retained.
+- Native renders/checkpoints the linked/badged Info Sheet and finishes sharing
+  and Inventory without a live browser. Parallel folders and 1 MiB staging.
+- Old connectors use the established path. Destructive/ambiguous media changes
+  and duplicate PDFs retain foreground reconciliation. No native media deletion.
+- Strict account/Store/edit/Sheet/parent/PDF ETag/index guards preserve newer
+  work and originals. Version-2 conflicts cannot fall through to browser overwrite.
+  Pending rows and completed native metadata survive .44 scans/concurrent writes.
+- Visible Resume can upgrade an ordinary queued job to UIDT. Hub/idle/cache,
+  pairing, consent, extension .25 and .43 response recovery are retained.
+- 393 Node tests, 27 native tests, assembly/lint and syntax pass. Native build
+  abdbec545a5f7ec793a5bb0e589c48266f34b1b0 / Actions 42424376391.
+- Signed .44 APK/checksum in downloads; original TEST certificate/package verified.
+  Install OVER the existing connector, retain data/trust. Private key never in Git.
+- Thirty-second readiness is a target, not measured. Physical-phone .44/Drive
+  verification remains pending. Older open clients can require reconciliation.
+- See RELEASE-0.9.5.44.md and LotKeys-0.9.5.44-Test-Report.md. Verify main and
+  Pages deployment before claiming release live. Read bounded source sections.
 
 ## Released .43 checkpoint
 

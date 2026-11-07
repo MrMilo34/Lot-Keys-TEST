@@ -65,3 +65,15 @@ test('the actual healthy protocol-2 sync skips browser rendering and reconciliat
   const f=completionFixture();f.ctx.restoreVehicleSyncState=()=>{};f.ctx.buildVehicleProfileName=()=>f.v.name;f.ctx.structure=async()=>({rootId:scope.store});f.ctx.config=async()=>({});f.ctx.setting=async key=>({currentUserAdminLevel:2,currentAccountEmail:scope.account,storeFolderId:scope.store}[key]);f.ctx.prepareDeferredVehicleSave=async()=>true;
   const start=html.indexOf('  async function syncVehicle(');vm.runInContext(html.slice(start,html.indexOf('  async function syncVehicleState(',start)),f.ctx);await f.ctx.syncVehicle(f.v);assert.equal(f.stored().syncStatus,'synced');
 });
+test('protocol-2 finishing cannot collide with a retained old job or another core-sheet save of the same edit',()=>{
+ const v=vehicle(),assets=Deferred.assign(v,Deferred.analyze(v),['photo-reserved-123','pdf-reserved-123']),op=Deferred.directory(v,{},'template-file-123','fp','https://mrmilo34.github.io/Lot-Keys-TEST/assets/'),a=Deferred.plan(v,scope,assets,op,'index-file-123','first'),b=Deferred.plan(v,scope,assets,op,'index-file-123','second');assert.notEqual(a.key,Core.key(scope));assert.notEqual(a.key,b.key);assert.deepEqual(a.context,b.context);
+});
+test('recovered existing folders are inspected for their existing PDF before reserving destinations',async()=>{
+ const f=preparationFixture();f.ctx.findChildByAppProperty=async()=>({id:'profile-folder-123',name:f.v.name});f.ctx.listFiles=async query=>query.includes('shared-folder-123')?[{id:'existing-pdf-123',name:'Vehicle Info Directory.pdf'}]:[];f.ctx.apiFetch=async()=>({ids:['photo-reserved-123']});await f.ctx.prepareDeferredVehicleSave(f.v,{rootId:scope.store,inventoryId:'inventory-folder-123'},{},()=>{});assert.equal(f.v.drive.directoryPdfId,'existing-pdf-123');
+});
+test('existing Profile folders keep the current Vehicle name during the foundation step',async()=>{
+ const f=preparationFixture();f.v.drive.profileFolderId='profile-folder-123';f.ctx.driveGet=async()=>({id:'profile-folder-123',name:'Old name'});f.ctx.patchMetadata=async(id,body)=>{f.events.push('rename:'+body.name);return{id,...body};};await f.ctx.prepareDeferredVehicleSave(f.v,{rootId:scope.store,inventoryId:'inventory-folder-123'},{},()=>{});assert.equal(f.events[0],'rename:2021 Jeep');
+});
+test('a protocol-2 newer remote edit or PDF conflict cannot fall through to browser overwrites',async()=>{
+ const f=completionFixture();f.ctx.window.LotKeysNativeTransfers.wait=async()=>{throw Object.assign(Error('The Info Sheet was changed elsewhere. Its newer PDF has been preserved.'),{nativeState:'needs_reconcile',snapshot:{}});};await assert.rejects(f.ctx.nativeVehicleTransfer(f.v,{rootId:scope.store},()=>{},{resumeOnly:true}),/newer PDF has been preserved/);assert.equal(f.stored().drive.nativeFinalizationPending,true);assert.ok(f.stored().drive.nativeTransfer);assert.equal(f.v.drive.nativeTransfer.reconcile,undefined);
+});

@@ -36,7 +36,7 @@
   function plan(v,scope,assets,directoryOperation,indexId,sheetUpdated){
     const cover=v.photos?.[0],coverKey=cover&&assets.some(row=>row.key===`photo:${cover.id}`)?`photo:${cover.id}`:'';
     const result=Core.batch(scope,assets,[directoryOperation,{type:'vehicle-cover',sheetId:v.drive.adminSheetId,sheetUpdated,indexId,recordUpdated:Number(v.updatedAt),assetKey:coverKey,coverId:cover?.driveFileId||''}]);
-    result.version=2;result.stagingChunkBytes=1024*1024;result.inventory=[];
+    result.version=2;result.key=JSON.stringify(['vehicle-save-v2',Core.key(scope),sheetUpdated,directoryOperation.pdfId]);result.stagingChunkBytes=1024*1024;result.inventory=[];
     for(const [kind,field] of groups)for(let position=0;position<(v[field]||[]).length;position++){const item=v[field][position];result.inventory.push({id:item.id,kind,position,name:item.name||'',driveFileId:item.driveFileId||'',driveName:item.driveName||'',size:item.blob?.size??item.size??0,type:item.blob?.type||item.type||''});}
     return result;
   }
