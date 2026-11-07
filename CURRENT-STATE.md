@@ -1,3 +1,32 @@
+# LotKeys TEST V0.9.5.43 — retained Android save status
+
+Baseline main: 9e13feb7e78b27ae3ce2d20bb4260fd98f3b2165 (.42).
+Branch: codex/native-save-status-v095043. Web 095043; Android .40; extension .25.
+
+- DT3526A stalled at 50% on .42; Profile reported a different account/Store/edit.
+  Blair pressed Sync Vehicle and the save continued/completed. No native snapshot
+  identifies the exact triggering response, so do not claim on-device root cause.
+- Reproduced: nativeCall swallowed failed JSON parsing and returned {}, which
+  the transfer context guard misreported as another account/edit. .43 rejects
+  malformed replies as recoverable response errors, not a context change.
+- Status validates identity structure, preserves the original receipt and retries
+  transient observation failures. Explicit 4xx rejection, real context mismatch
+  and invalid completed IDs remain stopped; no bypass or foreign adoption.
+- Hidden upload observation waits for visibility, then rechecks the retained job.
+  Queued/active/error messages are distinct; failures replace switch-app advice.
+- 369 Node tests pass (14 new), plus 16 web/eight inline/three extension syntax
+  checks. No real-device locked-phone or live Drive verification is claimed.
+- Android/APKs, native upload scheduler/protocol, .41 recovery, extension .25,
+  Hub, pairing, recent-message cache and original signing identity retained.
+  No APK reinstall, app/browser data clearing or photo reimport is required.
+- Native follow-up: TransferJobService.schedule's existing-pending-job early
+  return prevents a visible Resume action from upgrading ordinary work to UIDT.
+  This requires a new same-key APK and native tests; it is NOT fixed in .43.
+- See RELEASE-0.9.5.43.md and LotKeys-0.9.5.43-Test-Report.md. Preserve genuine
+  context guards; use bounded reads and current Git main before further work.
+
+## Released .42 checkpoint
+
 # LotKeys TEST V0.9.5.42 — Posting Buddy media updates
 
 Baseline main: 246b49696911bc447f7b7b7d27032cd402d2692d (.41).

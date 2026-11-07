@@ -1,15 +1,15 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.42",
-  "build": "095042",
-  "release": "posting-buddy-media",
+  "version": "0.9.5.43",
+  "build": "095043",
+  "release": "native-save-status",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095042-posting-buddy-media",
-  "publishedAt": "2026-11-04",
-  "basedOn": "LotKeys V0.9.5.41 background-save recovery",
+  "serviceWorkerCache": "lotkeys-app-v095043-native-save-status",
+  "publishedAt": "2026-11-07",
+  "basedOn": "LotKeys V0.9.5.42 with Posting Buddy V0.1.25",
   "androidConnectorVersion": "0.9.5.40",
-  "preparedAt": "2026-11-04",
+  "preparedAt": "2026-11-07",
   "deploymentStatus": "test-release",
   "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.40.apk"
 }

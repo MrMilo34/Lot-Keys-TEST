@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095042-posting-buddy-media';
+const CACHE='lotkeys-app-v095043-native-save-status';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

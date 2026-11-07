@@ -298,9 +298,11 @@
         cache: 'no-store',
         targetAddressSpace: 'loopback'
       });
-      let data = {};
-      try { data = await response.json(); } catch {}
-      if (!response.ok) throw Error(data.error || 'The Android phone layer returned ' + response.status + '.');
+      let data;
+      try { data = await response.json(); }
+      catch { const error = Error('The Android phone response was incomplete. Reopen LotKeys to check its retained save.'); error.code = response.ok ? 'NATIVE_RESPONSE_INVALID' : 'NATIVE_REQUEST_REJECTED'; if (!response.ok) error.status = response.status; throw error; }
+      if (!data || typeof data !== 'object' || Array.isArray(data)) { const error = Error('The Android phone returned an invalid response. Reconnect to check its saved state.'); error.code = 'NATIVE_RESPONSE_INVALID'; throw error; }
+      if (!response.ok) { const error = Error(data.error || 'The Android phone layer returned ' + response.status + '.'); error.status = response.status; error.code = 'NATIVE_REQUEST_REJECTED'; throw error; }
       return data;
     } catch (error) {
       if (error?.name === 'AbortError') throw Error('The Android phone layer did not answer. Reopen LotKeys Connector TEST.');
