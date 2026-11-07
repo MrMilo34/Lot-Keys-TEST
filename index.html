@@ -2711,18 +2711,19 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
   async function finishDeferredVehicleSave(v,reportProgress){
     const revision=String(v.updatedAt||0),receipt=v.drive.nativeTransfer;
     if(!receipt?.directoryResult||v.drive.nativeFinalizationPending)throw new Error('Android has not confirmed all Vehicle finishing work.');
+    v.drive.coverPhotoFileId=v.photos?.[0]?.driveFileId||'';
     v.drive.lastPhotoAssetFingerprint=assetFingerprint(v.photos);v.drive.lastDocumentAssetFingerprint=assetFingerprint(v.attachments);v.drive.lastVideoAssetFingerprint=assetFingerprint(v.videos);v.drive.lastAssetFingerprint=[v.drive.lastPhotoAssetFingerprint,v.drive.lastDocumentAssetFingerprint,v.drive.lastVideoAssetFingerprint].join('||');
     v.syncStatus='synced';v.syncError='';v.recoveryNeeded=false;v.recoveryReason='';v.mediaUpload=null;v.lastDriveSyncAt=Date.now();delete v.drive.nativeTransfer;delete v.drive.syncCheckpoint;
-    const saved=await DB.update('vehicles',v.id,current=>current&&String(current.updatedAt||0)===revision?v:undefined);
-    if(!saved||String(saved.updatedAt||0)!==revision){const error=new Error('The Vehicle changed while confirming its background save. Its newer edit has been kept.');error.nativeTransfer=true;throw error;}
+    let applied=false;await DB.update('vehicles',v.id,current=>{if(!current||String(current.updatedAt||0)!==revision||current.drive?.nativeTransfer?.id!==receipt.id)return;applied=true;return v;});
+    if(!applied){const error=new Error('The Vehicle changed while confirming its background save. Its newer edit has been kept.');error.nativeTransfer=true;throw error;}
     clearVehicleSyncState(v.id);if(v.drive.coverPhotoFileId&&!v.photos?.[0]?.blob)queueInventoryCover(v.id,v.drive.coverPhotoFileId);reportProgress({status:'complete',percent:100,message:'Vehicle Profile and Info Sheet saved in the background'});return v;
   }
   function assetFingerprint(items){return (items||[]).map(x=>`${x.id||''}:${x.driveFileId||''}:${x.name||''}`).join('|');}
   function directoryFingerprint(v,c,templateId){return JSON.stringify(['v071-text-only',templateId,c.storeName,c.directoryStoreAddress,c.directoryDirectionsUrl,v.year,v.make,v.model,v.stock,v.odometer,v.odometerUnit,v.originalListingUrl,v.carfaxUrl,!!v.carfaxOneOwner,!!v.carfaxLowKm,!!v.carfaxNoAccidents,v.drive?.photosFolderId,v.drive?.videosFolderId,v.drive?.documentsFolderId]);}
   function sheetFingerprint(v){return JSON.stringify([v.name,v.year,v.make,v.model,v.bodyStyle||'',v.exteriorColor||'',v.interiorColor||'',v.vehicleCondition||'',v.transmission||'',v.fuelType||'',v.engineSize||'',v.horsepower||'',v.price,v.odometer,v.odometerUnit,v.vin,v.stock,v.originalListingUrl,v.carfaxUrl,!!v.carfaxOneOwner,!!v.carfaxLowKm,!!v.carfaxNoAccidents,v.description,v.createdByUserName||'',v.createdByEmail||'',v.createdAt||0,!!v.pendingDeal,JSON.stringify(v.pendingDealRequests||[]),v.pendingDealUpdatedAt||'',v.pendingDealUpdatedByUserName||'',JSON.stringify(v.priceChangeRequests||[]),JSON.stringify(v.priceChangeAwards||[]),JSON.stringify(contributionRequestsForStorage(v)),JSON.stringify(contributionResolutionRows(v.contributionResolutions)),JSON.stringify(v.websitePriceFinding||null),v.photos?.[0]?.driveFileId,v.drive?.directoryPdfUrl]);}
   // Native background saves are opt-in through the Android connector. The browser
-  // still prepares folders, core profile data and the directory before handing off
-  // ALL original media. No "background ready" claim is made during source staging.
+  // prepares folders and core data, then hands off ALL original media. Protocol 2
+  // retains the directory work in Android; readiness still requires every source.
   async function nativeVehicleTransfer(v,s,reportProgress,{resumeOnly=false,force=false}={}){
     const Native=window.LotKeysNativeTransfers,Core=window.LotKeysTransferCore,phone=window.LotKeysPhone;
     if(!Native||!Core||!phone?.uploadCall)return false;

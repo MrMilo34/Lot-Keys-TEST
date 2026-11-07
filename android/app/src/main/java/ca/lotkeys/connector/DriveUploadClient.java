@@ -73,8 +73,9 @@ class DriveUploadClient {
                 InputStream stream = reply.status >= 400 ? connection.getErrorStream() : connection.getInputStream();
                 if (stream != null) try (InputStream in = stream; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                     byte[] buffer = new byte[8192]; int read;
-                    while ((read = in.read(buffer)) >= 0) { if (out.size() + read > 8 * 1024 * 1024) throw new java.io.IOException("Google returned an oversized response."); out.write(buffer, 0, read); }
-                    reply.body = out.toByteArray(); reply.text = new String(reply.body, StandardCharsets.UTF_8);
+                    int limit = (url.contains("/export?") ? 10 : 8) * 1024 * 1024;
+                    while ((read = in.read(buffer)) >= 0) { if (out.size() + read > limit) throw new java.io.IOException("Google returned an oversized response."); out.write(buffer, 0, read); }
+                    reply.body = out.toByteArray(); if (!url.contains("/export?")) reply.text = new String(reply.body, StandardCharsets.UTF_8);
                 }
                 check.run();
                 if (reply.status != 401) return reply;

@@ -2,7 +2,7 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./lotkeys-transfer-core.js'));else root.LotKeysDeferredSave=factory(root.LotKeysTransferCore);})(typeof globalThis!=='undefined'?globalThis:this,function(Core){
   'use strict';
   const groups=[['photo','photos','photosFolderId'],['video','videos','videosFolderId'],['document','attachments','documentsFolderId']];
-  function filename(item,kind,position){const base=String(item.name||`${kind}-${position+1}`).replace(kind==='photo'?/^\d{1,3}\s*-\s*/:/^$/,'');return ((kind==='photo'?String(position+1).padStart(2,'0')+' - ':'')+base).replace(/[\\/:*?"<>|]/g,'-').trim().slice(0,240);}
+  function filename(item,kind,position){const base=kind==='photo'?String(item.name||`${kind}-${position+1}`).replace(/^\s*(?:(?:\d{1,3})\s*-\s*)+/,'').trim():String(item.name||`${kind}-${position+1}`);return ((kind==='photo'?String(position+1).padStart(2,'0')+' - ':'')+base).replace(/[\\/:*?"<>|]/g,'-').trim()||'file';}
   function analyze(v,remote={}){
     const rows=[];
     for(const [kind,field,parent] of groups){const files=remote[field]||[],used=new Set();
@@ -20,7 +20,7 @@
   function assign(v,analysis,ids){
     if(!analysis.eligible||ids.length!==analysis.needed||ids.some(id=>!/^[-\w]{8,200}$/.test(id))||new Set(ids).size!==ids.length)throw Error('Drive did not reserve every destination for this save.');
     const available=ids.slice(),assets=[];
-    for(const row of analysis.rows){const id=row.file?.id||available.shift();row.item.driveFileId=id;row.item.driveName=row.name;
+    for(const row of analysis.rows){const id=row.file?.id||available.shift();row.item.driveFileId=id;row.item.driveName=row.name;if(row.kind==='photo')row.item.name=String(row.item.name||`photo-${row.position+1}`).replace(/^\s*(?:(?:\d{1,3})\s*-\s*)+/,'').trim();
       if(!row.file)assets.push({key:`${row.kind}:${row.item.id}`,parent:row.parent,name:row.name,driveId:id,size:row.item.blob.size,type:row.item.blob.type||'application/octet-stream',properties:{lotkeysAssetId:row.item.id,lotkeysVehicleId:v.id,lotkeysAssetKind:row.kind}});
     }
     v.drive.directoryPdfId=v.drive.directoryPdfId||available.shift();v.drive.directoryPdfUrl=`https://drive.google.com/file/d/${v.drive.directoryPdfId}/view`;v.drive.nativeFinalizationPending=true;
