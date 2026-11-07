@@ -23,8 +23,9 @@
     // of making a second batch while Android already owns part of the originals.
     await onPrepared(snapshot);
     if (Core.terminal(snapshot.state)) return snapshot;
-    if (snapshot.state !== 'staging') { snapshot = await phone.uploadCall('commit', { id: snapshot.id }, 180000); onProgress({ phase: 'queued', ...Core.progress(snapshot) }); return snapshot; }
+    if (snapshot.state !== 'staging') { snapshot = await phone.uploadCall('commit', { id: snapshot.id }, 180000); onProgress({ phase: 'queued', version:plan.version, ...Core.progress(snapshot) }); return snapshot; }
     const total = plan.assets.reduce((sum, row) => sum + row.size, 0); let staged = 0;
+    const chunkSize = plan.version === 2 ? Math.min(1024 * 1024, Math.max(CHUNK, Number(plan.stagingChunkBytes) || CHUNK)) : CHUNK;
     for (let item = 0; item < plan.assets.length; item++) {
       const source = sources.get(plan.assets[item].key);
       if (!(source instanceof Blob) || source.size !== plan.assets[item].size) throw Error('Keep the original file available until Android finishes preparing this save.');
@@ -33,17 +34,17 @@
       staged += offset;
       while (offset < source.size) {
         await check();
-        const end = Math.min(source.size, offset + CHUNK), bytes = base64(await source.slice(offset, end).arrayBuffer());
+        const end = Math.min(source.size, offset + chunkSize), bytes = base64(await source.slice(offset, end).arrayBuffer());
         let receipt;
         try { receipt = await phone.uploadCall('chunk', { id: snapshot.id, item, offset, base64: bytes }); }
         catch { receipt = await phone.uploadCall('chunk', { id: snapshot.id, item, offset, base64: bytes }); }
         if (receipt.staged !== end) throw Error('Android has not confirmed the original-file handoff.');
         staged += end - offset; offset = end;
-        onProgress({ phase: 'staging', staged, total, percent: total ? Math.floor(staged * 100 / total) : 0 });
+        onProgress({ phase: 'staging', staged, total, version:plan.version, fileIndex:item+1, fileCount:plan.assets.length, fileName:plan.assets[item].name, percent: total ? Math.floor(staged * 100 / total) : 0 });
       }
     }
     await check(); snapshot = await phone.uploadCall('commit', { id: snapshot.id }, 180000);
-    onProgress({ phase: 'queued', ...Core.progress(snapshot) });
+    onProgress({ phase: 'queued', version:plan.version, ...Core.progress(snapshot) });
     return snapshot;
   }
   async function readStatus(id, phone = bridge()) {
@@ -61,9 +62,9 @@
   function presentation(value = {}) {
     const phase = String(value.phase || ''), reason = String(value.error || '').trim();
     if (phase === 'staging') return { status: 'uploading', backgroundReady: false, message: 'Preparing originals for Android · keep LotKeys open' };
-    if (phase === 'queued') return { status: 'queued', backgroundReady: true, message: 'Android has the originals · waiting for Android to start the Drive save' };
+    if (phase === 'queued') return { status: 'queued', backgroundReady: true, message: value.version === 2 ? 'Ready to switch apps · Android has the files and finishing work' : 'Android has the originals · waiting for Android to start the Drive save' };
     if (phase === 'uploading') return { status: 'uploading', backgroundReady: true, message: 'Android reports uploading to Drive · originals are retained' };
-    if (phase === 'finalizing') return { status: 'processing', backgroundReady: true, message: 'Files saved · updating Inventory preview' };
+    if (phase === 'finalizing') return { status: 'processing', backgroundReady: true, message: value.stage === 'directory' ? 'Files saved · Android is creating the Vehicle Info Sheet' : 'Files saved · updating Inventory preview' };
     if (phase === 'complete') return { status: 'processing', backgroundReady: true, message: 'Files saved · confirming the Vehicle Profile' };
     if (phase === 'retrying') return { status: 'paused', backgroundReady: true, message: reason || 'Android retained the originals · waiting to retry Drive' };
     if (phase === 'needs_reconcile') return { status: 'paused', backgroundReady: true, message: reason || 'Files saved · open LotKeys to finish Inventory' };
@@ -78,7 +79,7 @@
       visibility.addEventListener('visibilitychange', resumed); resumed();
     });
   }
-  async function wait(id, context, { phone = bridge(), check = async () => {}, onProgress = () => {}, delay = ms => new Promise(resolve => setTimeout(resolve, ms)), visibility = globalThis.document } = {}) {
+  async function wait(id, context, { phone = bridge(), check = async () => {}, onProgress = () => {}, onSnapshot = () => {}, delay = ms => new Promise(resolve => setTimeout(resolve, ms)), visibility = globalThis.document } = {}) {
     let lastProgress = { percent: 0 };
     while (true) {
       await waitUntilVisible(visibility); await check(); let snapshot;
@@ -93,7 +94,7 @@
       let result;
       try { result = Core.completed(snapshot, context); }
       catch (error) { error.nativeTransfer = true; error.code = 'NATIVE_RESULT_INVALID'; throw error; }
-      lastProgress = Core.progress(snapshot); onProgress({ phase: snapshot.state, error: snapshot.error || '', ...lastProgress });
+      onSnapshot(snapshot); lastProgress = Core.progress(snapshot); onProgress({ phase: snapshot.state, stage:snapshot.stage||'', version:snapshot.version, error: snapshot.error || '', ...lastProgress });
       if (result) return result;
       if (snapshot.held) { const error = Error('This save is paused for its original account, Store or edit. Resume it from that context.'); error.nativeTransfer = true; error.nativeState = 'paused_context'; throw error; }
       if (Core.terminal(snapshot.state) || snapshot.state.startsWith('paused_')) {

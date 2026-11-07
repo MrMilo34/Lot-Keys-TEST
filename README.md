@@ -1,3 +1,17 @@
+# LotKeys TEST V0.9.5.44 — earlier Android handoff
+
+Folders and essential Vehicle data are saved first. Android then retains every
+original and the remaining Info Sheet/Inventory work. At **Ready to switch apps**,
+you can switch apps while Android uploads and finishes the Profile.
+
+[Install the signed V0.9.5.44 connector](downloads/LotKeys-Connector-TEST-V0.9.5.44.apk)
+over the current TEST app, preserving data and trusted PCs. Older connectors and
+destructive/ambiguous media edits keep the established sequence. Readiness time
+depends on original file sizes and device/network speed; 30 seconds is a target.
+393 Node tests and 27 native tests pass, with assembly/lint/signature checks.
+Physical-phone .44 verification remains pending.
+[Release details](RELEASE-0.9.5.44.md) · [Verification](LotKeys-0.9.5.44-Test-Report.md).
+
 # LotKeys TEST V0.9.5.43 — Android save status recovery
 
 Incomplete Android replies now trigger retained-job recovery instead of being

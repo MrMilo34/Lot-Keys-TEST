@@ -27,7 +27,8 @@ final class TransferFinalizer {
         if (operations == null) return;
         for (int i = 0; i < operations.length(); i++) {
             check.run(); JSONObject op = operations.getJSONObject(i); String type = op.getString("type");
-            if ("vehicle-cover".equals(type)) finishCover(store, batch, op);
+            if ("vehicle-directory".equals(type)) { store.stage(batch.getString("id"), "directory"); new DirectoryFinalizer(client, check).finish(store, batch, op, operations.getJSONObject(i + 1)); }
+            else if ("vehicle-cover".equals(type)) { store.stage(batch.getString("id"), "inventory"); finishCover(store, batch, op); }
             else if ("rename".equals(type)) {
                 String id = op.getString("id"); TransferStore.fileId(id);
                 json("PATCH", "https://www.googleapis.com/drive/v3/files/" + id + "?supportsAllDrives=true", new JSONObject().put("name", op.getString("name")), null);
@@ -75,6 +76,12 @@ final class TransferFinalizer {
                 if (row.optLong("updatedAt") != op.getLong("recordUpdated")) throw new Reconcile("Files are saved. A newer Inventory edit needs reconciliation in LotKeys.");
                 JSONObject drive = row.optJSONObject("drive"); if (drive == null) { drive = new JSONObject(); row.put("drive", drive); }
                 drive.put("coverPhotoFileId", cover); found = true;
+                JSONObject directory = store.get(batch.getString("id")).optJSONObject("finalizerResults"); directory = directory == null ? null : directory.optJSONObject("directory");
+                if (directory != null) {
+                    if (!directory.optString("id").equals(drive.optString("directoryPdfId"))) throw new Reconcile("The Info Sheet destination changed. Reopen the Vehicle to review it.");
+                    drive.put("nativeFinalizationPending", false).put("lastDirectoryFingerprint", directory.getString("fingerprint")).put("publicShareReady", directory.optBoolean("publicShareReady"));
+                    row.put("shareWarning", directory.optString("warning"));
+                }
             }
             if (!found) throw new Reconcile("Files are saved. This profile is no longer in the Inventory index.");
             check.run(); DriveUploadClient.Reply write = client.request("PUT", "https://www.googleapis.com/upload/drive/v2/files/" + index + "?uploadType=media&supportsAllDrives=true", "application/json", data.toString().getBytes(StandardCharsets.UTF_8), null, 0, 0, null, etag);

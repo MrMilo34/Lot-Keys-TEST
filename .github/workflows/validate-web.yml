@@ -28,6 +28,7 @@ jobs:
           node --check lotkeys-website-identity.js
           node --check lotkeys-transfer-core.js
           node --check lotkeys-native-transfers.js
+          node --check lotkeys-deferred-save.js
           node --check lotkeys-doorbell-core.js
           node --check wake-sender/Code.js
           node --check lotkeys-phone-core.js

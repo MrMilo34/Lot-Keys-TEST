@@ -1,3 +1,12 @@
+V0.9.5.44 EARLIER ANDROID HANDOFF
+- Establish folders/core data first; hand every original and PDF finishing plan to Android.
+- Ready to switch apps only after durable commit; native PDF/sharing/Inventory finish afterwards.
+- Parallel folders, bounded 1 MiB staging, stable IDs, revision/ETag/retry safeguards.
+- Old connector and conservative media-edit fallback retained; no native media deletions.
+- Signed Android .44 required for early handoff. Install over current TEST app; preserve data/trust.
+- 393 Node / 27 native tests, assembly/lint/syntax/signature checks pass. Device timing pending.
+- Build 095044; cache lotkeys-app-v095044-early-background-handoff. Posting Buddy remains .25.
+
 V0.9.5.43 RETAINED ANDROID SAVE STATUS
 - Reject incomplete JSON/status replies as recoverable observation failures, not false context mismatches.
 - Retain the current native receipt and recheck after reconnect/visibility; real guards remain strict.

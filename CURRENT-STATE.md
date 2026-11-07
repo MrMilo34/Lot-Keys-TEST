@@ -1,3 +1,32 @@
+# LotKeys TEST .44 — earlier Android handoff
+
+Release: PR #15; web build 095044; Android 0.9.5.44-test / 95044; extension .25.
+Baseline .43: 4d27b49c7018b6386bdbafa9dfc6e20629d87c00.
+Blair confirmed .43 uploads continued after switching apps. Preserve that milestone.
+
+- Browser establishes folders, core Sheet/Index and stable media/PDF IDs first.
+  Android retains every original plus the complete PDF/Inventory finishing plan.
+  Ready to switch apps appears only after commit confirms all sources retained.
+- Native renders/checkpoints the linked/badged Info Sheet and finishes sharing
+  and Inventory without a live browser. Parallel folders and 1 MiB staging.
+- Old connectors use the established path. Destructive/ambiguous media changes
+  and duplicate PDFs retain foreground reconciliation. No native media deletion.
+- Strict account/Store/edit/Sheet/parent/PDF ETag/index guards preserve newer
+  work and originals. Version-2 conflicts cannot fall through to browser overwrite.
+  Pending rows and completed native metadata survive .44 scans/concurrent writes.
+- Visible Resume can upgrade an ordinary queued job to UIDT. Hub/idle/cache,
+  pairing, consent, extension .25 and .43 response recovery are retained.
+- 393 Node tests, 27 native tests, assembly/lint and syntax pass. Native build
+  abdbec545a5f7ec793a5bb0e589c48266f34b1b0 / Actions 42424376391.
+- Signed .44 APK/checksum in downloads; original TEST certificate/package verified.
+  Install OVER the existing connector, retain data/trust. Private key never in Git.
+- Thirty-second readiness is a target, not measured. Physical-phone .44/Drive
+  verification remains pending. Older open clients can require reconciliation.
+- See RELEASE-0.9.5.44.md and LotKeys-0.9.5.44-Test-Report.md. Verify main and
+  Pages deployment before claiming release live. Read bounded source sections.
+
+## Released .43 checkpoint
+
 # LotKeys TEST V0.9.5.43 — retained Android save status
 
 Baseline main: 9e13feb7e78b27ae3ce2d20bb4260fd98f3b2165 (.42).

@@ -25,12 +25,14 @@ public final class TransferJobService extends JobService {
     private static final String CHANNEL = "lotkeys-uploads";
     private ExecutorService worker;
     private AtomicBoolean stopped;
+    private static final java.util.concurrent.atomic.AtomicReference<AtomicBoolean> active = new java.util.concurrent.atomic.AtomicReference<>();
 
     static boolean schedule(Context context, boolean fromVisibleNativeActivity) {
         JobScheduler jobs = context.getSystemService(JobScheduler.class);
         if (jobs == null) return false;
         // A visible Chrome/PWA window does NOT count as this app's visible activity.
-        if (jobs.getPendingJob(JOB) != null) return true;
+        JobInfo pending = jobs.getPendingJob(JOB); AtomicBoolean current = active.get();
+        if (pending != null && (current != null && !current.get() || !fromVisibleNativeActivity || Build.VERSION.SDK_INT < 34 || pending.isUserInitiated())) return true;
         if (Build.VERSION.SDK_INT >= 34 && fromVisibleNativeActivity) {
             try {
                 JobInfo urgent = new JobInfo.Builder(JOB, new ComponentName(context, TransferJobService.class))
@@ -38,6 +40,7 @@ public final class TransferJobService extends JobService {
                 if (jobs.schedule(urgent) == JobScheduler.RESULT_SUCCESS) return true;
             } catch (IllegalArgumentException | IllegalStateException | SecurityException unavailable) { /* Ordinary persisted work remains eligible. */ }
         }
+        if (pending != null) return true;
         return jobs.schedule(new JobInfo.Builder(JOB, new ComponentName(context, TransferJobService.class))
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setPersisted(true)
             .setBackoffCriteria(30000, JobInfo.BACKOFF_POLICY_EXPONENTIAL).build()) == JobScheduler.RESULT_SUCCESS;
@@ -45,6 +48,7 @@ public final class TransferJobService extends JobService {
 
     @Override public boolean onStartJob(JobParameters params) {
         AtomicBoolean cancelled = new AtomicBoolean(false); stopped = cancelled;
+        active.set(cancelled);
         notifyProgress(params, "Saving original files to Google Drive");
         worker = Executors.newSingleThreadExecutor();
         worker.execute(() -> {
@@ -67,6 +71,7 @@ public final class TransferJobService extends JobService {
                         check.run(); store.state(id, "uploading", "");
                         uploadAssets(params, store, batch, account, check);
                         check.run(); store.state(id, "finalizing", "");
+                        if (batch.optInt("version") == 2) notifyProgress(params, "Files saved · finishing the Vehicle Info Sheet and Inventory");
                         new TransferFinalizer(new DriveUploadClient(this, account, params.getNetwork(), check), check).finish(store, batch);
                         check.run(); store.state(id, "complete", ""); store.releaseOriginals(id);
                     } catch (CancellationException cancelledWork) {
@@ -88,6 +93,7 @@ public final class TransferJobService extends JobService {
                 }
             } catch (Exception storage) { retry = true; }
             finally {
+                active.compareAndSet(cancelled, null);
                 try { for (JSONObject pending : new TransferStore(this).pending()) if ("queued".equals(pending.optString("state"))) retry = true; } catch (Exception ignored) { retry = true; }
                 if (!cancelled.get()) { getSystemService(NotificationManager.class).cancel(NOTICE); jobFinished(params, retry); }
             }

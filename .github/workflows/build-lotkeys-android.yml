@@ -41,6 +41,10 @@ jobs:
       - name: Build and lint Android test layer
         working-directory: android
         run: gradle --no-daemon --continue :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+      - name: Preserve local signing verifier
+        run: |
+          tool_jar=$(find "$ANDROID_HOME/build-tools" -path '*/lib/apksigner.jar' | sort -V | tail -n 1)
+          cp "$tool_jar" android/app/build/outputs/apk/debug/apksigner.jar
       - name: Verify registered TEST certificate
         if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
         run: |
@@ -50,15 +54,19 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
         with:
-          name: LotKeys-Android-V0.9.5.40
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: LotKeys-Android-V0.9.5.44
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/debug/apksigner.jar
           retention-days: 14
       - name: Preserve APK for private local signing when CI secrets are unavailable
         uses: actions/upload-artifact@v4
         if: success() && env.LOTKEYS_TEST_SIGNED != 'true'
         with:
-          name: LotKeys-Android-UNSIGNED-DO-NOT-INSTALL-V0.9.5.40
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: LotKeys-Android-UNSIGNED-DO-NOT-INSTALL-V0.9.5.44
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/debug/apksigner.jar
           retention-days: 1
       - uses: actions/upload-artifact@v4
         if: always()

@@ -86,7 +86,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.5.40 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.5.44 TEST", 18, Color.rgb(100, 181, 246), true);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();

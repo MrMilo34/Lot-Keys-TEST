@@ -129,6 +129,7 @@ final class LocalApiServer {
             status.put("relay", relay);
             status.getJSONObject("capabilities").put("backgroundRelay", relay.optBoolean("authorized"));
             status.getJSONObject("capabilities").put("backgroundUploads", TransferAuth.ready(service));
+            status.getJSONObject("capabilities").put("deferredVehicleFinalization", TransferAuth.ready(service));
             status.getJSONObject("capabilities").put("adaptiveRelayPolling", true);
             status.put("uploadAccount", TransferAuth.account(service));
             return status;

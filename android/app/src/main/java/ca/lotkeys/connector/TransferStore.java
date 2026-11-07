@@ -29,6 +29,9 @@ final class TransferStore {
     JSONObject prepare(JSONObject input) throws Exception {
         synchronized (LOCK) {
             JSONObject scope = input.getJSONObject("context");
+            require(input.optInt("version", 1) == 1 || input.optInt("version") == 2, "Update the connector before preparing this save.");
+            if (input.optInt("version") == 2) DirectoryFinalizer.validate(input);
+            else { JSONArray operations = input.optJSONArray("finalizers"); for (int i = 0; operations != null && i < operations.length(); i++) require(!"vehicle-directory".equals(operations.getJSONObject(i).optString("type")), "This finishing plan requires protocol version 2."); }
             require(input.toString().length() <= 1024 * 1024, "Upload plan is too large.");
             require(!scope.optString("account").trim().isEmpty(), "An upload account is required.");
             fileId(scope.optString("store"));
@@ -55,6 +58,7 @@ final class TransferStore {
                 String key = asset.optString("key");
                 require(!key.isEmpty() && key.length() <= 200 && keys.add(key), "Upload file identifiers must be unique.");
                 fileId(asset.optString("parent"));
+                if (!asset.optString("driveId").isEmpty()) fileId(asset.getString("driveId"));
                 require(!asset.optString("name").isEmpty() && asset.optString("name").length() <= 240, "Invalid upload name.");
                 long size = asset.getLong("size");
                 require(size >= 0 && size <= MAX_BATCH && total <= MAX_BATCH - size, "This upload exceeds the available batch limit.");
@@ -147,7 +151,20 @@ final class TransferStore {
     void releaseOriginals(String id) throws Exception { synchronized (LOCK) {
         JSONObject batch = get(id); require("complete".equals(batch.optString("state")), "Keep originals until the entire save is confirmed.");
         for (int i = 0; i < batch.getJSONArray("assets").length(); i++) source(id, i).delete();
+        operationFile(id, "directory.pdf").delete();
     } }
+    File operationFile(String id, String name) { require(name.equals("directory.pdf") || name.equals("directory.json"), "Invalid save checkpoint."); return new File(directory(id), name); }
+    JSONObject directoryState(String id) throws Exception { synchronized (LOCK) { get(id); File file = operationFile(id, "directory.json"); return file.exists() ? read(file) : new JSONObject(); } }
+    void directoryState(String id, JSONObject state) throws Exception { synchronized (LOCK) { get(id); write(operationFile(id, "directory.json"), state); } }
+    void directoryPdf(String id, byte[] bytes) throws Exception { synchronized (LOCK) {
+        get(id); AtomicFile file = new AtomicFile(operationFile(id, "directory.pdf")); FileOutputStream out = null;
+        try { out = file.startWrite(); out.write(bytes); file.finishWrite(out); } catch (Exception error) { if (out != null) file.failWrite(out); throw error; }
+    } }
+    void directoryResult(String id, JSONObject result) throws Exception { synchronized (LOCK) {
+        JSONObject batch = get(id), results = batch.optJSONObject("finalizerResults"); if (results == null) results = new JSONObject();
+        batch.put("finalizerResults", results.put("directory", result)); save(batch);
+    } }
+    void stage(String id, String stage) throws Exception { synchronized (LOCK) { JSONObject batch = get(id); batch.put("stage", stage); save(batch); } }
     void hold(String account, String store) throws Exception {
         synchronized (LOCK) {
             for (JSONObject batch : all()) {

@@ -34,6 +34,7 @@ class DriveUploadClient {
     }
     static final class Reply {
         int status; String range = "", location = "", etag = "", text = "";
+        byte[] body = new byte[0];
         JSONObject json() throws Exception { return text.isEmpty() ? new JSONObject() : new JSONObject(text); }
     }
     static final class RemoteError extends Exception {
@@ -45,12 +46,12 @@ class DriveUploadClient {
             check.run();
             if (token == null) token = TransferAuth.token(context, account);
             URL target = new URL(url);
-            TransferStore.require("https".equals(target.getProtocol()) && ("www.googleapis.com".equals(target.getHost()) || "sheets.googleapis.com".equals(target.getHost())), "Unexpected Google upload endpoint.");
+            TransferStore.require("https".equals(target.getProtocol()) && ("www.googleapis.com".equals(target.getHost()) || "sheets.googleapis.com".equals(target.getHost()) || "docs.googleapis.com".equals(target.getHost())), "Unexpected Google upload endpoint.");
             HttpURLConnection connection = (HttpURLConnection) (network == null ? target.openConnection() : network.openConnection(target));
             connection.setInstanceFollowRedirects(false);
             connection.setConnectTimeout(20000); connection.setReadTimeout(30000); connection.setRequestMethod(method);
             connection.setRequestProperty("Authorization", "Bearer " + token);
-            connection.setRequestProperty("Accept", "application/json");
+            connection.setRequestProperty("Accept", url.contains("/export?") ? "application/pdf" : "application/json");
             if (range != null) connection.setRequestProperty("Content-Range", range);
             if (match != null && !match.isEmpty()) connection.setRequestProperty("If-Match", match);
             try {
@@ -72,8 +73,9 @@ class DriveUploadClient {
                 InputStream stream = reply.status >= 400 ? connection.getErrorStream() : connection.getInputStream();
                 if (stream != null) try (InputStream in = stream; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                     byte[] buffer = new byte[8192]; int read;
-                    while ((read = in.read(buffer)) >= 0) { if (out.size() + read > 8 * 1024 * 1024) throw new java.io.IOException("Google returned an oversized response."); out.write(buffer, 0, read); }
-                    reply.text = new String(out.toByteArray(), StandardCharsets.UTF_8);
+                    int limit = (url.contains("/export?") ? 10 : 8) * 1024 * 1024;
+                    while ((read = in.read(buffer)) >= 0) { if (out.size() + read > limit) throw new java.io.IOException("Google returned an oversized response."); out.write(buffer, 0, read); }
+                    reply.body = out.toByteArray(); if (!url.contains("/export?")) reply.text = new String(reply.body, StandardCharsets.UTF_8);
                 }
                 check.run();
                 if (reply.status != 401) return reply;
@@ -108,8 +110,9 @@ class DriveUploadClient {
         if (checkpoint.optJSONObject("result") != null) return checkpoint.getJSONObject("result");
         TransferStore.require(source.isFile() && source.length() == total, "The original file is no longer available for upload.");
         JSONObject remote = existing(asset);
-        if (remote != null) { store.itemState(id, item, checkpoint.put("confirmed", total).put("result", remote)); return remote; }
+        if (remote != null) { if (!asset.optString("driveId").isEmpty()) TransferStore.require(asset.getString("driveId").equals(remote.optString("id")), "A matching asset was created elsewhere. Reopen the Profile to reconcile it."); store.itemState(id, item, checkpoint.put("confirmed", total).put("result", remote)); return remote; }
         String driveId = checkpoint.optString("driveId");
+        if (driveId.isEmpty() && !asset.optString("driveId").isEmpty()) { driveId = asset.getString("driveId"); checkpoint.put("driveId", driveId); store.itemState(id, item, checkpoint); }
         if (driveId.isEmpty()) {
             Reply generated = json("GET", FILES + "/generateIds?count=1&space=drive&type=files", null); success(generated);
             driveId = generated.json().getJSONArray("ids").getString(0); TransferStore.fileId(driveId);

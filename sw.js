@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095043-native-save-status';
+const CACHE='lotkeys-app-v095044-early-background-handoff';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -20,6 +20,7 @@ const CORE=[
   './lotkeys-doorbell-core.js',
   './lotkeys-transfer-core.js',
   './lotkeys-native-transfers.js',
+  './lotkeys-deferred-save.js',
   './lotkeys-phone-core.js',
   './lotkeys-phone.js',
   './lotkeys-hub.js',
