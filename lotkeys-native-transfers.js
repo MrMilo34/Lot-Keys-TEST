@@ -46,10 +46,54 @@
     onProgress({ phase: 'queued', ...Core.progress(snapshot) });
     return snapshot;
   }
-  async function wait(id, context, { phone = bridge(), check = async () => {}, onProgress = () => {}, delay = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
+  async function readStatus(id, phone = bridge()) {
+    try {
+      const value = await phone.uploadCall('status', { id });
+      if (!value || !value.context || !Object.prototype.hasOwnProperty.call(value.context, 'revision') || !Array.isArray(value.assets) || typeof value.state !== 'string' || !value.state) throw Error('Android returned an incomplete save status.');
+      Core.context(value.context);
+      return value;
+    } catch (cause) {
+      if (Number(cause?.status) >= 400 && ![408, 425, 429].includes(Number(cause.status)) && Number(cause.status) < 500) { cause.nativeTransfer = true; cause.code = 'NATIVE_STATUS_REJECTED'; throw cause; }
+      const error = Error('Android save status unavailable: ' + (cause?.message || 'Reconnect to check its retained originals.'));
+      error.code = 'NATIVE_STATUS_UNAVAILABLE'; error.nativeTransfer = true; error.cause = cause; throw error;
+    }
+  }
+  function presentation(value = {}) {
+    const phase = String(value.phase || ''), reason = String(value.error || '').trim();
+    if (phase === 'staging') return { status: 'uploading', backgroundReady: false, message: 'Preparing originals for Android · keep LotKeys open' };
+    if (phase === 'queued') return { status: 'queued', backgroundReady: true, message: 'Android has the originals · waiting for Android to start the Drive save' };
+    if (phase === 'uploading') return { status: 'uploading', backgroundReady: true, message: 'Android reports uploading to Drive · originals are retained' };
+    if (phase === 'finalizing') return { status: 'processing', backgroundReady: true, message: 'Files saved · updating Inventory preview' };
+    if (phase === 'complete') return { status: 'processing', backgroundReady: true, message: 'Files saved · confirming the Vehicle Profile' };
+    if (phase === 'retrying') return { status: 'paused', backgroundReady: true, message: reason || 'Android retained the originals · waiting to retry Drive' };
+    if (phase === 'needs_reconcile') return { status: 'paused', backgroundReady: true, message: reason || 'Files saved · open LotKeys to finish Inventory' };
+    if (phase === 'status_unavailable') return { status: 'paused', backgroundReady: false, message: reason || 'Reconnecting to check the retained Android save' };
+    if (phase === 'failed' || phase === 'cancelled' || phase === 'context_mismatch' || phase.startsWith('paused_')) return { status: 'error', backgroundReady: false, message: reason || 'Android save needs attention · open the Vehicle Profile for the reason' };
+    return { status: 'paused', backgroundReady: false, message: 'Checking the retained Android save' };
+  }
+  async function waitUntilVisible(visibility) {
+    if (!visibility || visibility.visibilityState !== 'hidden') return;
+    await new Promise(resolve => {
+      const resumed = () => { if (visibility.visibilityState !== 'hidden') { visibility.removeEventListener('visibilitychange', resumed); resolve(); } };
+      visibility.addEventListener('visibilitychange', resumed); resumed();
+    });
+  }
+  async function wait(id, context, { phone = bridge(), check = async () => {}, onProgress = () => {}, delay = ms => new Promise(resolve => setTimeout(resolve, ms)), visibility = globalThis.document } = {}) {
+    let lastProgress = { percent: 0 };
     while (true) {
-      await check(); const snapshot = await phone.uploadCall('status', { id });
-      const result = Core.completed(snapshot, context); onProgress({ phase: snapshot.state, ...Core.progress(snapshot) });
+      await waitUntilVisible(visibility); await check(); let snapshot;
+      try { snapshot = await readStatus(id, phone); }
+      catch (error) { onProgress({ phase: 'status_unavailable', error: error.message, ...lastProgress }); throw error; }
+      if (!Core.sameContext(snapshot.context, context)) {
+        const actual = Core.context(snapshot.context), expected = Core.context(context), labels = { account: 'Google account', store: 'Store', record: 'Vehicle', revision: 'Vehicle edit' };
+        const changed = Object.keys(labels).filter(key => actual[key] !== expected[key]).map(key => labels[key]);
+        const error = Error('The background upload belongs to another account, Store or edit. Mismatch: ' + changed.join(', ') + '. Its originals are retained.');
+        error.nativeTransfer = true; error.code = 'NATIVE_CONTEXT_MISMATCH'; throw error;
+      }
+      let result;
+      try { result = Core.completed(snapshot, context); }
+      catch (error) { error.nativeTransfer = true; error.code = 'NATIVE_RESULT_INVALID'; throw error; }
+      lastProgress = Core.progress(snapshot); onProgress({ phase: snapshot.state, error: snapshot.error || '', ...lastProgress });
       if (result) return result;
       if (snapshot.held) { const error = Error('This save is paused for its original account, Store or edit. Resume it from that context.'); error.nativeTransfer = true; error.nativeState = 'paused_context'; throw error; }
       if (Core.terminal(snapshot.state) || snapshot.state.startsWith('paused_')) {
@@ -63,5 +107,5 @@
     if (!account || !store || !phone?.uploadCall) return;
     return phone.uploadCall('hold', { account, store }, 5000);
   }
-  return { available, handoff, wait, hold, chunkSize: CHUNK };
+  return { available, handoff, readStatus, presentation, wait, hold, chunkSize: CHUNK };
 });

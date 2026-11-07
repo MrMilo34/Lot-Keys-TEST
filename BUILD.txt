@@ -1,3 +1,12 @@
+V0.9.5.43 RETAINED ANDROID SAVE STATUS
+- Reject incomplete JSON/status replies as recoverable observation failures, not false context mismatches.
+- Retain the current native receipt and recheck after reconnect/visibility; real guards remain strict.
+- Separate queued/upload/error guidance; actual errors replace stale switch-app advice.
+- 369 Node tests; 16 standalone/eight inline/three packaged JS syntax checks pass.
+- Web-only: Android .40, Posting Buddy .25 and .41 Drive recovery retained. Physical-phone check pending.
+- Native scheduler UIDT upgrade is a separate pending follow-up; no native scheduling change here.
+- Build: 095043. Cache: lotkeys-app-v095043-native-save-status.
+
 V0.9.5.42 POSTING BUDDY V0.1.25 MEDIA UPDATES
 - Empty Facebook uploaders no longer require removal controls for an Update Photos transfer.
 - Prepare every image first, scope and verify removals, reacquire the current picker after grid rebuilds.

@@ -1,3 +1,14 @@
+# LotKeys TEST V0.9.5.43 — Android save status recovery
+
+Incomplete Android replies now trigger retained-job recovery instead of being
+mistaken for another account/Store/edit. Real mismatches still stop the save.
+Queued work, upload reports and failures have distinct guidance, and reopening
+LotKeys rechecks the retained job. Error text replaces stale switch-app advice.
+
+369 tests and syntax checks pass. Keep Android .40 and Posting Buddy .25;
+no APK reinstall. Physical-phone confirmation remains necessary.
+[Release details](RELEASE-0.9.5.43.md) · [Verification](LotKeys-0.9.5.43-Test-Report.md).
+
 # LotKeys TEST V0.9.5.42 — Posting Buddy V0.1.25
 
 Fixes Update Photos on an empty Facebook uploader, reacquires its file picker
