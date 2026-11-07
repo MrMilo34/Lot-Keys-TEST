@@ -1,3 +1,27 @@
+# LotKeys TEST .44 — early background handoff (validation in progress)
+
+Working branch: codex/early-background-handoff-v095044; baseline main
+4d27b49c7018b6386bdbafa9dfc6e20629d87c00 (.43). Do not claim .44 deployed yet.
+Blair confirmed .43 uploads continued after switching apps: retain this milestone.
+
+- New protocol-2 work plan keeps PDF generation, sharing and Inventory completion
+  in Android. The browser saves folders, essential Sheet/Index data and stable
+  reserved media/PDF IDs, then hands off every original and the complete plan.
+- Independent folders run concurrently. Protocol-2 staging uses bounded 1 MiB
+  chunks; old .40 connectors retain the established full browser path.
+- Native PDF rendering preserves text, links and three CARFAX badges, checkpoints
+  export bytes, verifies uploaded size/MD5 and uses conditional PDF/index updates.
+  Genuine newer Vehicle/PDF/index revisions stop reconciliation; originals remain.
+- Media removals, renames/unlisted files and duplicate PDFs keep the conservative
+  existing path. No native media deletions. Pending cross-device rows are guarded.
+- Website tests: 381 pass; web/inline syntax passes. Android build/tests/lint and
+  original-key APK packaging are pending. Thirty-second readiness is a target,
+  not measured or guaranteed, especially for large original videos.
+- .44 also fixes visible Resume not upgrading an existing ordinary upload job.
+  Hub idle/active policy, extension .25, pairing, consent and .43 recovery stay.
+
+## Released .43 checkpoint
+
 # LotKeys TEST V0.9.5.43 — retained Android save status
 
 Baseline main: 9e13feb7e78b27ae3ce2d20bb4260fd98f3b2165 (.42).
