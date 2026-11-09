@@ -116,8 +116,7 @@ public final class MainActivity extends Activity {
                 startForegroundService(new Intent(this, PhoneConnectorService.class));
                 token = InstallIdentity.token(this);
             } catch (Exception error) {
-                alert("The phone connection could not start. Open Phone & upload settings to resume it. Your saved work is retained.");
-                return;
+                android.widget.Toast.makeText(this, "Phone connection needs attention in Phone & upload settings. Your LotKeys workspace is still available.", android.widget.Toast.LENGTH_LONG).show();
             }
         }
         try { BrowserExperience.launch(this, token); }
@@ -221,7 +220,7 @@ public final class MainActivity extends Activity {
         button("Android App Permissions", this::openAppSettings, false);
         button("Locked-Phone Battery Settings", () -> new AlertDialog.Builder(this)
             .setTitle("Keep PC messages available while locked")
-            .setMessage("Android will ask whether LotKeys Connector TEST may keep the private PC relay running while the phone is locked. Confirm the system prompt. The connection notification remains visible while it is active.")
+            .setMessage("Android will ask whether LotKeys TEST may keep the private PC relay running while the phone is locked. Confirm the system prompt. The connection notification remains visible while it is active.")
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Continue", (dialog, which) -> requestBatteryExemption()).show(), false);
         button("Reset Browser Link", () -> new AlertDialog.Builder(this)
@@ -362,7 +361,7 @@ public final class MainActivity extends Activity {
 
     private void openAppSettings() {
         try { startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()))); }
-        catch (ActivityNotFoundException error) { alert("Open Android Settings > Apps > LotKeys Connector TEST."); }
+        catch (ActivityNotFoundException error) { alert("Open Android Settings > Apps > LotKeys TEST."); }
     }
 
     private void requestBatteryExemption() {

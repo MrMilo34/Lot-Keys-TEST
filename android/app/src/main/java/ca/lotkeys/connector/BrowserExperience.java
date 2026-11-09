@@ -55,10 +55,11 @@ final class BrowserExperience {
             .setShowTitle(true)
             .addMenuItem("Phone & upload settings", settings)
             .build();
-        // Pin after the first successful launch. A changed default must not silently hide local records.
+        // Retain the selected provider before handing control to the browser. A changed default must not silently hide local records.
         tab.intent.setPackage(selected);
+        if (!activity.getSharedPreferences("lotkeys-connector", Context.MODE_PRIVATE).edit().putString(PROVIDER, selected).commit())
+            throw new ActivityNotFoundException("LotKeys could not retain its browser choice. Try opening again; your saved data is retained.");
         tab.launchUrl(activity, appUri(token));
-        activity.getSharedPreferences("lotkeys-connector", Context.MODE_PRIVATE).edit().putString(PROVIDER, selected).apply();
     }
 
     private BrowserExperience() {}

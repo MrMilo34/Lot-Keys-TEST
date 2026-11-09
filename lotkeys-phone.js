@@ -305,13 +305,13 @@
       if (!response.ok) { const error = Error(data.error || 'The Android phone layer returned ' + response.status + '.'); error.status = response.status; error.code = 'NATIVE_REQUEST_REJECTED'; throw error; }
       return data;
     } catch (error) {
-      if (error?.name === 'AbortError') throw Error('The Android phone layer did not answer. Reopen LotKeys Connector TEST.');
+      if (error?.name === 'AbortError') throw Error('The Android phone layer did not answer. Reopen LotKeys TEST.');
       if (error instanceof TypeError || /failed to fetch/i.test(error?.message || '')) {
         const permission = diagnose ? await loopbackPermissionState() : '';
         if (permission === 'denied') {
           throw Error('Chrome blocked the phone connector. Open this site\'s permissions, allow Loopback network access, then tap Reconnect phone.');
         }
-        throw Error('The browser could not reach the phone connector. Keep LotKeys Connector TEST running, tap Reconnect phone, and allow Loopback network access if asked.');
+        throw Error('The browser could not reach the phone connector. Keep LotKeys TEST running, tap Reconnect phone, and allow Loopback network access if asked.');
       }
       throw error;
     } finally {
@@ -369,7 +369,7 @@
     if (!state.nativeToken) throw Error('Open LotKeys from the Android setup before pairing a computer.');
     await nativeTick({ throwOnError: true, userInitiated: true });
     if (state.backgroundRelay) {
-      if (state.relayError) throw Error('The Android PC relay reported: ' + state.relayError + ' Open LotKeys Connector TEST and resolve its connection warning before pairing.');
+      if (state.relayError) throw Error('The Android PC relay reported: ' + state.relayError + ' Open LotKeys TEST and resolve its connection warning before pairing.');
       state.relayReady = true;
       state.relayIdentity = text(state.nativeStatus?.relay?.account).toLowerCase();
       state.lastError = '';
@@ -380,7 +380,7 @@
       event('pair-ready', { account: state.relayIdentity, background: true });
       return status();
     }
-    throw Error('The Android PC relay needs Google authorization. Open LotKeys Connector TEST, finish PC Pairing Account with the same Google account, then return here and tap Check PC relay. Pairing in this browser alone would disconnect when you leave LotKeys.');
+    throw Error('The Android PC relay needs Google authorization. Open LotKeys TEST, finish PC Pairing Account with the same Google account, then return here and tap Check PC relay. Pairing in this browser alone would disconnect when you leave LotKeys.');
   }
 
   async function reconnectTrustedComputer({ force = false } = {}) {
@@ -1089,7 +1089,7 @@
 
   async function approvePair(sessionId, trustMode = '36h', { automatic = false } = {}) {
     const offer = pendingOffers.get(sessionId);
-    if (state.nativeToken && !state.backgroundRelay) throw Error('Authorize the Android PC relay in LotKeys Connector TEST before approving a computer.');
+    if (state.nativeToken && !state.backgroundRelay) throw Error('Authorize the Android PC relay in LotKeys TEST before approving a computer.');
     if (offer?._native) {
       if (!['ask', '36h', '7d', 'until-disconnect'].includes(trustMode)) trustMode = '36h';
       await nativeCall('/v1/pairings/approve', {
