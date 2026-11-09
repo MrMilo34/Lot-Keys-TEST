@@ -14,16 +14,26 @@
 
   <uses-feature android:name="android.hardware.telephony" android:required="true" />
 
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="https" />
+    </intent>
+    <intent>
+      <action android:name="android.support.customtabs.action.CustomTabsService" />
+    </intent>
+  </queries>
+
   <application
       android:name=".ConnectorApplication"
       android:allowBackup="false"
       android:dataExtractionRules="@xml/data_extraction_rules"
       android:fullBackupContent="false"
       android:usesCleartextTraffic="false"
-      android:label="LotKeys Connector TEST"
-      android:icon="@android:drawable/ic_dialog_email"
+      android:label="LotKeys TEST"
+      android:icon="@drawable/lotkeys_icon"
       android:theme="@android:style/Theme.Material.Light.NoActionBar">
-    <activity android:name=".MainActivity" android:exported="true">
+    <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />

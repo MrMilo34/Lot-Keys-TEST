@@ -16,7 +16,7 @@ function fixture() {
   const phone = { uploadCapabilities: async () => ({ uploadAccount: account, capabilities: { backgroundUploads: true } }), uploadCall: async (op, input) => {
     if (op === 'prepare') { plan = structuredClone(input); return { ...plan, id: 'native-batch-1', state: 'staging', assets: plan.assets.map(row => ({ ...row, staged: 0 })) }; }
     if (op === 'chunk') { assert.equal(persisted.drive.nativeTransfer.id, 'native-batch-1'); offsets[input.item] = input.offset + Buffer.from(input.base64, 'base64').length; return { staged: offsets[input.item] }; }
-    if (op === 'commit') { assert.equal(offsets.length, 13); for (let i = 0; i < plan.assets.length; i++) assert.equal(offsets[i], plan.assets[i].size); committed = true; return { ...plan, state: 'queued' }; }
+    if (op === 'commit') { assert.equal(offsets.length, 13); for (let i = 0; i < plan.assets.length; i++) assert.equal(offsets[i], plan.assets[i].size); committed = true; return { ...plan, id: 'native-batch-1', state: 'queued', assets: plan.assets.map(row => ({ ...row, staged: row.size })) }; }
     if (op === 'status') {
       if (!committed) throw Error('No background job yet');
       return { ...plan, state: 'complete', assets: plan.assets.map((row, i) => ({ ...row, confirmed: row.size, result: { id: 'drive-file-' + i, name: row.name } })) };
@@ -96,7 +96,7 @@ test('explicit repair recovers the exact .40 sheet overwrite and reuses Android 
   f.context.window.LotKeysPhone.uploadCall=async(op,input)=>{
     calls.push(op);
     if(op==='prepare'){assert.deepEqual(input,originalPlan);resumed=true;return {...originalPlan,id:'native-batch-1',state:'queued',held:false};}
-    if(op==='commit')return {...originalPlan,id:'native-batch-1',state:'queued'};
+    if(op==='commit')return {...originalPlan,id:'native-batch-1',state:'queued',assets:originalPlan.assets.map(row=>({...row,staged:row.size}))};
     if(op==='status')return {...originalPlan,id:'native-batch-1',state:resumed?'complete':'paused_context',held:!resumed,assets:originalPlan.assets.map((row,i)=>({...row,result:resumed?{id:'retained-file-'+i,name:row.name}:undefined}))};
     throw Error('Recovery must reuse the retained job: '+op);
   };

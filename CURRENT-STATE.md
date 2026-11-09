@@ -1,3 +1,30 @@
+# LotKeys TEST .45 — single-install readiness candidate
+
+Starting point: main 667a1c06f65fb7db7afed491a386881dc851e2c9 (.44).
+Keep .43 (4d27b49c7018b6386bdbafa9dfc6e20629d87c00) as the user-confirmed
+app-switch background-upload baseline. No user data or production changes.
+
+- Same Android package, launcher component, signing identity, native queue and
+  phone/PC permissions. Main launch opens the existing TEST origin in a browser
+  Custom Tab; its menu opens native Phone & upload settings. Browser provider is
+  retained after first launch; entering the workspace never requires SMS access.
+- No WebView database, Store migration, Firebase activation or subscription.
+  Browser toolbar remains; fullscreen TWA needs verified domain asset links.
+- Handoff readiness validates job/context, every original/destination, retained
+  bytes and finishing plan, then persists the committed receipt locally.
+  Profile timing records foundation, Android preparation and commit separately.
+- API 36 target; non-debuggable release APK/AAB build path. Browser-launch and
+  retained-upload tests cover API 35/36 using Robolectric 4.16.1 and Java 21 CI.
+- 404 Node tests pass locally. Native CI/signing/device checks are pending.
+  Do not call this deployed, installed, Play-approved or measured at 30 seconds.
+- Verified lot-keys.ca serves .81 from production main
+  82543c12cee842c869bced97b92c29e61b2d36a1: version, index, service worker,
+  manifest and privacy bytes match. Production assetlinks.json is absent.
+- Full Drive scope is restricted; app-data relay scope is non-sensitive. Actual
+  Cloud test-user/client/verification/billing state and Play account need review.
+  Public SMS cross-device exception is eligible for application, not approved.
+- Existing .44 and the historical notes below remain the behavioral reference.
+
 # LotKeys TEST .44 — earlier Android handoff
 
 Release: PR #15; web build 095044; Android 0.9.5.44-test / 95044; extension .25.

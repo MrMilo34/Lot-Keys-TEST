@@ -23,11 +23,13 @@
 <body>
   <main>
     <div class="brand"><img src="./assets/lotkeys-default-logo.png" alt="LotKeys"><div><h1>Install LotKeys</h1><p>Your dealership workspace on the Home Screen.</p></div></div>
-    <div class="hero"><strong>One tap from your phone or PC</strong><span>This installs the current LotKeys web app. It opens in its own app window and updates from the official LotKeys release.</span></div>
-    <button id="install" type="button">📲 Install LotKeys App</button>
+    <div class="hero"><strong>Android: one LotKeys installation</strong><span>The Android TEST app includes the phone connector and opens your Inventory, Listings and Hub. Install over the existing connector to keep its permissions, pairing and queued saves. Continue with the same browser and Google account to keep local work.</span></div>
+    <a class="button" href="./downloads/LotKeys-Connector-TEST-V0.9.5.45.apk">Download LotKeys TEST for Android</a>
+    <p>Open LotKeys from its Android icon. Use its menu → Phone &amp; upload settings for messaging, PC pairing or Drive approval. You do not need a separate web-app installation. The browser toolbar remains in this TEST build.</p>
+    <button id="install" type="button">Install Browser App (Optional)</button>
     <a class="button secondary" href="./">Open LotKeys</a>
     <div class="steps" id="manual-steps">
-      <div class="step"><b>1</b><div><strong>Android Chrome</strong><small>Open Chrome’s ⋮ menu and choose Install app or Add to Home screen if the blue button is unavailable.</small></div></div>
+      <div class="step"><b>1</b><div><strong>Existing Android users</strong><small>Keep the current app and browser data. Update the same installation; do not uninstall, clear storage or repeat pairing. The browser app remains available if you prefer it.</small></div></div>
       <div class="step"><b>2</b><div><strong>iPhone or iPad</strong><small>Open in Safari, tap Share, then Add to Home Screen.</small></div></div>
       <div class="step"><b>3</b><div><strong>PC Chrome or Edge</strong><small>Use the install icon at the right side of the address bar.</small></div></div>
     </div>
@@ -43,7 +45,7 @@
     addEventListener('beforeinstallprompt',event=>{event.preventDefault();promptEvent=event;button.disabled=false;status.textContent='LotKeys is ready to install on this device.'});
     button.addEventListener('click',async()=>{if(!promptEvent){status.textContent='Use the matching browser instructions below to add LotKeys.';document.getElementById('manual-steps').scrollIntoView({behavior:'smooth'});return}button.disabled=true;await promptEvent.prompt();const choice=await promptEvent.userChoice.catch(()=>({outcome:'dismissed'}));status.textContent=choice.outcome==='accepted'?'LotKeys installation started ✓':'Installation was cancelled — you can try again anytime.';promptEvent=null;if(choice.outcome!=='accepted')button.disabled=false});
     addEventListener('appinstalled',()=>{button.disabled=true;button.textContent='✓ LotKeys installed';status.textContent='LotKeys is now available from your Home Screen or app list.'});
-    if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js?v=095032',{updateViaCache:'none'}).then(registration=>registration.update().catch(()=>{})).catch(()=>{});
+    if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js?v=095045',{updateViaCache:'none'}).then(registration=>registration.update().catch(()=>{})).catch(()=>{});
   </script>
 </body>
 </html>

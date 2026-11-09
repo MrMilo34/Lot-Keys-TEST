@@ -15,15 +15,52 @@
     for (let i = 0; i < bytes.length; i += 8192) result += String.fromCharCode(...bytes.subarray(i, i + 8192));
     return btoa(result);
   }
-  async function handoff(plan, sources, { phone = bridge(), onProgress = () => {}, onPrepared = async () => {}, check = async () => {} } = {}) {
+  function canonical(value) {
+    if (Array.isArray(value)) return value.map(canonical);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]));
+    return value;
+  }
+  function handoffProof(snapshot, plan, id, retained = false) {
+    const reject = message => { const error = Error(message); error.nativeTransfer = true; error.code = 'NATIVE_STATUS_UNAVAILABLE'; throw error; };
+    if (!snapshot || typeof snapshot.id !== 'string' || !snapshot.id || !snapshot.context || !Array.isArray(snapshot.assets) || typeof snapshot.state !== 'string') reject('Android returned an incomplete handoff receipt. Reopen LotKeys to check its retained save.');
+    if (!Core.sameContext(snapshot.context, plan.context)) { const error = Error('The background upload belongs to another account, Store or edit. Its originals are retained.'); error.nativeTransfer = true; error.code = 'NATIVE_CONTEXT_MISMATCH'; throw error; }
+    if (id && snapshot.id !== id) reject('Android returned another save receipt. The original job has been kept.');
+    if (snapshot.assets.length !== plan.assets.length || (plan.version === 2 && snapshot.version !== 2)) reject('Android has not confirmed the complete original-file plan.');
+    const seen = new Set();
+    for (let i = 0; i < plan.assets.length; i++) {
+      const expected = plan.assets[i], actual = snapshot.assets[i];
+      if (!actual || seen.has(actual.key) || ['key', 'name', 'parent', 'size'].some(key => actual[key] !== expected[key]) || (expected.driveId && actual.driveId !== expected.driveId)) reject('Android has not confirmed every original and its saved destination.');
+      seen.add(actual.key);
+      if (retained && Number(actual.staged) !== expected.size && !(Number(actual.confirmed) === expected.size && /^[A-Za-z0-9_-]{8,200}$/.test(String(actual.result?.id || '')))) reject('Android has not confirmed retention of every original. Keep LotKeys open and check the save again.');
+    }
+    if (JSON.stringify(canonical(snapshot.finalizers)) !== JSON.stringify(canonical(plan.finalizers))) reject('Android has not confirmed the complete finishing plan.');
+    if (retained && (snapshot.held || !['queued', 'uploading', 'finalizing', 'retrying', 'complete', 'needs_reconcile'].includes(snapshot.state))) {
+      const error = Error(snapshot.error || 'The Android save is paused or has not committed. Its originals are retained.'); error.nativeTransfer = true; error.nativeState = snapshot.state; throw error;
+    }
+    return snapshot;
+  }
+  async function handoff(plan, sources, { phone = bridge(), onProgress = () => {}, onPrepared = async () => {}, onCommitted = async () => {}, check = async () => {}, clock = Date.now } = {}) {
+    const timing = { stagingStartedAt: clock(), originalBytes: plan.assets.reduce((sum, row) => sum + row.size, 0), originalCount: plan.assets.length };
     await check();
     let snapshot = await phone.uploadCall('prepare', plan);
-    if (!Core.sameContext(snapshot.context, plan.context)) throw Error('Android returned another account or Store upload.');
+    handoffProof(snapshot, plan);
     // Persist the receipt BEFORE transferring bytes. A refresh resumes staging instead
     // of making a second batch while Android already owns part of the originals.
     await onPrepared(snapshot);
-    if (Core.terminal(snapshot.state)) return snapshot;
-    if (snapshot.state !== 'staging') { snapshot = await phone.uploadCall('commit', { id: snapshot.id }, 180000); onProgress({ phase: 'queued', version:plan.version, ...Core.progress(snapshot) }); return snapshot; }
+    const id = snapshot.id;
+    const commit = async () => {
+      timing.commitStartedAt = clock();
+      snapshot = handoffProof(await phone.uploadCall('commit', { id }, 180000), plan, id, true);
+      timing.readyAt = clock();
+      timing.stagingMs = Math.max(0, timing.commitStartedAt - timing.stagingStartedAt);
+      timing.commitMs = Math.max(0, timing.readyAt - timing.commitStartedAt);
+      // Persist the committed receipt BEFORE presenting permission to switch apps.
+      await onCommitted(snapshot, timing);
+      onProgress({ phase: snapshot.state, version:plan.version, ...Core.progress(snapshot) });
+      return snapshot;
+    };
+    if (Core.terminal(snapshot.state)) { if (snapshot.state === 'complete' || snapshot.state === 'needs_reconcile') handoffProof(snapshot, plan, id, true); return snapshot; }
+    if (snapshot.state !== 'staging') return commit();
     const total = plan.assets.reduce((sum, row) => sum + row.size, 0); let staged = 0;
     const chunkSize = plan.version === 2 ? Math.min(1024 * 1024, Math.max(CHUNK, Number(plan.stagingChunkBytes) || CHUNK)) : CHUNK;
     for (let item = 0; item < plan.assets.length; item++) {
@@ -43,9 +80,7 @@
         onProgress({ phase: 'staging', staged, total, version:plan.version, fileIndex:item+1, fileCount:plan.assets.length, fileName:plan.assets[item].name, percent: total ? Math.floor(staged * 100 / total) : 0 });
       }
     }
-    await check(); snapshot = await phone.uploadCall('commit', { id: snapshot.id }, 180000);
-    onProgress({ phase: 'queued', version:plan.version, ...Core.progress(snapshot) });
-    return snapshot;
+    await check(); return commit();
   }
   async function readStatus(id, phone = bridge()) {
     try {
