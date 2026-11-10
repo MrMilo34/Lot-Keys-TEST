@@ -13,7 +13,7 @@ No credentials, trigger, manifest, roles or sharing settings were changed.
 
 ## Automated validation
 
-458 Node tests pass, including 25 new behavior checks. All 31 JavaScript syntax
+461 Node tests pass, including 28 new behavior checks. All 31 JavaScript syntax
 checks (web modules, inline scripts, Processor and packaged extension) and
 `git diff --check` pass. Focused behavior checks
 cover late gallery batches, slow downloads, failed folders, local edits/Store changes,
@@ -22,7 +22,11 @@ IDs, new edits, terminal receipt replay and queue fairness/order.
 
 ## Deployment and device limits
 
-TEST promotion and live-byte verification pending. Production remains untouched.
+PR #20 passed GitHub CI 42906185477 and main CI 42906376040; initial Pages
+42906375749 succeeded. All six checked live release files matched committed bytes.
+The slow-original follow-up adds independent photo workers and explicit cache-write
+errors, with 461 passing tests. Its CI/Pages outcome is recorded in the release
+handoff after promotion. Production remains 0.9.4.81 and is untouched.
 No new APK; the signed .46 file and native code are retained. Real regular-user
 phone/PC and cross-user publication tests have not been performed by Codex. Existing
 newer originals were not manually copied or invented into a request. URL photo import

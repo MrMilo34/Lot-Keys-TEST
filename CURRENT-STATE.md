@@ -24,8 +24,11 @@ retry/resynchronization, .43 fallback, saved originals, roles and production.
   patch. Its original Store binding, manifest, trigger and permissions were retained.
   Two previously pending requests now have durable approved receipts. Do not infer
   that the newer incomplete photo upload has reached official Inventory from that.
-- All 458 Node tests and 31 JavaScript syntax checks pass; diff check passes.
-  TEST promotion/live verification is the remaining release step. Real
+- All 461 Node tests and 31 JavaScript syntax checks pass; diff check passes.
+  Initial TEST promotion via PR #20 / Pages 42906375749 succeeded; six live
+  release files matched the committed bytes. The slow-original follow-up uses
+  independent photo workers, a five-minute original download deadline and
+  visible device-cache errors. It follows the same TEST checks. Real
   regular-user phone/PC retry, gallery and cross-user publication tests remain needed.
   Do not clear app/browser data, uninstall or manually copy unsubmitted More files.
   Google Drive's phone app is not needed for LotKeys' direct API upload path.

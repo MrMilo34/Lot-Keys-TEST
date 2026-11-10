@@ -32,3 +32,20 @@ test('completed receipts do not starve pending saves and older requests run befo
   vm.createContext(ctx);const a=source.indexOf('function processLotKeysRequests()');vm.runInContext(source.slice(a,source.indexOf('function lkProcessRequest_',a)),ctx);
   const result=ctx.processLotKeysRequests();assert.equal(result.processed,2);assert.equal(result.approved,2);assert.deepEqual(applied,['old','new']);
 });
+test('a regular creator submission publishes all selected photos and facts before its approved receipt',()=>{
+  const ctx={console,Date,JSON,String,Number,Math};vm.createContext(ctx);vm.runInContext(source,ctx);
+  const actor={userName:'Creator',email:'creator@example.test',googleSub:'creator-sub',adminLevel:0},files=new Map(),copies=[],saved=[];
+  const media=Array.from({length:12},(_,i)=>({id:'photo-'+i,driveFileId:'more-'+i,name:'photo-'+i+'.jpg'}));
+  for(const item of media)files.set(item.driveFileId,{id:item.driveFileId,name:item.name,parents:['more-photos']});
+  Object.assign(ctx,{
+    lkFindVehicle_:()=>null,lkFindDuplicateVehicle_:()=>null,
+    lkEnsureOfficialStructure_:(state,vehicle)=>{vehicle.drive={photosFolderId:'official-photos',videosFolderId:'official-videos',documentsFolderId:'official-documents'}},
+    lkGet_:id=>files.get(id),lkCopyFile_:(id,parent,name,properties)=>{const file={id:'official-'+copies.length,name,parents:[parent],properties};files.set(file.id,file);copies.push(file);return file},
+    lkListChildren_:parent=>[...files.values()].filter(file=>file.parents.includes(parent)),
+    lkWriteVehicle_:(state,vehicle)=>saved.push({vehicle:structuredClone(vehicle),cover:ctx.lkCoverPhotoId_(vehicle)}),
+    lkWriteJsonFile_:(id,request)=>{assert.equal(copies.length,12);assert.equal(saved.length,1);saved.push({receipt:structuredClone(request)})},lkTrash_:()=>false});
+  const request={id:'request',type:'vehicle-create',vehicleId:'vehicle',vehicle:{year:'2025',make:'Infiniti',model:'QX50 Pure',stock:'SC1763',price:49999},media:{photos:media,videos:[],documents:[]}};
+  assert.equal(ctx.lkProcessRequest_({},actor,request,{id:'request-file',name:'request.json'},{photosFolder:{id:'more-photos'}}),'approved');
+  assert.equal(saved[0].vehicle.stock,'SC1763');assert.equal(saved[0].vehicle.price,49999);assert.equal(saved[0].vehicle.createdByUserName,'Creator');assert.equal(copies.length,12);assert.equal(saved[0].cover,'official-0');
+  assert.equal(saved[1].receipt.status,'approved');assert.ok(saved[1].receipt.media.photos.every(photo=>photo.officialDriveFileId));assert.ok(copies.every(file=>file.parents[0]==='official-photos'));
+});
