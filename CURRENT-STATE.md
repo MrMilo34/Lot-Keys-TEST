@@ -15,8 +15,15 @@ app-switch background-upload baseline. No user data or production changes.
   Profile timing records foundation, Android preparation and commit separately.
 - API 36 target; non-debuggable release APK/AAB build path. Browser-launch and
   retained-upload tests cover API 35/36 using Robolectric 4.16.1 and Java 21 CI.
-- 404 Node tests pass locally. Native CI/signing/device checks are pending.
-  Do not call this deployed, installed, Play-approved or measured at 30 seconds.
+- 404 Node tests and 46 native Robolectric tests pass in CI at 50065a76.
+  Debug/release assembly, bundle and lint pass (release: 0 errors, 28 warnings).
+  Recovered release APK signed with original TEST key; package/version/certificate
+  and unchanged permissions verified against .44. See LotKeys-0.9.5.45-Test-Report.md.
+  Physical-phone .45 checks and measured readiness timing remain pending.
+  Do not call this installed, Play-approved or measured at 30 seconds.
+- Blair confirms .44 automatic retry/resynchronization resumed after app switching
+  in his last test; preserve that improvement. Its 50% readiness advice may have
+  appeared prematurely. Keep .43 as the earlier confirmed fallback.
 - Verified lot-keys.ca serves .81 from production main
   82543c12cee842c869bced97b92c29e61b2d36a1: version, index, service worker,
   manifest and privacy bytes match. Production assetlinks.json is absent.

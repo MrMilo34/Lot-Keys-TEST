@@ -25,5 +25,9 @@ No Drive layout, official Inventory permissions, personal Listings/Hub ownership
 Processor, outgoing MMS review, SMS deduplication, pairing, idle policy, extension,
 backend or Firebase configuration is changed. Existing Google services remain.
 
-Validation: 404 Node checks pass locally. Native CI, original-key signing and
-physical-phone behavior must be recorded before calling a release complete.
+Validation: 404 Node tests and 46 native Robolectric tests pass in CI. Debug and
+release assembly/bundle/lint succeeded. The recovered release APK is signed with
+the original TEST key and independently verified against .44; its checksum is
+in downloads. Physical-phone .45 upgrade, upload timing, retry, app switching,
+screen locking and PC relay tests remain pending. Preserve Blair's observed .44
+retry/resynchronization improvement. See LotKeys-0.9.5.45-Test-Report.md.
