@@ -1,3 +1,33 @@
+# LotKeys TEST .47 — Store access requests
+
+Based on .46 main 6f5d24622789d466237483f0a4bcf55f0eac7bdc. Web-only;
+keep original-key Android .46, its verified toolbar-free launch and native queue.
+Blair confirmed the .46 toolbar correction; real background-upload testing remains
+pending. Preserve data, .44 retry/resynchronization, .43 fallback and production.
+
+- Administrators copy a private Store invitation. A new user connects with that
+  invitation or a known directory Store Code, then opens Google's Request access
+  screen. Google requires the user to send it there; LotKeys never fabricates a
+  local 'request sent' state. No public Store folder or extra backend is created.
+- Admin Reports / Requests lists Google's pending requests for the Store root.
+  An approver can Approve or Deny; approval grants Reader access and provisions
+  the exact Google recipient's existing LotKeys user workspace automatically.
+  Google Drive still enforces sharing rights. Delegated/view-only proposals and
+  disabled accounts require existing manual review, not automatic restoration.
+- Rechecks root/account/admin identity and fresh Google identity before writes.
+  Verifies actual Google permission before membership provisioning; persisted
+  receipts recover interrupted/uncertain approvals without blind duplicate grants.
+  Other reports remain usable if the access-request API is temporarily unavailable.
+- 430 web tests pass (24 new); 30 total JavaScript syntax checks and diff check
+  pass. Native code/APK, scopes and permissions are unchanged; no Android rebuild.
+  Real Google two-account request/approve/deny and phone UI tests remain pending.
+- TEST promotion goes through its PR/checks. Verify Pages bytes/version before
+  claiming it live. Production remains unchanged. Google OAuth test-user allowlist
+  is separate and still required while its project is Testing.
+- Future Account background/connector controls remain a separate saved requirement
+  on codex/account-background-release-readiness; this release does not move them.
+- See RELEASE-0.9.5.47.md, LotKeys-0.9.5.47-Test-Report.md and CONTINUE-0.9.5.47.txt.
+
 # LotKeys TEST .46 — trusted launch and background upload controls
 
 Based on deployed .45 main 0b5310597e907544065b15658106e75b21ea18a0.
