@@ -8,20 +8,20 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.44 with Android V0.9.5.44', () => {
+test('release metadata is consistently V0.9.5.45 with Android V0.9.5.45', () => {
   const version = JSON.parse(read('version.json'));
-  assert.equal(version.version, '0.9.5.44');
-  assert.equal(version.build, '095044');
+  assert.equal(version.version, '0.9.5.45');
+  assert.equal(version.build, '095045');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'early-background-handoff');
-  assert.equal(version.androidConnectorVersion, '0.9.5.44');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095044-early-background-handoff');
-  assert.match(read('index.html'), /V0\.9\.5\.44/);
-  assert.match(read('manifest.webmanifest'), /build=095044/);
-  assert.match(read('sw.js'), /lotkeys-app-v095044-early-background-handoff/);
-  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.44/);
-  assert.match(read('android/app/build.gradle'), /versionCode 95044/);
-  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.44 TEST/);
+  assert.equal(version.release, 'single-install-readiness');
+  assert.equal(version.androidConnectorVersion, '0.9.5.45');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095045-single-install-readiness');
+  assert.match(read('index.html'), /V0\.9\.5\.45/);
+  assert.match(read('manifest.webmanifest'), /build=095045/);
+  assert.match(read('sw.js'), /lotkeys-app-v095045-single-install-readiness/);
+  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.45/);
+  assert.match(read('android/app/build.gradle'), /versionCode 95045/);
+  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.45 TEST/);
 });
 
 test('paired phone UI shows the trusted PC and can forget it', () => {
@@ -32,7 +32,7 @@ test('paired phone UI shows the trusted PC and can forget it', () => {
   assert.match(hub, /hub-phone-indicator \$\{e\(c\.level\)\}/);
   assert.match(hub, /id="hub-connected-pcs">🖥️ \$\{phone.connected\?'Connected':phone.paired\?'Paired':'Computers'\}/);
   assert.match(hub, /data-forget-browser=.*?Forget/);
-  assert.match(hub, /Android Settings → Apps → LotKeys Connector TEST → Battery and choose Unrestricted/);
+  assert.match(hub, /Android Settings → Apps → LotKeys TEST → Battery and choose Unrestricted/);
   assert.match(html, /\.readiness-btn\.phone-paired\{background:#1689e8\}/);
   assert.match(html, /phone\?\.connected&&\(phone\.role!=='phone'\|\|phone\.native&&phone\.relayReady/);
 });
@@ -174,7 +174,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
   assert.match(phone, /String\(1000 .* % 9000\)/);
   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095044/);
+  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095045/);
   assert.match(phone, /targetAddressSpace: 'loopback'/);
   assert.match(phone, /connectNative/);
   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
@@ -237,7 +237,7 @@ test('Android layer keeps the existing messenger and adds a reviewed media hando
   assert.match(manifest, /foregroundServiceType="remoteMessaging"/);
   assert.doesNotMatch(manifest, /RECEIVE_SMS|RECEIVE_MMS|RECEIVE_WAP_PUSH|WRITE_SMS|READ_CALL_LOG|WRITE_CALL_LOG|BIND_ACCESSIBILITY_SERVICE|MANAGE_EXTERNAL_STORAGE/);
   assert.match(activity, /remains your default messaging app/);
-  assert.match(activity, /#lotkeys-phone=/);
+  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/BrowserExperience.java'), /\.fragment\([\s\S]*?"lotkeys-phone=" \+ token/);
   assert.doesNotMatch(activity, /FLAG_SECURE/, 'TEST connector must allow screenshots and screen recording');
   assert.doesNotMatch(activity, /ROLE_SMS|device\.json|hub\.json/);
   assert.match(store, /Telephony\.Threads/);
@@ -268,8 +268,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
   assert.match(messaging, /async function sendParty/);
   assert.match(messaging, /function hubMount/);
   assert.match(messaging, /async function hubRows/);
-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095044/);
-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095044/);
+  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095045/);
+  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095045/);
 });
 
 test('cached LotKeys renders before Chat and Phone background startup', () => {

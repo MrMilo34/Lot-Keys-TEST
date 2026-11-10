@@ -18,7 +18,7 @@ test('staging retries identical bytes after a lost reply and commits only after 
       if (lost) { lost = false; throw Error('reply lost'); }
       return { staged: offset };
     }
-    if (op === 'commit') { assert.equal(offset, plan.assets[0].size); commits++; return { ...plan, state: 'queued' }; }
+    if (op === 'commit') { assert.equal(offset, plan.assets[0].size); commits++; return { ...plan, id: 'batch-1', state: 'queued', assets: plan.assets.map(row => ({ ...row, staged: row.size })) }; }
   } };
   await Native.handoff(plan, sources, { phone, onPrepared: async () => { savedReceipt = true; } });
   assert.deepEqual(accepted.slice(0, 2), [[0, Native.chunkSize], [0, Native.chunkSize]]);
@@ -44,16 +44,16 @@ test('existing Android copies resume from the retained offset, and paused author
   const phone = { uploadCall: async (op, input) => {
     if (op === 'prepare') return { ...plan, id: 'batch-1', state: 'staging', assets: plan.assets.map(row => ({ ...row, staged: Native.chunkSize })) };
     if (op === 'chunk') { offsets.push(input.offset); return { staged: plan.assets[0].size }; }
-    return { ...plan, state: 'paused_auth', error: 'Restore Drive access' };
+    return { ...plan, id: 'batch-1', state: 'paused_auth', error: 'Restore Drive access', assets: plan.assets.map(row => ({ ...row, staged: row.size })) };
   } };
-  await Native.handoff(plan, sources, { phone }); assert.deepEqual(offsets, [Native.chunkSize]);
+  await assert.rejects(Native.handoff(plan, sources, { phone }), /Restore Drive access/); assert.deepEqual(offsets, [Native.chunkSize]);
   await assert.rejects(Native.wait('batch-1', context, { phone }), /Restore Drive access/);
 });
 test('a resumed held batch requeues its retained originals without staging another copy', async () => {
   const { plan } = fixture(); let commits = 0;
   const phone = { uploadCall: async op => {
     if (op === 'prepare') return { ...plan, id: 'batch-1', state: 'queued' };
-    if (op === 'commit') { commits++; return { ...plan, state: 'queued' }; }
+    if (op === 'commit') { commits++; return { ...plan, id: 'batch-1', state: 'queued', assets: plan.assets.map(row => ({ ...row, staged: row.size })) }; }
     throw Error('Retained originals must not be staged again');
   } };
   await Native.handoff(plan, new Map(), { phone }); assert.equal(commits, 1);

@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 
 android {
     namespace 'ca.lotkeys.connector'
-    compileSdk 35
+    compileSdk 36
 
     // A controlled TEST release uses one stable, non-production certificate so
     // its Android OAuth client can be registered once. The private key is
@@ -27,13 +27,16 @@ android {
     defaultConfig {
         applicationId 'ca.lotkeys.connector.test'
         minSdk 30
-        targetSdk 35
-        versionCode 95044
-        versionName '0.9.5.44-test'
+        targetSdk 36
+        versionCode 95045
+        versionName '0.9.5.45-test'
     }
 
     buildTypes {
         debug {
+            if (hasTestSigning) signingConfig signingConfigs.lotkeysTest
+        }
+        release {
             if (hasTestSigning) signingConfig signingConfigs.lotkeysTest
         }
     }
@@ -56,9 +59,10 @@ dependencies {
     // jdk7/jdk8 1.6 split artifacts and fail duplicate-class validation.
     implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
     implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.browser:browser:1.8.0'
     implementation 'com.google.android.gms:play-services-auth:21.3.0'
     implementation platform('com.google.firebase:firebase-bom:34.5.0')
     implementation 'com.google.firebase:firebase-messaging'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.robolectric:robolectric:4.14.1'
+    testImplementation 'org.robolectric:robolectric:4.16.1'
 }

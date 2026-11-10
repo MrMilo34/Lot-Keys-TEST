@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-/** One-time, contextual Android permission setup. The normal messaging interface remains LotKeys. */
+/** Single-install LotKeys entry point with contextual phone/upload settings. */
 public final class MainActivity extends Activity {
     private static final int REQUEST_MESSAGES = 41;
     private static final int REQUEST_CONTACTS = 42;
@@ -42,7 +42,7 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_UPLOAD_AUTHORIZATION = 46;
     private static final int REQUEST_WAKE_SETUP = 47;
     private static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
-    private static final String TEST_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095040";
+    private boolean setupMode;
     private LinearLayout body;
     private Account pendingGoogleAccount;
     private TextView pcRelayStatus;
@@ -58,15 +58,69 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        render();
+        setupMode = state != null ? state.getBoolean("setupMode") : wantsSetup(getIntent());
+        if (setupMode) render();
+        else { renderHome(); if (state == null) openExperience(); }
+    }
+
+    private boolean wantsSetup(Intent intent) {
+        JSONObject pending = DriveRelay.pendingRequest(this);
+        return (intent != null && intent.getBooleanExtra(BrowserExperience.SHOW_SETUP, false)) ||
+            (pending != null && pending.optLong("expiresAt") > System.currentTimeMillis());
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent); setIntent(intent);
+        setupMode = wantsSetup(intent);
+        connectionUi.removeCallbacks(refreshConnectionUi);
+        PhoneConnectorService.setSetupVisible(setupMode);
+        if (setupMode) connectionUi.post(refreshConnectionUi);
+        if (setupMode) render(); else { renderHome(); openExperience(); }
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        state.putBoolean("setupMode", setupMode);
+        super.onSaveInstanceState(state);
     }
 
     @Override public void onResume() {
         super.onResume();
-        PhoneConnectorService.setSetupVisible(true);
-        render();
+        PhoneConnectorService.setSetupVisible(setupMode);
+        if (setupMode) render(); else renderHome();
         connectionUi.removeCallbacks(refreshConnectionUi);
-        connectionUi.post(refreshConnectionUi);
+        if (setupMode) connectionUi.post(refreshConnectionUi);
+    }
+
+    private void renderHome() {
+        ScrollView scroll = new ScrollView(this);
+        body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(dp(24), dp(28), dp(24), dp(36));
+        body.setBackgroundColor(Color.rgb(14, 16, 20));
+        scroll.addView(body); setContentView(scroll);
+        text("LotKeys", 30, Color.WHITE, true);
+        text("V0.9.5.45 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Your Inventory, Listings and Hub open here. Phone messaging, PC connection and background saves use this same installation.", 16, Color.LTGRAY, false);
+        button("Open LotKeys", this::openExperience, true);
+        button("Phone & upload settings", () -> {
+            setupMode = true; PhoneConnectorService.setSetupVisible(true); render();
+            connectionUi.removeCallbacks(refreshConnectionUi); connectionUi.post(refreshConnectionUi);
+        }, false);
+        text("Use the same browser and Google account as before to keep local work. Android access is optional and requested only in settings. No second LotKeys home-screen installation is needed.", 14, Color.rgb(145, 151, 161), false);
+    }
+
+    private void openExperience() {
+        String token = "";
+        if (prefs().getBoolean("enabled", false) && requiredMessagesGranted() && notificationsGranted()) {
+            try {
+                startForegroundService(new Intent(this, PhoneConnectorService.class));
+                token = InstallIdentity.token(this);
+            } catch (Exception error) {
+                android.widget.Toast.makeText(this, "Phone connection needs attention in Phone & upload settings. Your LotKeys workspace is still available.", android.widget.Toast.LENGTH_LONG).show();
+            }
+        }
+        try { BrowserExperience.launch(this, token); }
+        catch (ActivityNotFoundException error) { alert(error.getMessage()); }
     }
     @Override public void onPause() {
         connectionUi.removeCallbacks(refreshConnectionUi);
@@ -86,7 +140,8 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.5.44 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.5.45 TEST", 18, Color.rgb(100, 181, 246), true);
+        button("Open LotKeys", this::openExperience, false);
 
         PhoneStore store = new PhoneStore(this);
         boolean messages = requiredMessagesGranted();
@@ -165,7 +220,7 @@ public final class MainActivity extends Activity {
         button("Android App Permissions", this::openAppSettings, false);
         button("Locked-Phone Battery Settings", () -> new AlertDialog.Builder(this)
             .setTitle("Keep PC messages available while locked")
-            .setMessage("Android will ask whether LotKeys Connector TEST may keep the private PC relay running while the phone is locked. Confirm the system prompt. The connection notification remains visible while it is active.")
+            .setMessage("Android will ask whether LotKeys TEST may keep the private PC relay running while the phone is locked. Confirm the system prompt. The connection notification remains visible while it is active.")
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Continue", (dialog, which) -> requestBatteryExemption()).show(), false);
         button("Reset Browser Link", () -> new AlertDialog.Builder(this)
@@ -227,9 +282,8 @@ public final class MainActivity extends Activity {
         prefs().edit().putBoolean("enabled", true).commit();
         try { startForegroundService(new Intent(this, PhoneConnectorService.class)); }
         catch (Exception error) { alert("Android could not start the phone connection. Check App Permissions and try again."); return; }
-        String fragment = "#lotkeys-phone=" + Uri.encode(InstallIdentity.token(this));
-        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(TEST_URL + fragment))); }
-        catch (ActivityNotFoundException error) { alert("No browser is available to open LotKeys."); }
+        try { BrowserExperience.launch(this, InstallIdentity.token(this)); }
+        catch (ActivityNotFoundException error) { alert(error.getMessage()); }
     }
 
     private void chooseGoogleAccount() {
@@ -307,7 +361,7 @@ public final class MainActivity extends Activity {
 
     private void openAppSettings() {
         try { startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()))); }
-        catch (ActivityNotFoundException error) { alert("Open Android Settings > Apps > LotKeys Connector TEST."); }
+        catch (ActivityNotFoundException error) { alert("Open Android Settings > Apps > LotKeys TEST."); }
     }
 
     private void requestBatteryExemption() {

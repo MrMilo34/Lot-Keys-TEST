@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095044-early-background-handoff';
+const CACHE='lotkeys-app-v095045-single-install-readiness';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

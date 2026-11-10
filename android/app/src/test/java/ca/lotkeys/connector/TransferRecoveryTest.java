@@ -14,7 +14,7 @@ import java.io.File;
 import java.util.UUID;
 import static org.junit.Assert.*;
 
-@RunWith(RobolectricTestRunner.class) @Config(sdk = 35)
+@RunWith(RobolectricTestRunner.class) @Config(sdk = {35, 36})
 public class TransferRecoveryTest {
     private TransferStore store;
     @Before public void before() {
