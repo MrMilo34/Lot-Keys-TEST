@@ -46,6 +46,13 @@ public final class TransferJobService extends JobService {
             .setBackoffCriteria(30000, JobInfo.BACKOFF_POLICY_EXPONENTIAL).build()) == JobScheduler.RESULT_SUCCESS;
     }
 
+    static String executionMode(Context context) {
+        JobScheduler jobs = context.getSystemService(JobScheduler.class);
+        JobInfo pending = jobs == null ? null : jobs.getPendingJob(JOB);
+        return Build.VERSION.SDK_INT >= 34 && pending != null && pending.isUserInitiated()
+            ? "user_initiated" : "scheduled";
+    }
+
     @Override public boolean onStartJob(JobParameters params) {
         AtomicBoolean cancelled = new AtomicBoolean(false); stopped = cancelled;
         active.set(cancelled);
@@ -134,7 +141,7 @@ public final class TransferJobService extends JobService {
     private void notifyProgress(JobParameters params, String text) {
         NotificationManager manager = getSystemService(NotificationManager.class);
         manager.createNotificationChannel(new NotificationChannel(CHANNEL, "Drive saves", NotificationManager.IMPORTANCE_LOW));
-        PendingIntent open = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent open = PendingIntent.getActivity(this, 0, new Intent(this, UploadActivity.class), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         Notification notification = new Notification.Builder(this, CHANNEL).setSmallIcon(android.R.drawable.stat_sys_upload)
             .setContentTitle("LotKeys · Saving to Drive").setContentText(text).setContentIntent(open).setOnlyAlertOnce(true).setOngoing(true).build();
         if (Build.VERSION.SDK_INT >= 34 && params.isUserInitiatedJob()) setNotification(params, NOTICE, notification, JOB_END_NOTIFICATION_POLICY_REMOVE);

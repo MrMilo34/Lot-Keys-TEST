@@ -4,6 +4,12 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.ComponentName;
+import android.os.Handler;
+import android.os.Looper;
+import androidx.browser.customtabs.CustomTabsServiceConnection;
+import androidx.browser.customtabs.CustomTabsSession;
+import androidx.browser.trusted.TrustedWebActivityIntentBuilder;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ResolveInfo;
@@ -13,7 +19,7 @@ import androidx.browser.customtabs.CustomTabsIntent;
 
 /** Uses the existing HTTPS origin and browser storage; never creates a WebView data silo. */
 final class BrowserExperience {
-    static final String WEB_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095045";
+    static final String WEB_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095046";
     static final String SHOW_SETUP = "showPhoneSetup";
     private static final String PROVIDER = "experienceBrowserPackage";
 
@@ -47,8 +53,65 @@ final class BrowserExperience {
         return selected;
     }
 
+    private static final java.util.Map<Activity, Connection> connections = new java.util.WeakHashMap<>();
+
+    static void close(Activity activity) {
+        Connection old = connections.remove(activity);
+        if (old != null) old.close();
+    }
+
     static void launch(Activity activity, String token) {
         String selected = provider(activity);
+        if (!activity.getSharedPreferences("lotkeys-connector", Context.MODE_PRIVATE).edit().putString(PROVIDER, selected).commit())
+            throw new ActivityNotFoundException("LotKeys could not retain its browser choice. Try opening again; your saved data is retained.");
+        close(activity);
+        Connection connection = new Connection(activity, selected, token);
+        connections.put(activity, connection);
+        connection.bind();
+    }
+
+    private static final class Connection extends CustomTabsServiceConnection {
+        final Activity activity;
+        final String selected, token;
+        final Handler handler = new Handler(Looper.getMainLooper());
+        boolean bound, launched, closed;
+        final Runnable fallback;
+        Connection(Activity activity, String selected, String token) {
+            this.activity = activity; this.selected = selected; this.token = token;
+            fallback = () -> {
+                if (closed || launched || activity.isFinishing()) return;
+                launched = true;
+                try { launchFallback(activity, selected, token); }
+                catch (ActivityNotFoundException unavailable) {
+                    android.widget.Toast.makeText(activity, "Restore your saved LotKeys browser, then reopen the app. Your data is retained.", android.widget.Toast.LENGTH_LONG).show();
+                }
+            };
+        }
+        void bind() {
+            try { bound = CustomTabsClient.bindCustomTabsService(activity, selected, this); }
+            catch (SecurityException unavailable) { bound = false; }
+            if (bound) handler.postDelayed(fallback, 3000); else fallback.run();
+        }
+        @Override public void onCustomTabsServiceConnected(ComponentName name, CustomTabsClient client) {
+            if (closed || launched || activity.isFinishing()) return;
+            try {
+                CustomTabsSession session = client.newSession(null);
+                if (session == null) { fallback.run(); return; }
+                handler.removeCallbacks(fallback);
+                // Chrome hides browser chrome only after verifying the real HTTPS origin.
+                // No WebView, browser/profile switch, or verification bypass is used.
+                new TrustedWebActivityIntentBuilder(appUri(token)).build(session).launchTrustedWebActivity(activity);
+                launched = true;
+            } catch (RuntimeException unavailable) { fallback.run(); }
+        }
+        @Override public void onServiceDisconnected(ComponentName name) { if (!launched) fallback.run(); }
+        void close() {
+            closed = true; handler.removeCallbacks(fallback);
+            if (bound) { activity.unbindService(this); bound = false; }
+        }
+    }
+
+    private static void launchFallback(Activity activity, String selected, String token) {
         PendingIntent settings = PendingIntent.getActivity(activity, 9545, setupIntent(activity),
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         CustomTabsIntent tab = new CustomTabsIntent.Builder()

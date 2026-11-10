@@ -91,6 +91,11 @@ public final class MainActivity extends Activity {
         if (setupMode) connectionUi.post(refreshConnectionUi);
     }
 
+    @Override public void onDestroy() {
+        BrowserExperience.close(this);
+        super.onDestroy();
+    }
+
     private void renderHome() {
         ScrollView scroll = new ScrollView(this);
         body = new LinearLayout(this);
@@ -99,9 +104,10 @@ public final class MainActivity extends Activity {
         body.setBackgroundColor(Color.rgb(14, 16, 20));
         scroll.addView(body); setContentView(scroll);
         text("LotKeys", 30, Color.WHITE, true);
-        text("V0.9.5.45 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("V0.9.5.46 TEST", 18, Color.rgb(100, 181, 246), true);
         text("Your Inventory, Listings and Hub open here. Phone messaging, PC connection and background saves use this same installation.", 16, Color.LTGRAY, false);
         button("Open LotKeys", this::openExperience, true);
+        button("Background upload controls", () -> startActivity(new Intent(this, UploadActivity.class)), false);
         button("Phone & upload settings", () -> {
             setupMode = true; PhoneConnectorService.setSetupVisible(true); render();
             connectionUi.removeCallbacks(refreshConnectionUi); connectionUi.post(refreshConnectionUi);
@@ -140,7 +146,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.5.45 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.5.46 TEST", 18, Color.rgb(100, 181, 246), true);
         button("Open LotKeys", this::openExperience, false);
 
         PhoneStore store = new PhoneStore(this);

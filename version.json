@@ -1,15 +1,16 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.45",
-  "build": "095045",
-  "release": "single-install-readiness",
+  "version": "0.9.5.46",
+  "build": "095046",
+  "release": "trusted-launch-background-controls",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095045-single-install-readiness",
+  "serviceWorkerCache": "lotkeys-app-v095046-trusted-launch-background-controls",
   "publishedAt": "2026-11-10",
-  "basedOn": "TEST .44, preserving the .43 phone-confirmed upload baseline",
-  "androidConnectorVersion": "0.9.5.45",
-  "preparedAt": "2026-11-09",
-  "deploymentStatus": "test-release",
-  "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.45.apk"
+  "basedOn": "TEST .45 preserving observed .44 retry/resynchronization",
+  "androidConnectorVersion": "0.9.5.46",
+  "preparedAt": "2026-11-10",
+  "deploymentStatus": "test-release-phone-verification-pending",
+  "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.46.apk",
+  "originVerificationUrl": "https://mrmilo34.github.io/.well-known/assetlinks.json"
 }

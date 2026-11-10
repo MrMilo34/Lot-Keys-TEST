@@ -129,6 +129,7 @@ final class LocalApiServer {
             status.put("relay", relay);
             status.getJSONObject("capabilities").put("backgroundRelay", relay.optBoolean("authorized"));
             status.getJSONObject("capabilities").put("backgroundUploads", TransferAuth.ready(service));
+            status.getJSONObject("capabilities").put("uploadControls", true);
             status.getJSONObject("capabilities").put("deferredVehicleFinalization", TransferAuth.ready(service));
             status.getJSONObject("capabilities").put("adaptiveRelayPolling", true);
             status.put("uploadAccount", TransferAuth.account(service));
@@ -151,9 +152,9 @@ final class LocalApiServer {
             if ("/v1/transfers/commit".equals(path)) {
                 JSONObject batch = transfers.commit(id);
                 if (!TransferStore.terminal(batch.optString("state")) && !TransferJobService.schedule(service, false)) throw new IllegalStateException("Android could not schedule this save. Open Android setup and tap Resume Drive Saves.");
-                return batch;
+                return batch.put("execution", TransferJobService.executionMode(service));
             }
-            if ("/v1/transfers/status".equals(path)) return transfers.snapshot(transfers.get(id));
+            if ("/v1/transfers/status".equals(path)) return transfers.snapshot(transfers.get(id)).put("execution", TransferJobService.executionMode(service));
             if ("/v1/transfers/cancel".equals(path)) return transfers.cancel(id);
             if ("/v1/transfers/acknowledge".equals(path)) return transfers.acknowledge(id);
         }

@@ -1,3 +1,16 @@
+# LotKeys TEST V0.9.5.46 — app launch and background upload controls
+
+[Install the signed .46 Android update](downloads/LotKeys-Connector-TEST-V0.9.5.46.apk)
+over the current TEST app. The verified origin enables Trusted Web Activity launch
+without Chrome's URL toolbar on compatible browsers. Use the same browser/profile;
+do not uninstall or clear data. Physical-phone toolbar confirmation is pending.
+
+Keep LotKeys open while preparing originals. After a durable handoff, open native
+Background upload controls and tap Continue uploads in background before switching
+apps. Android can defer/stop work; existing retained retries and .44 improvements
+remain. 406 web and 58 native tests pass; phone app-switch/lock/retry tests remain.
+[Release details](RELEASE-0.9.5.46.md) · [Verification and rollback](LotKeys-0.9.5.46-Test-Report.md).
+
 # LotKeys TEST V0.9.5.44 — earlier Android handoff
 
 Folders and essential Vehicle data are saved first. Android then retains every

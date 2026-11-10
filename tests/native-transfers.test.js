@@ -59,3 +59,23 @@ test('a resumed held batch requeues its retained originals without staging anoth
   await Native.handoff(plan, new Map(), { phone }); assert.equal(commits, 1);
   await assert.rejects(Native.wait('batch-1', context, { phone: { uploadCall: async () => ({ ...plan, state: 'queued', held: true }) } }), /paused/);
 });
+
+
+test('ordinary Android scheduling is shown as deferrable while retained files stay safe', () => {
+  const value = Native.presentation({ phase: 'queued', version: 2, execution: 'scheduled' });
+  assert.equal(value.backgroundReady, true);
+  assert.match(value.message, /retained.*controls.*defer/);
+  assert.doesNotMatch(value.message, /Ready to switch/);
+  assert.match(Native.presentation({ phase: 'queued', version: 2, execution: 'user_initiated' }).message, /Ready to switch/);
+  assert.equal(Native.presentation({ phase: 'staging', execution: 'user_initiated' }).backgroundReady, false);
+});
+
+test('retained queue execution mode reaches progress after commit and status refresh', async () => {
+  const { plan } = fixture(); const events = [];
+  const snapshot = { ...plan, id: 'batch-1', state: 'queued', execution: 'scheduled', assets: plan.assets.map(row => ({ ...row, staged: row.size })) };
+  await Native.handoff(plan, new Map(), { phone: { uploadCall: async () => snapshot }, onProgress: value => events.push(value) });
+  assert.equal(events.at(-1).execution, 'scheduled');
+  let n = 0;
+  await Native.wait('batch-1', context, { phone: { uploadCall: async () => ++n === 1 ? snapshot : { ...snapshot, state: 'complete', assets: snapshot.assets.map(row => ({ ...row, result: { id: 'result-drive-123' } })) } }, delay: async () => {}, onProgress: value => events.push(value) });
+  assert.equal(events.at(-2).execution, 'scheduled');
+});
