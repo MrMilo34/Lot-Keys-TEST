@@ -134,3 +134,18 @@ test('reopening a Profile subscribes to live batches from its existing gallery j
   modal.dataset.openToken='second';const second=ctx.queueVehicleHydration('vehicle',{openToken:'second',onUpdate:v=>updates.push(v)});assert.equal(first,second);
   send({id:'vehicle',photos:[{id:'batch'}]});assert.equal(updates[0].photos[0].id,'batch');done.resolve();await first;
 });
+
+test('one slow original does not hold up the rest of the gallery',async()=>{
+  const f=fixture(),slow=deferred(),updates=[];
+  f.ctx.listFiles=async q=>q.includes("'photos'")?Array.from({length:12},(_,i)=>({id:'remote-'+i,name:String(i).padStart(2,'0')+'.jpg',mimeType:'image/jpeg'})):[];
+  f.ctx.fetchFileBlob=async id=>id==='remote-2'?slow.promise:new Blob(['photo']);
+  await f.ctx.hydrateVehicleAssets(f.vehicle,{photoBlobWaitMs:0,onUpdate:v=>updates.push(v)});await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(f.get().mediaHydration.loadedCount,11);assert.equal(f.get().mediaHydration.status,'loading');slow.resolve(new Blob(['late']));await new Promise(resolve=>setImmediate(resolve));assert.equal(updates.at(-1).mediaHydration.loadedCount,12);assert.equal(updates.at(-1).mediaHydration.status,'ready');
+});
+
+test('a failed background cache write reports an error to the open screen',async()=>{
+  const f=fixture(),updates=[],update=f.ctx.DB.update;let writes=0;
+  f.ctx.listFiles=async q=>q.includes("'photos'")?[{id:'remote',name:'photo.jpg',mimeType:'image/jpeg'}]:[];
+  f.ctx.DB.update=async(...args)=>{if(writes++)throw Error('storage full');return update(...args)};
+  await f.ctx.hydrateVehicleAssets(f.vehicle,{onUpdate:v=>updates.push(v)});assert.equal(updates.at(-1).mediaHydration.status,'error');assert.match(updates.at(-1).mediaHydration.error,/storage/);
+});

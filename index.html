@@ -1107,7 +1107,7 @@ const DriveSync = (() => {
     clearSessionAuthorization();
   }
   async function apiFetch(url, opts={}, retry=true){
-    const token=await authorize(false),{timeoutMs=0,...request}=opts;
+    const token=await authorize(false),{timeoutMs=String(opts.method||'GET').toUpperCase()==='GET'?60000:0,...request}=opts;
     const headers=new Headers(request.headers||{});headers.set('Authorization',`Bearer ${token}`);
     const controller=timeoutMs&&!request.signal?new AbortController():null;
     const timer=controller?setTimeout(()=>controller.abort(),timeoutMs):null;
@@ -2615,28 +2615,35 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
     notify(saved);
     const galleryRevision=String(saved.updatedAt||0);
     const canMerge=current=>!!current&&!vehicleHydrationPending(current)&&String(current.updatedAt||0)===galleryRevision&&String(current.drive?.profileFolderId||'')===expectedFolder;
-    const loadMissing=(async()=>{
-      // Three originals at a time avoids saturating a slow dealership connection.
-      for(let start=0;start<missing.length;start+=3){
+    let nextPhoto=0;
+    const loadPhoto=async()=>{
+      while(nextPhoto<missing.length){
+        const photo=missing[nextPhoto++];
         if(!await contextCurrent()||!canMerge(await DB.get('vehicles',v.id)))return;
-        const chunk=missing.slice(start,start+3),results=await Promise.allSettled(chunk.map(async photo=>{
+        let loaded=null;
+        try{
           const key=context.email+'|'+expectedFolder+'|'+photo.driveFileId;
           let job=vehiclePhotoDownloads.get(key);
-          if(!job){job=fetchFileBlob(photo.driveFileId,true,{timeoutMs:60000}).finally(()=>{if(vehiclePhotoDownloads.get(key)===job)vehiclePhotoDownloads.delete(key)});vehiclePhotoDownloads.set(key,job);}
-          const blob=await job;return {...photo,blob,type:blob.type||photo.type};
-        }));
-        const loaded=new Map(results.filter(result=>result.status==='fulfilled').map(result=>[result.value.driveFileId,result.value]));
-        if(results.some(result=>result.status==='rejected'))failures.push('photo download');
+          if(!job){job=fetchFileBlob(photo.driveFileId,true,{timeoutMs:300000}).finally(()=>{if(vehiclePhotoDownloads.get(key)===job)vehiclePhotoDownloads.delete(key)});vehiclePhotoDownloads.set(key,job);}
+          const blob=await job;loaded={blob,type:blob.type||photo.type};
+        }catch(error){failures.push('photo download');console.warn('Vehicle photo download deferred',error)}
         if(!await contextCurrent())return;
         let merged=false;
         const row=await DB.update('vehicles',v.id,current=>{
           if(!canMerge(current))return;
-          const photos=(current.photos||[]).map(photo=>photo.blob||!loaded.has(photo.driveFileId)?photo:{...photo,blob:loaded.get(photo.driveFileId).blob,type:loaded.get(photo.driveFileId).type});
-          merged=true;return {...current,photos,mediaHydration:{status:failures.length?'error':start+3<missing.length?'loading':'ready',error:failures.length?'Some photos could not load. Cached photos were kept; retry when connected.':'',photoCount:photos.length,loadedCount:photos.filter(photo=>photo.blob).length}};
+          const photos=(current.photos||[]).map(item=>item.blob||!loaded||item.driveFileId!==photo.driveFileId?item:{...item,...loaded});
+          const loadedCount=photos.filter(item=>item.blob).length;
+          merged=true;return {...current,photos,mediaHydration:{status:failures.length?'error':loadedCount<photos.length?'loading':'ready',error:failures.length?'Some photos could not load. Cached photos were kept; retry when connected.':'',photoCount:photos.length,loadedCount}};
         });
         if(!merged)return;notify(row);
       }
-    })().catch(error=>console.warn('Background vehicle photo hydration failed',error));
+    };
+    // Three independent workers: a slow original cannot block the other photos.
+    const loadMissing=Promise.allSettled(Array.from({length:Math.min(3,missing.length)},loadPhoto)).then(async results=>{
+      const failed=results.find(result=>result.status==='rejected');if(!failed)return;
+      console.warn('Background vehicle photo hydration failed',failed.reason);
+      if(await contextCurrent()){const current=await DB.get('vehicles',v.id);if(canMerge(current))notify({...current,mediaHydration:{status:'error',error:'Photos could not be cached on this device. Saved originals were kept; check device storage and retry.'}});}
+    }).catch(error=>console.warn('Background vehicle photo hydration failed',error));
     if(photoBlobWaitMs===null)await loadMissing;
     else await Promise.race([loadMissing,new Promise(resolve=>setTimeout(resolve,Math.max(0,Number(photoBlobWaitMs)||0)))]);
     return await DB.get('vehicles',v.id)||saved;

@@ -1,7 +1,7 @@
 # LotKeys TEST 0.9.5.48 — Inventory media recovery
 
 Full galleries continue into open Vehicle Profiles and Listing photo pickers after
-slow metadata/download responses. Three photos download together; loading counts,
+slow metadata/download responses. Three independent photo workers keep later images moving when one is slow; loading counts,
 failed-folder preservation and Retry keep incomplete galleries visible. Selected
 photo IDs are reconciled without replacing typed Listing fields.
 
