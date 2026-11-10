@@ -2,7 +2,7 @@ LotKeys TEST .47 Store join requests — 2026-11-10
 
 Baseline main 6f5d24622789d466237483f0a4bcf55f0eac7bdc (.46). Source in isolated
 lotkeys-store-requests checkout. Native/installed signed .46 stays unchanged.
-430 Node tests (24 new) and 30 JS syntax/diff checks pass. Current task: finish PR,
+433 Node tests (27 new) and 30 JS syntax/diff checks pass. Current task: finish PR,
 verify CI, promote TEST only and verify Pages/source/APK preservation. Record actual
 PR/merge/deployment evidence before calling it live. No production change.
 

@@ -1,7 +1,7 @@
 # TEST .47 — Store join-request validation
 
 Baseline: main 6f5d24622789d466237483f0a4bcf55f0eac7bdc, signed Android .46.
-430 Node tests pass: 406 prior checks plus 24 new Store access-request checks.
+433 Node tests pass: 406 prior checks plus 27 new Store access-request checks.
 30 JavaScript syntax checks pass, including web/inline and unchanged packaged
 extension; git diff --check passes. CI/Pages results must be recorded at promotion.
 No native source, signed APK, Google scope, Android permission or production changes.
@@ -12,7 +12,7 @@ authorization/network; validates code/root against Store Access.json. Requests u
 Google's current proposal APIs and authenticated Request access UI, never a locally
 fabricated request. Pagination, omitted empty lists and repeated tokens are covered.
 
-Admin/Google-account/Store guards, canonical Google proposal recipient, Reader-only
+Fresh canonical Store Access.json administrator/disabled-recipient checks (not cached roles), Admin/Google-account/Store guards, canonical Google proposal recipient, Reader-only
 approval, denial without provisioning, disabled accounts, delegated/view proposals,
 request root mismatch, duplicate clicks, stale identity, interrupted workspace setup,
 uncertain acceptance, fresh actual permission verification and cache isolation are

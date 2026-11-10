@@ -31,7 +31,18 @@
   function createClient({api,context,readReceipts,writeReceipts,provision,blocked=async()=>false,clock=Date.now}){
     let cache=null;const busy=new Set();
     async function scope(){const s=await context();if(Number(s.adminLevel)<1||!s.rootId)throw Error('Store Administration access is required.');return {...s,rootId:folderId(s.rootId),account:email(s.account)};}
-    async function guard(s,fresh=false){const live=await context(fresh);if(live.rootId!==s.rootId||String(live.account||'').toLowerCase()!==s.account||Number(live.adminLevel)<1)throw Error('The Store or Google account changed. Open Reports / Requests again.');}
+    async function authority(s,recipient=''){
+      const url=new URL('https://www.googleapis.com/drive/v3/files');url.searchParams.set('q',"'"+s.rootId+"' in parents and trashed = false and name = 'Store Access.json'");url.searchParams.set('supportsAllDrives','true');url.searchParams.set('includeItemsFromAllDrives','true');url.searchParams.set('fields','nextPageToken,files(id)');url.searchParams.set('pageSize','1000');
+      const files=await api(url.href);if(files.nextPageToken||files.files?.length!==1)throw Error('The Store access record could not be confirmed. Ask its owner to review Store setup.');
+      const raw=await api(API+encodeURIComponent(files.files[0].id)+'?alt=media&supportsAllDrives=true'),data=typeof raw==='string'?JSON.parse(raw):raw;
+      if(data?.app!=='LotKeys'||data.recordType!=='storeAccess'||data.storeFolderId!==s.rootId||!Array.isArray(data.accessUsers))throw Error('Google did not return the current Store access record.');
+      const disabled=user=>['disabled','banned','blacklisted','removed'].includes(String(user?.status||'').toLowerCase());
+      const actor=data.accessUsers.find(user=>String(user.email||'').trim().toLowerCase()===s.account);
+      if(!actor||disabled(actor)||Number(actor.adminLevel)<1)throw Error('Your current Store record does not allow Administration approval. Refresh Store access.');
+      const member=recipient&&data.accessUsers.find(user=>String(user.email||'').trim().toLowerCase()===recipient);
+      if(member&&disabled(member))throw Error('This account is disabled or removed in the current Store record. Review Approved Users.');
+    }
+    async function guard(s,fresh=false,recipient=''){const live=await context(fresh);if(live.rootId!==s.rootId||String(live.account||'').toLowerCase()!==s.account||Number(live.adminLevel)<1)throw Error('The Store or Google account changed. Open Reports / Requests again.');if(fresh){await authority(s,recipient);const after=await context();if(after.rootId!==s.rootId||String(after.account||'').toLowerCase()!==s.account||Number(after.adminLevel)<1)throw Error('The Store or Google account changed. Refresh Requests.');}}
     const key=s=>'storeJoinSetupsV1:'+s.rootId+':'+s.account;
     async function receipts(s){const rows=await readReceipts(key(s));return Array.isArray(rows)?rows.filter(x=>x.rootId===s.rootId&&x.account===s.account):[];}
     async function retain(s,row){await guard(s);const rows=await receipts(s);const next=rows.filter(x=>x.id!==row.id);next.push(row);await writeReceipts(key(s),next);cache=null;}
@@ -81,7 +92,7 @@
         const address=row?.email||email(remembered?.email);
         if(row&&!row.self)throw Error('This is not a self-service Store join request. Review it in Google Drive.');
         if(await blocked(address))throw Error('This account is disabled or removed. Review its existing Approved User record before restoring access.');
-        await guard(s,true);
+        await guard(s,true,address);
         if(row&&remembered?.state!=='setup_pending'){
           remembered={id,rootId:s.rootId,account:s.account,email:address,createdAt:row.createdAt,state:'approval_check'};await retain(s,remembered);
           try{await api(endpoint+':resolve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ACCEPT',role:['reader'],sendNotification:false})});}
@@ -89,7 +100,7 @@
           remembered.state='setup_pending';await retain(s,remembered);
         }
         if(!await hasDirectAccess(s,address))throw Error('Google has not confirmed this account’s Store access. Refresh Requests; no Store user was provisioned.');
-        await guard(s,true);if(await blocked(address))throw Error('This account was disabled while approval was in progress. Review Approved Users.');
+        await guard(s,true,address);if(await blocked(address))throw Error('This account was disabled while approval was in progress. Review Approved Users.');
         await provision({email:address,userName:''});await guard(s);await remove(s,id);return {status:'approved',email:address};
       }finally{busy.delete(lock);cache=null;}
     }

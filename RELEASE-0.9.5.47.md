@@ -17,7 +17,7 @@ contains only the folder locator/Store code/name, never a login bearer or public
 Google requires the initial request in its UI; the Drive API can list/resolve but
 cannot create access proposals. No new server, credentials, scopes or public sharing.
 
-430 automated web tests and 30 syntax checks pass. Google two-account and phone
+433 automated web tests and 30 syntax checks pass. Google two-account and phone
 checks remain pending. Keep the installed signed .46 APK; no reinstall/data clearing.
 This does not remove Google's separate OAuth test-user gate or implement the future
 Account background-controls layout. Production is unchanged.
