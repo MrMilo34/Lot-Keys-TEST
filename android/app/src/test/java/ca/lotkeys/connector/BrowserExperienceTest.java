@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Looper;
+import java.time.Duration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,6 +50,8 @@ public class BrowserExperienceTest {
             .putString("experienceBrowserPackage", "com.android.chrome").putString("unrelated", "keep").commit();
         Activity activity = Robolectric.buildActivity(Activity.class).create().get();
         BrowserExperience.launch(activity, InstallIdentity.token(context));
+        // TWA service binding is asynchronous; allow the bounded same-browser fallback.
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(3));
         Intent opened = Shadows.shadowOf(activity).getNextStartedActivity();
         assertEquals("com.android.chrome", opened.getPackage());
         assertEquals("lotkeys-phone=same-browser-token", opened.getData().getFragment());
@@ -64,6 +68,8 @@ public class BrowserExperienceTest {
     @Test public void openingLotKeysDoesNotRequireOrRequestPhonePermissions() {
         browser("com.android.chrome");
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).create().get();
+        // TWA service binding is asynchronous; allow the bounded same-browser fallback.
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(3));
         Intent opened = Shadows.shadowOf(activity).getNextStartedActivity();
         assertNotNull(opened); assertNull(opened.getData().getFragment());
         assertNull(Shadows.shadowOf(activity).getLastRequestedPermission());
@@ -75,10 +81,20 @@ public class BrowserExperienceTest {
             Manifest.permission.READ_SMS, Manifest.permission.SEND_SMS, Manifest.permission.POST_NOTIFICATIONS);
         context.getSharedPreferences("lotkeys-connector", 0).edit().putBoolean("enabled", true).putString("browserToken", "existing-link").commit();
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).create().get();
+        // TWA service binding is asynchronous; allow the bounded same-browser fallback.
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(3));
         Intent opened = Shadows.shadowOf(activity).getNextStartedActivity();
         assertEquals("lotkeys-phone=existing-link", opened.getData().getFragment());
         assertNull(Shadows.shadowOf(activity).getLastRequestedPermission());
         assertEquals("existing-link", InstallIdentity.token(context));
+    }
+    @Test public void destroyingTheLauncherCancelsItsDelayedBrowserFallback() {
+        browser("com.android.chrome");
+        Activity activity = Robolectric.buildActivity(Activity.class).create().get();
+        BrowserExperience.launch(activity, "");
+        BrowserExperience.close(activity);
+        Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(4));
+        assertNull(Shadows.shadowOf(activity).getNextStartedActivity());
     }
     @Test public void explicitSettingsOpensNativeConsentWithoutLaunchingOrGrantingAnything() {
         MainActivity activity = Robolectric.buildActivity(MainActivity.class, BrowserExperience.setupIntent(context)).create().get();
