@@ -1,3 +1,36 @@
+# LotKeys TEST .48 — Inventory media recovery
+
+Based on TEST main 025ecc2f7ef0860b7d0a0bcc5cd9a289c0cb7b80. Web-only;
+keep the original-key Android .46 and its existing native queue. Preserve .44
+retry/resynchronization, .43 fallback, saved originals, roles and production.
+
+- Full gallery metadata and photo batches update open Profiles and Listing forms
+  even after the old 15-second / 2.4-second UI waits. Download three originals at
+  a time, show loading/error status and Retry, retain cached media on folder errors.
+  Canonical cover IDs preserve selected Listing photos and edited form fields.
+- Per-file More upload checkpoints survive interrupted lanes. Final owner requests
+  reserve and persist a Drive file ID before creating/writing; bounded API requests
+  retry the same ID, preserve terminal receipts and verify the workspace parent.
+  Account, Store and local edit guards stop stale writes. Newer edits get new
+  request IDs while accepted media references can be reused.
+- Inventory refresh reads pending submission receipts before replacing local work.
+  Queued saves stay Awaiting Inventory publication; rejected saves retain originals
+  with an actionable error. Confirmed receipts allow official Inventory adoption.
+- Processor .78 saves approved/rejected receipts before attempting cleanup. A shared
+  folder writer can edit a user-owned request but Google may deny trashing it.
+  Cleanup failure can no longer replay completed snapshots. Terminal receipts do
+  not consume the pending-request limit; pending saves run in creation order.
+- The existing LW-034 processor received the bounded .76 -> .78 completion/queue
+  patch. Its original Store binding, manifest, trigger and permissions were retained.
+  Two previously pending requests now have durable approved receipts. Do not infer
+  that the newer incomplete photo upload has reached official Inventory from that.
+- All 458 Node tests and 31 JavaScript syntax checks pass; diff check passes.
+  TEST promotion/live verification is the remaining release step. Real
+  regular-user phone/PC retry, gallery and cross-user publication tests remain needed.
+  Do not clear app/browser data, uninstall or manually copy unsubmitted More files.
+  Google Drive's phone app is not needed for LotKeys' direct API upload path.
+- See RELEASE-0.9.5.48.md, LotKeys-0.9.5.48-Test-Report.md and CONTINUE-0.9.5.48.txt.
+
 # LotKeys TEST .47 — Store access requests
 
 Based on .46 main 6f5d24622789d466237483f0a4bcf55f0eac7bdc. Web-only;

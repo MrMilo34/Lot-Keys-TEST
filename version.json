@@ -1,16 +1,16 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.47",
-  "build": "095047",
-  "release": "store-access-requests",
+  "version": "0.9.5.48",
+  "build": "095048",
+  "release": "inventory-media-recovery",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095047-store-access-requests",
+  "serviceWorkerCache": "lotkeys-app-v095048-inventory-media-recovery",
   "publishedAt": "2026-11-10",
-  "basedOn": "TEST .46 with signed Android .46 preserved",
+  "basedOn": "TEST .47 with signed Android .46 preserved",
   "androidConnectorVersion": "0.9.5.46",
   "preparedAt": "2026-11-10",
-  "deploymentStatus": "test-release-account-verification-pending",
+  "deploymentStatus": "test-release-phone-verification-pending",
   "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.46.apk",
   "originVerificationUrl": "https://mrmilo34.github.io/.well-known/assetlinks.json"
 }

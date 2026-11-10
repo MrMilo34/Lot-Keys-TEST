@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095047-store-access-requests';
+const CACHE='lotkeys-app-v095048-inventory-media-recovery';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
