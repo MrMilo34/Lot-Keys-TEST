@@ -21,10 +21,11 @@ Preserve Blair's observed .44 retry/resynchronization, .43 fallback and saved da
 - 406 Node tests and 24 JavaScript syntax checks pass; 58 native tests, assembly,
   bundle and lint pass in CI 42855311393 at 3c6089d8. Lint: 0 errors, 33 warnings.
   Original-key signed .46 APK verifies against .45 package/key/permissions and is
-  included in downloads with SHA-256. Do not substitute an unsigned CI artifact.
-- Install OVER the current TEST app without uninstalling or clearing app/browser
-  data. The matching website is prepared for TEST promotion through its PR.
-  Confirm Pages deployment before calling it live. Production remains untouched.
+  published in downloads with SHA-256. Do not substitute an unsigned CI artifact.
+- PR #17 merged at 7e8544bdd0024fc964b18ace7c6037719bcced5e; TEST Pages
+  deployment 42871744941 succeeded. Eight live release files, including the APK,
+  matched committed bytes. Production remains 0.9.4.81. Install OVER the existing
+  TEST app without uninstalling or clearing app/browser data.
 - Physical-phone upgrade, toolbar removal and background/lock/retry tests remain
   outstanding. See LotKeys-0.9.5.46-Test-Report.md and CONTINUE-0.9.5.46.txt.
 

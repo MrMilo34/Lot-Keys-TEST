@@ -22,8 +22,12 @@ libraries retain 16 KB ZIP-offset and ELF LOAD alignment. No new credentials.
 
 The signed installer is saved in Blair's Library and included in downloads with
 its checksum for coordinated TEST publication. Do not use an unsigned CI APK.
-This branch opens the existing live TEST origin; build=095046 does not select a
-Git branch. Confirm matching .46 Pages deployment before reporting it live.
+PR #17 merged at 7e8544bdd0024fc964b18ace7c6037719bcced5e. TEST Pages run
+42871744941 succeeded; eight live files including the signed APK/checksum matched
+committed bytes. TEST serves .46; production remains .81. Release-head web check
+42871334586 and Android check 42871334239 both succeeded. A final install-page
+copy correction removes the obsolete .45 toolbar/menu instructions; no Android
+code or binary changed. Physical-phone results remain pending.
 
 ## Origin verification completed
 

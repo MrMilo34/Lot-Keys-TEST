@@ -1,31 +1,33 @@
 LotKeys .46 TEST release continuation — 2026-11-10
 
-Goal: toolbar-free APK using the existing browser/profile, with native upload
-controls preserving .44 retry/resynchronization, all data and original TEST key.
-Branch codex/trusted-launch-background-v095046; .45 baseline
-0b5310597e907544065b15658106e75b21ea18a0. Do not touch production.
+Completed: PR #17 merged at 7e8544bdd0024fc964b18ace7c6037719bcced5e;
+Pages 42871744941 succeeded. TEST .46 web/runtime and signed APK/checksum matched
+committed bytes. The final copy-only follow-up corrects old install-page toolbar
+instructions. No Android source/binary change. Production remains 0.9.4.81.
+Release-head web check 42871334586 and Android check 42871334239 succeeded.
+406 web tests / 58 native tests / 24 JS syntax checks; lint 0 errors/33 warnings.
+Original Android source 3c6089d8ad4d3d7c3eef9926c96b6a7f378681c9, CI 42855311393.
+Signed .46 APK ca.lotkeys.connector.test / 95046, SHA-256
+5050259a4ebc48314ba5c1ebbddc895f73e271dc2ccdbc3b76e0f3c9973a0093.
+Library APK file_000000005f4081fdb2863b82d42d24ba is the same verified binary.
 
-Android source 3c6089d8ad4d3d7c3eef9926c96b6a7f378681c9; CI 42855311393.
-58 native tests, assembly/bundle/lint pass; lint 0 errors/33 warnings.
-406 web tests and 24 JavaScript syntax checks pass.
-Signed APK ca.lotkeys.connector.test, 0.9.5.46-test / 95046:
-SHA-256 5050259a4ebc48314ba5c1ebbddc895f73e271dc2ccdbc3b76e0f3c9973a0093.
-Original certificate matches .45; no new permissions or credentials.
-APK is saved in Library and prepared for downloads; never replace with unsigned CI.
+Root assetlinks.json is HTTP 200 JSON without redirect. Google Digital Asset Links
+returned linked=true for exact origin/package/original certificate. Helper repo
+MrMilo34/mrmilo34.github.io commit 1432430a221d9e0353839e71e45a19b72b994950.
+No CNAME, new credentials, permission grants or production changes.
+Recovery .45 branch recovery/test-v095045-before-v095046 retains
+0b5310597e907544065b15658106e75b21ea18a0; .44/.43 fallbacks remain.
 
-Origin verification completed: root .well-known/assetlinks.json is HTTP 200 JSON
-without redirects; Google check linked=true. Helper repo MrMilo34/mrmilo34.github.io
-commit 1432430a221d9e0353839e71e45a19b72b994950. No CNAME/production change.
-Earlier approval denials were resolved by Blair's later explicit related-work and
-TEST-update approval. Don't ask him to reauthorize routine correction steps.
+Next: verify final copy-only Pages deployment, then phone tests. Update over the
+installed TEST app; normal close/reopen, same browser/profile/account/Store.
+Do not uninstall or clear app/browser data. Confirm native .46, absent URL bar,
+retained originals before switching apps, native Continue uploads in background,
+then app-switch/lock/network-retry and final PDF/Inventory without missing or
+duplicated media. Android may defer/stop jobs; preparation needs LotKeys open.
+Server verification and automated tests do not establish actual phone behavior.
 
-Next: confirm APK/checksum and docs committed, preserve .45 recovery branch,
-PR checks, merge expected head, verify TEST Pages .46 and exact published APK hash.
-Record actual PR/merge/deployment evidence in final report/checkpoint.
-Physical phone remains: same-key upgrade over installed TEST, normal close/reopen,
-no toolbar, native Continue uploads in background after durable original commit,
-app-switch/lock/network retry, final PDF/Inventory and no lost/duplicated media.
-Do not uninstall, clear app/browser data or change account/Store/browser profile.
-Android may defer/stop work; preparation still needs LotKeys open.
-
-See LotKeys-0.9.5.46-Test-Report.md for exact tests, use and rollback instructions.
+Blair explicitly approved necessary related steps for this correction and future
+tasks, without repeated permission questions. Ask when an approach materially
+changes or direct input is required; higher-level action safeguards still apply.
+Historical automatic-review denials were resolved by later relevant approval.
+See LotKeys-0.9.5.46-Test-Report.md for exact evidence and rollback instructions.
