@@ -11,6 +11,7 @@ function fixture(status = 'synced') {
   const ctx = {console, Blob, Map, Set, Date, Promise, structuredClone, setTimeout, clearTimeout,
     DB:{get:async()=>structuredClone(row), put:async(_, value)=>{calls.writes++;row=structuredClone(value);},
       update:async(_,id,change)=>{const next=change(structuredClone(row));if(next!==undefined){calls.writes++;row=structuredClone(next);}return structuredClone(row);}},
+    setting:async(key,fallback)=>fallback,
     driveGet:async()=>({id:'profile'}), scanVehicleProfile:async()=>{calls.scans++;return{id:'vehicle',name:'2024 QX60',price:49990,updatedAt:99,syncStatus:'synced',drive:structuredClone(vehicle.drive)};},
     listFiles:async()=>[], qEscape:value=>value, stripPhotoOrderPrefix:value=>value,
     protectPopulatedLocalVehicle:()=>false, fetchFileBlob:async()=>new Blob(['remote photo']),
@@ -72,4 +73,64 @@ test('the upload error handler cannot write its stale browser object over a newe
   vm.createContext(ctx);const start=html.indexOf('  async function syncVehicleNow(');
   vm.runInContext(html.slice(start,html.indexOf('  function vehicleNeedsAutomaticResume(',start)),ctx);
   const result=await ctx.syncVehicleNow(vehicle,{quiet:true});assert.equal(result.price,48000);assert.equal(result.updatedAt,200);assert.equal(writes,0);
+});
+
+test('late photo batches notify the open screen after the initial UI wait expires',async()=>{
+  const f=fixture(),photo=deferred(),updates=[];
+  f.ctx.listFiles=async q=>q.includes("'photos'")?Array.from({length:6},(_,i)=>({id:'remote-'+i,name:String(i)+'.jpg',mimeType:'image/jpeg'})):[];
+  f.ctx.fetchFileBlob=()=>photo.promise;
+  const initial=await f.ctx.hydrateVehicleAssets(f.vehicle,{photoBlobWaitMs:0,onUpdate:v=>updates.push(v)});
+  assert.equal(initial.photos.length,6);assert.equal(initial.mediaHydration.status,'loading');
+  photo.resolve(new Blob(['photo']));await new Promise(resolve=>setImmediate(resolve));
+  assert.ok(updates.some(v=>v.mediaHydration.loadedCount===3));assert.equal(updates.at(-1).mediaHydration.loadedCount,6);
+  assert.equal(updates.at(-1).mediaHydration.status,'ready');
+});
+test('a failed Documents folder does not discard a readable photo gallery or cached documents',async()=>{
+  const f=fixture();f.vehicle.attachments=[{id:'inspection',driveFileId:'inspection-file'}];f.set(f.vehicle);
+  f.ctx.listFiles=async q=>{if(q.includes("'documents'"))throw Error('403');return q.includes("'photos'")?[{id:'remote-photo',name:'photo.jpg',mimeType:'image/jpeg'}]:[]};
+  const result=await f.ctx.hydrateVehicleAssets(f.vehicle);assert.equal(result.photos.length,1);assert.ok(result.photos[0].blob);
+  assert.equal(result.attachments[0].id,'inspection');assert.equal(result.mediaHydration.status,'error');
+});
+test('only three photo downloads run together on a slow connection',async()=>{
+  const f=fixture(),waiting=deferred();let active=0,max=0;
+  f.ctx.listFiles=async q=>q.includes("'photos'")?Array.from({length:12},(_,i)=>({id:'remote-'+i,name:String(i)+'.jpg',mimeType:'image/jpeg'})):[];
+  f.ctx.fetchFileBlob=async()=>{active++;max=Math.max(max,active);await waiting.promise;active--;return new Blob(['photo'])};
+  await f.ctx.hydrateVehicleAssets(f.vehicle,{photoBlobWaitMs:0});assert.equal(max,3);waiting.resolve();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(max,3);assert.equal(f.get().mediaHydration.loadedCount,12);
+});
+test('a Store or Google account change discards late gallery writes and callbacks',async()=>{
+  for(const changed of ['storeFolderId','currentAccountEmail']){
+    const f=fixture(),photo=deferred(),updates=[];let switched=false;
+    f.ctx.setting=async(key,fallback)=>switched&&key===changed?'different':fallback;
+    f.ctx.listFiles=async q=>q.includes("'photos'")?[{id:'remote-photo',name:'photo.jpg',mimeType:'image/jpeg'}]:[];
+    f.ctx.fetchFileBlob=()=>photo.promise;
+    await f.ctx.hydrateVehicleAssets(f.vehicle,{photoBlobWaitMs:0,onUpdate:v=>updates.push(v)});
+    const writes=f.calls.writes,count=updates.length;switched=true;photo.resolve(new Blob(['photo']));await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(f.calls.writes,writes);assert.equal(updates.length,count);
+  }
+});
+test('the full metadata request still repaints after the old 15-second cutoff',async()=>{
+  const loaded=deferred(),rows=[],modal={open:true,dataset:{openToken:'same'}};
+  const ctx={console,modal,vehicleHydrationJobs:new Map(),DB:{get:async()=>({id:'vehicle',drive:{profileFolderId:'profile'}})},DriveSync:{connected:()=>true,ready:async()=>true,hydrateVehicleAssets:async(v,options)=>{await loaded.promise;options.onUpdate({...v,photos:[{id:'late'}]});return v;}}};
+  vm.createContext(ctx);const start=html.indexOf('  function queueVehicleHydration(');vm.runInContext(html.slice(start,html.indexOf('  async function showVehicle(',start)),ctx);
+  const job=ctx.queueVehicleHydration('vehicle',{openToken:'same',onUpdate:row=>rows.push(row)});loaded.resolve();await job;
+  assert.ok(rows.some(v=>v.photos?.[0]?.id==='late'));
+  modal.dataset.openToken='another';rows.length=0;await ctx.queueVehicleHydration('vehicle',{openToken:'same',onUpdate:row=>rows.push(row)});assert.equal(rows.length,0);
+});
+
+test('late gallery metadata preserves Listing photo choices when a cached cover gains its canonical asset ID',()=>{
+  const ctx={Map};vm.createContext(ctx);const start=html.indexOf('  function adoptListingVehicleGallery(');vm.runInContext(html.slice(start,html.indexOf('  async function hydrateVehicleForListingUi(',start)),ctx);
+  const listing={marketplaceTitle:'My edited title',description:'My typed copy',photoOrder:['DRV-cover','listing-photo'],photoPickerOrder:['listing-photo','DRV-cover'],photoOrderCustomized:true};
+  const current={id:'vehicle',photos:[{id:'DRV-cover',driveFileId:'cover-file'}]},fresh={photos:[{id:'canonical-cover',driveFileId:'cover-file'},{id:'other',driveFileId:'other-file'}]};
+  const result=ctx.adoptListingVehicleGallery(listing,current,fresh);
+  assert.deepEqual(listing.photoOrder,['canonical-cover','listing-photo']);assert.deepEqual(listing.photoPickerOrder,['listing-photo','canonical-cover']);assert.equal(listing.marketplaceTitle,'My edited title');assert.equal(listing.description,'My typed copy');assert.equal(result.photos.length,2);
+});
+
+test('reopening a Profile subscribes to live batches from its existing gallery job',async()=>{
+  const started=deferred(),done=deferred(),modal={open:true,dataset:{openToken:'first'}},updates=[];let send;
+  const ctx={console,modal,vehicleHydrationJobs:new Map(),Set,DB:{get:async()=>({id:'vehicle',drive:{profileFolderId:'profile'}})},DriveSync:{connected:()=>true,ready:async()=>true,hydrateVehicleAssets:async(v,options)=>{send=options.onUpdate;started.resolve();await done.promise;return v;}}};
+  vm.createContext(ctx);const start=html.indexOf('  function queueVehicleHydration(');vm.runInContext(html.slice(start,html.indexOf('  async function showVehicle(',start)),ctx);
+  const first=ctx.queueVehicleHydration('vehicle',{openToken:'first',onUpdate:()=>assert.fail('Closed screen must ignore late photos')});await started.promise;
+  modal.dataset.openToken='second';const second=ctx.queueVehicleHydration('vehicle',{openToken:'second',onUpdate:v=>updates.push(v)});assert.equal(first,second);
+  send({id:'vehicle',photos:[{id:'batch'}]});assert.equal(updates[0].photos[0].id,'batch');done.resolve();await first;
 });

@@ -66,3 +66,12 @@ test('a pending save arriving after Inventory metadata was read wins the atomic 
 test('foreground resume starts saved vehicle uploads before preference backups and directory scans',async()=>{
   const calls=[],ctx={document:{visibilityState:'visible'},navigator:{onLine:true},storeTransitionBusy:false,foregroundResumeBusy:false,DriveSync:{resumeStalledUploads:()=>calls.push('recover-stalled'),syncPersonalPreferences:async()=>calls.push('preferences'),refreshStoreDirectory:async()=>calls.push('directory')},resumePendingVehicleSyncs:async()=>calls.push('vehicles'),resumePendingContributionSubmissions:async()=>calls.push('contributions'),resumePendingListingSyncs:async()=>calls.push('listings'),refreshInventoryIfDue:async()=>calls.push('inventory-refresh'),refreshListingsIfDue:async()=>calls.push('listing-refresh'),storeProfileThumbCache:{clear:()=>{}},route:'home',modal:{open:false},console};vm.createContext(ctx);vm.runInContext(html.slice(html.indexOf('  async function resumeForegroundWork('),html.indexOf('  let baseReadySignaled=')),ctx);await ctx.resumeForegroundWork();assert.ok(calls.indexOf('vehicles')<calls.indexOf('preferences'));assert.ok(calls.indexOf('inventory-refresh')<calls.indexOf('directory'));assert.equal(ctx.foregroundResumeBusy,false);
 });
+for(const status of ['pending','approved','rejected'])test('Inventory refresh keeps submitted work honest while its receipt is '+status,async()=>{
+  const f=inventoryFixture({unchanged:true}),local=f.rows.get('vehicle');local.syncStatus='queued';local.price=25000;local.lastWorkspaceRequestId='request';local.lastWorkspaceRequestFileId='receipt';
+  f.ctx.fetchFileBlob=async()=>new Blob([JSON.stringify({id:'request',vehicleId:'vehicle',status,processorError:'A duplicate stock number needs review.'})]);
+  await f.ctx.refreshInventoryFromDrive({indexHint:{file:{id:'index'},entries:[f.entry]}});
+  const saved=f.rows.get('vehicle');
+  if(status==='pending'){assert.equal(saved.syncStatus,'queued');assert.equal(saved.price,25000);assert.equal(f.writes.length,0);}
+  if(status==='approved'){assert.equal(saved.syncStatus,'synced');assert.equal(saved.price,19888);}
+  if(status==='rejected'){assert.equal(saved.syncStatus,'error');assert.equal(saved.price,25000);assert.match(saved.syncError,/duplicate stock/);}
+});

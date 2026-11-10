@@ -1,12 +1,12 @@
 /**
- * LotKeys Store Processor V0.9.4.77
+ * LotKeys Store Processor V0.9.4.78
  *
  * This script is installed once by an Admin Level 2 account. It is the trusted
  * writer between each user's private More request queue and the official,
  * Viewer-only Inventory. Never deploy it to execute as the visiting web user.
  */
 
-const LOTKEYS_PROCESSOR_VERSION = '0.9.4.77';
+const LOTKEYS_PROCESSOR_VERSION = '0.9.4.78';
 // First installation only: configure this or the lotkeysStoreFolderId Script
 // property. Generic updates never select a dealership or replace that binding.
 const LOTKEYS_STORE_FOLDER_ID = '';
@@ -188,14 +188,15 @@ function processLotKeysRequests() {
         const context = lkMoreContext_(moreVehicle);
         if (!context.pendingFolder) return;
         const files = lkListChildren_(context.pendingFolder.id, "mimeType != '" + LK_FOLDER + "'")
-          .filter(function(file) { return /\.json$/i.test(file.name || ''); });
+          .filter(function(file) { return /\.json$/i.test(file.name || ''); })
+          .sort(function(a, b) { return (Date.parse(a.createdTime || '') || 0) - (Date.parse(b.createdTime || '') || 0); });
         files.forEach(function(file) {
           if (remaining <= 0) return;
-          remaining -= 1;
-          result.processed += 1;
           try {
             const request = lkReadJsonFile_(file.id);
             if (!request || String(request.status || 'pending') !== 'pending') return;
+            remaining -= 1;
+            result.processed += 1;
             request.driveRequestFileId = file.id;
             request.userName = lkUserName_(actor);
             request.userEmail = lkEmail_(actor);
@@ -1314,12 +1315,16 @@ function lkCleanupLegacyRequestArchives_(moreFolder) {
 
 function lkApproveRequest_(request, file, context, note) {
   request.status = 'approved'; request.resolvedAt = new Date().toISOString(); request.processorNote = note || '';
+  // Shared-folder writers may edit a user-owned request but cannot trash it.
+  // Persist the terminal receipt first so cleanup failure cannot replay a save.
+  lkWriteJsonFile_(file.id, request, file.name);
   lkTrash_(file.id);
   return 'approved';
 }
 
 function lkRejectRequest_(request, file, context, reason) {
   request.status = 'rejected'; request.resolvedAt = new Date().toISOString(); request.processorError = String(reason || 'Request rejected.');
+  lkWriteJsonFile_(file.id, request, file.name);
   lkTrash_(file.id);
   return 'rejected';
 }
@@ -1478,7 +1483,7 @@ function lkListChildren_(parentId, extraQuery) {
     const response = Drive.Files.list({
       q: query, pageSize: 1000, pageToken: pageToken,
       supportsAllDrives: true, includeItemsFromAllDrives: true,
-      fields: 'nextPageToken,files(id,name,mimeType,driveId,parents,appProperties,properties,webViewLink,trashed,modifiedTime)'
+      fields: 'nextPageToken,files(id,name,mimeType,driveId,parents,appProperties,properties,webViewLink,trashed,createdTime,modifiedTime)'
     });
     Array.prototype.push.apply(out, response.files || []);
     pageToken = response.nextPageToken;
