@@ -94,10 +94,10 @@ final class BrowserExperience {
         }
         @Override public void onCustomTabsServiceConnected(ComponentName name, CustomTabsClient client) {
             if (closed || launched || activity.isFinishing()) return;
-            CustomTabsSession session = client.newSession(null);
-            if (session == null) { fallback.run(); return; }
-            handler.removeCallbacks(fallback);
             try {
+                CustomTabsSession session = client.newSession(null);
+                if (session == null) { fallback.run(); return; }
+                handler.removeCallbacks(fallback);
                 // Chrome hides browser chrome only after verifying the real HTTPS origin.
                 // No WebView, browser/profile switch, or verification bypass is used.
                 new TrustedWebActivityIntentBuilder(appUri(token)).build(session).launchTrustedWebActivity(activity);
