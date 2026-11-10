@@ -3,7 +3,7 @@ V0.9.5.47 STORE ACCESS REQUESTS
 - Admin Reports / Requests lists, approves/provisions or denies pending requests.
 - Reader Store access; existing own-workspace permissions; identity/Store guards.
 - Retained receipts recover uncertain approval and partial setup without blind grants.
-- 430 web tests, 30 syntax checks and diff check pass; two-account Google test pending.
+- 433 web tests, 30 syntax checks and diff check pass; two-account Google test pending.
 - Web build 095047; cache lotkeys-app-v095047-store-access-requests; signed Android .46 retained.
 - No extra scopes, credentials, public folders or production changes. OAuth test gate separate.
 

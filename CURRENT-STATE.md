@@ -18,7 +18,7 @@ pending. Preserve data, .44 retry/resynchronization, .43 fallback and production
   Verifies actual Google permission before membership provisioning; persisted
   receipts recover interrupted/uncertain approvals without blind duplicate grants.
   Other reports remain usable if the access-request API is temporarily unavailable.
-- 430 web tests pass (24 new); 30 total JavaScript syntax checks and diff check
+- 433 web tests pass (27 new); 30 total JavaScript syntax checks and diff check
   pass. Native code/APK, scopes and permissions are unchanged; no Android rebuild.
   Real Google two-account request/approve/deny and phone UI tests remain pending.
 - TEST promotion goes through its PR/checks. Verify Pages bytes/version before

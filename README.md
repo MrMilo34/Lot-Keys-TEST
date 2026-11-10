@@ -5,7 +5,7 @@ send Google's Request access prompt, and appear in **Reports / Requests**. Appro
 provisions their Store workspace using the exact Google account; Deny grants nothing.
 Store files remain private until approval. Existing Android .46 stays installed.
 
-430 web tests and 30 syntax checks pass; real two-account Google/phone testing is
+433 web tests and 30 syntax checks pass; real two-account Google/phone testing is
 pending. This does not remove Google's separate OAuth test-user restriction.
 [Release details](RELEASE-0.9.5.47.md) · [Verification](LotKeys-0.9.5.47-Test-Report.md).
 

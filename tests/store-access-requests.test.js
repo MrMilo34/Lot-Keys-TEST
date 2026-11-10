@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const Core=require('../lotkeys-store-requests.js');
 const root='store-root-12345',other='other-root-12345',base='https://mrmilo34.github.io/Lot-Keys-TEST/?build=095046#lotkeys-phone=PRIVATE';
 function fixture(options={}){
-  const state={context:{rootId:root,account:'admin@example.com',adminLevel:2},proposals:new Map(),receipts:new Map(),permissions:[],provisioned:[],calls:[],share:true,blocked:false,...options};
+  const state={context:{rootId:root,account:'admin@example.com',adminLevel:2},proposals:new Map(),receipts:new Map(),permissions:[],provisioned:[],calls:[],share:true,blocked:false,registry:[{email:'admin@example.com',adminLevel:2,status:'active'}],...options};
   const row={fileId:root,proposalId:'request-1',requesterEmailAddress:'new@example.com',recipientEmailAddress:'new@example.com',rolesAndViews:[{role:'writer'}],requestMessage:'Join the team',createTime:'2026-11-10T20:00:00Z',...options.proposal};state.proposals.set(row.proposalId,row);
   const client=Core.createClient({
     context:async fresh=>{if(state.onContext)await state.onContext(fresh,state);return {...state.context}},
@@ -11,7 +11,10 @@ function fixture(options={}){
     provision:async account=>{if(state.provisionError)throw Error('Workspace temporarily unavailable');state.provisioned.push(account);},
     api:async(url,opts={})=>{
       state.calls.push({url,opts});if(state.onCall)await state.onCall(url,opts,state);
-      const u=new URL(url),tail=u.pathname.slice(u.pathname.indexOf('/files/')+7),parts=tail.split('/');assert.equal(parts[0],root,'Never address another Store');
+      const u=new URL(url);
+      if(u.pathname==='/drive/v3/files'){assert.ok(u.searchParams.get('q').startsWith("'"+root+"' in parents"));return {files:[{id:'canonical-store-access'}]};}
+      if(u.pathname.endsWith('/canonical-store-access'))return state.registryError?{}:{app:'LotKeys',recordType:'storeAccess',storeFolderId:root,accessUsers:state.registry};
+      const tail=u.pathname.slice(u.pathname.indexOf('/files/')+7),parts=tail.split('/');assert.equal(parts[0],root,'Never address another Store');
       if(parts.length===1)return {id:root,capabilities:{canShare:state.share}};
       if(parts[1]==='permissions')return {permissions:state.permissions};
       if(parts.length===2)return state.page?state.page(u):{accessProposals:[...state.proposals.values()]};
@@ -123,4 +126,14 @@ test('authorization and network failures never pretend a Store access request is
 });
 test('known Store Codes can request private access while existing connected Store Codes still work',async()=>{
   const f=connectionFixture();assert.equal((await f.connect('LK-123')).root.id,root);f.state.fail=Object.assign(Error('Access needed'),{code:'STORE_ACCESS_REQUIRED'});await assert.rejects(f.connect('LK-123'),error=>error.requestTarget.folderId===root);
+});
+
+test('a locally cached administrator role cannot override a demotion in the current Store access record',async()=>{
+  const f=fixture({registry:[{email:'admin@example.com',adminLevel:0,status:'active'}]});await assert.rejects(f.client.resolve('request-1','approve',f.ctx()),/current Store record/);assert.equal(f.state.permissions.length,0);assert.equal(f.state.provisioned.length,0);
+});
+test('missing authoritative Store records fail closed before any approval',async()=>{
+  const f=fixture({registryError:true});await assert.rejects(f.client.resolve('request-1','approve',f.ctx()),/Store access record/);assert.equal(f.state.permissions.length,0);
+});
+test('fresh Store records block disabled recipients even when local cached membership says active',async()=>{
+  const f=fixture();f.state.registry.push({email:'new@example.com',adminLevel:0,status:'disabled'});await assert.rejects(f.client.resolve('request-1','approve',f.ctx()),/disabled/);assert.equal(f.state.permissions.length,0);
 });
