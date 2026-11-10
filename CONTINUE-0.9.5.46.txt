@@ -1,3 +1,9 @@
+LATEST: Signed .46 candidate built and saved in Library. 58 native tests pass; 406 web tests pass.
+Source 3c6089d8ad4d3d7c3eef9926c96b6a7f378681c9; CI 42855311393.
+SHA-256 5050259a4ebc48314ba5c1ebbddc895f73e271dc2ccdbc3b76e0f3c9973a0093.
+No .46 web/root publication. Draft PR creation denied and not retried.
+See LotKeys-0.9.5.46-Test-Report.md for current evidence; old pending entries below are historical.
+
 LATEST: User explicitly approved saving .46 to a testing branch and building its APK.
 The previous commit denial below is historical; origin-root publishing is still pending.
 Upload notifications now open the native transfer controls directly.

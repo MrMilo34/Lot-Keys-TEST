@@ -14,10 +14,13 @@ Keep .44 retry/resynchronization improvement, .43 milestone and all saved data.
   committed retained queue. No new permissions or consent grants.
 - Ordinary queue status distinguishes Android deferral from an accepted UIDT.
   Staging still needs the browser open; retained uploads/retries remain native.
-- 406 Node tests and 24 JavaScript syntax checks pass locally. Native tests added;
-  Android CI/signature/device verification pending. Not deployed.
+- 406 Node tests and 24 JavaScript syntax checks pass locally; 58 native tests,
+  assembly/bundle/lint pass in CI 42855311393 at 3c6089d8. Release lint: 0 errors,
+  33 warnings. Original-key signed .46 candidate verifies against .45 package/key
+  and permissions. See LotKeys-0.9.5.46-Test-Report.md. Phone checks pending.
+  Candidate APK is saved in Library; .46 website and root verification not deployed.
 - User explicitly approved committing .46 to a testing branch and building its APK.
-  Candidate native build/signing checks are in progress; root verification remains pending.
+  Native build/signing checks completed; root verification remains pending.
 - Production, root-host configuration, permissions and credentials unchanged.
 
 # LotKeys TEST .45 — single-install readiness candidate
