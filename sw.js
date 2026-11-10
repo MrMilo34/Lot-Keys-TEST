@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095046-trusted-launch-background-controls';
+const CACHE='lotkeys-app-v095047-store-access-requests';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
@@ -16,6 +16,7 @@ const CORE=[
   './lotkeys-hub-store.js',
   './lotkeys-listing-storage.js',
   './lotkeys-personal-preferences.js',
+  './lotkeys-store-requests.js',
   './lotkeys-website-identity.js',
   './lotkeys-doorbell-core.js',
   './lotkeys-transfer-core.js',

@@ -1,3 +1,12 @@
+V0.9.5.47 STORE ACCESS REQUESTS
+- Private invitations open Google's authenticated Request access flow for new users.
+- Admin Reports / Requests lists, approves/provisions or denies pending requests.
+- Reader Store access; existing own-workspace permissions; identity/Store guards.
+- Retained receipts recover uncertain approval and partial setup without blind grants.
+- 430 web tests, 30 syntax checks and diff check pass; two-account Google test pending.
+- Web build 095047; cache lotkeys-app-v095047-store-access-requests; signed Android .46 retained.
+- No extra scopes, credentials, public folders or production changes. OAuth test gate separate.
+
 V0.9.5.46 TRUSTED LAUNCH AND BACKGROUND UPLOAD CONTROLS
 - Actual Trusted Web Activity requests preserve the existing browser/profile and origin.
 - Origin-root public certificate verification is live; Google linked=true. Phone visual check pending.

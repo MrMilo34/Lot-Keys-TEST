@@ -1,3 +1,14 @@
+# LotKeys TEST V0.9.5.47 — Store access requests
+
+Administrators can **Copy Store Invitation**. New users connect with that invitation,
+send Google's Request access prompt, and appear in **Reports / Requests**. Approve
+provisions their Store workspace using the exact Google account; Deny grants nothing.
+Store files remain private until approval. Existing Android .46 stays installed.
+
+430 web tests and 30 syntax checks pass; real two-account Google/phone testing is
+pending. This does not remove Google's separate OAuth test-user restriction.
+[Release details](RELEASE-0.9.5.47.md) · [Verification](LotKeys-0.9.5.47-Test-Report.md).
+
 # LotKeys TEST V0.9.5.46 — app launch and background upload controls
 
 [Install the signed .46 Android update](downloads/LotKeys-Connector-TEST-V0.9.5.46.apk)
