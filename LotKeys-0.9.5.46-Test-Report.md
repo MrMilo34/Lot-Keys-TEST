@@ -20,28 +20,49 @@ The certificate, launcher and permission set match .45. Signature v3 verifies.
 Signed APK payload bytes match the unsigned CI release APK. All four native
 libraries retain 16 KB ZIP-offset and ELF LOAD alignment. No new credentials.
 
-The signed installer is saved in Blair's Library. This branch does not replace
-its downloads link with an unsigned CI artifact. No .46 website was published.
-Live TEST remains .45 and production remains .81 as checked after signing.
-Installing the APK alone opens that live TEST website, even with build=095046.
+The signed installer is saved in Blair's Library and included in downloads with
+its checksum for coordinated TEST publication. Do not use an unsigned CI APK.
+This branch opens the existing live TEST origin; build=095046 does not select a
+Git branch. Confirm matching .46 Pages deployment before reporting it live.
 
-## Use and remaining work
+## Origin verification completed
+
+https://mrmilo34.github.io/.well-known/assetlinks.json returned HTTP 200 without
+redirect, application/json; charset=utf-8, with exact prepared bytes on 2026-11-10.
+File SHA-256: 8a0b797d189e3e1af43d1aebe42faf72ba51dfec5fb5c4ef1286b690db254063.
+Google Digital Asset Links check returned linked=true for the exact HTTPS origin,
+ca.lotkeys.connector.test and the original certificate above. Public helper repo
+MrMilo34/mrmilo34.github.io commit 1432430a221d9e0353839e71e45a19b72b994950
+serves only minimal verification-site files; no CNAME or production change.
+This establishes server-side verification, not a physical-phone visual result.
+The old .45 APK uses Custom Tabs and does not become a TWA just from this file.
+
+## Phone testing and rollback
 
 Install OVER the existing app; do not uninstall or clear app/browser data.
-Use the same browser/profile/account/Store. Native upload notification opens the
-new controls; the native home also has Background upload controls. After originals
-are committed, tap Continue to request user-initiated scheduling while native UI is
-visible. No fresh Google or Android permission grant is performed by that screen.
-Staging still requires LotKeys open, and Android can pause/retry transfers.
+Use the same browser/profile/account/Store, close the old app view and reopen .46.
+Confirm native version 0.9.5.46-test and that workspace opens without the URL bar.
+Google/browser verification caches may delay recognition; do not clear data.
 
-Toolbar-free TWA rendering still requires the origin-root assetlinks file prepared
-in deployment/trusted-origin. That required live URL returns 404; the account-root
-repository was not found through the current connection. No origin verification
-bypass, WebView migration, origin switch or hosting change was performed.
-Coordinated .46 TEST web publication is also pending, so its new in-page controls
-and deferrable-queue wording are not live yet. Preserve .44 retry improvements,
-.43 fallback, trusted PCs, consent, native queue and original-file order.
+Keep LotKeys open through preparation and durable committed receipt. Open native
+Background upload controls from the Profile link, native home or notification;
+tap Continue uploads in background while native UI is visible. Switch apps and
+check Android upload notification, then lock/unlock and briefly interrupt network.
+Return and verify originals, PDF/sharing, Inventory, retry/resync and no duplicates.
+Record readiness time and bytes; no 30-second or continuous-upload claim is made.
+This screen adds no Google scope, Android permission or automatic consent.
 
-A draft PR creation attempt was denied by automatic approval review because the
-user approved committing/building, not opening a PR. It was not retried. The branch,
-CI and signed APK completed independently; no PR or merge exists for .46.
+Before promotion retain .45 main 0b5310597e907544065b15658106e75b21ea18a0 in
+recovery/test-v095045-before-v095046. The .44 recovery branch already points to
+667a1c06f65fb7db7afed491a386881dc851e2c9; .43 fallback remains
+4d27b49c7018b6386bdbafa9dfc6e20629d87c00. Keep prior signed installers.
+For web rollback, revert the .46 merge on TEST main through a reviewed commit,
+then verify Pages and .45 version/cache/files. Do not force-reset shared main.
+Do not uninstall or force a lower Android version over .46; if native rollback is
+needed, produce a same-key build with a higher version code using retained source.
+Leave root verification in place; it is harmless to Custom Tab .45. No production
+rollback, credential or permission changes are required by this TEST-only release.
+
+Earlier commit/PR/root-publication approval denials were historical. Blair later
+explicitly approved updating the existing TEST release and necessary related work.
+Independent phone testing is still required before a public-release readiness claim.

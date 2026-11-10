@@ -1,27 +1,32 @@
-# LotKeys TEST .46 candidate — trusted launch and background controls
+# LotKeys TEST .46 — trusted launch and background upload controls
 
 Based on deployed .45 main 0b5310597e907544065b15658106e75b21ea18a0.
-User reports .45 browser toolbar differs from the Chrome-installed standalone app.
-Keep .44 retry/resynchronization improvement, .43 milestone and all saved data.
+Preserve Blair's observed .44 retry/resynchronization, .43 fallback and saved data.
 
-- Requests a real browser-session Trusted Web Activity, keeping the existing origin,
-  pinned browser, package/signing identity and local storage. Falls back to the same
-  browser Custom Tab when unavailable; never bypasses origin verification.
-- Fullscreen remains BLOCKED until the HTTPS origin-root assetlinks file is hosted.
-  The project subpath is insufficient. See deployment/trusted-origin/README.txt.
-- Explicit native Background upload controls are reachable from retained Profile
-  receipts and native home. Only a user tap can request UIDT for an authorized,
-  committed retained queue. No new permissions or consent grants.
-- Ordinary queue status distinguishes Android deferral from an accepted UIDT.
-  Staging still needs the browser open; retained uploads/retries remain native.
-- 406 Node tests and 24 JavaScript syntax checks pass locally; 58 native tests,
-  assembly/bundle/lint pass in CI 42855311393 at 3c6089d8. Release lint: 0 errors,
-  33 warnings. Original-key signed .46 candidate verifies against .45 package/key
-  and permissions. See LotKeys-0.9.5.46-Test-Report.md. Phone checks pending.
-  Candidate APK is saved in Library; .46 website and root verification not deployed.
-- User explicitly approved committing .46 to a testing branch and building its APK.
-  Native build/signing checks completed; root verification remains pending.
-- Production, root-host configuration, permissions and credentials unchanged.
+- Real browser-session Trusted Web Activity keeps the existing HTTPS origin,
+  pinned browser, package/certificate and browser storage. Same-browser Custom
+  Tab remains a safe fallback when trusted launch is unavailable.
+- Required origin-root assetlinks.json is now live with HTTP 200, JSON content
+  type and no redirect. Google Digital Asset Links check returned linked=true
+  for ca.lotkeys.connector.test and the original TEST certificate on 2026-11-10.
+  Public helper repo: MrMilo34/mrmilo34.github.io, commit 1432430a221d9e0353839e71e45a19b72b994950.
+  No CNAME or production-site modification. Phone toolbar verification is pending.
+- Explicit native Background upload controls are reachable from committed Profile
+  receipts, upload notifications and native home. A visible native user tap can
+  request user-initiated scheduling for an authorized, committed retained queue.
+  No new permissions, credentials or consent grants. Android can stop/defer jobs.
+- Keep LotKeys open while preparing originals. After durable commit, tap Continue
+  uploads in background in native controls, then switch apps. Retained checkpoints,
+  retries, original-file order and account/Store guards remain in effect.
+- 406 Node tests and 24 JavaScript syntax checks pass; 58 native tests, assembly,
+  bundle and lint pass in CI 42855311393 at 3c6089d8. Lint: 0 errors, 33 warnings.
+  Original-key signed .46 APK verifies against .45 package/key/permissions and is
+  included in downloads with SHA-256. Do not substitute an unsigned CI artifact.
+- Install OVER the current TEST app without uninstalling or clearing app/browser
+  data. The matching website is prepared for TEST promotion through its PR.
+  Confirm Pages deployment before calling it live. Production remains untouched.
+- Physical-phone upgrade, toolbar removal and background/lock/retry tests remain
+  outstanding. See LotKeys-0.9.5.46-Test-Report.md and CONTINUE-0.9.5.46.txt.
 
 # LotKeys TEST .45 — single-install readiness candidate
 

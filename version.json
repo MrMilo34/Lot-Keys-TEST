@@ -9,7 +9,8 @@
   "publishedAt": "2026-11-10",
   "basedOn": "TEST .45 preserving observed .44 retry/resynchronization",
   "androidConnectorVersion": "0.9.5.46",
-  "preparedAt": "2026-11-09",
-  "deploymentStatus": "candidate-awaiting-origin-verification",
-  "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.46.apk"
+  "preparedAt": "2026-11-10",
+  "deploymentStatus": "test-release-phone-verification-pending",
+  "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.46.apk",
+  "originVerificationUrl": "https://mrmilo34.github.io/.well-known/assetlinks.json"
 }

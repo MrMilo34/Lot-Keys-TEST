@@ -1,50 +1,31 @@
-LATEST: Signed .46 candidate built and saved in Library. 58 native tests pass; 406 web tests pass.
-Source 3c6089d8ad4d3d7c3eef9926c96b6a7f378681c9; CI 42855311393.
+LotKeys .46 TEST release continuation — 2026-11-10
+
+Goal: toolbar-free APK using the existing browser/profile, with native upload
+controls preserving .44 retry/resynchronization, all data and original TEST key.
+Branch codex/trusted-launch-background-v095046; .45 baseline
+0b5310597e907544065b15658106e75b21ea18a0. Do not touch production.
+
+Android source 3c6089d8ad4d3d7c3eef9926c96b6a7f378681c9; CI 42855311393.
+58 native tests, assembly/bundle/lint pass; lint 0 errors/33 warnings.
+406 web tests and 24 JavaScript syntax checks pass.
+Signed APK ca.lotkeys.connector.test, 0.9.5.46-test / 95046:
 SHA-256 5050259a4ebc48314ba5c1ebbddc895f73e271dc2ccdbc3b76e0f3c9973a0093.
-No .46 web/root publication. Draft PR creation denied and not retried.
-See LotKeys-0.9.5.46-Test-Report.md for current evidence; old pending entries below are historical.
+Original certificate matches .45; no new permissions or credentials.
+APK is saved in Library and prepared for downloads; never replace with unsigned CI.
 
-LATEST: User explicitly approved saving .46 to a testing branch and building its APK.
-The previous commit denial below is historical; origin-root publishing is still pending.
-Upload notifications now open the native transfer controls directly.
+Origin verification completed: root .well-known/assetlinks.json is HTTP 200 JSON
+without redirects; Google check linked=true. Helper repo MrMilo34/mrmilo34.github.io
+commit 1432430a221d9e0353839e71e45a19b72b994950. No CNAME/production change.
+Earlier approval denials were resolved by Blair's later explicit related-work and
+TEST-update approval. Don't ask him to reauthorize routine correction steps.
 
-LotKeys .46 candidate continuation
+Next: confirm APK/checksum and docs committed, preserve .45 recovery branch,
+PR checks, merge expected head, verify TEST Pages .46 and exact published APK hash.
+Record actual PR/merge/deployment evidence in final report/checkpoint.
+Physical phone remains: same-key upgrade over installed TEST, normal close/reopen,
+no toolbar, native Continue uploads in background after durable original commit,
+app-switch/lock/network retry, final PDF/Inventory and no lost/duplicated media.
+Do not uninstall, clear app/browser data or change account/Store/browser profile.
+Android may defer/stop work; preparation still needs LotKeys open.
 
-User request: make APK resemble the Chrome-installed standalone app and allow
-uploads to continue while using other apps; preserve .44 retry improvements/data.
-Based on main 0b5310597e907544065b15658106e75b21ea18a0 (.45).
-Local checkout: /workspace/scratch/5c0c8271189a/lotkeys-v46
-
-Prepared: real TWA browser session with lifecycle cleanup/same-browser fallback;
-origin asset statements; native UploadActivity for explicit authorized committed
-queue promotion to UIDT; web retained-receipt link and deferrable-job status.
-No additional manifest permissions, private key changes or storage migrations.
-406 Node tests pass; 24 JS syntax checks pass; native tests added but not run.
-No .46 APK built/signed, native CI, phone test or fullscreen verification yet.
-No .46 branch/PR/publish. .45 remains live; production remains untouched.
-
-Blocked operation: GitHub create_commit targeting MrMilo34/Lot-Keys-TEST,
-parent 0b5310597e907544065b15658106e75b21ea18a0, initially prepared tree
-158b45efe7080fc14d2c70b91e1c9cb0963a0e2c. Auto-review denied it, saying
-implementation was authorized but committing was not explicitly approved.
-Read latest dot history after denial; no new approval found; did not retry.
-Local safety/lifecycle fixes since that tree mean rebuild tree from local files.
-No branch reference was created, and main was not changed. Git tree objects only
-were saved remotely; those are not a branch, deployed release or tested build.
-
-Additional blocker: required https://mrmilo34.github.io/.well-known/assetlinks.json
-returns 404. MrMilo34/MrMilo34.github.io is not found through current connection.
-Concrete assetlinks.json and .nojekyll prepared under deployment/trusted-origin.
-Need approval/access to publish those at the origin root (create minimal public
-root Pages repository if absent), with no CNAME and no production-domain change.
-Do not put assetlinks under /Lot-Keys-TEST/ and claim verification; it will fail.
-
-Next after approval: recheck main, create candidate branch/draft PR using current
-local files, run Android CI and fix failures, verify native tests and manifest,
-sign release artifact with original TEST key privately, compare certificate and
-version/permissions. Publish origin file only with required approval, verify public
-URL/content, then physical-phone TWA/browser profile and queued/background tests.
-Coordinate TEST web release only after checks; preserve same origin and all data.
-Current .45 background jobs already retain/retry uploads, but ordinary scheduling
-can be deferred; Chrome-visible UI does not count as native-visible activity.
-Native staging still needs LotKeys open; UIDT cannot prevent all Android stops.
+See LotKeys-0.9.5.46-Test-Report.md for exact tests, use and rollback instructions.

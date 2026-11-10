@@ -1,4 +1,10 @@
 Required URL: https://mrmilo34.github.io/.well-known/assetlinks.json
-Serve assetlinks.json from the account-root GitHub Pages site, with HTTP 200 and application/json, without redirects. The project-path /Lot-Keys-TEST/.well-known/assetlinks.json cannot verify this origin.
-The MrMilo34/MrMilo34.github.io repository was not found using the current GitHub connection; the live required URL returned 404. Confirm ownership/access or approve creating that minimal public repository/site before publication. Required files: .well-known/assetlinks.json and .nojekyll, with Pages from main root. No CNAME; do not change Lot-Keys production or TEST origin. Preserve any pre-existing root site/configuration if found.
-This links the existing TEST package and public certificate fingerprint to the origin for a toolbar-free Trusted Web Activity. No private keys, new credentials, additional Android permissions or browser security bypasses are required. Browser/provider capability and on-device verification still need testing.
+Account-root GitHub Pages verification is live: HTTP 200, application/json, no redirect.
+Google Digital Asset Links check returned linked=true on 2026-11-10 for the exact
+origin, ca.lotkeys.connector.test and original TEST signing certificate.
+Public helper repo MrMilo34/mrmilo34.github.io, main commit
+1432430a221d9e0353839e71e45a19b72b994950, publishes main/root with .nojekyll.
+No CNAME or production modification. Preserve any root files/configuration.
+The project-path /Lot-Keys-TEST/.well-known/assetlinks.json cannot verify this origin.
+Only public certificate fingerprints are published; no private key or credentials.
+Phone/browser support and verification caching still require real-device testing.
