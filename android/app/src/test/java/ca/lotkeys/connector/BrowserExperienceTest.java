@@ -36,7 +36,7 @@ public class BrowserExperienceTest {
         Uri uri = BrowserExperience.appUri("retained-token");
         assertEquals("mrmilo34.github.io", uri.getHost());
         assertEquals("/Lot-Keys-TEST/", uri.getPath());
-        assertEquals("095045", uri.getQueryParameter("build"));
+        assertEquals("095046", uri.getQueryParameter("build"));
         assertNull(uri.getQueryParameter("lotkeys-phone"));
         assertEquals("lotkeys-phone=retained-token", uri.getFragment());
         assertNull(BrowserExperience.appUri("").getFragment());

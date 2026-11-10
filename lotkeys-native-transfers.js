@@ -56,7 +56,7 @@
       timing.commitMs = Math.max(0, timing.readyAt - timing.commitStartedAt);
       // Persist the committed receipt BEFORE presenting permission to switch apps.
       await onCommitted(snapshot, timing);
-      onProgress({ phase: snapshot.state, version:plan.version, ...Core.progress(snapshot) });
+      onProgress({ phase: snapshot.state, version:plan.version, execution:snapshot.execution, ...Core.progress(snapshot) });
       return snapshot;
     };
     if (Core.terminal(snapshot.state)) { if (snapshot.state === 'complete' || snapshot.state === 'needs_reconcile') handoffProof(snapshot, plan, id, true); return snapshot; }
@@ -97,6 +97,7 @@
   function presentation(value = {}) {
     const phase = String(value.phase || ''), reason = String(value.error || '').trim();
     if (phase === 'staging') return { status: 'uploading', backgroundReady: false, message: 'Preparing originals for Android · keep LotKeys open' };
+    if (phase === 'queued' && value.execution === 'scheduled') return { status: 'queued', backgroundReady: true, message: 'Android retained the originals · open Background upload controls to start the transfer; Android may defer ordinary work' };
     if (phase === 'queued') return { status: 'queued', backgroundReady: true, message: value.version === 2 ? 'Ready to switch apps · Android has the files and finishing work' : 'Android has the originals · waiting for Android to start the Drive save' };
     if (phase === 'uploading') return { status: 'uploading', backgroundReady: true, message: 'Android reports uploading to Drive · originals are retained' };
     if (phase === 'finalizing') return { status: 'processing', backgroundReady: true, message: value.stage === 'directory' ? 'Files saved · Android is creating the Vehicle Info Sheet' : 'Files saved · updating Inventory preview' };
@@ -129,7 +130,7 @@
       let result;
       try { result = Core.completed(snapshot, context); }
       catch (error) { error.nativeTransfer = true; error.code = 'NATIVE_RESULT_INVALID'; throw error; }
-      onSnapshot(snapshot); lastProgress = Core.progress(snapshot); onProgress({ phase: snapshot.state, stage:snapshot.stage||'', version:snapshot.version, error: snapshot.error || '', ...lastProgress });
+      onSnapshot(snapshot); lastProgress = Core.progress(snapshot); onProgress({ phase: snapshot.state, stage:snapshot.stage||'', version:snapshot.version, execution:snapshot.execution, error: snapshot.error || '', ...lastProgress });
       if (result) return result;
       if (snapshot.held) { const error = Error('This save is paused for its original account, Store or edit. Resume it from that context.'); error.nativeTransfer = true; error.nativeState = 'paused_context'; throw error; }
       if (Core.terminal(snapshot.state) || snapshot.state.startsWith('paused_')) {

@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095045-single-install-readiness';
+const CACHE='lotkeys-app-v095046-trusted-launch-background-controls';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

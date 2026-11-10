@@ -1,3 +1,25 @@
+# LotKeys TEST .46 candidate — trusted launch and background controls
+
+Based on deployed .45 main 0b5310597e907544065b15658106e75b21ea18a0.
+User reports .45 browser toolbar differs from the Chrome-installed standalone app.
+Keep .44 retry/resynchronization improvement, .43 milestone and all saved data.
+
+- Requests a real browser-session Trusted Web Activity, keeping the existing origin,
+  pinned browser, package/signing identity and local storage. Falls back to the same
+  browser Custom Tab when unavailable; never bypasses origin verification.
+- Fullscreen remains BLOCKED until the HTTPS origin-root assetlinks file is hosted.
+  The project subpath is insufficient. See deployment/trusted-origin/README.txt.
+- Explicit native Background upload controls are reachable from retained Profile
+  receipts and native home. Only a user tap can request UIDT for an authorized,
+  committed retained queue. No new permissions or consent grants.
+- Ordinary queue status distinguishes Android deferral from an accepted UIDT.
+  Staging still needs the browser open; retained uploads/retries remain native.
+- 406 Node tests and 24 JavaScript syntax checks pass locally. Native tests added;
+  Android CI/signature/device verification pending. Not deployed.
+- User explicitly approved committing .46 to a testing branch and building its APK.
+  Candidate native build/signing checks are in progress; root verification remains pending.
+- Production, root-host configuration, permissions and credentials unchanged.
+
 # LotKeys TEST .45 — single-install readiness candidate
 
 Starting point: main 667a1c06f65fb7db7afed491a386881dc851e2c9 (.44).
