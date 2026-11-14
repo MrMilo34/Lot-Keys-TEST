@@ -1,21 +1,32 @@
-# LotKeys .49 Compare candidate — draft review, not deployed
+# LotKeys TEST .49 — manual/import-only Compare pilot
 
-Based on TEST main `f7ec1b8fd095f2455dddcc300516c510fccc819c`.
-Web 0.9.5.49 / 095049; original signed Android .46 is unchanged.
-Supported parts: Home Compare, compact Home search retaining its gradient,
-price-sorted wrapping stock-linked result lines, Copy results, cautious explicit
-make/model/generation/body/trim matching, provenance and account/Store-scoped
-revision-guarded temporary Google Doc saves. Manual/import only: no automatic
-website search is connected. See COMPARE-SOURCE-READINESS.md.
-503 Node and 29 DOM checks pass. Detached Compare views now retire before a
-Home remount; local writes drain first and successful receipts update report
-state without replacing newer source/target edits. Different trims remain
-labelled comparables rather than excluded vehicles. A credential-free real-browser CI harness was
-added; inspect actual CI results before claiming rendered mobile validation.
-Authenticated app Drive/Docs save and physical phone tests remain outstanding.
-See COMPARE-CANDIDATE-HANDOFF.md for gates, known limits and TEST rollback.
-This task owns Compare; the separate task is paused. Do not unpause unrelated
-.48 upload work or modify production. Existing TEST remains .48 until promotion.
+Release source: PR #22, based on .48 f7ec1b8fd095f2455dddcc300516c510fccc819c.
+Web 0.9.5.49 / 095049; original signed Android .46 remains installed/unchanged.
+Promotion is TEST only and must be confirmed by Pages success and live-byte checks.
+
+- Home Compare and compact Home search retaining its gradient; other searches
+  unchanged. Vehicle-style workspace, sources above compact price-sorted results,
+  target star, stock hyperlinks, mileage, Copy results and explicit unknown facts.
+- Manual entry / authorized CSV, TSV or JSON only. No automatic website search.
+  Different trims remain labelled comparables; known make/model/generation/body
+  conflicts are retained under exclusions. Preserve provenance and reliable dedup.
+- Retired views cannot overwrite remounted source/target edits. Serialized local
+  writes drain before the next view reads; late imports are ignored and successful
+  matching receipts reconcile report state without clobbering drafts/newer runs.
+- Scoped, revision-guarded temporary Drive report remains TEST functionality.
+  Failures retain local results and the previous saved link. Independent isolated
+  Docs API QA verified same-file replacement/reload, links and stale-revision
+  rejection through the connected account. LotKeys' own browser authorization,
+  renewal, app Drive transport and physical-phone behavior remain unverified.
+  Those limits are visible in the Compare panel, editor, version info and metadata.
+- Independent reviewer confirmed the remount fix; 503 Node, 29 DOM, 31 syntax
+  checks and full-app responsive Chromium checks passed at the reviewed revision.
+  Pilot-label/release metadata changes use the same checks before merge.
+- Preserve .44-.48 features, native queues, original .46 signing/browser data,
+  processor, extension and production. Unrelated .48 upload work remains paused.
+- .48 rollback target is f7ec1b8 and rollback/test-v095048-before-compare-pilot.
+  See RELEASE-0.9.5.49.md and COMPARE-CANDIDATE-HANDOFF.md. Do not clear user
+  data, reset authorization, delete reports or replace the APK when rolling back.
 
 # LotKeys TEST .48 — Inventory media recovery
 

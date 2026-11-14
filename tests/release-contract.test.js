@@ -8,17 +8,17 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.49 candidate with Android V0.9.5.46', () => {
+test('release metadata is consistently V0.9.5.49 manual/import TEST pilot with Android V0.9.5.46', () => {
   const version = JSON.parse(read('version.json'));
   assert.equal(version.version, '0.9.5.49');
   assert.equal(version.build, '095049');
   assert.equal(version.channel, 'test');
-  assert.equal(version.release, 'comparison-candidate');
+  assert.equal(version.release, 'comparison-manual-pilot');
   assert.equal(version.androidConnectorVersion, '0.9.5.46');
-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095049-comparison-candidate');
+  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095049-comparison-manual-pilot');
   assert.match(read('index.html'), /V0\.9\.5\.49/);
   assert.match(read('manifest.webmanifest'), /build=095049/);
-  assert.match(read('sw.js'), /lotkeys-app-v095049-comparison-candidate/);
+  assert.match(read('sw.js'), /lotkeys-app-v095049-comparison-manual-pilot/);
   assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.46/);
   assert.match(read('android/app/build.gradle'), /versionCode 95046/);
   assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.46 TEST/);

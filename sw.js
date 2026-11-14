@@ -1,4 +1,4 @@
-const CACHE='lotkeys-app-v095049-comparison-candidate';
+const CACHE='lotkeys-app-v095049-comparison-manual-pilot';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',

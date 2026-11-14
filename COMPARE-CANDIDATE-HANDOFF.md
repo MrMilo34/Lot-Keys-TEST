@@ -1,3 +1,19 @@
+# TEST manual/import pilot release decision
+
+Blair/Buddy authorized a clearly labelled TEST-only pilot after final checks.
+The reviewed comparison/storage behavior is unchanged; only pilot wording,
+release metadata/cache ID, release contract and documentation changed for promotion.
+The PR must pass CI at the final head and Pages/live-byte verification must confirm
+actual deployment. Production and user authorization/reports are outside release
+verification. No signed-in browser app is opened or renewed by the agent.
+
+The pilot is suitable because failed Drive saves retain local results/previous
+links, the isolated actual Docs batches passed, and scope/revision/remount guards
+are tested. It does not establish actual LotKeys OAuth renewal or phone behavior.
+Those limitations and absent automatic sources are explicit in the app. Existing
+promotion holds below describe the earlier draft stage; this specific TEST pilot
+has now been authorized. The unrelated .48 implementation pause remains in force.
+
 # LotKeys Compare candidate — 0.9.5.49 / 095049
 
 Based on current TEST main f7ec1b8fd095f2455dddcc300516c510fccc819c (.48).
@@ -73,7 +89,9 @@ or search redirect is not a working in-app listing retrieval integration.
   access-policy bypass was retried. DOM results are not rendered screenshots.
 - Connected Drive profile/folder reads succeeded. The connector does not establish
   the LotKeys app's own OAuth identity, Docs API enablement or write transport.
-  No live Google Doc was created or replaced for QA. Full authenticated app save,
+  Later isolated native Docs QA verified creation, same-file guarded replacement,
+  reload, UTF-16 stock links and stale-revision rejection via connected tools; no
+  existing reports were changed. This does not verify app OAuth/renewal/transport. Full authenticated app save,
   revision replacement, renewal, two-account/Store and concurrent-device tests remain.
 - Physical Android .46 phone testing remains outstanding. Responsive Chromium is
   not a physical-phone background-upload or native-handoff test.
