@@ -127,14 +127,14 @@ try:
         page.locator('.nav-btn[data-route="home"]').click()
         page.wait_for_selector('.compare-panel')
         page.locator('.compare-panel>summary').click()
-        page.locator('#compare-name-0').fill('NEW SOURCE AFTER NAVIGATION')
+        page.locator('#home-compare #compare-name-0').fill('NEW SOURCE AFTER NAVIGATION')
         page.evaluate('finishDelayedCompareSave()')
         page.wait_for_function("document.querySelector('.compare-home-latest .compare-status')?.textContent==='Saved to Drive'")
         saved=page.evaluate("""async()=>{const b=LotKeysMessagingBridge,key='lotkeysCompareV1:'+LotKeysCompare.scopeKey(await b.DriveSync.comparisonContext());return b.getSetting(key,null);}""")
         assert saved['sources'][0]['name']=='NEW SOURCE AFTER NAVIGATION', saved['sources'][0]['name']
         assert saved['saved']['runId']==page.evaluate('delayedCompareReport.runId')
         assert saved['pending'] is None
-        assert page.locator('#compare-name-0').input_value()=='NEW SOURCE AFTER NAVIGATION'
+        assert page.locator('#home-compare #compare-name-0').input_value()=='NEW SOURCE AFTER NAVIGATION'
         page.screenshot(path=str(OUT / 'remount-receipt-mobile.png'),full_page=True)
         page.locator('.compare-open').click()
         page.wait_for_selector('dialog[open] #compare-form')
