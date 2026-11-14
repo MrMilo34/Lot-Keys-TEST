@@ -112,9 +112,13 @@ try:
         page.wait_for_selector('dialog[open] #compare-form')
         # Real route navigation while a Drive response is outstanding. Only this
         # transport is mocked; route teardown/remount and IndexedDB writes are real.
-        page.evaluate("""()=>{
+        page.evaluate("""async()=>{
           LotKeysMessagingBridge.DriveSync.saveComparisonReport=async report=>{window.delayedCompareReport=report;await new Promise(resolve=>window.finishDelayedCompareSave=resolve);return {fileId:'synthetic-report',url:'https://docs.google.com/document/d/synthetic-report/edit',runId:report.runId,text:LotKeysCompare.documentBody(report).text};};
+          await LotKeysMessagingBridge.rerender();
         }""")
+        page.locator('.compare-panel>summary').click()
+        page.locator('.compare-open').click()
+        page.wait_for_selector('dialog[open] #compare-form')
         page.locator('#compare-form button[type=submit]').click()
         page.wait_for_function('!!window.finishDelayedCompareSave')
         page.locator('.modal-head .close').click()
