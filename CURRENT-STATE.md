@@ -1,3 +1,33 @@
+# LotKeys TEST .49 — manual/import-only Compare pilot
+
+Release source: PR #22, based on .48 f7ec1b8fd095f2455dddcc300516c510fccc819c.
+Web 0.9.5.49 / 095049; original signed Android .46 remains installed/unchanged.
+Promotion is TEST only and must be confirmed by Pages success and live-byte checks.
+
+- Home Compare and compact Home search retaining its gradient; other searches
+  unchanged. Vehicle-style workspace, sources above compact price-sorted results,
+  target star, stock hyperlinks, mileage, Copy results and explicit unknown facts.
+- Manual entry / authorized CSV, TSV or JSON only. No automatic website search.
+  Different trims remain labelled comparables; known make/model/generation/body
+  conflicts are retained under exclusions. Preserve provenance and reliable dedup.
+- Retired views cannot overwrite remounted source/target edits. Serialized local
+  writes drain before the next view reads; late imports are ignored and successful
+  matching receipts reconcile report state without clobbering drafts/newer runs.
+- Scoped, revision-guarded temporary Drive report remains TEST functionality.
+  Failures retain local results and the previous saved link. Independent isolated
+  Docs API QA verified same-file replacement/reload, links and stale-revision
+  rejection through the connected account. LotKeys' own browser authorization,
+  renewal, app Drive transport and physical-phone behavior remain unverified.
+  Those limits are visible in the Compare panel, editor, version info and metadata.
+- Independent reviewer confirmed the remount fix; 503 Node, 29 DOM, 31 syntax
+  checks and full-app responsive Chromium checks passed at the reviewed revision.
+  Pilot-label/release metadata changes use the same checks before merge.
+- Preserve .44-.48 features, native queues, original .46 signing/browser data,
+  processor, extension and production. Unrelated .48 upload work remains paused.
+- .48 rollback target is f7ec1b8 and rollback/test-v095048-before-compare-pilot.
+  See RELEASE-0.9.5.49.md and COMPARE-CANDIDATE-HANDOFF.md. Do not clear user
+  data, reset authorization, delete reports or replace the APK when rolling back.
+
 # LotKeys TEST .48 — Inventory media recovery
 
 Based on TEST main 025ecc2f7ef0860b7d0a0bcc5cd9a289c0cb7b80. Web-only;
