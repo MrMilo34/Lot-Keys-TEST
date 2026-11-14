@@ -42,6 +42,9 @@ try:
         page.add_init_script("Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{window.copiedComparisonText=text;}}})")
         page.goto(origin, wait_until='domcontentloaded')
         page.wait_for_selector('#home-compare', timeout=20000)
+        # Initial disconnected onboarding is outside this synthetic comparison test.
+        # Wait for it before seeding; the Google transport remains blocked/mocked.
+        page.wait_for_selector('#lotkeys-auth-overlay', state='visible')
         page.evaluate('''async()=>{
           const b=LotKeysMessagingBridge;
           for(const [id,value] of Object.entries({currentAccountEmail:'comparison@example.test',currentAccountSub:'test-sub',personalProfileDriveFolderId:'synthetic-personal',storeFolderId:'synthetic-store',storeName:'LotKeys QA',userName:'Comparison QA',lastInventoryRefreshAt:Date.now(),lastListingsRefreshAt:Date.now(),onboardingSeen:true}))await b.DB.put('settings',{id,value});
@@ -51,6 +54,8 @@ try:
           b.DriveSync.saveComparisonReport=async report=>{compareSaves.push(report);if(window.failComparisonSave)throw new Error('Simulated unavailable Drive');return {fileId:'synthetic-report',url:'https://docs.google.com/document/d/synthetic-report/edit',runId:report.runId,text:LotKeysCompare.documentBody(report).text};};
           for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
           await b.rerender();
+          document.querySelector('#lotkeys-auth-overlay').hidden=true;
+          document.body.dataset.lotkeysSigningIn='false';
         }''')
         page.wait_for_selector('.home-compact-search')
         style = page.evaluate('''()=>{
@@ -113,6 +118,13 @@ try:
         (OUT/'browser-results.json').write_text(json.dumps(summary,indent=2))
         print(json.dumps(summary,indent=2))
         browser.close()
+except Exception:
+    if 'page' in globals():
+        try:
+            page.screenshot(path=str(OUT / 'failure.png'))
+        except Exception:
+            pass
+    raise
 finally:
     server.shutdown()
     server.server_close()
