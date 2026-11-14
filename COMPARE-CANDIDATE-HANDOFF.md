@@ -20,7 +20,8 @@ latest changes. Use the current GitHub review branch/PR, not that old ZIP.
   includes plain-text lines, source URLs, dates and review notes. Copy document URL
   is separate and does not grant access.
 - Optional explicit generation/body fields and cautious matching. Known make,
-  model, generation, body or trim conflicts move to Excluded mismatches; their
+  model, generation or body conflicts move to Excluded mismatches; different
+  trims remain included with equipment/price differences labelled; their
   original facts and provenance remain available. Missing facts are possible
   matches, never confirmed matches. No year-to-generation inference is made.
   Full-Inventory mode checks each source row against all cached targets.
@@ -55,8 +56,8 @@ or search redirect is not a working in-app listing retrieval integration.
 
 ## Validation
 
-- 501/501 Node web tests pass, including 40 comparison tests.
-- 20/20 actual Compare UI Happy DOM checks pass, including copy text/URL, matching
+- 503/503 Node web tests pass, including 42 comparison tests.
+- 29/29 actual Compare UI Happy DOM checks pass, including copy text/URL, matching
   exclusion, target draft persistence, pending-save recovery and scope-change races.
 - Run `node --test tests/*.test.js` for the normal suite.
 - Optional DOM checks: install happy-dom 21.0.4 outside the repository and set
@@ -109,3 +110,25 @@ If TEST needs rollback, prepare a revert PR restoring these web changes to the
 saved .48 baseline f7ec1b8; use the normal checks and Pages verification. Retain
 personal Drive comparison documents and all user/browser data. Do not downgrade
 or replace the original APK, force-reset main, delete records or touch production.
+
+## Independent review: Home remount data preservation
+
+The reviewer reproduced an old pending save overwriting a newer Home view's
+source edits. Its original isolated test failed before this fix and passes after.
+A view now retires on detach or superseding mount, clears its timer/listeners,
+flushes its current draft and serializes local writes before the next mount reads
+settings. Late imports, loads and retired callbacks cannot persist old snapshots.
+Successful Drive receipts are reconciled into the active matching pending report,
+changing report state while keeping current source and target edits. A newer
+pending comparison cannot be cleared by an older receipt. Verified matching
+receipts are also recovered on load. The shared modal is closed only while it
+still contains this view's own Compare form.
+
+DOM regressions cover the exact review case, unsaved newer edits plus successful
+receipt adoption, late imports, delayed local persistence, last-key debounce,
+startup receipt recovery, a newer pending comparison and an unrelated shared
+editor. The full-app Chromium harness also navigates Inventory -> Home during a
+held save, edits the new source field, releases the old response and checks real
+IndexedDB state plus the active UI. Inspect the latest CI result for that check.
+These are synthetic tests; actual app Google authentication and physical phones
+remain outstanding. TEST promotion is still held.

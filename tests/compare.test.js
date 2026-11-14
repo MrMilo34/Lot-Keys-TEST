@@ -64,8 +64,8 @@ test('explicit generation/body/trim identify comparables across years without in
  const unknown=C.compare([source([{...row,vin:'',url:'https://dealer.example/possible',year:2023}])],{target:row,now}).rows.find(x=>!x.target);
  assert.equal(unknown.match.status,'possible');assert.ok(unknown.flags.some(x=>/Generation unknown/.test(x)));assert.equal(unknown.generation,'');
 });
-test('known make/model/generation/body/trim conflicts are retained separately rather than called comparables',()=>{
- for(const [key,value] of [['make','Ford'],['model','Aviator'],['generation','First generation'],['body','Sedan'],['trim','Premiere']]){
+test('known make/model/generation/body conflicts are retained separately rather than called comparables',()=>{
+ for(const [key,value] of [['make','Ford'],['model','Aviator'],['generation','First generation'],['body','Sedan']]){
   const r=C.compare([source([{...detailed,vin:'',stock:'OTHER',url:'https://dealer.example/other',[key]:value}])],{target:detailed,now});
   assert.equal(r.rows.length,1,key);assert.equal(r.excluded.length,1,key);assert.equal(r.excluded[0].match.status,'excluded');assert.ok(r.excluded[0].flags.includes('Different '+key+' from target'));assert.equal(r.excluded[0].observations[0].source,'Dealer');
  }
@@ -113,3 +113,6 @@ test('CSV supports explicit body/generation columns without guessing missing val
 
 test('full Inventory mode retains saved Inventory facts when a newer cross-post has the same VIN',()=>{const r=C.compare([source([{...detailed,price:1,model:'Wrong',observedAt:'2026-11-14T11:00:00Z'}])],{inventory:[detailed],now});assert.equal(r.rows.length,1);assert.equal(r.rows[0].price,30000);assert.equal(r.rows[0].model,'Nautilus');assert.ok(r.rows[0].flags.includes('Conflicting model; verify sources'));});
 test('comparison row budget spans every source rather than multiplying with Add Source',()=>{const rows=Array.from({length:1100},()=>({model:'Nautilus',price:1}));assert.throws(()=>C.compare([source(rows),source(rows)],{now}),/2,000 total/);});
+
+test('different trims remain labelled comparables within the same generation and body',()=>{const r=C.compare([source([{...detailed,trim:'Premiere',price:28000,vin:'',stock:'ALT',url:'https://dealer.example/alt'}])],{target:detailed,now});assert.equal(r.excluded.length,0);assert.equal(r.rows.length,2);const alt=r.rows.find(x=>!x.target);assert.equal(alt.match.status,'variant');assert.match(alt.match.reasons.join(' '),/Different trim/);assert.match(C.table(r),/Comparable — different trim/);assert.match(C.shareText(r),/Different trim/);assert.equal(alt.trim,'Premiere');});
+test('trim variants with missing generation or body stay possible, and genuine body conflicts are excluded',()=>{const missing=C.matchVehicle({...detailed,trim:'Premiere',generation:''},detailed);assert.equal(missing.status,'possible');assert.match(missing.reasons.join(' '),/Generation unknown/);assert.match(missing.reasons.join(' '),/Different trim/);assert.equal(C.matchVehicle({...detailed,trim:'Premiere',body:'Sedan'},detailed).status,'excluded');});

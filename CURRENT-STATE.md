@@ -7,7 +7,10 @@ price-sorted wrapping stock-linked result lines, Copy results, cautious explicit
 make/model/generation/body/trim matching, provenance and account/Store-scoped
 revision-guarded temporary Google Doc saves. Manual/import only: no automatic
 website search is connected. See COMPARE-SOURCE-READINESS.md.
-501 Node and 20 DOM checks pass. A credential-free real-browser CI harness was
+503 Node and 29 DOM checks pass. Detached Compare views now retire before a
+Home remount; local writes drain first and successful receipts update report
+state without replacing newer source/target edits. Different trims remain
+labelled comparables rather than excluded vehicles. A credential-free real-browser CI harness was
 added; inspect actual CI results before claiming rendered mobile validation.
 Authenticated app Drive/Docs save and physical phone tests remain outstanding.
 See COMPARE-CANDIDATE-HANDOFF.md for gates, known limits and TEST rollback.

@@ -49,11 +49,11 @@
     const reasons=[],conflicts=[];
     for(const key of ['make','model','generation','body','trim']){
       if(!factKey(row[key])||!factKey(target[key]))reasons.push(`${key[0].toUpperCase()+key.slice(1)} unknown; verify against target`);
-      else if(factKey(row[key])!==factKey(target[key]))conflicts.push(`Different ${key} from target`);
+      else if(factKey(row[key])!==factKey(target[key])){if(key==='trim')reasons.push('Different trim from target; compare equipment and price');else conflicts.push(`Different ${key} from target`);}
     }
     if(!row.year||!target.year)reasons.push('Year unknown; verify');
     else if(row.year!==target.year)reasons.push('Different year from target; generation must be verified');
-    const status=conflicts.length?'excluded':reasons.some(r=>/unknown/.test(r))?'possible':'matched';
+    const status=conflicts.length?'excluded':reasons.some(r=>/unknown/.test(r))?'possible':reasons.some(r=>r.startsWith('Different trim'))?'variant':'matched';
     return {status,reasons:[...conflicts,...reasons]};
   }
   function canonicalListingUrl(value){
@@ -95,7 +95,7 @@
       else if(!targets.length)row.match={status:'unassessed',reasons:['No Inventory target available; comparability unverified']};
       else{
         const checks=targets.map(t=>({target:t,match:matchVehicle(row,t)}));
-        const best=checks.find(x=>x.match.status==='matched')||checks.find(x=>x.match.status==='possible')||checks[0];
+        const best=checks.find(x=>x.match.status==='matched')||checks.find(x=>x.match.status==='variant')||checks.find(x=>x.match.status==='possible')||checks[0];
         row.match={...best.match,stocks:checks.filter(x=>x.match.status===best.match.status).map(x=>x.target.stock).filter(Boolean)};
         row.flags.push(...row.match.reasons);
       }
@@ -104,12 +104,12 @@
     }
     included.sort(sortPrice);excluded.sort(sortPrice);
     return {schema:2,runId:runId||`${now}-${Math.random().toString(36).slice(2)}`,generatedAt:new Date(now).toISOString(),staleHours,coverage,rows:included,excluded,
-      matchingPolicy:'Known make/model/generation/body/trim conflicts are excluded. Missing facts are possible matches, never confirmed. Model year alone does not establish generation. All supplied prices are retained; no cheaper/higher-price cutoff is applied.'};
+      matchingPolicy:'Known make/model/generation/body conflicts are excluded. Different trims stay included with equipment/price differences labelled. Missing facts are possible matches, never confirmed. Model year alone does not establish generation. All supplied prices are retained; no cheaper/higher-price cutoff is applied.'};
   }
   const price=v=>v==null?'Unknown price':new Intl.NumberFormat('en-CA',{style:'currency',currency:'CAD',maximumFractionDigits:2}).format(v);
   const title=r=>[r.year,r.make,r.model,r.trim].filter(Boolean).join(' ')||'Unknown vehicle';
   const mileage=r=>r.kilometres==null?'Unknown mileage':`${r.kilometres.toLocaleString('en-CA')} km`;
-  const matchLabel=r=>({matched:'Comparable from supplied facts',possible:'Possible match — verify missing facts',excluded:'Excluded — conflicting vehicle facts',target:'Selected target',inventory:'Our Inventory reference',unassessed:'Comparability unverified'}[r.match?.status]||'Comparability unverified');
+  const matchLabel=r=>({matched:'Comparable from supplied facts',variant:'Comparable — different trim; review equipment and price',possible:'Possible match — review differences or missing facts',excluded:'Excluded — conflicting vehicle facts',target:'Selected target',inventory:'Our Inventory reference',unassessed:'Comparability unverified'}[r.match?.status]||'Comparability unverified');
   const priceDifference=r=>r.priceDifference==null||r.target?'':r.priceDifference===0?'Same price as target':`${price(Math.abs(r.priceDifference))} ${r.priceDifference<0?'lower':'higher'} than target`;
   const resultLine=r=>`${r.target?'⭐ ':''}${price(r.price)} - ${title(r)} - ${r.stock||'Stock unknown'} · ${mileage(r)}`;
   function lineList(rows){return `<ol class="compare-lines">${rows.map(r=>`<li class="compare-row ${r.target?'compare-target':''}"><div class="compare-result-line">${r.target?'<span aria-label="Selected target">⭐</span> ':''}<strong>${escape(price(r.price))}</strong> - ${escape(title(r))} - ${r.url?`<a href="${escape(safeUrl(r.url))}" target="_blank" rel="noopener noreferrer">${escape(r.stock||'Stock unknown')}</a>`:escape(r.stock||'Stock unknown')}<span class="compare-mileage"> · ${escape(mileage(r))}</span></div><div class="compare-match">${escape(matchLabel(r))}${priceDifference(r)?` · ${escape(priceDifference(r))}`:''}${r.match?.stocks?.length?` · Target stock: ${escape(r.match.stocks.join(', '))}`:''}</div><details class="compare-row-details"><summary>Source &amp; vehicle details${r.flags.length?` · ${r.flags.length} checks`:''}</summary><div>${escape(r.source)} · VIN ${escape(r.vin||'unknown')} · Generation ${escape(r.generation||'unknown')} · Body ${escape(r.body||'unknown')}</div>${r.flags.length?`<div>${escape(r.flags.join(' · '))}</div>`:''}${r.observations.map(o=>`<div>${escape(o.source)} · ${escape(o.observedAt||'Checked date unknown')} · ${escape(price(o.price))}${safeUrl(o.url)?` · <a href="${escape(safeUrl(o.url))}" target="_blank" rel="noopener noreferrer">Source</a>`:''}</div>`).join('')}</details></li>`).join('')}</ol>`;}

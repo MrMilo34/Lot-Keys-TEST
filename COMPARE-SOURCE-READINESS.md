@@ -29,6 +29,7 @@ path needs an appropriate access arrangement, bounded usage/costs, source
 attribution and a secure transport before being presented as working.
 
 Matching in this candidate uses supplied facts only: known make/model/generation/
-body/trim conflicts are excluded but retained for review; missing fields remain
+body conflicts are excluded but retained for review; different trims remain
+included with equipment/price differences labelled, and missing fields remain
 possible matches. Same-year or nearby-year vehicles do not establish a generation.
 Cheaper and higher prices are retained without an invented percentage cutoff.

@@ -69,7 +69,7 @@ try:
         assert 'linear-gradient' in style['gradient'], style
         page.screenshot(path=str(OUT / 'home-desktop.png'), full_page=True)
         page.locator('.compare-panel>summary').click()
-        source = [{'price':price,'year':2025,'make':'Lincoln','model':'Nautilus','trim':trim,'generation':'Second generation','body':'SUV','stock':stock,'kilometres':30000,'url':'https://dealer.example/'+stock,'observedAt':'2026-11-14T12:00:00Z','currency':'CAD'} for price,trim,stock in [(28000,'Reserve','CHEAPER'),(31500,'Reserve','HIGHER'),(25000,'Premiere','WRONG-TRIM')]]
+        source = [{'price':price,'year':2025,'make':'Lincoln','model':'Nautilus','trim':trim,'generation':'Second generation','body':body,'stock':stock,'kilometres':30000,'url':'https://dealer.example/'+stock,'observedAt':'2026-11-14T12:00:00Z','currency':'CAD'} for price,trim,body,stock in [(28000,'Reserve','SUV','CHEAPER'),(31500,'Reserve','SUV','HIGHER'),(29500,'Premiere','SUV','TRIM-VARIANT'),(25000,'Reserve','Sedan','WRONG-BODY')]]
         page.locator('#compare-text-0').fill(json.dumps(source))
         page.locator('.compare-open').click()
         page.wait_for_selector('dialog[open] #compare-form')
@@ -79,11 +79,12 @@ try:
         page.wait_for_function('compareSaves.length===1')
         page.wait_for_function("document.querySelector('.compare-results .compare-status')?.textContent==='Saved to Drive'")
         assert page.locator('.compare-results table').count() == 0
-        assert page.locator('.compare-results .compare-results-list > .compare-lines > .compare-row').count() == 3
+        assert page.locator('.compare-results .compare-results-list > .compare-lines > .compare-row').count() == 4
         assert page.locator('.compare-results .compare-results-list > .compare-lines > .compare-row').first.inner_text().startswith('$28,000')
         assert page.locator('.compare-results .compare-target .compare-result-line').inner_text().startswith('⭐ $30,000')
         assert page.locator('.compare-results .compare-target .compare-result-line a').get_attribute('href') == 'https://dealer.example/target'
         assert page.locator('.compare-results .compare-excluded .compare-row').count() == 1
+        assert 'Comparable — different trim' in page.locator('.compare-results').inner_text()
         page.locator('.compare-results .compare-copy-results').click()
         page.wait_for_function("window.copiedComparisonText?.includes('⭐ $30,000.00 - 2024 Lincoln Nautilus Reserve - QA-1')")
         assert 'no automatic website search' in page.evaluate('copiedComparisonText')
@@ -109,12 +110,36 @@ try:
         assert 'New results are local' in page.locator('.compare-status').inner_text()
         page.locator('.compare-open').click()
         page.wait_for_selector('dialog[open] #compare-form')
+        # Real route navigation while a Drive response is outstanding. Only this
+        # transport is mocked; route teardown/remount and IndexedDB writes are real.
+        page.evaluate("""()=>{
+          LotKeysMessagingBridge.DriveSync.saveComparisonReport=async report=>{window.delayedCompareReport=report;await new Promise(resolve=>window.finishDelayedCompareSave=resolve);return {fileId:'synthetic-report',url:'https://docs.google.com/document/d/synthetic-report/edit',runId:report.runId,text:LotKeysCompare.documentBody(report).text};};
+        }""")
+        page.locator('#compare-form button[type=submit]').click()
+        page.wait_for_function('!!window.finishDelayedCompareSave')
+        page.locator('.modal-head .close').click()
+        page.locator('.nav-btn[data-route="vehicles"]').click()
+        page.wait_for_selector('#inventory-page-search')
+        page.locator('.nav-btn[data-route="home"]').click()
+        page.wait_for_selector('.compare-panel')
+        page.locator('.compare-panel>summary').click()
+        page.locator('#compare-name-0').fill('NEW SOURCE AFTER NAVIGATION')
+        page.evaluate('finishDelayedCompareSave()')
+        page.wait_for_function("document.querySelector('.compare-home-latest .compare-status')?.textContent==='Saved to Drive'")
+        saved=page.evaluate("""async()=>{const b=LotKeysMessagingBridge,key='lotkeysCompareV1:'+LotKeysCompare.scopeKey(await b.DriveSync.comparisonContext());return b.getSetting(key,null);}""")
+        assert saved['sources'][0]['name']=='NEW SOURCE AFTER NAVIGATION', saved['sources'][0]['name']
+        assert saved['saved']['runId']==page.evaluate('delayedCompareReport.runId')
+        assert saved['pending'] is None
+        assert page.locator('#compare-name-0').input_value()=='NEW SOURCE AFTER NAVIGATION'
+        page.screenshot(path=str(OUT / 'remount-receipt-mobile.png'),full_page=True)
+        page.locator('.compare-open').click()
+        page.wait_for_selector('dialog[open] #compare-form')
         page.evaluate("LotKeysMessagingBridge.setSetting('currentAccountEmail','different@example.test')")
         page.wait_for_function("!document.querySelector('#modal').open")
         assert page.locator('#home-compare').inner_text()==''
         assert not any(any(host in url for host in ['autotrader','cargurus','dealer.example']) for url in external),external
         assert not errors,errors
-        summary={'checks':['actual Home search dimensions and gradient','source and target controls','price-sorted compact lines','target star and stock hyperlink','known trim exclusion','Copy results manual limitation','1280/390/320px no horizontal overflow','failed save retains pending results and previous link','Inventory unchanged','reload retains pending report','account change clears report'],'sizes':sizes,'homeStyle':style,'pageErrors':errors,'externalRequestsBlocked':len(external),'liveDriveTested':False,'physicalPhoneTested':False}
+        summary={'checks':['actual Home search dimensions and gradient','source and target controls','price-sorted compact lines','target star and stock hyperlink','known body exclusion and labelled trim variants','Copy results manual limitation','1280/390/320px no horizontal overflow','failed save retains pending results and previous link','Inventory unchanged','reload retains pending report','route remount preserves newer source edits and reconciles receipt','account change clears report'],'sizes':sizes,'homeStyle':style,'pageErrors':errors,'externalRequestsBlocked':len(external),'liveDriveTested':False,'physicalPhoneTested':False}
         (OUT/'browser-results.json').write_text(json.dumps(summary,indent=2))
         print(json.dumps(summary,indent=2))
         browser.close()
