@@ -82,7 +82,7 @@ try:
         assert page.locator('.compare-results .compare-results-list > .compare-lines > .compare-row').count() == 3
         assert page.locator('.compare-results .compare-results-list > .compare-lines > .compare-row').first.inner_text().startswith('$28,000')
         assert page.locator('.compare-results .compare-target .compare-result-line').inner_text().startswith('⭐ $30,000')
-        assert page.locator('.compare-results .compare-target a').get_attribute('href') == 'https://dealer.example/target'
+        assert page.locator('.compare-results .compare-target .compare-result-line a').get_attribute('href') == 'https://dealer.example/target'
         assert page.locator('.compare-results .compare-excluded .compare-row').count() == 1
         page.locator('.compare-results .compare-copy-results').click()
         page.wait_for_function("window.copiedComparisonText?.includes('⭐ $30,000.00 - 2024 Lincoln Nautilus Reserve - QA-1')")
