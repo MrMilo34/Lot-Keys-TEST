@@ -47,7 +47,7 @@ try:
         page.wait_for_selector('#lotkeys-auth-overlay', state='visible')
         page.evaluate('''async()=>{
           const b=LotKeysMessagingBridge;
-          for(const [id,value] of Object.entries({currentAccountEmail:'comparison@example.test',currentAccountSub:'test-sub',personalProfileDriveFolderId:'synthetic-personal',storeFolderId:'synthetic-store',storeName:'LotKeys QA',userName:'Comparison QA',lastInventoryRefreshAt:Date.now(),lastListingsRefreshAt:Date.now(),onboardingSeen:true}))await b.DB.put('settings',{id,value});
+          for(const [id,value] of Object.entries({currentAccountEmail:'comparison@example.test',currentAccountSub:'test-sub',personalProfileDriveFolderId:'synthetic-personal',storeFolderId:'synthetic-store',driveStoreStructure:{rootId:'synthetic-store',userId:'synthetic-user',rootWritable:false},storeName:'LotKeys QA',userName:'Comparison QA',lastInventoryRefreshAt:Date.now(),lastListingsRefreshAt:Date.now(),onboardingSeen:true}))await b.DB.put('settings',{id,value});
           await b.DB.put('vehicles',{id:'target-1',year:'2024',make:'Lincoln',model:'Nautilus',trim:'Reserve',generation:'Second generation',body:'SUV',name:'2024 Lincoln Nautilus Reserve - QA-1',stock:'QA-1',price:30000,odometer:25000,odometerUnit:'KM',vin:'5LMPJ8KA5RJ825421',originalListingUrl:'https://dealer.example/target',updatedAt:Date.now(),photos:[]});
           b.DriveSync.loadComparisonReport=async()=>null;
           window.compareSaves=[];
@@ -150,6 +150,7 @@ try:
 except Exception:
     if 'page' in globals():
         try:
+            print(json.dumps({'pageErrors':errors,'mainText':page.locator('#main').inner_text()[:2000]},indent=2))
             page.screenshot(path=str(OUT / 'failure.png'))
         except Exception:
             pass
