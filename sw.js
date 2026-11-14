@@ -1,8 +1,11 @@
-const CACHE='lotkeys-app-v095048-inventory-media-recovery';
+const CACHE='lotkeys-app-v095049-comparison-candidate';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
   './index.html',
+  './lotkeys-compare.js',
+  './lotkeys-compare-ui.js',
+  './lotkeys-compare.css',
   './install.html',
   './privacy.html',
   './terms.html',

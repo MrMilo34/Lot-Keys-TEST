@@ -1,3 +1,19 @@
+# LotKeys .49 Compare candidate — draft review, not deployed
+
+Based on TEST main `f7ec1b8fd095f2455dddcc300516c510fccc819c`.
+Web 0.9.5.49 / 095049; original signed Android .46 is unchanged.
+Supported parts: Home Compare, compact Home search retaining its gradient,
+price-sorted wrapping stock-linked result lines, Copy results, cautious explicit
+make/model/generation/body/trim matching, provenance and account/Store-scoped
+revision-guarded temporary Google Doc saves. Manual/import only: no automatic
+website search is connected. See COMPARE-SOURCE-READINESS.md.
+501 Node and 20 DOM checks pass. A credential-free real-browser CI harness was
+added; inspect actual CI results before claiming rendered mobile validation.
+Authenticated app Drive/Docs save and physical phone tests remain outstanding.
+See COMPARE-CANDIDATE-HANDOFF.md for gates, known limits and TEST rollback.
+This task owns Compare; the separate task is paused. Do not unpause unrelated
+.48 upload work or modify production. Existing TEST remains .48 until promotion.
+
 # LotKeys TEST .48 — Inventory media recovery
 
 Based on TEST main 025ecc2f7ef0860b7d0a0bcc5cd9a289c0cb7b80. Web-only;
