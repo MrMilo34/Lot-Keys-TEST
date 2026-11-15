@@ -125,9 +125,17 @@ No purchase, signup, account creation, permission change or vendor contact occur
   source restrictions. Bulk standalone data redistribution is restricted. Keep
   freshness/unknown facts and source metadata; do not infer report-export rights
   from the general display licence. Legacy coverage, exact Wanted-URL resolution,
-  stock/listing links, price/odometer mapping, costs and permission to retain/share
-  the replaceable Drive report remain unverified. No key, signup, API call or
-  purchase was made; this is a research candidate, not a connected integration.
+  live stock/link mapping, price/odometer units and permission to retain/share
+  the replaceable Drive report remain unverified. The published detail example
+  includes `sourceUri`, `stockNumber`, location and observation timestamps; those
+  are documented fields, not evidence of Legacy coverage or current availability.
+  [Published pricing](https://cardog.app/pricing), checked 2026-11-15, offers
+  50 free credits monthly with no card and stops at the allowance (after any
+  separately purchased packs). Listing search/count/facets/detail each cost one
+  credit per request. Prices are USD; actual account entitlement/metering has not
+  been tested. No key, signup, API call or purchase was made. This remains a
+  research candidate, not a connected integration. The reviewed listing reference
+  does not settle data-family attribution/retention or shareable report rights.
 - [Brave Search](https://brave.com/search/api/) has low per-query pricing but says
   storage rights need a custom plan; its [standard terms](https://api-dashboard.search.brave.com/documentation/resources/terms-of-service)
   limit caching/storage and redistribution. Do not assume a persisted Drive
@@ -139,6 +147,31 @@ approved private host for credentials. Prefer evaluating an existing authorized
 dealer feed for the smallest pilot; do not silently create a paid vendor account
 or start a new infrastructure migration. Ask for provider name/access method via
 secure setup, never a secret in chat. A source-selection question is pending.
+
+## Cardog coverage check — design only
+
+No signup, API use, spending or outreach is authorized by this research update.
+If access is separately authorized later, use the existing provider-neutral
+contract and a private server-side key, with a total ceiling of 10 credits for
+an initial check. That is a proposed engineering limit, not a provider promise
+or an executed test. Include ref resolution, pages, details and any retry in the
+budget, inspect credit headers and stop before exceeding it. Do not buy packs,
+upgrade plans, automatically retry or assume 50 credits means 50 full comparisons.
+
+Use one small source search and only a few details, resolving required refs first.
+Verify a known Legacy vehicle's exact URL or VIN relationship, dealer/site mapping,
+stock, CAD price, odometer units and real location. Treat zero matches as inconclusive.
+Preserve last-seen/verification timestamps, status and source metadata; neither a
+successful response nor `updatedAt` alone proves a live, recently observed vehicle.
+Check practical coverage separately from the documented filter support. Do not
+crawl returned source links or assume arbitrary website/exact-URL lookup exists.
+
+Keep the initial result ephemeral. Establish required attribution, freshness,
+retention and permission for a private shareable Drive report before adding any
+provider result to the existing saved-report flow. No duplicate source-specific
+UI, new adapter or change to app/Drive/account/remount code is needed for this
+research step. A useful free allowance removes neither the source-rights blocker
+nor the secure-backend/app-integration and real-account validation gates.
 
 ## Validation and continuation
 
