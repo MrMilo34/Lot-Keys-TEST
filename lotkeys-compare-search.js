@@ -122,7 +122,7 @@
               const row=C.normalize(raw,{name:plan.name,url:plan.website},now);
               row.sourceCriteria=plan;row.discovery=inspectListing(row,plan);row.flags.push(...row.discovery.reasons);
               const match=C.matchVehicle(row,wanted);row.match=match;
-              if(!row.url){row.discovery.status='review';row.flags.push('Source supplied no exact listing URL; not a verified linked alternative');}
+              if(!row.url){if(row.discovery.status!=='excluded')row.discovery.status='review';row.flags.push('Source supplied no exact listing URL; not a verified linked alternative');}
               // Explicit source criteria determine inclusion; target differences remain visible.
               if(match.status==='excluded'){row.flags.push(...match.reasons);if(match.reasons.some(r=>/Different (generation|body) from target/.test(r))){row.discovery.status='excluded';row.discovery.reasons.push('Different known generation/body from Vehicle Wanted');}else row.match={status:'requested',reasons:match.reasons};}
               if(row.price!=null&&wanted.price!=null)row.priceDifference=row.price-wanted.price;

@@ -142,14 +142,19 @@ secure setup, never a secret in chat. A source-selection question is pending.
 
 ## Validation and continuation
 
-Local: 531 Node tests, 35 DOM tests and 33 JavaScript syntax checks pass; diff
+Local: 533 Node tests, 35 DOM tests and 33 JavaScript syntax checks pass; diff
 check passes. New-source tests use synthetic data, not live provider responses.
 Local Chromium cannot launch because the execution environment denies its Unix
 socket operation. [CI 43670313470](https://github.com/MrMilo34/Lot-Keys-TEST/actions/runs/43670313470)
 passed at source commit 901e0478, including the existing full-app browser/remount
 checks and the new standalone query component at 1280/390/320 px. The component
 had no overflow, page errors or external requests. Its 320/1280 screenshots were
-also inspected. This subsequent change updates research notes only. No physical
+also inspected. Follow-up changes add source research and preserve exclusion
+precedence when a returned listing has no URL. The regression first reproduced
+on a 2010 vehicle in a 2024 search; year/make/model/price/region mismatches remain
+excluded, with the missing-link diagnostic retained. Otherwise eligible unlinked
+vehicles still require review. Existing Drive/account/remount safeguards are
+unchanged. Record follow-up CI against its actual revision in the PR. No physical
 phone, real source, LotKeys browser OAuth renewal or authenticated app Drive test
 has occurred here.
 

@@ -36,3 +36,36 @@ test('deduplicated physical vehicles preserve conflicting location observations'
 
 test('mutable account context cannot change the captured owner during discovery',async()=>{const f=fixture(),owner={account:'qa@example.test',sub:'1',store:'store',root:'root',epoch:1};f.io.context=async()=>owner;f.io.search=async()=>{owner.epoch++;return {rows:[row()]};};await assert.rejects(f.service.discover({wantedUrl:wanted.url,sources:[source()]}),{code:'CONTEXT_CHANGED'});});
 test('edits to query objects while the wanted link loads do not change the running search',async()=>{const f=fixture(),request={wantedUrl:wanted.url,sources:[source()]};f.io.resolveWanted=async()=>{request.sources[0].criteria.years=0;return {row:wanted};};f.setPages([{rows:[row({year:2021})]}]);const r=await f.service.discover(request);assert.equal(r.coverage[0].criteria.yearMin,2021);assert.equal(r.rows.length,2);assert.equal(request.sources[0].criteria.years,0);});
+
+test('a missing listing URL cannot downgrade known mismatches from excluded to review',async()=>{
+  const cases=[
+    {name:'year',facts:{year:2010},reason:'year range'},
+    {name:'make',facts:{make:'Honda'},reason:'requested make'},
+    {name:'model',facts:{model:'Pilot'},reason:'requested model'},
+    {name:'price',facts:{price:10000},query:{criteria:{years:3,priceMin:35000}},reason:'price bounds'},
+    {name:'radius',facts:{distanceKm:101},query:{sourceId:'platform',criteria:{years:3},distanceId:'100'},reason:'radius'},
+    {name:'province',facts:{province:'BC'},query:{sourceId:'platform',criteria:{years:3},distanceId:'province'},reason:'province'},
+    {name:'country',facts:{country:'US'},query:{sourceId:'platform',criteria:{years:3},distanceId:'national'},reason:'country'},
+    {name:'generation',facts:{generation:'Third generation'},reason:'generation/body'},
+    {name:'body',facts:{body:'Sedan'},reason:'generation/body'}
+  ];
+  for(const c of cases){
+    const f=fixture();f.setPages([{rows:[row({...c.facts,stock:c.name,url:''})]}]);
+    const report=await f.service.discover({wantedUrl:wanted.url,sources:[source(c.query)]});
+    assert.equal(report.excluded.length,1,c.name+' must stay excluded');
+    assert.equal(report.filterReview.length,0,c.name+' must not become review');
+    assert.equal(report.rows.length,1,c.name+' must leave only the Wanted reference');
+    const rejected=report.excluded[0];
+    assert.equal(rejected.discovery.status,'excluded',c.name);
+    assert.ok(rejected.discovery.reasons.some(r=>r.includes(c.reason)),c.name+' keeps its mismatch reason');
+    assert.ok(rejected.flags.some(r=>r.includes('no exact listing URL')),c.name+' keeps its missing-link flag');
+  }
+});
+test('an otherwise eligible listing without an exact URL still requires review',async()=>{
+  const f=fixture();f.setPages([{rows:[row({url:''})]}]);
+  const report=await f.service.discover({wantedUrl:wanted.url,sources:[source()]});
+  assert.equal(report.rows.length,1);assert.equal(report.excluded.length,0);
+  assert.equal(report.filterReview.length,1);
+  assert.equal(report.filterReview[0].discovery.status,'review');
+  assert.ok(report.filterReview[0].flags.some(r=>r.includes('no exact listing URL')));
+});
