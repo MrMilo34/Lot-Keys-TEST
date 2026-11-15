@@ -107,7 +107,27 @@ No purchase, signup, account creation, permission change or vendor contact occur
   [published plans](https://www.marketcheck.com/pricing) cap Free/Basic radius at
   100 miles; do not offer 500 km or national for those plans. Mileage/radius/dist
   are miles even with Canadian inventory; price is CAD for country=ca. No live
-  account, exact-URL target lookup or adapter has been verified.
+  account, exact-URL target lookup or adapter has been verified. Its current
+  [terms](https://www.marketcheck.com/terms-of-service), sections 3–6, allow live
+  user-driven application queries but restrict persistent/independent datasets,
+  competing data services and data-acquisition targeting. A small, replaceable
+  shareable Drive report is not established as permitted or prohibited by that
+  general wording; the intended use needs confirmation. Commercial integration
+  may require a separate agreement. Never treat API availability as report rights.
+- [Cardog](https://cardog.app/docs) documents Canadian listings and a
+  [listing search API](https://cardog.app/docs/reference/listings) with registered
+  make/model refs, year/price bounds, seller IDs and latitude/longitude/radius in
+  kilometres. A seller-ID filter is not a verified arbitrary dealer-website
+  filter, and radius support does not establish provincial/national options.
+  Its [API terms](https://cardog.app/api-terms), sections 3, 5 and 11, permit
+  automation and subordinate use/display within authorized customer applications,
+  subject to required attribution, response metadata, data-family retention and
+  source restrictions. Bulk standalone data redistribution is restricted. Keep
+  freshness/unknown facts and source metadata; do not infer report-export rights
+  from the general display licence. Legacy coverage, exact Wanted-URL resolution,
+  stock/listing links, price/odometer mapping, costs and permission to retain/share
+  the replaceable Drive report remain unverified. No key, signup, API call or
+  purchase was made; this is a research candidate, not a connected integration.
 - [Brave Search](https://brave.com/search/api/) has low per-query pricing but says
   storage rights need a custom plan; its [standard terms](https://api-dashboard.search.brave.com/documentation/resources/terms-of-service)
   limit caching/storage and redistribution. Do not assume a persisted Drive
@@ -125,10 +145,13 @@ secure setup, never a secret in chat. A source-selection question is pending.
 Local: 531 Node tests, 35 DOM tests and 33 JavaScript syntax checks pass; diff
 check passes. New-source tests use synthetic data, not live provider responses.
 Local Chromium cannot launch because the execution environment denies its Unix
-socket operation. CI is configured to run the existing full-app browser checks
-and the new standalone query component at 1280/390/320 px. Record actual CI
-results before claiming browser verification. No physical phone, real source,
-LotKeys browser OAuth renewal or authenticated app Drive test has occurred here.
+socket operation. [CI 43670313470](https://github.com/MrMilo34/Lot-Keys-TEST/actions/runs/43670313470)
+passed at source commit 901e0478, including the existing full-app browser/remount
+checks and the new standalone query component at 1280/390/320 px. The component
+had no overflow, page errors or external requests. Its 320/1280 screenshots were
+also inspected. This subsequent change updates research notes only. No physical
+phone, real source, LotKeys browser OAuth renewal or authenticated app Drive test
+has occurred here.
 
 Before TEST promotion:
 
