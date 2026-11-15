@@ -20,6 +20,8 @@ jobs:
         run: |
           node --check lotkeys-compare.js
           node --check lotkeys-compare-ui.js
+          node --check lotkeys-compare-search.js
+          node --check lotkeys-compare-search-ui.js
           node --check lotkeys-info.js
           node --check lotkeys-messaging.js
           node --check lotkeys-awards.js
@@ -67,7 +69,7 @@ jobs:
       - name: Comparison DOM behavior
         run: |
           npm install --prefix "$RUNNER_TEMP/compare-dom" --ignore-scripts --no-audit --no-fund happy-dom@21.0.4
-          LOTKEYS_COMPARE_DOM="$RUNNER_TEMP/compare-dom/node_modules/happy-dom/lib/index.js" node --test tests/compare-ui-dom.mjs
+          LOTKEYS_COMPARE_DOM="$RUNNER_TEMP/compare-dom/node_modules/happy-dom/lib/index.js" node --test tests/compare-ui-dom.mjs tests/compare-search-ui-dom.mjs
       - name: Install isolated browser test tools
         run: |
           python -m pip install playwright==1.62.0
@@ -75,7 +77,9 @@ jobs:
       - name: Compare desktop and mobile browser checks
         env:
           COMPARE_EVIDENCE_DIRECTORY: ${{ runner.temp }}/lotkeys-compare-evidence
-        run: python tests/compare-browser.py
+        run: |
+          python tests/compare-browser.py
+          python tests/compare-search-browser.py
       - name: Upload synthetic browser evidence
         if: always()
         uses: actions/upload-artifact@v4
