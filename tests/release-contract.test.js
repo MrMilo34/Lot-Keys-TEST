@@ -15,16 +15,16 @@ test('release metadata is consistently V0.9.5.50 partial TEST reliability previe
   assert.equal(version.channel, 'test');
   assert.equal(version.release, 'reliability-preview');
   assert.equal(version.releaseScope, 'partial-reliability-test-preview');
-  assert.equal(version.deploymentStatus, 'test-preview');
+  assert.equal(version.deploymentStatus, 'source-checkpoint-not-deployed');
   assert.equal(version.regularUserNativeHandoff, false);
   assert.equal(version.androidConnectorVersion, '0.9.5.46');
   assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095050-reliability-preview');
   assert.match(read('index.html'), /V0\.9\.5\.50/);
   assert.match(read('manifest.webmanifest'), /build=095050/);
   assert.match(read('sw.js'), /lotkeys-app-v095050-reliability-preview/);
-  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.46/);
-  assert.match(read('android/app/build.gradle'), /versionCode 95046/);
-  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.46 TEST/);
+  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.51-SOURCE-PREVIEW-DO-NOT-INSTALL/);
+  assert.match(read('android/app/build.gradle'), /versionCode 95051/);
+  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.51 TEST PREVIEW/);
 });
 
 test('paired phone UI shows the trusted PC and can forget it', () => {

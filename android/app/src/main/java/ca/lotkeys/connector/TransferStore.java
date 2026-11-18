@@ -29,9 +29,10 @@ final class TransferStore {
     JSONObject prepare(JSONObject input) throws Exception {
         synchronized (LOCK) {
             JSONObject scope = input.getJSONObject("context");
-            require(input.optInt("version", 1) == 1 || input.optInt("version") == 2, "Update the connector before preparing this save.");
-            if (input.optInt("version") == 2) DirectoryFinalizer.validate(input);
-            else { JSONArray operations = input.optJSONArray("finalizers"); for (int i = 0; operations != null && i < operations.length(); i++) require(!"vehicle-directory".equals(operations.getJSONObject(i).optString("type")), "This finishing plan requires protocol version 2."); }
+            require(input.optInt("version", 1) == 1 || input.optInt("version") == 2 || input.optInt("version") == 3, "Update the connector before preparing this save.");
+            if (input.optInt("version") == 3) SubmissionFinalizer.validate(input);
+            else if (input.optInt("version") == 2) DirectoryFinalizer.validate(input);
+            else { JSONArray operations = input.optJSONArray("finalizers"); for (int i = 0; operations != null && i < operations.length(); i++) require(!"vehicle-directory".equals(operations.getJSONObject(i).optString("type")) && !"vehicle-submission".equals(operations.getJSONObject(i).optString("type")), "Update the finishing protocol before preparing this save."); }
             require(input.toString().length() <= 1024 * 1024, "Upload plan is too large.");
             require(!scope.optString("account").trim().isEmpty(), "An upload account is required.");
             fileId(scope.optString("store"));
@@ -163,6 +164,10 @@ final class TransferStore {
     void directoryResult(String id, JSONObject result) throws Exception { synchronized (LOCK) {
         JSONObject batch = get(id), results = batch.optJSONObject("finalizerResults"); if (results == null) results = new JSONObject();
         batch.put("finalizerResults", results.put("directory", result)); save(batch);
+    } }
+    void submissionResult(String id, JSONObject result) throws Exception { synchronized (LOCK) {
+        JSONObject batch = get(id), results = batch.optJSONObject("finalizerResults"); if (results == null) results = new JSONObject();
+        batch.put("finalizerResults", results.put("submission", result)); save(batch);
     } }
     void stage(String id, String stage) throws Exception { synchronized (LOCK) { JSONObject batch = get(id); batch.put("stage", stage); save(batch); } }
     void hold(String account, String store) throws Exception {

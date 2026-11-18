@@ -16,11 +16,12 @@
   "lotkeysDriveAuthorizationVerified": false,
   "lotkeysDriveRenewalVerified": false,
   "physicalPhoneVerified": false,
-  "deploymentStatus": "test-preview",
+  "deploymentStatus": "source-checkpoint-not-deployed",
   "regularUserNativeHandoff": false,
   "knownLimitations": [
     "Regular-user submissions remain browser-dependent; preparation screen wake is best effort.",
     "Paired-PC higher-authority report needs its exact error for diagnosis; only definite relay 401 renewal is addressed.",
     "Automatic Compare remains blocked by approved source access, report rights and private backend."
-  ]
+  ],
+  "androidSourceCandidateVersion": "0.9.5.51"
 }

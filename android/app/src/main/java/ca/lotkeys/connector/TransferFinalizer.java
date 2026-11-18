@@ -28,6 +28,7 @@ final class TransferFinalizer {
         for (int i = 0; i < operations.length(); i++) {
             check.run(); JSONObject op = operations.getJSONObject(i); String type = op.getString("type");
             if ("vehicle-directory".equals(type)) { store.stage(batch.getString("id"), "directory"); new DirectoryFinalizer(client, check).finish(store, batch, op, operations.getJSONObject(i + 1)); }
+            else if ("vehicle-submission".equals(type)) { store.stage(batch.getString("id"), "submission"); new SubmissionFinalizer(client, check).finish(store, batch); }
             else if ("vehicle-cover".equals(type)) { store.stage(batch.getString("id"), "inventory"); finishCover(store, batch, op); }
             else if ("rename".equals(type)) {
                 String id = op.getString("id"); TransferStore.fileId(id);

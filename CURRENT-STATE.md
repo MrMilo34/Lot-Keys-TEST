@@ -1,3 +1,27 @@
+# Native submission checkpoint — not deployed
+
+The live TEST website is the partial .50 preview at39e89f0, verified after Pages
+44380311201. Production .81 and the installed original-key .46 APK are preserved.
+This isolated continuation adds only the missing native request finalizer, source
+candidate .51. It is not a complete regular-user background-posting release.
+
+- Protocol3 validates one frozen vehicle-create/owner-update request against its
+  account, Store, Vehicle edit, workspace and every planned original.
+- Native uploads finish first. The finisher resolves confirmed media IDs and
+  atomically creates one request using its pre-reserved Drive ID. It never writes
+  official Inventory, changes sharing or overwrites a processor receipt.
+- Lost replies reuse the same file; pending/approved/rejected receipts reconcile
+  without replaying pending work. Originals remain retained on uncertain/error
+  paths. Existing protocol1/2 and Android job scheduling remain intact.
+- Browser plan preparation, UI receipt reconciliation and early local original
+  handoff remain unimplemented. No current .50 client uses protocol3. Real phone
+  app-switch/lock, native Google access and processor integration are unverified.
+- Candidate native .51 outputs are explicitly SOURCE PREVIEW / DO NOT INSTALL;
+  no matching-key installer is delivered by this checkpoint. Public download
+  remains .46. Do not deploy this source or claim background posting is fixed.
+- Paired-PC sending is a separate reported regression being investigated in this
+  same workstream. No speculative permission or send retry changes are included.
+
 # LotKeys .50 — partial reliability TEST preview
 
 TEST-only publication is now authorized for the reviewed partial preview.

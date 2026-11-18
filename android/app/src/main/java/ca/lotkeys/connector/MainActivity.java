@@ -104,7 +104,7 @@ public final class MainActivity extends Activity {
         body.setBackgroundColor(Color.rgb(14, 16, 20));
         scroll.addView(body); setContentView(scroll);
         text("LotKeys", 30, Color.WHITE, true);
-        text("V0.9.5.46 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("V0.9.5.51 TEST PREVIEW", 18, Color.rgb(100, 181, 246), true);
         text("Your Inventory, Listings and Hub open here. Phone messaging, PC connection and background saves use this same installation.", 16, Color.LTGRAY, false);
         button("Open LotKeys", this::openExperience, true);
         button("Background upload controls", () -> startActivity(new Intent(this, UploadActivity.class)), false);
@@ -146,7 +146,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("LotKeys", 30, Color.WHITE, true);
-        text("Phone Connection · V0.9.5.46 TEST", 18, Color.rgb(100, 181, 246), true);
+        text("Phone Connection · V0.9.5.51 TEST PREVIEW", 18, Color.rgb(100, 181, 246), true);
         button("Open LotKeys", this::openExperience, false);
 
         PhoneStore store = new PhoneStore(this);

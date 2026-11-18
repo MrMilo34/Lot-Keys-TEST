@@ -78,6 +78,7 @@ public final class TransferJobService extends JobService {
                         check.run(); store.state(id, "uploading", "");
                         uploadAssets(params, store, batch, account, check);
                         check.run(); store.state(id, "finalizing", "");
+                        if (batch.optInt("version") == 3) notifyProgress(params, "Files saved · submitting the Vehicle for Inventory review");
                         if (batch.optInt("version") == 2) notifyProgress(params, "Files saved · finishing the Vehicle Info Sheet and Inventory");
                         new TransferFinalizer(new DriveUploadClient(this, account, params.getNetwork(), check), check).finish(store, batch);
                         check.run(); store.state(id, "complete", ""); store.releaseOriginals(id);
