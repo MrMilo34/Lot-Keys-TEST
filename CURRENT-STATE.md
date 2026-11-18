@@ -1,7 +1,9 @@
-# LotKeys .50 — unreleased reliability preview (build/handoff only)
+# LotKeys .50 — partial reliability TEST preview
 
-Based on live TEST .49 main a3cbd0a; do not deploy this candidate. Production .81,
-original signed Android .46 and .48 rollback f7ec1b8 are preserved. New .50 scope
+TEST-only publication is now authorized for the reviewed partial preview.
+Base TEST .49 is a3cbd0aac8d956ec9d8110a1c5dd7f08f7fb7cbe; preserve it on
+rollback/test-v095049-before-reliability-preview before promotion. Production .81,
+original signed Android .46 and .48 rollback f7ec1b8 remain protected. New .50 scope
 allows bounded work on sign-in, background preparation, paired-PC sending and
 Account controls; unrelated holds and actual records remain protected.
 
@@ -16,6 +18,9 @@ Account controls; unrelated holds and actual records remain protected.
   Native More handoff and active Compare source/backend work remain unresolved.
 - PR23 preparation stays separate. See RELEASE-0.9.5.50-CANDIDATE.md for exact
   implementation limits, source constraints, tests and source-review ZIP contract.
+- Publication changes only release metadata/documentation; the reviewed .50
+  reliability code remains unchanged. Confirm Pages success and served bytes
+  before reporting deployment. Regular-user native handoff is still unfinished.
 
 # LotKeys TEST .49 — manual/import-only Compare pilot
 

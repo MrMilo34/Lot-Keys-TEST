@@ -8,12 +8,15 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('release metadata is consistently V0.9.5.50 unreleased reliability preview with Android V0.9.5.46', () => {
+test('release metadata is consistently V0.9.5.50 partial TEST reliability preview with Android V0.9.5.46', () => {
   const version = JSON.parse(read('version.json'));
   assert.equal(version.version, '0.9.5.50');
   assert.equal(version.build, '095050');
   assert.equal(version.channel, 'test');
   assert.equal(version.release, 'reliability-preview');
+  assert.equal(version.releaseScope, 'partial-reliability-test-preview');
+  assert.equal(version.deploymentStatus, 'test-preview');
+  assert.equal(version.regularUserNativeHandoff, false);
   assert.equal(version.androidConnectorVersion, '0.9.5.46');
   assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095050-reliability-preview');
   assert.match(read('index.html'), /V0\.9\.5\.50/);

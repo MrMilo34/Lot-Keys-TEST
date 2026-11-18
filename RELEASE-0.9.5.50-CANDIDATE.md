@@ -1,8 +1,9 @@
-# LotKeys .50 — unreleased reliability preview
+# LotKeys .50 — partial reliability TEST preview
 
-Build/review only. Based on TEST .49 main a3cbd0aac8d956ec9d8110a1c5dd7f08f7fb7cbe.
-Live TEST stays .49; production stays .81. This is not a completed release of all
-requested reliability work. Native source, original signed Android .46, browser
+TEST-only publication of this partial preview is now authorized. Based on .49
+main a3cbd0aac8d956ec9d8110a1c5dd7f08f7fb7cbe, with that exact rollback preserved
+on rollback/test-v095049-before-reliability-preview. Production stays .81.
+This is not a completed release of all requested reliability work. Native source, original signed Android .46, browser
 storage, Google scopes, Store permissions and actual user data are unchanged.
 
 ## Implemented in this candidate
@@ -96,7 +97,8 @@ checks use synthetic phone/Drive data and are not physical phone/provider proof.
 
 The review ZIP contains tracked source and the unchanged .46 APK; historical
 installers are omitted and listed in REVIEW-MANIFEST.json. It is a source review
-bundle, not an installable .50 app or approval to replace live TEST. The manifest
+bundle, not an installable .50 app. TEST publication is separately authorized
+and must be confirmed by Pages success and served-byte checks. The manifest
 records the source commit and file hashes. Do not clear storage, uninstall, reset
 Google accounts, replace signing keys or run source previews against real reports.
 
