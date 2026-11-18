@@ -26,7 +26,7 @@ public class SubmissionFinalizerTest {
     }
     private JSONObject plan() throws Exception {
         JSONObject request = new JSONObject().put("schemaVersion", 3).put("app", "LotKeys").put("recordType", "vehicleRequest")
-            .put("id", "VCREATE-vehicle-123-one").put("type", "vehicle-create").put("status", "pending").put("vehicleId", "vehicle-123")
+            .put("id", "VCREATE-vehicle-123-one").put("type", "vehicle-native-create").put("nativeSubmissionGuard", new JSONObject().put("version", 1).put("baseRevision", JSONObject.NULL)).put("status", "pending").put("vehicleId", "vehicle-123")
             .put("userName", "Regular user").put("userEmail", "user@example.test").put("createdAt", "2026-11-18T12:00:00Z")
             .put("context", new JSONObject().put("rootId", "store-folder-123").put("email", "user@example.test").put("revision", "1"))
             .put("folders", new JSONObject().put("pendingFolderId", "pending-folder-123").put("moreVehicleFolderId", "workspace-folder-123"))
@@ -134,6 +134,12 @@ public class SubmissionFinalizerTest {
             JSONObject plan = plan(); plan.getJSONObject("context").put(field, "different");
             assertThrows(IllegalArgumentException.class, () -> store.prepare(plan));
         }
+    }
+    @Test public void legacyRequestTypesAndMissingRevisionGuardsCannotUseTheNewPrimitive() throws Exception {
+        JSONObject legacy = plan(); request(legacy).put("type", "vehicle-create");
+        assertThrows(IllegalArgumentException.class, () -> store.prepare(legacy));
+        JSONObject missing = plan(); request(missing).getJSONObject("nativeSubmissionGuard").remove("baseRevision");
+        assertThrows(IllegalArgumentException.class, () -> store.prepare(missing));
     }
     @Test public void legacyProtocolsAndMixedInventoryOperationsCannotSubmitRequests() throws Exception {
         for (int version : new int[]{1,2}) { JSONObject plan = plan(); plan.put("version", version); assertThrows(IllegalArgumentException.class, () -> store.prepare(plan)); }

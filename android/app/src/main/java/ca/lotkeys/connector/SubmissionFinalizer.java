@@ -32,7 +32,10 @@ final class SubmissionFinalizer {
         TransferStore.require("pending".equals(request.optString("status")) && request.optInt("schemaVersion") == 3 && "vehicleRequest".equals(request.optString("recordType")), "Only a pending Vehicle request can be submitted.");
         TransferStore.require("LotKeys".equals(request.optString("app")) && !request.optString("userName").isEmpty() && !request.optString("createdAt").isEmpty(), "The submission identity is incomplete.");
         String type = request.optString("type");
-        TransferStore.require("vehicle-create".equals(type) || "vehicle-owner-update".equals(type), "Unsupported Vehicle submission type.");
+        TransferStore.require("vehicle-native-create".equals(type) || "vehicle-native-owner-update".equals(type), "This submission requires the guarded Store processor.");
+        JSONObject guard = request.getJSONObject("nativeSubmissionGuard"); Object base = guard.opt("baseRevision");
+        TransferStore.require(guard.optInt("version") == 1 && guard.has("baseRevision"), "The Inventory revision guard is missing.");
+        TransferStore.require("vehicle-native-create".equals(type) ? base == JSONObject.NULL : base instanceof Number && ((Number)base).longValue() > 0 && ((Number)base).doubleValue() == ((Number)base).longValue() && ((Number)base).longValue() <= 9007199254740991L, "Invalid base Inventory revision.");
         JSONObject folders = request.getJSONObject("folders");
         TransferStore.require(op.getString("parentId").equals(folders.optString("pendingFolderId")), "The pending request destination changed.");
         TransferStore.fileId(folders.getString("moreVehicleFolderId"));
@@ -109,7 +112,7 @@ final class SubmissionFinalizer {
         identity(receipt, batch.getJSONObject("context"));
         String status = receipt.optString("status");
         if (!request.getString("id").equals(receipt.optString("id")) || !("pending".equals(status) || "approved".equals(status) || "rejected".equals(status) || "dismissed".equals(status) || "withdrawn".equals(status)) || (existing.optBoolean("trashed") && "pending".equals(status))) throw new TransferFinalizer.Reconcile("The saved submission needs review. Its originals are retained.");
-        check.run(); store.submissionResult(batch.getString("id"), new JSONObject().put("id", id).put("requestId", request.getString("id")).put("status", status));
+        check.run(); store.submissionResult(batch.getString("id"), new JSONObject().put("id", id).put("requestId", request.getString("id")).put("status", status).put("message", receipt.optString("processorError", receipt.optString("processorNote"))));
     }
 
     private void verifyWorkspace(String parent, String vehicleFolder, String record) throws Exception {
