@@ -1,3 +1,22 @@
+# LotKeys .50 — unreleased reliability preview (build/handoff only)
+
+Based on live TEST .49 main a3cbd0a; do not deploy this candidate. Production .81,
+original signed Android .46 and .48 rollback f7ec1b8 are preserved. New .50 scope
+allows bounded work on sign-in, background preparation, paired-PC sending and
+Account controls; unrelated holds and actual records remain protected.
+
+- Cached valid tokens skip external-library waiting. Definite relay401 retries
+  once through existing recovery;403/uncertain sends retain existing safeguards.
+- Vehicle preparation acquires a shared visible-screen wake lease, released on
+  exits/hidden state/verified native handoff. Regular-user More uploads still need
+  the browser; no universal background or locked-phone execution claim is made.
+- Minimal Account rows below Lock Screen use checked phone/receipt state, honest
+  amber/green indicators and existing native controls. No idle polling or scopes.
+- Exact reported PC authorization error and physical phone proof remain missing.
+  Native More handoff and active Compare source/backend work remain unresolved.
+- PR23 preparation stays separate. See RELEASE-0.9.5.50-CANDIDATE.md for exact
+  implementation limits, source constraints, tests and source-review ZIP contract.
+
 # LotKeys TEST .49 — manual/import-only Compare pilot
 
 Release source: PR #22, based on .48 f7ec1b8fd095f2455dddcc300516c510fccc819c.

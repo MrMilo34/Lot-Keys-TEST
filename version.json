@@ -1,19 +1,26 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.49",
-  "build": "095049",
-  "release": "comparison-manual-pilot",
+  "version": "0.9.5.50",
+  "build": "095050",
+  "release": "reliability-preview",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095049-comparison-manual-pilot",
-  "basedOn": "TEST main f7ec1b8 (.48); signed Android .46 preserved",
+  "serviceWorkerCache": "lotkeys-app-v095050-reliability-preview",
+  "basedOn": "TEST .49 a3cbd0a; signed Android .46 preserved",
   "androidConnectorVersion": "0.9.5.46",
-  "preparedAt": "2026-11-14",
+  "preparedAt": "2026-11-18",
   "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.46.apk",
   "originVerificationUrl": "https://mrmilo34.github.io/.well-known/assetlinks.json",
-  "releaseScope": "manual-import-only-test-pilot",
+  "releaseScope": "unreleased-reliability-preview",
   "automaticWebsiteSearch": false,
   "lotkeysDriveAuthorizationVerified": false,
   "lotkeysDriveRenewalVerified": false,
-  "physicalPhoneVerified": false
+  "physicalPhoneVerified": false,
+  "deploymentStatus": "not-deployed",
+  "regularUserNativeHandoff": false,
+  "knownLimitations": [
+    "Regular-user submissions remain browser-dependent; preparation screen wake is best effort.",
+    "Paired-PC higher-authority report needs its exact error for diagnosis; only definite relay 401 renewal is addressed.",
+    "Automatic Compare remains blocked by approved source access, report rights and private backend."
+  ]
 }

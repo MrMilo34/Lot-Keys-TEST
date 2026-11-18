@@ -582,7 +582,13 @@
   async function driveFetch(url, options = {}) {
     try {
       const token = await Drive.authorize(false);
-      const result = await relayRequest(url, options, token);
+      let result = await relayRequest(url, options, token);
+      // A definite 401 rejected this mailbox request before acceptance. Renew
+      // once through shared recovery; never retry a 403 or an uncertain send.
+      if(result.status===401&&typeof Drive.recoverAuthorizationAfter401==='function'){
+        const renewed=await Drive.recoverAuthorizationAfter401();
+        result=await relayRequest(url,options,renewed);
+      }
       if (!result.ok) {
         const payload = relayPayload(result);
         const message = payload?.error?.message || (typeof payload === 'string' ? payload : '');
