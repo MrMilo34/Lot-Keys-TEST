@@ -1,9 +1,10 @@
-const CACHE='lotkeys-app-v095049-comparison-manual-pilot';
+const CACHE='lotkeys-app-v095050-reliability-preview';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
   './index.html',
   './lotkeys-compare.js',
+  './lotkeys-reliability.js',
   './lotkeys-compare-ui.js',
   './lotkeys-compare.css',
   './install.html',

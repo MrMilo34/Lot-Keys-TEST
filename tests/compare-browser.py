@@ -136,6 +136,22 @@ try:
         assert saved['pending'] is None
         assert page.locator('#home-compare #compare-name-0').input_value()=='NEW SOURCE AFTER NAVIGATION'
         page.screenshot(path=str(OUT / 'remount-receipt-mobile.png'),full_page=True)
+        # Account uses the actual route and styles. Native status is synthetic;
+        # no phone permission or live Drive action is performed.
+        page.evaluate("LotKeysPhone.uploadCapabilities=async()=>({uploadAccount:'comparison@example.test',capabilities:{backgroundUploads:true},permissions:{readSms:true,sendSms:true},relay:{account:'comparison@example.test',authorized:true,connected:true}})")
+        page.locator('.nav-btn[data-route="profile"]').click()
+        page.wait_for_selector('#account-upload-connector .capability-light.green')
+        assert page.locator('#account-upload-connector').evaluate("e=>e.previousElementSibling.id")=='account-lock-settings'
+        assert page.locator('#account-upload-connector button,#account-upload-connector a.btn').count()==2
+        assert 'Regular-user submissions still need LotKeys open' in page.locator('#account-upload-connector').inner_text()
+        for width in [1280,390,320]:
+            page.set_viewport_size({'width':width,'height':844})
+            assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
+            page.locator('#account-upload-connector').scroll_into_view_if_needed()
+            page.screenshot(path=str(OUT / f'account-{width}.png'))
+        page.locator('.nav-btn[data-route="home"]').click()
+        page.wait_for_selector('.compare-panel')
+        page.locator('.compare-panel>summary').click()
         page.locator('.compare-open').click()
         page.wait_for_selector('dialog[open] #compare-form')
         page.evaluate("LotKeysMessagingBridge.setSetting('currentAccountEmail','different@example.test')")
@@ -143,7 +159,7 @@ try:
         assert page.locator('#home-compare').inner_text()==''
         assert not any(any(host in url for host in ['autotrader','cargurus','dealer.example']) for url in external),external
         assert not errors,errors
-        summary={'checks':['actual Home search dimensions and gradient','source and target controls','price-sorted compact lines','target star and stock hyperlink','known body exclusion and labelled trim variants','Copy results manual limitation','1280/390/320px no horizontal overflow','failed save retains pending results and previous link','Inventory unchanged','reload retains pending report','route remount preserves newer source edits and reconciles receipt','account change clears report'],'sizes':sizes,'homeStyle':style,'pageErrors':errors,'externalRequestsBlocked':len(external),'liveDriveTested':False,'physicalPhoneTested':False}
+        summary={'checks':['actual Home search dimensions and gradient','source and target controls','price-sorted compact lines','target star and stock hyperlink','known body exclusion and labelled trim variants','Copy results manual limitation','1280/390/320px no horizontal overflow','failed save retains pending results and previous link','Inventory unchanged','reload retains pending report','route remount preserves newer source edits and reconciles receipt','account change clears report','Account controls below Lock Screen, two actions and responsive widths with synthetic native status'],'sizes':sizes,'homeStyle':style,'pageErrors':errors,'externalRequestsBlocked':len(external),'liveDriveTested':False,'physicalPhoneTested':False}
         (OUT/'browser-results.json').write_text(json.dumps(summary,indent=2))
         print(json.dumps(summary,indent=2))
         browser.close()

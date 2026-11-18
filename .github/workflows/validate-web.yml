@@ -35,6 +35,7 @@ jobs:
           node --check lotkeys-doorbell-core.js
           node --check wake-sender/Code.js
           node --check lotkeys-phone-core.js
+          node --check lotkeys-reliability.js
           node --check lotkeys-phone.js
           node --check lotkeys-hub.js
           node --check sw.js
@@ -53,6 +54,14 @@ jobs:
                       subprocess.run(['node', '--check', script.name], check=True)
           PY
 
+      - name: Package unreleased source review
+        run: python3 tools/package-review.py "$RUNNER_TEMP/LotKeys-0.9.5.50-REVIEW-ONLY-source.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LotKeys-0.9.5.50-REVIEW-ONLY-source
+          path: ${{ runner.temp }}/LotKeys-0.9.5.50-REVIEW-ONLY-source.zip
+          if-no-files-found: error
+
   compare-browser:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -67,7 +76,7 @@ jobs:
       - name: Comparison DOM behavior
         run: |
           npm install --prefix "$RUNNER_TEMP/compare-dom" --ignore-scripts --no-audit --no-fund happy-dom@21.0.4
-          LOTKEYS_COMPARE_DOM="$RUNNER_TEMP/compare-dom/node_modules/happy-dom/lib/index.js" node --test tests/compare-ui-dom.mjs
+          LOTKEYS_COMPARE_DOM="$RUNNER_TEMP/compare-dom/node_modules/happy-dom/lib/index.js" node --test tests/compare-ui-dom.mjs tests/account-controls-dom.mjs
       - name: Install isolated browser test tools
         run: |
           python -m pip install playwright==1.62.0
