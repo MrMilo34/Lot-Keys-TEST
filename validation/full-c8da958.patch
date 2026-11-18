@@ -1,0 +1,1620 @@
+From c97fd2232bbae5509e6b67b67c73cd0358ce2e33 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Wed, 18 Nov 2026 12:37:17 -0700
+Subject: [PATCH 1/3] Checkpoint native-only regular-user submission
+ finalization
+
+---
+ .github/workflows/build-lotkeys-android.yml   |   6 +-
+ CURRENT-STATE.md                              |  24 +++
+ NATIVE-SUBMISSION-CHECKPOINT.md               |  37 +++++
+ android/app/build.gradle                      |   4 +-
+ .../ca/lotkeys/connector/LocalApiServer.java  |   1 +
+ .../ca/lotkeys/connector/MainActivity.java    |   4 +-
+ .../connector/SubmissionFinalizer.java        | 137 ++++++++++++++++
+ .../lotkeys/connector/TransferFinalizer.java  |   1 +
+ .../lotkeys/connector/TransferJobService.java |   1 +
+ .../ca/lotkeys/connector/TransferStore.java   |  11 +-
+ .../connector/SubmissionFinalizerTest.java    | 149 ++++++++++++++++++
+ tests/release-contract.test.js                |   8 +-
+ version.json                                  |   5 +-
+ 13 files changed, 372 insertions(+), 16 deletions(-)
+ create mode 100644 NATIVE-SUBMISSION-CHECKPOINT.md
+ create mode 100644 android/app/src/main/java/ca/lotkeys/connector/SubmissionFinalizer.java
+ create mode 100644 android/app/src/test/java/ca/lotkeys/connector/SubmissionFinalizerTest.java
+
+diff --git a/.github/workflows/build-lotkeys-android.yml b/.github/workflows/build-lotkeys-android.yml
+index b71ea34..3509b02 100644
+--- a/.github/workflows/build-lotkeys-android.yml
++++ b/.github/workflows/build-lotkeys-android.yml
+@@ -58,7 +58,7 @@ jobs:
+       - uses: actions/upload-artifact@v4
+         if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
+         with:
+-          name: LotKeys-Android-V0.9.5.46
++          name: LotKeys-Android-V0.9.5.51-SOURCE-PREVIEW-DO-NOT-INSTALL
+           path: |
+             android/app/build/outputs/apk/debug/app-debug.apk
+             android/app/build/outputs/apk/debug/apksigner.jar
+@@ -67,7 +67,7 @@ jobs:
+         uses: actions/upload-artifact@v4
+         if: success() && env.LOTKEYS_TEST_SIGNED != 'true'
+         with:
+-          name: LotKeys-Android-UNSIGNED-DO-NOT-INSTALL-V0.9.5.46
++          name: LotKeys-Android-UNSIGNED-DO-NOT-INSTALL-V0.9.5.51-SOURCE-PREVIEW-DO-NOT-INSTALL
+           path: |
+             android/app/build/outputs/apk/debug/app-debug.apk
+             android/app/build/outputs/apk/debug/apksigner.jar
+@@ -76,7 +76,7 @@ jobs:
+         uses: actions/upload-artifact@v4
+         if: success()
+         with:
+-          name: LotKeys-Android-RELEASE-CANDIDATE-V0.9.5.46
++          name: LotKeys-Android-RELEASE-CANDIDATE-V0.9.5.51-SOURCE-PREVIEW-DO-NOT-INSTALL
+           path: |
+             android/app/build/outputs/apk/release/*.apk
+             android/app/build/outputs/bundle/release/*.aab
+diff --git a/CURRENT-STATE.md b/CURRENT-STATE.md
+index 06361d6..c4bd55f 100644
+--- a/CURRENT-STATE.md
++++ b/CURRENT-STATE.md
+@@ -1,3 +1,27 @@
++# Native submission checkpoint — not deployed
++
++The live TEST website is the partial .50 preview at39e89f0, verified after Pages
++44380311201. Production .81 and the installed original-key .46 APK are preserved.
++This isolated continuation adds only the missing native request finalizer, source
++candidate .51. It is not a complete regular-user background-posting release.
++
++- Protocol3 validates one frozen vehicle-create/owner-update request against its
++  account, Store, Vehicle edit, workspace and every planned original.
++- Native uploads finish first. The finisher resolves confirmed media IDs and
++  atomically creates one request using its pre-reserved Drive ID. It never writes
++  official Inventory, changes sharing or overwrites a processor receipt.
++- Lost replies reuse the same file; pending/approved/rejected receipts reconcile
++  without replaying pending work. Originals remain retained on uncertain/error
++  paths. Existing protocol1/2 and Android job scheduling remain intact.
++- Browser plan preparation, UI receipt reconciliation and early local original
++  handoff remain unimplemented. No current .50 client uses protocol3. Real phone
++  app-switch/lock, native Google access and processor integration are unverified.
++- Candidate native .51 outputs are explicitly SOURCE PREVIEW / DO NOT INSTALL;
++  no matching-key installer is delivered by this checkpoint. Public download
++  remains .46. Do not deploy this source or claim background posting is fixed.
++- Paired-PC sending is a separate reported regression being investigated in this
++  same workstream. No speculative permission or send retry changes are included.
++
+ # LotKeys .50 — partial reliability TEST preview
+ 
+ TEST-only publication is now authorized for the reviewed partial preview.
+diff --git a/NATIVE-SUBMISSION-CHECKPOINT.md b/NATIVE-SUBMISSION-CHECKPOINT.md
+new file mode 100644
+index 0000000..8c0cc48
+--- /dev/null
++++ b/NATIVE-SUBMISSION-CHECKPOINT.md
+@@ -0,0 +1,37 @@
++# Bounded native request finalizer checkpoint
++
++Based on the reviewed .50 source a29d923 and its TEST-only publication39e89f0.
++The .49 rollback remains a3cbd0a. No production, Store data, reports, permissions
++or signing identity changes are authorized by this source checkpoint.
++
++Protocol3 has one vehicle-submission finalizer: fileId is a browser-reserved Drive
++file ID, parentId is the existing private Pending folder, request is the frozen
++schema3 LotKeys vehicle-create or vehicle-owner-update request. Request context
++must match native account/store/record/revision. Existing media has driveFileId;
++new media has assetKey and its original parentFolderId. Every staged asset must
++match one media reference and contribution request. The existing native queue
++retains originals and uploads them before running this finalizer.
++
++The finalizer verifies Pending -> Requests -> More Vehicle folder ancestry and
++public role/Vehicle properties. It resolves only confirmed media IDs, creates
++metadata and JSON body together with the reserved ID and a plan fingerprint,
++and verifies a matching server receipt. It never PATCHes a request, writes shared
++Inventory, changes access or performs provider migration. A response lost after
++acceptance is recovered by exact ID; an existing terminal receipt is never
++rewritten to pending. Failures retain original files and checkpoints. The existing
++Store processor continues enforcing user roles and publishing accepted Inventory.
++
++This is a native prerequisite, not end-to-end background posting. The existing
++.50 browser does not build protocol3 plans or reconcile its receipts. Completing
++that client path, testing it against isolated authorized workspaces, preserving
++the .44/.48 recovery safeguards, and validating an actual matching-key .51 phone
++upgrade are still required. Preparation before Android retains every original
++still needs the visible browser; the existing wake lease is only best effort.
++Ordinary jobs can be deferred; user-initiated jobs require the existing visible
++native action on supported Android versions. No platform background restriction
++is bypassed. No real phone or live Drive/processor test is claimed.
++
++Robolectric fixtures cover delayed media, full payload binding, lost responses,
++terminal receipts, collision, account/Store/edit changes, permission denial,
++cancellation, and protocol compatibility. Record the actual CI result separately;
++these are simulated tests rather than a physical-device send or upload test.
+diff --git a/android/app/build.gradle b/android/app/build.gradle
+index 3521541..9e34d81 100644
+--- a/android/app/build.gradle
++++ b/android/app/build.gradle
+@@ -28,8 +28,8 @@ android {
+         applicationId 'ca.lotkeys.connector.test'
+         minSdk 30
+         targetSdk 36
+-        versionCode 95046
+-        versionName '0.9.5.46-test'
++        versionCode 95051
++        versionName '0.9.5.51-test-preview'
+     }
+ 
+     buildTypes {
+diff --git a/android/app/src/main/java/ca/lotkeys/connector/LocalApiServer.java b/android/app/src/main/java/ca/lotkeys/connector/LocalApiServer.java
+index 58c604b..3cc0cec 100644
+--- a/android/app/src/main/java/ca/lotkeys/connector/LocalApiServer.java
++++ b/android/app/src/main/java/ca/lotkeys/connector/LocalApiServer.java
+@@ -131,6 +131,7 @@ final class LocalApiServer {
+             status.getJSONObject("capabilities").put("backgroundUploads", TransferAuth.ready(service));
+             status.getJSONObject("capabilities").put("uploadControls", true);
+             status.getJSONObject("capabilities").put("deferredVehicleFinalization", TransferAuth.ready(service));
++            status.getJSONObject("capabilities").put("submissionFinalization", TransferAuth.ready(service));
+             status.getJSONObject("capabilities").put("adaptiveRelayPolling", true);
+             status.put("uploadAccount", TransferAuth.account(service));
+             return status;
+diff --git a/android/app/src/main/java/ca/lotkeys/connector/MainActivity.java b/android/app/src/main/java/ca/lotkeys/connector/MainActivity.java
+index 5758bf6..b554bc1 100644
+--- a/android/app/src/main/java/ca/lotkeys/connector/MainActivity.java
++++ b/android/app/src/main/java/ca/lotkeys/connector/MainActivity.java
+@@ -104,7 +104,7 @@ public final class MainActivity extends Activity {
+         body.setBackgroundColor(Color.rgb(14, 16, 20));
+         scroll.addView(body); setContentView(scroll);
+         text("LotKeys", 30, Color.WHITE, true);
+-        text("V0.9.5.46 TEST", 18, Color.rgb(100, 181, 246), true);
++        text("V0.9.5.51 TEST PREVIEW", 18, Color.rgb(100, 181, 246), true);
+         text("Your Inventory, Listings and Hub open here. Phone messaging, PC connection and background saves use this same installation.", 16, Color.LTGRAY, false);
+         button("Open LotKeys", this::openExperience, true);
+         button("Background upload controls", () -> startActivity(new Intent(this, UploadActivity.class)), false);
+@@ -146,7 +146,7 @@ public final class MainActivity extends Activity {
+         setContentView(scroll);
+ 
+         text("LotKeys", 30, Color.WHITE, true);
+-        text("Phone Connection · V0.9.5.46 TEST", 18, Color.rgb(100, 181, 246), true);
++        text("Phone Connection · V0.9.5.51 TEST PREVIEW", 18, Color.rgb(100, 181, 246), true);
+         button("Open LotKeys", this::openExperience, false);
+ 
+         PhoneStore store = new PhoneStore(this);
+diff --git a/android/app/src/main/java/ca/lotkeys/connector/SubmissionFinalizer.java b/android/app/src/main/java/ca/lotkeys/connector/SubmissionFinalizer.java
+new file mode 100644
+index 0000000..7b3afec
+--- /dev/null
++++ b/android/app/src/main/java/ca/lotkeys/connector/SubmissionFinalizer.java
+@@ -0,0 +1,137 @@
++package ca.lotkeys.connector;
++
++import org.json.JSONArray;
++import org.json.JSONObject;
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.HashMap;
++import java.util.HashSet;
++import java.util.Map;
++
++/** Protocol 3: publish one private More request after all originals are confirmed.
++ * This submits to the existing Store processor; it never writes shared Inventory.
++ * The capability describes this native primitive; a browser handoff is still needed.
++ */
++final class SubmissionFinalizer {
++    private static final String FILES = "https://www.googleapis.com/drive/v3/files/";
++    private final DriveUploadClient client;
++    private final DriveUploadClient.Check check;
++    SubmissionFinalizer(DriveUploadClient client, DriveUploadClient.Check check) { this.client = client; this.check = check; }
++
++    static void validate(JSONObject plan) throws Exception {
++        TransferStore.require(plan.optInt("version") == 3, "This submission needs protocol 3.");
++        JSONArray operations = plan.getJSONArray("finalizers");
++        TransferStore.require(operations.length() == 1 && "vehicle-submission".equals(operations.getJSONObject(0).optString("type")), "A submission cannot contain Inventory or directory operations.");
++        JSONObject op = operations.getJSONObject(0), scope = plan.getJSONObject("context"), request = op.getJSONObject("request");
++        TransferStore.fileId(op.getString("fileId")); TransferStore.fileId(op.getString("parentId"));
++        String record = scope.getString("record"), requestId = request.optString("id");
++        TransferStore.require(requestId.matches("[A-Za-z0-9._-]{1,200}"), "Invalid submission identifier.");
++        identity(request, scope);
++        TransferStore.require("pending".equals(request.optString("status")) && request.optInt("schemaVersion") == 3 && "vehicleRequest".equals(request.optString("recordType")), "Only a pending Vehicle request can be submitted.");
++        TransferStore.require("LotKeys".equals(request.optString("app")) && !request.optString("userName").isEmpty() && !request.optString("createdAt").isEmpty(), "The submission identity is incomplete.");
++        String type = request.optString("type");
++        TransferStore.require("vehicle-create".equals(type) || "vehicle-owner-update".equals(type), "Unsupported Vehicle submission type.");
++        JSONObject folders = request.getJSONObject("folders");
++        TransferStore.require(op.getString("parentId").equals(folders.optString("pendingFolderId")), "The pending request destination changed.");
++        TransferStore.fileId(folders.getString("moreVehicleFolderId"));
++        TransferStore.require(record.equals(request.getJSONObject("vehicle").optString("id")), "The Vehicle snapshot changed.");
++        Map<String, JSONObject> assets = new HashMap<>();
++        JSONArray rows = plan.getJSONArray("assets");
++        for (int i = 0; i < rows.length(); i++) {
++            JSONObject asset = rows.getJSONObject(i), properties = asset.getJSONObject("properties");
++            TransferStore.require("vehicleContributionAsset".equals(properties.optString("lotkeysRole")) && record.equals(properties.optString("lotkeysVehicleId")) && requestId.equals(properties.optString("lotkeysContributionId")), "An original belongs to another submission.");
++            TransferStore.require(assets.put(asset.getString("key"), asset) == null, "Duplicate submission original.");
++        }
++        HashSet<String> referenced = new HashSet<>();
++        JSONObject media = request.getJSONObject("media");
++        for (String[] kind : new String[][]{{"photos", "photo"}, {"videos", "video"}, {"documents", "document"}}) {
++            JSONArray items = media.getJSONArray(kind[0]); HashSet<String> ids = new HashSet<>();
++            for (int i = 0; i < items.length(); i++) {
++                JSONObject item = items.getJSONObject(i); String id = item.optString("id"), key = item.optString("assetKey");
++                TransferStore.require(!id.isEmpty() && ids.add(id), "Duplicate or missing submission media identifier.");
++                if (key.isEmpty()) { TransferStore.fileId(item.optString("driveFileId")); continue; }
++                JSONObject asset = assets.get(key);
++                TransferStore.require(asset != null && referenced.add(key) && item.optString("driveFileId").isEmpty(), "An original has an invalid submission reference.");
++                JSONObject properties = asset.getJSONObject("properties");
++                TransferStore.require(id.equals(properties.optString("lotkeysAssetId")) && kind[1].equals(properties.optString("lotkeysAssetKind")) && asset.getString("parent").equals(item.optString("parentFolderId")), "An original destination or media kind changed.");
++            }
++        }
++        TransferStore.require(referenced.size() == assets.size(), "Every retained original must appear in the submission.");
++    }
++
++    private static void identity(JSONObject request, JSONObject scope) throws Exception {
++        JSONObject context = request.getJSONObject("context");
++        TransferStore.require(scope.getString("record").equals(request.optString("vehicleId")) && scope.getString("store").equals(context.optString("rootId")) && scope.getString("revision").equals(context.optString("revision")) && scope.getString("account").equalsIgnoreCase(request.optString("userEmail")) && scope.getString("account").equalsIgnoreCase(context.optString("email")), "The submission belongs to another account, Store or Vehicle edit.");
++    }
++
++    JSONObject payload(TransferStore store, JSONObject batch) throws Exception {
++        validate(batch);
++        Map<String, JSONObject> confirmed = new HashMap<>(); JSONArray assets = batch.getJSONArray("assets");
++        for (int i = 0; i < assets.length(); i++) {
++            JSONObject asset = assets.getJSONObject(i), state = store.itemState(batch.getString("id"), i), result = state.optJSONObject("result");
++            TransferStore.require(result != null && state.optLong("confirmed", -1) == asset.getLong("size"), "Every original must be confirmed before submitting the Vehicle.");
++            TransferStore.fileId(result.getString("id"));
++            if (!asset.optString("driveId").isEmpty()) TransferStore.require(asset.getString("driveId").equals(result.getString("id")), "The confirmed original changed its file identifier.");
++            confirmed.put(asset.getString("key"), result);
++        }
++        JSONObject request = new JSONObject(batch.getJSONArray("finalizers").getJSONObject(0).getJSONObject("request").toString());
++        for (String kind : new String[]{"photos", "videos", "documents"}) {
++            JSONArray items = request.getJSONObject("media").getJSONArray(kind);
++            for (int i = 0; i < items.length(); i++) {
++                JSONObject item = items.getJSONObject(i); String key = item.optString("assetKey");
++                if (!key.isEmpty()) { item.put("driveFileId", confirmed.get(key).getString("id")); item.remove("assetKey"); }
++            }
++        }
++        return request;
++    }
++
++    void finish(TransferStore store, JSONObject batch) throws Exception {
++        JSONObject request = payload(store, batch), op = batch.getJSONArray("finalizers").getJSONObject(0);
++        String id = op.getString("fileId"), parent = op.getString("parentId"), body = canonical(request), fingerprint = digest(body);
++        verifyWorkspace(parent, request.getJSONObject("folders").getString("moreVehicleFolderId"), batch.getJSONObject("context").getString("record"));
++        JSONObject existing = metadata(id);
++        if (existing == null) {
++            JSONObject properties = new JSONObject().put("lotkeysRole", "vehicleRequest").put("lotkeysVehicleId", request.getString("vehicleId")).put("lotkeysRequestId", request.getString("id")).put("lotkeysRequestType", request.getString("type")).put("lotkeysSubmissionSha256", fingerprint);
++            JSONObject meta = new JSONObject().put("id", id).put("name", request.getString("id") + ".json").put("mimeType", "application/json").put("parents", new JSONArray().put(parent)).put("properties", properties).put("appProperties", properties);
++            String boundary = "lotkeys_" + fingerprint;
++            String multipart = "--" + boundary + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n" + meta + "\r\n--" + boundary + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n" + body + "\r\n--" + boundary + "--\r\n";
++            check.run(); DriveUploadClient.Reply reply = client.request("POST", "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id", "multipart/related; boundary=" + boundary, multipart.getBytes(StandardCharsets.UTF_8), null, 0, 0, null, null);
++            if (reply.status != 409) DriveUploadClient.success(reply);
++            existing = metadata(id);
++        }
++        if (existing == null) throw new TransferFinalizer.Reconcile("The request response is uncertain. Its reserved ID and originals are retained for review.");
++        JSONObject properties = existing.optJSONObject("properties"); JSONArray parents = existing.optJSONArray("parents"); boolean sameParent = false;
++        for (int i = 0; parents != null && i < parents.length(); i++) sameParent |= parent.equals(parents.optString(i));
++        if (!id.equals(existing.optString("id")) || !sameParent || properties == null || !request.getString("id").equals(properties.optString("lotkeysRequestId")) || !request.getString("vehicleId").equals(properties.optString("lotkeysVehicleId")) || !fingerprint.equals(properties.optString("lotkeysSubmissionSha256"))) throw new TransferFinalizer.Reconcile("The reserved request belongs to different work. Nothing was overwritten.");
++        JSONObject receipt = json("GET", FILES + id + "?alt=media&supportsAllDrives=true").json();
++        identity(receipt, batch.getJSONObject("context"));
++        String status = receipt.optString("status");
++        if (!request.getString("id").equals(receipt.optString("id")) || !("pending".equals(status) || "approved".equals(status) || "rejected".equals(status) || "dismissed".equals(status) || "withdrawn".equals(status)) || (existing.optBoolean("trashed") && "pending".equals(status))) throw new TransferFinalizer.Reconcile("The saved submission needs review. Its originals are retained.");
++        check.run(); store.submissionResult(batch.getString("id"), new JSONObject().put("id", id).put("requestId", request.getString("id")).put("status", status));
++    }
++
++    private void verifyWorkspace(String parent, String vehicleFolder, String record) throws Exception {
++        JSONObject pending = metadata(parent); requireRole(pending, "moreRequestsPending", record);
++        JSONArray parents = pending.getJSONArray("parents"); TransferStore.require(parents.length() == 1, "The request folder has an ambiguous parent.");
++        JSONObject requests = metadata(parents.getString(0)); requireRole(requests, "moreRequests", record);
++        JSONArray roots = requests.getJSONArray("parents"); TransferStore.require(roots.length() == 1 && vehicleFolder.equals(roots.getString(0)), "The request folder moved outside its Vehicle workspace.");
++        requireRole(metadata(vehicleFolder), "moreVehicle", record);
++    }
++    private static void requireRole(JSONObject folder, String role, String record) throws Exception {
++        JSONObject properties = folder == null ? null : folder.optJSONObject("properties");
++        TransferStore.require(folder != null && !folder.optBoolean("trashed") && "application/vnd.google-apps.folder".equals(folder.optString("mimeType")) && properties != null && role.equals(properties.optString("lotkeysRole")) && record.equals(properties.optString("lotkeysVehicleId")), "The private Vehicle request workspace changed.");
++    }
++    private JSONObject metadata(String id) throws Exception {
++        TransferStore.fileId(id); check.run(); DriveUploadClient.Reply reply = client.request("GET", FILES + id + "?supportsAllDrives=true&fields=id,mimeType,parents,properties,trashed", null, null, null, 0, 0, null, null);
++        if (reply.status == 404) return null; DriveUploadClient.success(reply); return reply.json();
++    }
++    private DriveUploadClient.Reply json(String method, String url) throws Exception { check.run(); DriveUploadClient.Reply reply = client.request(method, url, null, null, null, 0, 0, null, null); DriveUploadClient.success(reply); return reply; }
++    private static String canonical(Object value) throws Exception {
++        if (value instanceof JSONObject) { JSONObject object = (JSONObject)value; ArrayList<String> keys = new ArrayList<>(); object.keys().forEachRemaining(keys::add); Collections.sort(keys); ArrayList<String> pairs = new ArrayList<>(); for (String key : keys) pairs.add(JSONObject.quote(key) + ":" + canonical(object.get(key))); return "{" + String.join(",", pairs) + "}"; }
++        if (value instanceof JSONArray) { JSONArray array = (JSONArray)value; ArrayList<String> values = new ArrayList<>(); for (int i = 0; i < array.length(); i++) values.add(canonical(array.get(i))); return "[" + String.join(",", values) + "]"; }
++        return value == null || value == JSONObject.NULL ? "null" : value instanceof String ? JSONObject.quote((String)value) : value.toString();
++    }
++    private static String digest(String value) throws Exception { StringBuilder out = new StringBuilder(); for (byte b : MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))) out.append(String.format(java.util.Locale.ROOT, "%02x", b & 255)); return out.toString(); }
++}
+diff --git a/android/app/src/main/java/ca/lotkeys/connector/TransferFinalizer.java b/android/app/src/main/java/ca/lotkeys/connector/TransferFinalizer.java
+index 887569f..da09486 100644
+--- a/android/app/src/main/java/ca/lotkeys/connector/TransferFinalizer.java
++++ b/android/app/src/main/java/ca/lotkeys/connector/TransferFinalizer.java
+@@ -28,6 +28,7 @@ final class TransferFinalizer {
+         for (int i = 0; i < operations.length(); i++) {
+             check.run(); JSONObject op = operations.getJSONObject(i); String type = op.getString("type");
+             if ("vehicle-directory".equals(type)) { store.stage(batch.getString("id"), "directory"); new DirectoryFinalizer(client, check).finish(store, batch, op, operations.getJSONObject(i + 1)); }
++            else if ("vehicle-submission".equals(type)) { store.stage(batch.getString("id"), "submission"); new SubmissionFinalizer(client, check).finish(store, batch); }
+             else if ("vehicle-cover".equals(type)) { store.stage(batch.getString("id"), "inventory"); finishCover(store, batch, op); }
+             else if ("rename".equals(type)) {
+                 String id = op.getString("id"); TransferStore.fileId(id);
+diff --git a/android/app/src/main/java/ca/lotkeys/connector/TransferJobService.java b/android/app/src/main/java/ca/lotkeys/connector/TransferJobService.java
+index 8bfb3eb..904aa9a 100644
+--- a/android/app/src/main/java/ca/lotkeys/connector/TransferJobService.java
++++ b/android/app/src/main/java/ca/lotkeys/connector/TransferJobService.java
+@@ -78,6 +78,7 @@ public final class TransferJobService extends JobService {
+                         check.run(); store.state(id, "uploading", "");
+                         uploadAssets(params, store, batch, account, check);
+                         check.run(); store.state(id, "finalizing", "");
++                        if (batch.optInt("version") == 3) notifyProgress(params, "Files saved · submitting the Vehicle for Inventory review");
+                         if (batch.optInt("version") == 2) notifyProgress(params, "Files saved · finishing the Vehicle Info Sheet and Inventory");
+                         new TransferFinalizer(new DriveUploadClient(this, account, params.getNetwork(), check), check).finish(store, batch);
+                         check.run(); store.state(id, "complete", ""); store.releaseOriginals(id);
+diff --git a/android/app/src/main/java/ca/lotkeys/connector/TransferStore.java b/android/app/src/main/java/ca/lotkeys/connector/TransferStore.java
+index fc86348..6b9cc58 100644
+--- a/android/app/src/main/java/ca/lotkeys/connector/TransferStore.java
++++ b/android/app/src/main/java/ca/lotkeys/connector/TransferStore.java
+@@ -29,9 +29,10 @@ final class TransferStore {
+     JSONObject prepare(JSONObject input) throws Exception {
+         synchronized (LOCK) {
+             JSONObject scope = input.getJSONObject("context");
+-            require(input.optInt("version", 1) == 1 || input.optInt("version") == 2, "Update the connector before preparing this save.");
+-            if (input.optInt("version") == 2) DirectoryFinalizer.validate(input);
+-            else { JSONArray operations = input.optJSONArray("finalizers"); for (int i = 0; operations != null && i < operations.length(); i++) require(!"vehicle-directory".equals(operations.getJSONObject(i).optString("type")), "This finishing plan requires protocol version 2."); }
++            require(input.optInt("version", 1) == 1 || input.optInt("version") == 2 || input.optInt("version") == 3, "Update the connector before preparing this save.");
++            if (input.optInt("version") == 3) SubmissionFinalizer.validate(input);
++            else if (input.optInt("version") == 2) DirectoryFinalizer.validate(input);
++            else { JSONArray operations = input.optJSONArray("finalizers"); for (int i = 0; operations != null && i < operations.length(); i++) require(!"vehicle-directory".equals(operations.getJSONObject(i).optString("type")) && !"vehicle-submission".equals(operations.getJSONObject(i).optString("type")), "Update the finishing protocol before preparing this save."); }
+             require(input.toString().length() <= 1024 * 1024, "Upload plan is too large.");
+             require(!scope.optString("account").trim().isEmpty(), "An upload account is required.");
+             fileId(scope.optString("store"));
+@@ -164,6 +165,10 @@ final class TransferStore {
+         JSONObject batch = get(id), results = batch.optJSONObject("finalizerResults"); if (results == null) results = new JSONObject();
+         batch.put("finalizerResults", results.put("directory", result)); save(batch);
+     } }
++    void submissionResult(String id, JSONObject result) throws Exception { synchronized (LOCK) {
++        JSONObject batch = get(id), results = batch.optJSONObject("finalizerResults"); if (results == null) results = new JSONObject();
++        batch.put("finalizerResults", results.put("submission", result)); save(batch);
++    } }
+     void stage(String id, String stage) throws Exception { synchronized (LOCK) { JSONObject batch = get(id); batch.put("stage", stage); save(batch); } }
+     void hold(String account, String store) throws Exception {
+         synchronized (LOCK) {
+diff --git a/android/app/src/test/java/ca/lotkeys/connector/SubmissionFinalizerTest.java b/android/app/src/test/java/ca/lotkeys/connector/SubmissionFinalizerTest.java
+new file mode 100644
+index 0000000..83c80a3
+--- /dev/null
++++ b/android/app/src/test/java/ca/lotkeys/connector/SubmissionFinalizerTest.java
+@@ -0,0 +1,149 @@
++package ca.lotkeys.connector;
++
++import android.content.Context;
++import android.util.Base64;
++import org.json.JSONArray;
++import org.json.JSONObject;
++import org.junit.Before;
++import org.junit.Test;
++import org.junit.runner.RunWith;
++import org.robolectric.RobolectricTestRunner;
++import org.robolectric.RuntimeEnvironment;
++import org.robolectric.annotation.Config;
++import java.io.File;
++import java.nio.charset.StandardCharsets;
++import java.util.UUID;
++import java.util.concurrent.CancellationException;
++import static org.junit.Assert.*;
++
++@RunWith(RobolectricTestRunner.class) @Config(sdk = {35, 36})
++public class SubmissionFinalizerTest {
++    private TransferStore store;
++    @Before public void before() {
++        Context context = RuntimeEnvironment.getApplication();
++        org.robolectric.shadows.ShadowStatFs.registerStats(new File(context.getFilesDir(), "transfers").getAbsolutePath(), 1024 * 1024, 512 * 1024, 512 * 1024);
++        store = new TransferStore(context);
++    }
++    private JSONObject plan() throws Exception {
++        JSONObject request = new JSONObject().put("schemaVersion", 3).put("app", "LotKeys").put("recordType", "vehicleRequest")
++            .put("id", "VCREATE-vehicle-123-one").put("type", "vehicle-create").put("status", "pending").put("vehicleId", "vehicle-123")
++            .put("userName", "Regular user").put("userEmail", "user@example.test").put("createdAt", "2026-11-18T12:00:00Z")
++            .put("context", new JSONObject().put("rootId", "store-folder-123").put("email", "user@example.test").put("revision", "1"))
++            .put("folders", new JSONObject().put("pendingFolderId", "pending-folder-123").put("moreVehicleFolderId", "workspace-folder-123"))
++            .put("vehicle", new JSONObject().put("id", "vehicle-123").put("price", 12345))
++            .put("media", new JSONObject().put("photos", new JSONArray().put(new JSONObject().put("id", "photo-one").put("assetKey", "photo:photo-one").put("parentFolderId", "photos-folder-123").put("status", "pending")))
++                .put("videos", new JSONArray()).put("documents", new JSONArray()));
++        JSONObject asset = new JSONObject().put("key", "photo:photo-one").put("name", "original.jpg").put("type", "image/jpeg").put("parent", "photos-folder-123").put("size", 2)
++            .put("properties", new JSONObject().put("lotkeysRole", "vehicleContributionAsset").put("lotkeysVehicleId", "vehicle-123").put("lotkeysContributionId", request.getString("id")).put("lotkeysAssetId", "photo-one").put("lotkeysAssetKind", "photo"));
++        return new JSONObject().put("version", 3).put("key", UUID.randomUUID().toString())
++            .put("context", new JSONObject().put("account", "user@example.test").put("store", "store-folder-123").put("record", "vehicle-123").put("revision", "1"))
++            .put("assets", new JSONArray().put(asset))
++            .put("finalizers", new JSONArray().put(new JSONObject().put("type", "vehicle-submission").put("fileId", "request-file-123").put("parentId", "pending-folder-123").put("request", request)));
++    }
++    private JSONObject staged(boolean confirmed) throws Exception {
++        JSONObject prepared = store.prepare(plan()); String id = prepared.getString("id");
++        store.append(id, 0, 0, Base64.encodeToString(new byte[]{1,2}, Base64.NO_WRAP)); store.commit(id);
++        if (confirmed) store.itemState(id, 0, new JSONObject().put("confirmed", 2).put("result", new JSONObject().put("id", "photo-file-123")));
++        return store.get(id);
++    }
++    private static JSONObject request(JSONObject plan) throws Exception { return plan.getJSONArray("finalizers").getJSONObject(0).getJSONObject("request"); }
++    private final class Remote extends DriveUploadClient {
++        int posts, reads, denied; boolean loseReply, conflict; JSONObject file, receipt;
++        Remote() { super(null, "user@example.test", null, () -> {}); }
++        private JSONObject folder(String id, String parent, String role) throws Exception {
++            return new JSONObject().put("id", id).put("mimeType", "application/vnd.google-apps.folder").put("parents", new JSONArray().put(parent))
++                .put("properties", new JSONObject().put("lotkeysRole", role).put("lotkeysVehicleId", "vehicle-123"));
++        }
++        @Override Reply request(String method, String url, String type, byte[] bytes, File source, long offset, long length, String range, String match) throws Exception {
++            Reply reply = new Reply(); reply.status = 200;
++            if (method.equals("POST")) {
++                posts++; assertTrue(url.contains("uploadType=multipart")); assertNull(source); assertNull(match);
++                String[] parts = new String(bytes, StandardCharsets.UTF_8).split("\r\n\r\n");
++                file = new JSONObject(parts[1].substring(0, parts[1].indexOf("\r\n--")));
++                receipt = new JSONObject(parts[2].substring(0, parts[2].indexOf("\r\n--")));
++                if (loseReply) { loseReply = false; throw new java.io.IOException("accepted, response lost"); }
++                reply.status = conflict ? 409 : 201; reply.text = "{\"id\":\"request-file-123\"}"; return reply;
++            }
++            assertEquals("GET", method); reads++;
++            if (denied != 0) { reply.status = denied; return reply; }
++            if (url.contains("pending-folder-123?")) reply.text = folder("pending-folder-123", "requests-folder-123", "moreRequestsPending").toString();
++            else if (url.contains("requests-folder-123?")) reply.text = folder("requests-folder-123", "workspace-folder-123", "moreRequests").toString();
++            else if (url.contains("workspace-folder-123?")) reply.text = folder("workspace-folder-123", "user-more-123", "moreVehicle").toString();
++            else if (file == null) reply.status = 404;
++            else reply.text = (url.contains("alt=media") ? receipt : file).toString();
++            return reply;
++        }
++    }
++    @Test public void noRequestIsWrittenUntilEveryOriginalIsConfirmed() throws Exception {
++        JSONObject batch = staged(false); Remote remote = new Remote();
++        assertThrows(IllegalArgumentException.class, () -> new SubmissionFinalizer(remote, () -> {}).finish(store, batch));
++        assertEquals(0, remote.reads); assertEquals(0, remote.posts); assertEquals(2, store.source(batch.getString("id"), 0).length());
++    }
++    @Test public void completeMediaPublishesOnlyThePrivateRequestAndPersistsItsReceipt() throws Exception {
++        JSONObject batch = staged(true); Remote remote = new Remote();
++        new TransferFinalizer(remote, () -> {}).finish(store, batch);
++        assertEquals(1, remote.posts); assertEquals("pending-folder-123", remote.file.getJSONArray("parents").getString(0));
++        assertEquals("vehicleRequest", remote.file.getJSONObject("properties").getString("lotkeysRole"));
++        assertEquals("photo-file-123", remote.receipt.getJSONObject("media").getJSONArray("photos").getJSONObject(0).getString("driveFileId"));
++        assertFalse(remote.receipt.getJSONObject("media").getJSONArray("photos").getJSONObject(0).has("assetKey"));
++        assertTrue(request(batch).getJSONObject("media").getJSONArray("photos").getJSONObject(0).has("assetKey"));
++        TransferStore recovered = new TransferStore(RuntimeEnvironment.getApplication());
++        assertEquals("request-file-123", recovered.get(batch.getString("id")).getJSONObject("finalizerResults").getJSONObject("submission").getString("id"));
++        assertEquals(2, recovered.source(batch.getString("id"), 0).length());
++        assertThrows(IllegalArgumentException.class, () -> recovered.releaseOriginals(batch.getString("id")));
++    }
++    @Test public void lostCreateReplyAndProcessorApprovalNeverCreateOrRewriteAnotherRequest() throws Exception {
++        JSONObject batch = staged(true); Remote remote = new Remote(); remote.loseReply = true;
++        assertThrows(java.io.IOException.class, () -> new SubmissionFinalizer(remote, () -> {}).finish(store, batch));
++        remote.receipt.put("status", "approved").put("processorNote", "already published"); remote.file.put("trashed", true);
++        new SubmissionFinalizer(remote, () -> {}).finish(new TransferStore(RuntimeEnvironment.getApplication()), batch);
++        assertEquals(1, remote.posts); assertEquals("already published", remote.receipt.getString("processorNote"));
++        assertEquals("approved", store.get(batch.getString("id")).getJSONObject("finalizerResults").getJSONObject("submission").getString("status"));
++    }
++    @Test public void rejectedProcessorReceiptIsKeptWithoutReplayingItAsPending() throws Exception {
++        JSONObject batch = staged(true); Remote remote = new Remote(); remote.loseReply = true;
++        assertThrows(java.io.IOException.class, () -> new SubmissionFinalizer(remote, () -> {}).finish(store, batch));
++        remote.receipt.put("status", "rejected").put("processorError", "requires review");
++        new SubmissionFinalizer(remote, () -> {}).finish(store, batch);
++        assertEquals(1, remote.posts); assertEquals("rejected", store.get(batch.getString("id")).getJSONObject("finalizerResults").getJSONObject("submission").getString("status"));
++    }
++    @Test public void conflictChecksTheSameReservedFileInsteadOfUsingAnUpdate() throws Exception {
++        JSONObject batch = staged(true); Remote remote = new Remote(); remote.conflict = true;
++        new SubmissionFinalizer(remote, () -> {}).finish(store, batch); assertEquals(1, remote.posts);
++    }
++    @Test public void aForeignReservedFileIsNeverReplaced() throws Exception {
++        JSONObject batch = staged(true); Remote remote = new Remote(); remote.loseReply = true;
++        assertThrows(java.io.IOException.class, () -> new SubmissionFinalizer(remote, () -> {}).finish(store, batch));
++        remote.file.put("parents", new JSONArray().put("another-folder-123"));
++        assertThrows(TransferFinalizer.Reconcile.class, () -> new SubmissionFinalizer(remote, () -> {}).finish(store, batch)); assertEquals(1, remote.posts);
++    }
++    @Test public void changedReceiptIdentityStopsWithoutDiscardingOriginals() throws Exception {
++        JSONObject batch = staged(true); Remote remote = new Remote(); remote.loseReply = true;
++        assertThrows(java.io.IOException.class, () -> new SubmissionFinalizer(remote, () -> {}).finish(store, batch));
++        remote.receipt.put("userEmail", "other@example.test");
++        assertThrows(IllegalArgumentException.class, () -> new SubmissionFinalizer(remote, () -> {}).finish(store, batch));
++        assertEquals(1, remote.posts); assertEquals(2, store.source(batch.getString("id"), 0).length());
++    }
++    @Test public void permissionDenialAndContextCancellationCannotPublish() throws Exception {
++        JSONObject batch = staged(true); Remote remote = new Remote(); remote.denied = 403;
++        assertThrows(DriveUploadClient.RemoteError.class, () -> new SubmissionFinalizer(remote, () -> {}).finish(store, batch)); assertEquals(0, remote.posts);
++        assertThrows(CancellationException.class, () -> new SubmissionFinalizer(remote, () -> { throw new CancellationException(); }).finish(store, batch)); assertEquals(0, remote.posts);
++    }
++    @Test public void crossAccountStoreAndRevisionPlansAreRejectedBeforeStaging() throws Exception {
++        for (String field : new String[]{"account", "store", "revision"}) {
++            JSONObject plan = plan(); plan.getJSONObject("context").put(field, "different");
++            assertThrows(IllegalArgumentException.class, () -> store.prepare(plan));
++        }
++    }
++    @Test public void legacyProtocolsAndMixedInventoryOperationsCannotSubmitRequests() throws Exception {
++        for (int version : new int[]{1,2}) { JSONObject plan = plan(); plan.put("version", version); assertThrows(IllegalArgumentException.class, () -> store.prepare(plan)); }
++        JSONObject plan = plan(); plan.getJSONArray("finalizers").put(new JSONObject().put("type", "vehicle-cover"));
++        assertThrows(IllegalArgumentException.class, () -> store.prepare(plan));
++    }
++    @Test public void anUnreferencedOriginalOrChangedMediaDestinationCannotBeCommitted() throws Exception {
++        JSONObject plan = plan(); request(plan).getJSONObject("media").put("photos", new JSONArray());
++        assertThrows(IllegalArgumentException.class, () -> store.prepare(plan));
++        JSONObject changed = plan(); request(changed).getJSONObject("media").getJSONArray("photos").getJSONObject(0).put("parentFolderId", "another-folder-123");
++        assertThrows(IllegalArgumentException.class, () -> store.prepare(changed));
++    }
++}
+diff --git a/tests/release-contract.test.js b/tests/release-contract.test.js
+index 0ee73d3..752a5d6 100644
+--- a/tests/release-contract.test.js
++++ b/tests/release-contract.test.js
+@@ -15,16 +15,16 @@ test('release metadata is consistently V0.9.5.50 partial TEST reliability previe
+   assert.equal(version.channel, 'test');
+   assert.equal(version.release, 'reliability-preview');
+   assert.equal(version.releaseScope, 'partial-reliability-test-preview');
+-  assert.equal(version.deploymentStatus, 'test-preview');
++  assert.equal(version.deploymentStatus, 'source-checkpoint-not-deployed');
+   assert.equal(version.regularUserNativeHandoff, false);
+   assert.equal(version.androidConnectorVersion, '0.9.5.46');
+   assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095050-reliability-preview');
+   assert.match(read('index.html'), /V0\.9\.5\.50/);
+   assert.match(read('manifest.webmanifest'), /build=095050/);
+   assert.match(read('sw.js'), /lotkeys-app-v095050-reliability-preview/);
+-  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.46/);
+-  assert.match(read('android/app/build.gradle'), /versionCode 95046/);
+-  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.46 TEST/);
++  assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.51-SOURCE-PREVIEW-DO-NOT-INSTALL/);
++  assert.match(read('android/app/build.gradle'), /versionCode 95051/);
++  assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.51 TEST PREVIEW/);
+ });
+ 
+ test('paired phone UI shows the trusted PC and can forget it', () => {
+diff --git a/version.json b/version.json
+index 3cd298c..6556fc1 100644
+--- a/version.json
++++ b/version.json
+@@ -16,11 +16,12 @@
+   "lotkeysDriveAuthorizationVerified": false,
+   "lotkeysDriveRenewalVerified": false,
+   "physicalPhoneVerified": false,
+-  "deploymentStatus": "test-preview",
++  "deploymentStatus": "source-checkpoint-not-deployed",
+   "regularUserNativeHandoff": false,
+   "knownLimitations": [
+     "Regular-user submissions remain browser-dependent; preparation screen wake is best effort.",
+     "Paired-PC higher-authority report needs its exact error for diagnosis; only definite relay 401 renewal is addressed.",
+     "Automatic Compare remains blocked by approved source access, report rights and private backend."
+-  ]
++  ],
++  "androidSourceCandidateVersion": "0.9.5.51"
+ }
+-- 
+2.52.0
+
+
+From d09fcab37ecda2a1e4fb1d936abdb938ad3749ec Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Wed, 18 Nov 2026 12:37:57 -0700
+Subject: [PATCH 2/3] Bound native checkpoint validation to one PR run
+
+---
+ .github/workflows/build-lotkeys-android.yml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/.github/workflows/build-lotkeys-android.yml b/.github/workflows/build-lotkeys-android.yml
+index 3509b02..7274f3e 100644
+--- a/.github/workflows/build-lotkeys-android.yml
++++ b/.github/workflows/build-lotkeys-android.yml
+@@ -7,6 +7,7 @@ on:
+       - '.github/workflows/build-lotkeys-android.yml'
+       - 'android/**'
+   push:
++    branches: [main]
+     paths:
+       - '.github/workflows/build-lotkeys-android.yml'
+       - 'android/**'
+-- 
+2.52.0
+
+
+From c8da958a792c0c6851c57cd284438400e0c4077c Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Wed, 18 Nov 2026 13:28:09 -0700
+Subject: [PATCH 3/3] Wire guarded regular-user native handoff and preserve
+ delayed Inventory edits
+
+---
+ .github/workflows/validate-web.yml            |   7 +-
+ CURRENT-STATE.md                              |  54 ++++----
+ NATIVE-SUBMISSION-CHECKPOINT.md               |   7 +
+ RELEASE-0.9.5.51-SOURCE-CHECKPOINT.md         |  52 ++++++++
+ .../lotkeys/connector/BrowserExperience.java  |   2 +-
+ .../connector/SubmissionFinalizer.java        |   7 +-
+ .../connector/BrowserExperienceTest.java      |   2 +-
+ .../connector/SubmissionFinalizerTest.java    |   8 +-
+ index.html                                    | 126 +++++++++++++-----
+ lotkeys-native-transfers.js                   |  12 +-
+ lotkeys-owner-transfers.js                    |  93 +++++++++++++
+ lotkeys-reliability.js                        |   5 +-
+ manifest.webmanifest                          |   2 +-
+ processor/Code.gs                             |  23 +++-
+ sw.js                                         |   3 +-
+ tests/account-controls-dom.mjs                |   2 +-
+ tests/owner-native-adapter.test.js            |  15 +++
+ tests/owner-native-transfers.test.js          |  33 +++++
+ tests/processor-native-submission.test.js     |  16 +++
+ tests/release-contract.test.js                |  24 ++--
+ tools/package-review.py                       |   6 +-
+ version.json                                  |  25 ++--
+ 22 files changed, 418 insertions(+), 106 deletions(-)
+ create mode 100644 RELEASE-0.9.5.51-SOURCE-CHECKPOINT.md
+ create mode 100644 lotkeys-owner-transfers.js
+ create mode 100644 tests/owner-native-adapter.test.js
+ create mode 100644 tests/owner-native-transfers.test.js
+ create mode 100644 tests/processor-native-submission.test.js
+
+diff --git a/.github/workflows/validate-web.yml b/.github/workflows/validate-web.yml
+index 0ef80cc..cb6f423 100644
+--- a/.github/workflows/validate-web.yml
++++ b/.github/workflows/validate-web.yml
+@@ -31,6 +31,7 @@ jobs:
+           node --check lotkeys-website-identity.js
+           node --check lotkeys-transfer-core.js
+           node --check lotkeys-native-transfers.js
++          node --check lotkeys-owner-transfers.js
+           node --check lotkeys-deferred-save.js
+           node --check lotkeys-doorbell-core.js
+           node --check wake-sender/Code.js
+@@ -55,11 +56,11 @@ jobs:
+           PY
+ 
+       - name: Package unreleased source review
+-        run: python3 tools/package-review.py "$RUNNER_TEMP/LotKeys-0.9.5.50-REVIEW-ONLY-source.zip"
++        run: python3 tools/package-review.py "$RUNNER_TEMP/LotKeys-0.9.5.51-REVIEW-ONLY-source.zip"
+       - uses: actions/upload-artifact@v4
+         with:
+-          name: LotKeys-0.9.5.50-REVIEW-ONLY-source
+-          path: ${{ runner.temp }}/LotKeys-0.9.5.50-REVIEW-ONLY-source.zip
++          name: LotKeys-0.9.5.51-REVIEW-ONLY-source
++          path: ${{ runner.temp }}/LotKeys-0.9.5.51-REVIEW-ONLY-source.zip
+           if-no-files-found: error
+ 
+   compare-browser:
+diff --git a/CURRENT-STATE.md b/CURRENT-STATE.md
+index c4bd55f..da23a54 100644
+--- a/CURRENT-STATE.md
++++ b/CURRENT-STATE.md
+@@ -1,26 +1,34 @@
+-# Native submission checkpoint — not deployed
+-
+-The live TEST website is the partial .50 preview at39e89f0, verified after Pages
+-44380311201. Production .81 and the installed original-key .46 APK are preserved.
+-This isolated continuation adds only the missing native request finalizer, source
+-candidate .51. It is not a complete regular-user background-posting release.
+-
+-- Protocol3 validates one frozen vehicle-create/owner-update request against its
+-  account, Store, Vehicle edit, workspace and every planned original.
+-- Native uploads finish first. The finisher resolves confirmed media IDs and
+-  atomically creates one request using its pre-reserved Drive ID. It never writes
+-  official Inventory, changes sharing or overwrites a processor receipt.
+-- Lost replies reuse the same file; pending/approved/rejected receipts reconcile
+-  without replaying pending work. Originals remain retained on uncertain/error
+-  paths. Existing protocol1/2 and Android job scheduling remain intact.
+-- Browser plan preparation, UI receipt reconciliation and early local original
+-  handoff remain unimplemented. No current .50 client uses protocol3. Real phone
+-  app-switch/lock, native Google access and processor integration are unverified.
+-- Candidate native .51 outputs are explicitly SOURCE PREVIEW / DO NOT INSTALL;
+-  no matching-key installer is delivered by this checkpoint. Public download
+-  remains .46. Do not deploy this source or claim background posting is fixed.
+-- Paired-PC sending is a separate reported regression being investigated in this
+-  same workstream. No speculative permission or send retry changes are included.
++# .51 guarded background submission source — activation blocked
++
++Live TEST remains .50 at 39e89f0306e9fd10da4f06771dc62ac78566af85.
++Production .81, original signed .46 download, .49/.48 rollback and data remain
++unchanged. Existing draft PR25 owns this bounded continuation. Do not deploy
++this source or call regular-user background posting phone-verified.
++
++- Browser now freezes the exact account/Store/edit, selected media and pending
++  request ID before staging. The durable receipt precedes bytes; confirmed local
++  retention precedes readiness. Lost replies resume the same plan. A browser
++  return verifies the native finalizer receipt before reporting submission.
++- Native protocol3 finishes media then atomically submits the private More
++  request. It never writes official Inventory or overwrites terminal receipts.
++  Old native protocol1/2 and old-APK browser fallback remain supported.
++- Processor .79 source rejects delayed creates colliding with existing records
++  and owner snapshots whose base Inventory revision changed. Distinct request
++  types fail closed on .78; the browser requires Store-advertised protocol3.
++- Existing Store processor must receive and verify this patch before activation.
++  No callable authorized Apps Script editor/update tool is currently available;
++  no live script, trigger, binding, permission or Store report was changed.
++- The Account section retains two controls with checked amber/green states;
++  rejected native submissions remain amber. Native UI can request user-initiated
++  execution of retained files. Ordinary Android scheduling may be deferred.
++- Preparation remains visible until every original is retained. Full behavior
++  across app switching/lock needs matching signed .51, live processor and phone
++  validation. Original signing recovery was independently unlocked and its
++  certificate matched .46; no replacement credentials were created.
++- PC-send awaits the reported screenshot/error and Device SMS vs LotKeys chat
++  identification. No speculative repair; Compare stays outside this milestone.
++
++See RELEASE-0.9.5.51-SOURCE-CHECKPOINT.md for checks, exact limits and continuation.
+ 
+ # LotKeys .50 — partial reliability TEST preview
+ 
+diff --git a/NATIVE-SUBMISSION-CHECKPOINT.md b/NATIVE-SUBMISSION-CHECKPOINT.md
+index 8c0cc48..8449ce8 100644
+--- a/NATIVE-SUBMISSION-CHECKPOINT.md
++++ b/NATIVE-SUBMISSION-CHECKPOINT.md
+@@ -1,3 +1,10 @@
++# Continuation supersedes the prerequisite limits below
++
++The .51 source now includes the browser plan/receipt adapter and a guarded .79
++processor patch. See CURRENT-STATE.md and RELEASE-0.9.5.51-SOURCE-CHECKPOINT.md.
++The historical native-only description below records the previous checkpoint.
++Live activation, matching installer delivery and phone validation remain pending.
++
+ # Bounded native request finalizer checkpoint
+ 
+ Based on the reviewed .50 source a29d923 and its TEST-only publication39e89f0.
+diff --git a/RELEASE-0.9.5.51-SOURCE-CHECKPOINT.md b/RELEASE-0.9.5.51-SOURCE-CHECKPOINT.md
+new file mode 100644
+index 0000000..e0e5cc1
+--- /dev/null
++++ b/RELEASE-0.9.5.51-SOURCE-CHECKPOINT.md
+@@ -0,0 +1,52 @@
++# .51 guarded regular-user native submission checkpoint
++
++This is source for the existing PR25, not a deployed installer or proof of a
++working locked phone. TEST .50 at 39e89f0 and production .81 are preserved.
++
++The browser freezes selected originals and a request snapshot, reserves one
++Drive ID, saves its plan, then stages originals locally to Android in 1 MiB
++chunks. Android confirms retention before readiness. Native execution uploads
++and verifies originals, creates one private More request atomically, and saves
++the finalizer receipt. Browser resume verifies that exact receipt. Pending means
++awaiting Inventory publication, not already published. Rejected requests retain
++saved originals and show an error. Cross-account, Store, revision and competing
++tab writes are refused. This path does not change media sharing.
++
++Processor .79 adds an optimistic base-revision check before the existing creator
++and Inventory write path. Distinct native request types fail closed on older
++processors. The browser requires Store Access protocol3 bound to the same Store.
++The original .78 processor, manifest, Store root and triggers must be preserved
++as rollback before applying the patch to the existing TEST script project. Do
++not reinstall or create duplicate triggers, alter roles/sharing, or run against
++production. The source patch has not been applied to a live script: an authorized
++Apps Script editor/update capability is absent in the current tool set.
++
++Existing installed .46 continues the foreground path. Original recovery key and
++certificate match .46 (SHA256 77bbfafca861ef0638cedbbeae0847d99d4c3416f6b50a888b01cab07b1f2635).
++Only a final reviewed .51 build may be signed with that existing key, and package,
++version and certificate must be verified before providing any installer. No new
++credentials, browser data clearing or uninstall are required.
++
++Node tests cover frozen plan binding, all selected originals, lost prepare/chunk/
++commit replies, retained-file resume without Blobs, stale account/edit rejection,
++competing tabs, terminal request receipts, old APK/processor fallback and .79
++stale Inventory rejection. These are automated fixtures; live Google, browser
++renewal, native-to-processor integration, app-switch/lock and OEM power behavior
++remain unverified. Existing native prerequisite CI (44383405333) passed 80 tests;
++this checkpoint changes guards and needs its own CI before packaging.
++
++Keep the screen visible during local preparation. After retained confirmation,
++Android owns the files; ordinary jobs may be deferred. Account > Background
++uploads opens the existing native Continue control, which can request a
++user-initiated job while native UI is visible. This does not promise continuous
++execution through force-stop, revoked access or Android/OEM suspension.
++
++PC-send remains awaiting screenshot and Device SMS versus LotKeys chat context;
++no guessed repair is included. Automatic Compare remains pending and unchanged.
++Stop at this bounded checkpoint or a verified test release; no next feature cycle.
++
++Local validation at this checkpoint: 561 Node tests and 33 DOM tests pass;
++21 standalone plus eight inline script syntax checks and git diff checks pass.
++The local Chromium run could not launch because its expected Playwright browser
++executable is absent. No responsive-browser success is claimed for this revision
++until CI verifies it. Native CI for the updated guards is pending separately.
+diff --git a/android/app/src/main/java/ca/lotkeys/connector/BrowserExperience.java b/android/app/src/main/java/ca/lotkeys/connector/BrowserExperience.java
+index 1a787eb..631ef6e 100644
+--- a/android/app/src/main/java/ca/lotkeys/connector/BrowserExperience.java
++++ b/android/app/src/main/java/ca/lotkeys/connector/BrowserExperience.java
+@@ -19,7 +19,7 @@ import androidx.browser.customtabs.CustomTabsIntent;
+ 
+ /** Uses the existing HTTPS origin and browser storage; never creates a WebView data silo. */
+ final class BrowserExperience {
+-    static final String WEB_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095046";
++    static final String WEB_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095051";
+     static final String SHOW_SETUP = "showPhoneSetup";
+     private static final String PROVIDER = "experienceBrowserPackage";
+ 
+diff --git a/android/app/src/main/java/ca/lotkeys/connector/SubmissionFinalizer.java b/android/app/src/main/java/ca/lotkeys/connector/SubmissionFinalizer.java
+index 7b3afec..5995750 100644
+--- a/android/app/src/main/java/ca/lotkeys/connector/SubmissionFinalizer.java
++++ b/android/app/src/main/java/ca/lotkeys/connector/SubmissionFinalizer.java
+@@ -32,7 +32,10 @@ final class SubmissionFinalizer {
+         TransferStore.require("pending".equals(request.optString("status")) && request.optInt("schemaVersion") == 3 && "vehicleRequest".equals(request.optString("recordType")), "Only a pending Vehicle request can be submitted.");
+         TransferStore.require("LotKeys".equals(request.optString("app")) && !request.optString("userName").isEmpty() && !request.optString("createdAt").isEmpty(), "The submission identity is incomplete.");
+         String type = request.optString("type");
+-        TransferStore.require("vehicle-create".equals(type) || "vehicle-owner-update".equals(type), "Unsupported Vehicle submission type.");
++        TransferStore.require("vehicle-native-create".equals(type) || "vehicle-native-owner-update".equals(type), "This submission requires the guarded Store processor.");
++        JSONObject guard = request.getJSONObject("nativeSubmissionGuard"); Object base = guard.opt("baseRevision");
++        TransferStore.require(guard.optInt("version") == 1 && guard.has("baseRevision"), "The Inventory revision guard is missing.");
++        TransferStore.require("vehicle-native-create".equals(type) ? base == JSONObject.NULL : base instanceof Number && ((Number)base).longValue() > 0 && ((Number)base).doubleValue() == ((Number)base).longValue() && ((Number)base).longValue() <= 9007199254740991L, "Invalid base Inventory revision.");
+         JSONObject folders = request.getJSONObject("folders");
+         TransferStore.require(op.getString("parentId").equals(folders.optString("pendingFolderId")), "The pending request destination changed.");
+         TransferStore.fileId(folders.getString("moreVehicleFolderId"));
+@@ -109,7 +112,7 @@ final class SubmissionFinalizer {
+         identity(receipt, batch.getJSONObject("context"));
+         String status = receipt.optString("status");
+         if (!request.getString("id").equals(receipt.optString("id")) || !("pending".equals(status) || "approved".equals(status) || "rejected".equals(status) || "dismissed".equals(status) || "withdrawn".equals(status)) || (existing.optBoolean("trashed") && "pending".equals(status))) throw new TransferFinalizer.Reconcile("The saved submission needs review. Its originals are retained.");
+-        check.run(); store.submissionResult(batch.getString("id"), new JSONObject().put("id", id).put("requestId", request.getString("id")).put("status", status));
++        check.run(); store.submissionResult(batch.getString("id"), new JSONObject().put("id", id).put("requestId", request.getString("id")).put("status", status).put("message", receipt.optString("processorError", receipt.optString("processorNote"))));
+     }
+ 
+     private void verifyWorkspace(String parent, String vehicleFolder, String record) throws Exception {
+diff --git a/android/app/src/test/java/ca/lotkeys/connector/BrowserExperienceTest.java b/android/app/src/test/java/ca/lotkeys/connector/BrowserExperienceTest.java
+index 137cc9f..55ce533 100644
+--- a/android/app/src/test/java/ca/lotkeys/connector/BrowserExperienceTest.java
++++ b/android/app/src/test/java/ca/lotkeys/connector/BrowserExperienceTest.java
+@@ -38,7 +38,7 @@ public class BrowserExperienceTest {
+         Uri uri = BrowserExperience.appUri("retained-token");
+         assertEquals("mrmilo34.github.io", uri.getHost());
+         assertEquals("/Lot-Keys-TEST/", uri.getPath());
+-        assertEquals("095046", uri.getQueryParameter("build"));
++        assertEquals("095051", uri.getQueryParameter("build"));
+         assertNull(uri.getQueryParameter("lotkeys-phone"));
+         assertEquals("lotkeys-phone=retained-token", uri.getFragment());
+         assertNull(BrowserExperience.appUri("").getFragment());
+diff --git a/android/app/src/test/java/ca/lotkeys/connector/SubmissionFinalizerTest.java b/android/app/src/test/java/ca/lotkeys/connector/SubmissionFinalizerTest.java
+index 83c80a3..7a09f46 100644
+--- a/android/app/src/test/java/ca/lotkeys/connector/SubmissionFinalizerTest.java
++++ b/android/app/src/test/java/ca/lotkeys/connector/SubmissionFinalizerTest.java
+@@ -26,7 +26,7 @@ public class SubmissionFinalizerTest {
+     }
+     private JSONObject plan() throws Exception {
+         JSONObject request = new JSONObject().put("schemaVersion", 3).put("app", "LotKeys").put("recordType", "vehicleRequest")
+-            .put("id", "VCREATE-vehicle-123-one").put("type", "vehicle-create").put("status", "pending").put("vehicleId", "vehicle-123")
++            .put("id", "VCREATE-vehicle-123-one").put("type", "vehicle-native-create").put("nativeSubmissionGuard", new JSONObject().put("version", 1).put("baseRevision", JSONObject.NULL)).put("status", "pending").put("vehicleId", "vehicle-123")
+             .put("userName", "Regular user").put("userEmail", "user@example.test").put("createdAt", "2026-11-18T12:00:00Z")
+             .put("context", new JSONObject().put("rootId", "store-folder-123").put("email", "user@example.test").put("revision", "1"))
+             .put("folders", new JSONObject().put("pendingFolderId", "pending-folder-123").put("moreVehicleFolderId", "workspace-folder-123"))
+@@ -135,6 +135,12 @@ public class SubmissionFinalizerTest {
+             assertThrows(IllegalArgumentException.class, () -> store.prepare(plan));
+         }
+     }
++    @Test public void legacyRequestTypesAndMissingRevisionGuardsCannotUseTheNewPrimitive() throws Exception {
++        JSONObject legacy = plan(); request(legacy).put("type", "vehicle-create");
++        assertThrows(IllegalArgumentException.class, () -> store.prepare(legacy));
++        JSONObject missing = plan(); request(missing).getJSONObject("nativeSubmissionGuard").remove("baseRevision");
++        assertThrows(IllegalArgumentException.class, () -> store.prepare(missing));
++    }
+     @Test public void legacyProtocolsAndMixedInventoryOperationsCannotSubmitRequests() throws Exception {
+         for (int version : new int[]{1,2}) { JSONObject plan = plan(); plan.put("version", version); assertThrows(IllegalArgumentException.class, () -> store.prepare(plan)); }
+         JSONObject plan = plan(); plan.getJSONArray("finalizers").put(new JSONObject().put("type", "vehicle-cover"));
+diff --git a/index.html b/index.html
+index d6c0309..1d4e5d2 100644
+--- a/index.html
++++ b/index.html
+@@ -421,12 +421,12 @@ dialog.sale-celebration-layer .sale-celebration{position:fixed;inset:0;z-index:1
+ #account-upload-connector .account-capability{margin-top:14px;padding-top:10px;border-top:1px solid var(--line)}#account-upload-connector p{overflow-wrap:anywhere;font-size:13px}#account-upload-connector .capability-light{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;background:#d97706}#account-upload-connector .capability-light.green{background:#16a34a}
+ </style>
+   <title>LotKeys</title>
+-  <link rel="stylesheet" href="./lotkeys-compare.css?v=095050">
+-  <script src="./lotkeys-compare.js?v=095050"></script>
+-  <script src="./lotkeys-compare-ui.js?v=095050"></script>
+-  <script src="./lotkeys-store-requests.js?v=095050"></script>
+-  <script src="./lotkeys-personal-preferences.js?v=095050"></script>
+-  <script src="./lotkeys-website-identity.js?v=095050"></script>
++  <link rel="stylesheet" href="./lotkeys-compare.css?v=095051">
++  <script src="./lotkeys-compare.js?v=095051"></script>
++  <script src="./lotkeys-compare-ui.js?v=095051"></script>
++  <script src="./lotkeys-store-requests.js?v=095051"></script>
++  <script src="./lotkeys-personal-preferences.js?v=095051"></script>
++  <script src="./lotkeys-website-identity.js?v=095051"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script src="https://apis.google.com/js/api.js" async defer></script>
+ 
+@@ -533,7 +533,7 @@ body[data-theme="dark"] .sync-status-text.good.phone-paired{color:#60b8ff}
+ </style>
+ <script>
+ (() => {
+-  const build='095050';
++  const build='095051';
+   const secure=location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
+   if(!secure||!('serviceWorker' in navigator))return;
+   const buildNumber=value=>Number(String(value||'').replace(/[^0-9]/g,''))||0;
+@@ -578,7 +578,7 @@ body[data-theme="dark"] .sync-status-text.good.phone-paired{color:#60b8ff}
+       </div>
+     </header>
+ 
+-    <div id="local-test-note" class="protocol-warning"><strong>LotKeys Drive Test · V0.9.5.50 · Reliability Preview</strong> — Starting…<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button></div>
++    <div id="local-test-note" class="protocol-warning"><strong>LotKeys Drive Test · V0.9.5.51 · Background Preview</strong> — Starting…<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button></div>
+     <main id="main"><div class="lotkeys-boot-placeholder" aria-live="polite"><div class="lotkeys-boot-brand"><img src="./assets/lotkeys-default-logo.png" alt="" aria-hidden="true"><div><strong>Loading LotKeys…</strong><span>Restoring your Store and saved data</span></div></div><div class="lotkeys-boot-search"></div><div class="lotkeys-boot-stats"><i></i><i></i></div><div class="lotkeys-boot-lines"><i></i><i></i><i></i></div></div></main>
+ 
+     <nav class="bottom-nav" aria-label="Primary">
+@@ -1226,7 +1226,7 @@ const DriveSync = (() => {
+   function writeLightweightRows(key,rows){try{localStorage.setItem(key,JSON.stringify(rows||{}))}catch{}}
+   function saveVehicleSyncState(v,checkpoint={}){
+     if(!v?.id)return;const rows=readLightweightRows(VEHICLE_SYNC_STATE_STORAGE),source=v.drive||{},drive={};
+-    for(const key of ['profileFolderId','adminSheetId','adminSheetUrl','sharedFolderId','photosFolderId','videosFolderId','documentsFolderId','directoryPdfId','directoryPdfUrl','lastSheetFingerprint','lastSheetUpdatedAt','nativeTransfer','lastDirectoryFingerprint','lastPhotoAssetFingerprint','lastDocumentAssetFingerprint','lastVideoAssetFingerprint','lastAssetFingerprint','publicShareReady','nativeFinalizationPending','foundationStartedAt','foundationReadyAt'])if(source[key]!==undefined)drive[key]=source[key];
++    for(const key of ['profileFolderId','adminSheetId','adminSheetUrl','sharedFolderId','photosFolderId','videosFolderId','documentsFolderId','directoryPdfId','directoryPdfUrl','lastSheetFingerprint','lastSheetUpdatedAt','nativeTransfer','lastNativeSubmission','previousNativeSubmission','lastDirectoryFingerprint','lastPhotoAssetFingerprint','lastDocumentAssetFingerprint','lastVideoAssetFingerprint','lastAssetFingerprint','publicShareReady','nativeFinalizationPending','foundationStartedAt','foundationReadyAt'])if(source[key]!==undefined)drive[key]=source[key];
+     rows[String(v.id)]={drive,sharedFolderUrl:v.sharedFolderUrl||'',checkpoint:{...(source.syncCheckpoint||{}),...(checkpoint||{})},updatedAt:Date.now()};writeLightweightRows(VEHICLE_SYNC_STATE_STORAGE,rows);
+   }
+   function restoreVehicleSyncState(v){
+@@ -1550,7 +1550,7 @@ const DriveSync = (() => {
+       const data=JSON.parse(await(await fetchFileBlob(f.id)).text());
+       await checkStoreBrandingContext(brandingContext);
+       if(data.storeFolderId&&String(data.storeFolderId)!==s.rootId)throw new Error('Store Access.json belongs to another Store.');
+-      await setSetting('storeProcessorVersion',String(data?.processor?.version||''));await setSetting('storeProcessorInstalled',data?.processor?.installed===true);
++      await setSetting('storeProcessorVersion',String(data?.processor?.version||''));await setSetting('storeProcessorInstalled',data?.processor?.installed===true);await setSetting('storeProcessorNativeSubmissionProtocol',data?.processor?.installed===true?Number(data?.processor?.nativeSubmissionProtocol)||0:0);await setSetting('storeProcessorSubmissionStoreId',s.rootId);
+       if(data.storeName!=null)await setSetting('storeName',String(data.storeName||''));if(data.storeCode!=null)await setSetting('storeCode',String(data.storeCode||''));
+       const directory=data.directory||{},controls=data.controls||{},branding=data.branding||{};if(directory.address!=null)await setSetting('directoryStoreAddress',String(directory.address||''));if(directory.directionsUrl!=null)await setSetting('directoryDirectionsUrl',String(directory.directionsUrl||''));if(controls.publicShareEnabled!=null)await setSetting('publicShareEnabled',!!controls.publicShareEnabled);if(controls.originalListingMandatory!=null)await setSetting('originalListingMandatory',!!controls.originalListingMandatory);if(controls.postBuddyReleaseUrl!=null)await setSetting('postBuddyReleaseUrl',String(controls.postBuddyReleaseUrl||''));if(controls.postBuddyWebsiteUrl!=null)await setSetting('postBuddyWebsiteUrl',String(controls.postBuddyWebsiteUrl||''));if(Array.isArray(data.postingLocations))await setSetting('storePostingLocations',data.postingLocations);await refreshStoreLogoCache(s,branding).catch(error=>console.warn('Store branding refresh deferred',error));await checkStoreBrandingContext(brandingContext);
+       if(controls.platformInfoDriveFileId!=null)await setSetting('lotkeysPlatformInfoDriveFileId',String(controls.platformInfoDriveFileId||''));if(controls.platformInfoDriveFileUrl!=null)await setSetting('lotkeysPlatformInfoDriveFileUrl',String(controls.platformInfoDriveFileUrl||''));if(controls.platformInfoUpdatedAt!=null)await setSetting('lotkeysPlatformInfoUpdatedAt',String(controls.platformInfoUpdatedAt||''));
+@@ -2223,14 +2223,14 @@ async function ensureVehicleContributionRoot(v,kind){
+   const spec=MORE_MEDIA_SPECS[kind];if(!spec)throw new Error('Unknown contribution media type.');let w=await ensureVehicleMoreWorkspace(v,{mediaKinds:[kind]}),folder=w[spec.idKey]?await driveGet(w[spec.idKey],'id,name,mimeType,webViewLink,appProperties,properties').catch(()=>null):null;if(!folder){w=await ensureVehicleMoreWorkspace(v,{force:true,mediaKinds:[kind]});folder=w[spec.idKey]?await driveGet(w[spec.idKey],'id,name,mimeType,webViewLink,appProperties,properties'):null}return folder;
+ }
+ async function ensureVehicleContributionUserFolder(v,kind){return ensureVehicleContributionRoot(v,kind)}
+-async function ensureVehicleMoreWorkspace(v,{force=false,mediaKinds=[],requireRequests=false}={}){
++async function ensureVehicleMoreWorkspace(v,{force=false,mediaKinds=[],requireRequests=false,shareMedia=true}={}){
+   if(!v?.id)throw new Error('Vehicle Profile ID is missing.');mediaKinds=requestedMoreMediaKinds(mediaKinds);const s=await moreWorkspaceStructure(),cached=cachedMoreWorkspaceForUser(v.moreWorkspace,s);if(!force&&completeMoreWorkspace(cached,mediaKinds,requireRequests))return cached;const name=String(v.name||buildVehicleProfileName(v)||v.id);
+   let vehicle=cached.vehicleFolderId?await driveGet(cached.vehicleFolderId,'id,name,mimeType,webViewLink,appProperties,properties').catch(()=>null):null;if(!vehicle)vehicle=await findChildByAppProperty(s.moreId,'lotkeysMoreVehicleId',v.id,FOLDER_MIME).catch(()=>null);if(!vehicle)vehicle=await findChildByName(s.moreId,name,FOLDER_MIME).catch(()=>null);if(!vehicle)vehicle=await ensureFolder(s.moreId,name,'lotkeysMoreVehicleId',v.id,{lotkeysRole:'moreVehicle',lotkeysVehicleId:String(v.id)});else if(vehicle.name!==name)vehicle=await patchMetadata(vehicle.id,{name,properties:{lotkeysRole:'moreVehicle',lotkeysVehicleId:String(v.id)}},'id,name,mimeType,webViewLink,appProperties,properties');
+   const next={...cached,moreRootFolderId:String(s.moreId||''),ownerUserName:String(s.userName||''),ownerEmail:String(s.email||'').trim().toLowerCase(),ownerGoogleSub:String(s.googleSub||''),vehicleFolderId:vehicle.id,vehicleFolderUrl:contributionFolderUrl(vehicle.id)};
+   if(mediaKinds.length){
+     let media=next.mediaFolderId?await driveGet(next.mediaFolderId,'id,name,mimeType,webViewLink,appProperties,properties').catch(()=>null):null;if(!media)media=await findChildByAppProperty(vehicle.id,'lotkeysRole','moreClientMedia',FOLDER_MIME).catch(()=>null);if(!media)media=await findChildByName(vehicle.id,'Client Media',FOLDER_MIME).catch(()=>null);if(!media)media=await ensureFolder(vehicle.id,'Client Media','lotkeysRole','moreClientMedia',{lotkeysRole:'moreClientMedia',lotkeysVehicleId:String(v.id)});next.mediaFolderId=media.id;next.mediaFolderUrl=contributionFolderUrl(media.id);
+     for(const kind of mediaKinds){const spec=MORE_MEDIA_SPECS[kind];let folder=next[spec.idKey]?await driveGet(next[spec.idKey],'id,name,mimeType,webViewLink,appProperties,properties').catch(()=>null):null;if(!folder)folder=await findChildByAppProperty(media.id,'lotkeysRole',spec.role,FOLDER_MIME).catch(()=>null);if(!folder)folder=await findChildByName(media.id,spec.name,FOLDER_MIME).catch(()=>null);if(!folder)folder=await ensureFolder(media.id,spec.name,'lotkeysRole',spec.role,{lotkeysRole:spec.role,lotkeysVehicleId:String(v.id)});next[spec.idKey]=folder.id;}
+-    await setAnyoneReader(media.id).catch(error=>console.warn('More media link sharing is unavailable',error));
++    if(shareMedia)await setAnyoneReader(media.id).catch(error=>console.warn('More media link sharing is unavailable',error));
+   }
+   if(requireRequests){let requests=next.requestsFolderId?await driveGet(next.requestsFolderId,'id,name,mimeType,webViewLink,appProperties,properties').catch(()=>null):null;if(!requests)requests=await findChildByAppProperty(vehicle.id,'lotkeysRole','moreRequests',FOLDER_MIME).catch(()=>null);if(!requests)requests=await findChildByName(vehicle.id,'Requests',FOLDER_MIME).catch(()=>null);if(!requests)requests=await ensureFolder(vehicle.id,'Requests','lotkeysRole','moreRequests',{lotkeysRole:'moreRequests',lotkeysVehicleId:String(v.id)});let pending=next.pendingFolderId?await driveGet(next.pendingFolderId,'id,name,mimeType,webViewLink,appProperties,properties').catch(()=>null):null;if(!pending)pending=await findChildByAppProperty(requests.id,'lotkeysRole','moreRequestsPending',FOLDER_MIME).catch(()=>null);if(!pending)pending=await findChildByName(requests.id,'Pending',FOLDER_MIME).catch(()=>null);if(!pending)pending=await ensureFolder(requests.id,'Pending','lotkeysRole','moreRequestsPending',{lotkeysRole:'moreRequestsPending',lotkeysVehicleId:String(v.id)});next.requestsFolderId=requests.id;next.pendingFolderId=pending.id;}
+   // Callers already persist the completed request/vehicle. Keeping this checkpoint small
+@@ -2401,6 +2401,60 @@ async function openExistingMoreMedia(v,{force=false}={}){
+   const children=await listFiles(`'${qEscape(media.id)}' in parents and trashed = false`,'files(id,name,mimeType,webViewLink,appProperties,trashed)'),folders={},directFiles=children.filter(item=>item.mimeType!==FOLDER_MIME);for(const kind of Object.keys(MORE_MEDIA_SPECS)){const spec=MORE_MEDIA_SPECS[kind];folders[kind]=children.find(item=>item.mimeType===FOLDER_MIME&&(item.appProperties?.lotkeysRole===spec.role||item.name===spec.name))||null}
+   const counts=await Promise.all(Object.entries(folders).map(async([kind,folder])=>[kind,folder?(await listFiles(`'${qEscape(folder.id)}' in parents and trashed = false`,'files(id,mimeType,trashed)')).filter(item=>item.mimeType!==FOLDER_MIME).length:0])),fileCount=directFiles.length+counts.reduce((sum,row)=>sum+row[1],0),workspace={...cached,moreRootFolderId:String(s.moreId||''),ownerUserName:String(s.userName||''),ownerEmail:String(s.email||'').trim().toLowerCase(),ownerGoogleSub:String(s.googleSub||''),vehicleFolderId:vehicle.id,vehicleFolderUrl:contributionFolderUrl(vehicle.id),mediaFolderId:media.id,mediaFolderUrl:contributionFolderUrl(media.id),mediaHasContent:fileCount>0,mediaLastCheckedAt:Date.now(),verifiedAt:Date.now()};for(const [kind,folder] of Object.entries(folders))if(folder)workspace[MORE_MEDIA_SPECS[kind].idKey]=folder.id;v.moreWorkspace=workspace;await DB.put('vehicles',v).catch(()=>{});return{available:fileCount>0,id:media.id,url:workspace.mediaFolderUrl,workspace,fileCount};
+ }
++async function nativeOwnedVehicleSubmission(v,request,context,{check,onProgress}){
++  const Owner=typeof window!=='undefined'?window.LotKeysOwnerTransfers:null,Core=typeof window!=='undefined'?window.LotKeysTransferCore:null,phone=typeof window!=='undefined'?window.LotKeysPhone:null;
++  if(!Owner||!Core||!phone?.uploadCall)return null;
++  v.drive=v.drive||{};
++  const scope=Core.context({account:context.email,store:context.rootId,record:v.id,revision:context.revision});
++  const mismatch=()=>Object.assign(new Error('The account, Store or Vehicle edit changed. Its saved originals have been kept.'),{nativeTransfer:true,code:'NATIVE_CONTEXT_MISMATCH'});
++  const save=async(stage,expectedKey)=>{
++    await check();let applied=false;
++    await DB.update('vehicles',v.id,current=>{
++      if(!current||String(current.updatedAt||0)!==scope.revision)return;
++      const existing=current.drive?.nativeTransfer;
++      if(existing&&expectedKey&&existing.plan?.key!==expectedKey)return;
++      applied=true;return v;
++    });
++    if(!applied)throw mismatch();saveVehicleSyncState(v,{stage,percent:stage==='native-owner-queued'?50:stage==='owner-submitted'?100:5});
++  };
++  // The shared IndexedDB receipt wins over a stale in-memory copy in another tab.
++  const current=await DB.get('vehicles',v.id);await check();
++  if(current?.drive?.nativeTransfer)v.drive.nativeTransfer=current.drive.nativeTransfer;
++  const processorReady=(await setting('storeProcessorNativeSubmissionProtocol',0))===3&&String(await setting('storeProcessorSubmissionStoreId',''))===scope.store;
++  const prepare=async()=>{
++    await check();
++    const needed=[['photos','photo'],['videos','video'],['attachments','document']].filter(([field])=>(v[field]||[]).some(item=>!item.driveFileId)).map(row=>row[1]);
++    const w=await ensureVehicleMoreWorkspace(v,{requireRequests:true,mediaKinds:needed,shareMedia:false});await check();
++    const assets=[],media={photos:[],videos:[],documents:[]};
++    for(const [field,kind]of [['photos','photo'],['videos','video'],['attachments','document']]){
++      const key=Owner.plural(kind),parent=w[key+'FolderId'],accepted=new Map((request.media?.[key]||[]).map(item=>[String(item.id),item]));
++      for(const item of v[field]||[]){
++        await check();
++        if(item.driveFileId){const {blob,...row}=item;media[key].push({...row,status:'keep',sourceKind:'official'});continue;}
++        const previous=accepted.get(String(item.id));
++        if(previous?.driveFileId&&previous.contributionId===request.id){
++          let known;try{known=await driveGet(previous.driveFileId,'id,parents,trashed');}catch(error){if(Number(error.status)!==404)throw error;}
++          if(known&&!known.trashed){if(!known.parents?.includes(parent))throw Error('An accepted original moved outside your More workspace. Review it before retrying.');media[key].push({...previous});continue;}
++        }
++        if(!(item.blob instanceof Blob))throw Error('A selected '+kind+' original is not available yet. Load or reselect it before submitting this Vehicle.');
++        const name=String(item.name||kind+'-'+item.id).replace(/[\\/:*?"<>|]+/g,'_').slice(0,140),assetKey=kind+':'+item.id;
++        assets.push({key:assetKey,parent,name,size:item.blob.size,type:item.blob.type||item.type||'application/octet-stream',properties:{lotkeysRole:'vehicleContributionAsset',lotkeysVehicleId:String(v.id),lotkeysContributionId:String(request.id),lotkeysContributionUser:String(request.userName||''),lotkeysAssetId:String(item.id),lotkeysAssetKind:kind}});
++        media[key].push({id:item.id,name,type:item.blob.type||item.type||'',assetKey,parentFolderId:parent,status:'pending',contributedByUserName:request.userName||'',contributionId:request.id});
++      }
++    }
++    await check();const generated=await apiFetch('https://www.googleapis.com/drive/v3/files/generateIds?count=1&space=drive&type=files',{timeoutMs:60000});await check();
++    return Owner.plan({vehicle:v,request,scope,workspace:w,assets,media,fileId:generated.ids?.[0]});
++  };
++  return Owner.run({vehicle:v,request,scope,phone,processorReady,prepare,check,onProgress,
++    persist:async(receipt,stage)=>{v.drive.nativeTransfer=receipt;if(stage==='queued')v.drive.lastHandoffTiming=receipt.handoffTiming;await save('native-owner-'+stage,receipt.plan.key);},
++    retire:async receipt=>{v.drive.previousNativeSubmission={id:receipt.id,context:receipt.context,requestId:receipt.plan?.finalizers?.[0]?.request?.id||'',retainedAt:Date.now()};delete v.drive.nativeTransfer;await save('native-owner-retired',receipt.plan.key);},
++    submitted:async(result,snapshot,receipt)=>{
++      const current=await DB.get('vehicles',v.id);await check();if(current?.drive?.nativeTransfer?.id!==receipt.id)throw mismatch();
++      v.lastWorkspaceRequestId=result.id;v.lastWorkspaceRequestFileId=result.driveRequestFileId;v.ownerSubmissionDraft=null;v.syncStatus=result.processorError?'error':'queued';v.syncError=result.processorError||'';
++      v.drive.lastNativeSubmission={id:receipt.id,context:scope,state:'complete',handoffComplete:true,submissionStatus:result.status,requestId:result.id,fileId:result.driveRequestFileId,completedAt:Date.now()};
++      delete v.drive.nativeTransfer;await save('owner-submitted',receipt.plan.key);clearOwnerRequestDraft(v.id);
++    }});
++}
+ async function queueOwnedVehicleProfile(v,{onProgress=()=>{}}={}){
+   const report=state=>{try{onProgress({kind:'owner-update',folder:'Your More Media',status:'processing',...state})}catch(error){console.warn('Owner submission progress could not be painted',error)}},mapped=(state,start,end)=>{const raw=Math.max(0,Math.min(100,Number(state?.percent)||0));report({...state,status:state?.status==='complete'?'processing':state?.status||'uploading',percent:Math.round(start+((end-start)*raw/100))})};
+   const identity={userName:String(await setting('userName','')),email:String(await setting('currentAccountEmail','')).toLowerCase(),googleSub:String(await setting('currentAccountSub',''))};
+@@ -2428,7 +2482,7 @@ async function queueOwnedVehicleProfile(v,{onProgress=()=>{}}={}){
+     await uploadVehicleContributionItems(v,request,kind,fresh,state=>mapped(state,start,end),save);
+     await save();return request.media[key];
+   };
+-  await checkpoint(draft?.checkpoint||'start');await ensureVehicleMoreWorkspace(v,{requireRequests:true});await prepare(v.attachments,'document',5,25);report({percent:25,message:'Documents saved'});const freshPhotos=(Array.isArray(v.photos)?v.photos:[]).filter(x=>!x?.driveFileId&&x?.blob),freshVideos=(Array.isArray(v.videos)?v.videos:[]).filter(x=>!x?.driveFileId&&x?.blob);if(freshPhotos.length||freshVideos.length)await ensureVehicleMoreWorkspace(v,{mediaKinds:[...(freshPhotos.length?['photo']:[]),...(freshVideos.length?['video']:[])]});const mediaJobs=[];if(Array.isArray(v.photos)&&v.photos.length)mediaJobs.push(prepare(v.photos,'photo',25,92));if(Array.isArray(v.videos)&&v.videos.length)mediaJobs.push(prepare(v.videos,'video',25,92));if(mediaJobs.length){report({percent:25,message:v.photos?.length&&v.videos?.length?'Uploading photos + video together':v.photos?.length?'Uploading photos':'Uploading video'});const results=await Promise.allSettled(mediaJobs);const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;}report({percent:92,message:'Media saved'});request.vehicle=vehicleRequestSnapshot(v);request.status='pending';await checkpoint('request');report({percent:95,message:'Submitting Vehicle Profile'});const saved=await writeVehicleWorkspaceRequest(v,request,{onCheckpoint:async saved=>{Object.assign(request,saved);await checkpoint('request')}});await assertCurrent();v.lastWorkspaceRequestId=saved.id;v.lastWorkspaceRequestFileId=saved.driveRequestFileId;v.ownerSubmissionDraft=null;v.syncStatus='queued';v.syncError='';v.updatedAt=Date.now();await DB.put('vehicles',v);clearOwnerRequestDraft(v.id);report({status:'complete',percent:100,message:'Upload submitted · awaiting shared Inventory publication'});return saved;
++  await checkpoint(draft?.checkpoint||'start');if(typeof nativeOwnedVehicleSubmission==='function'){const native=await nativeOwnedVehicleSubmission(v,request,context,{check:assertCurrent,onProgress:report});if(native)return native;}await ensureVehicleMoreWorkspace(v,{requireRequests:true});await prepare(v.attachments,'document',5,25);report({percent:25,message:'Documents saved'});const freshPhotos=(Array.isArray(v.photos)?v.photos:[]).filter(x=>!x?.driveFileId&&x?.blob),freshVideos=(Array.isArray(v.videos)?v.videos:[]).filter(x=>!x?.driveFileId&&x?.blob);if(freshPhotos.length||freshVideos.length)await ensureVehicleMoreWorkspace(v,{mediaKinds:[...(freshPhotos.length?['photo']:[]),...(freshVideos.length?['video']:[])]});const mediaJobs=[];if(Array.isArray(v.photos)&&v.photos.length)mediaJobs.push(prepare(v.photos,'photo',25,92));if(Array.isArray(v.videos)&&v.videos.length)mediaJobs.push(prepare(v.videos,'video',25,92));if(mediaJobs.length){report({percent:25,message:v.photos?.length&&v.videos?.length?'Uploading photos + video together':v.photos?.length?'Uploading photos':'Uploading video'});const results=await Promise.allSettled(mediaJobs);const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;}report({percent:92,message:'Media saved'});request.vehicle=vehicleRequestSnapshot(v);request.status='pending';await checkpoint('request');report({percent:95,message:'Submitting Vehicle Profile'});const saved=await writeVehicleWorkspaceRequest(v,request,{onCheckpoint:async saved=>{Object.assign(request,saved);await checkpoint('request')}});await assertCurrent();v.lastWorkspaceRequestId=saved.id;v.lastWorkspaceRequestFileId=saved.driveRequestFileId;v.ownerSubmissionDraft=null;v.syncStatus='queued';v.syncError='';v.updatedAt=Date.now();await DB.put('vehicles',v);clearOwnerRequestDraft(v.id);report({status:'complete',percent:100,message:'Upload submitted · awaiting shared Inventory publication'});return saved;
+ }
+ async function queueVehicleState(v,{onProgress=()=>{}}={}){
+   const report=state=>{try{onProgress({kind:'request',folder:'Vehicle Request',status:'processing',...state})}catch(error){console.warn('Vehicle request progress could not be painted',error)}};report({percent:5,message:'Preparing Vehicle request'});
+@@ -2594,7 +2648,7 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
+         const recovery={...local,...e,drive:{...(local.drive||{}),...(e.drive||{})},syncStatus:'error',recoveryNeeded:true,recoveryReason:'interrupted-drive-sync'};recovery.sharedFolderUrl=recovery.drive.sharedFolderId?`https://drive.google.com/drive/folders/${recovery.drive.sharedFolderId}`:'';await commitInventoryVehicle(version,recovery);continue;
+       }
+       if(local.syncStatus==='synced'&&!local.recoveryNeeded&&JSON.stringify(indexEntry(local))===JSON.stringify(e)){if(local.drive?.coverPhotoFileId&&!local.photos?.[0]?.blob)queueInventoryCover(local.id,local.drive.coverPhotoFileId);continue;}
+-      const officialCreationConfirmed=!!local.id&&!local.drive?.profileFolderId&&!!e.drive?.profileFolderId,matchingRecoveryRepaired=!!local.recoveryNeeded&&String(local.drive?.profileFolderId||'')===String(e.drive?.profileFolderId||'');if(['local','pending','syncing','error'].includes(local.syncStatus)&&!officialCreationConfirmed&&!matchingRecoveryRepaired)continue;if(protectPopulatedLocalVehicle(local,e)){local.drive={...(local.drive||{}),...(e.drive||{})};local.syncStatus='pending';local.syncError='Drive Profile metadata was incomplete. LotKeys preserved the local Vehicle data and will repair Drive on the next sync.';await commitInventoryVehicle(version,local);continue}const contributionResolutions=contributionResolutionRows([...(local.contributionResolutions||[]),...(e.contributionResolutions||[])]),v={...local,...e,contributionResolutions,contributionRequests:pendingContributionRequests([...(e.contributionRequests||[]),...(local.contributionRequests||[])],contributionResolutions),drive:{...(local.drive||{}),...(e.drive||{})},syncStatus:'synced'};v.sharedFolderUrl=v.drive.sharedFolderId?`https://drive.google.com/drive/folders/${v.drive.sharedFolderId}`:'';if(officialCreationConfirmed||matchingRecoveryRepaired){v.mediaUpload=null;v.ownerSubmissionDraft=null;v.recoveryNeeded=false;v.recoveryReason='';v.syncError='';delete v.localRecoverySnapshot;clearVehicleSyncState(v.id);clearOwnerRequestDraft(v.id);clearVehicleUiProgressState(v.id)}
++      const officialCreationConfirmed=!!local.id&&!local.drive?.profileFolderId&&!!e.drive?.profileFolderId,matchingRecoveryRepaired=!!local.recoveryNeeded&&String(local.drive?.profileFolderId||'')===String(e.drive?.profileFolderId||'');if(['local','pending','syncing','error'].includes(local.syncStatus)&&!officialCreationConfirmed&&!matchingRecoveryRepaired)continue;if(protectPopulatedLocalVehicle(local,e)){local.drive={...(local.drive||{}),...(e.drive||{})};local.syncStatus='pending';local.syncError='Drive Profile metadata was incomplete. LotKeys preserved the local Vehicle data and will repair Drive on the next sync.';await commitInventoryVehicle(version,local);continue}const contributionResolutions=contributionResolutionRows([...(local.contributionResolutions||[]),...(e.contributionResolutions||[])]),v={...local,...e,contributionResolutions,contributionRequests:pendingContributionRequests([...(e.contributionRequests||[]),...(local.contributionRequests||[])],contributionResolutions),drive:{...(local.drive||{}),...(e.drive||{})},syncStatus:'synced'};delete v.ownerSubmissionBaseRevision;v.sharedFolderUrl=v.drive.sharedFolderId?`https://drive.google.com/drive/folders/${v.drive.sharedFolderId}`:'';if(officialCreationConfirmed||matchingRecoveryRepaired){v.mediaUpload=null;v.ownerSubmissionDraft=null;v.recoveryNeeded=false;v.recoveryReason='';v.syncError='';delete v.localRecoverySnapshot;clearVehicleSyncState(v.id);clearOwnerRequestDraft(v.id);clearVehicleUiProgressState(v.id)}
+       if(v.drive.coverPhotoFileId){const prev=(local.photos||[]).find(p=>p.driveFileId===v.drive.coverPhotoFileId);if(prev?.blob)v.photos=[prev,...(local.photos||[]).filter(p=>p!==prev)];else{v.photos=[{id:`DRV-${v.drive.coverPhotoFileId}`,name:'Cover photo',type:'image/jpeg',driveFileId:v.drive.coverPhotoFileId},...(local.photos||[]).filter(photo=>photo.driveFileId!==v.drive.coverPhotoFileId)];}}
+       if(v.drive?.nativeFinalizationPending){v.syncStatus='processing_elsewhere';v.mediaUpload={status:'queued',percent:0,message:'Waiting for the phone to finish this Vehicle Profile',updatedAt:Date.now()};}else if(local.syncStatus==='processing_elsewhere')v.mediaUpload=null;const applied=await commitInventoryVehicle(version,v);if(applied&&!v.drive?.nativeFinalizationPending&&v.drive?.coverPhotoFileId&&!v.photos?.[0]?.blob)queueInventoryCover(v.id,v.drive.coverPhotoFileId);
+     }
+@@ -3187,7 +3241,7 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
+     'storeUsers','storeUserReports','managementUpdates','storePostingLocations','directoryStoreAddress','directoryDirectionsUrl','directoryTemplateFileId',
+     'publicShareEnabled','originalListingMandatory','postBuddyReleaseUrl','postBuddyWebsiteUrl','storeLogoFileId','storeLogoUpdatedAt','storeLogoDataUrl','storeLogoCachedVersion','storeBrandingCacheV1',
+     'lotkeysAwardDefinitionsV1','lotkeysAwardNominationsV1','lotkeysDeveloperAccessV1','lotkeysSpecialAwardAuditV1','lotkeysDeveloperCelebrationEventsV1',
+-    'monthlyContributionHistory','monthlyReveal','monthlyRevealSettings','seenMonthlyRevealId','storeProcessorVersion','storeProcessorInstalled','currentUserRole','currentUserAdminLevel',
++    'monthlyContributionHistory','monthlyReveal','monthlyRevealSettings','seenMonthlyRevealId','storeProcessorVersion','storeProcessorInstalled','storeProcessorNativeSubmissionProtocol','storeProcessorSubmissionStoreId','currentUserRole','currentUserAdminLevel',
+     'inventoryIndexFileId','listingsIndexFileId','lastInventoryFolderAuditAt','lastInventoryFolderSignature','lastInventoryIndexModifiedTime','lastInventoryIndexSignature',
+     'lastInventoryRefreshAt','lastManualInventoryRefreshAt','lastListingsIndexSignature','lastListingsRefreshAt','lastManualListingsRefreshAt','lastPriceCheckAt',
+     'listingDeletionTombstonesV1','storeProfileThumbnailLastSyncError','lotkeysPlatformInfoDriveFileId','lotkeysPlatformInfoDriveFileUrl','lotkeysPlatformInfoUpdatedAt'
+@@ -3300,7 +3354,7 @@ async function queueVehicleState(v,{onProgress=()=>{}}={}){
+     const s=await setting('driveStoreStructure',null);if(s?.rootId)await readStoreAccess(s).catch(error=>console.warn('Store directory status refresh deferred',error));const mode=s?.rootWritable===false?'Viewer Inventory + writable personal workspace':'Administration';return {ok:true,level:'good',message:`Connected to ${root.name||'Store'} · ${mode} ✓`,identity,root};
+   }
+   async function getStatus(){ const c=await config();const s=await setting('driveStoreStructure',null);return {isHttps:isHttps(),configured:!!c.clientId,hasPickerConfig:!!(c.apiKey&&c.projectNumber),connected:connected(),storeFolderId:c.storeFolderId,storeFolderName:c.storeFolderName,structure:s}; }
+-  return {nativeTransferReceipts:()=>Object.values(readLightweightRows(VEHICLE_SYNC_STATE_STORAGE)).map(row=>row.drive?.nativeTransfer).filter(Boolean),comparisonContext,loadComparisonReport,saveComparisonReport,recoverAuthorizationAfter401,authorize,renewAuthorization,renewPairingAuthorization,apiClientRequest,disconnect,connected,ready,restoreSessionAuthorization,getGoogleIdentity,bootstrapPersonalAccount,chooseStoreFolder,useFolderUrl,choosePersonalAccountLocation,getPersonalAccountStatus,getPersonalProfileRestoreStatus,getDeveloperFilesStatus,ensureDeveloperFilesFolder,publishPlatformInfo,findPersonalAccountPhotoFile,recoverPersonalAccountFolder,deletePersonalDescriptionTemplateFile,ensureStoreStructure,ensureDirectoryTemplate,syncVehicle,syncVehicleState,deleteVehicle,syncListing,deleteListing,reconcileListingVehicleProfiles,syncStoreConfig,loadStoreConfig,readStoreAccess,refreshStoreDirectory,provisionStoreUser,listStoreJoinRequests,resolveStoreJoinRequest,repairStoreAccessModel,applyStoreRoleAccess,queueOwnedVehicleProfile,queueVehicleState,openExistingMoreMedia,listVideoMetadata,getVideoMetadata,refreshVehicleVideoMetadata,refreshInventoryFromDrive,quickRefreshInventoryFromDrive,refreshUserListingsFromDrive,quickRefreshUserListingsFromDrive,adminReadUserListings,hydrateVehicleAssets,getStatus,config,fetchFileBlob,loadPersonalProfile,syncPersonalProfile,syncPersonalPreferences,savePersonalPreferences,syncStoreProfileThumbnail,uploadPersonalCelebrationSound,selectPersonalCelebrationSound,syncStoreCelebrationSound,saveStoreRevealAudio,clearStoreRevealAudio,refreshStoreLogoCache,saveStoreLogo,removeStoreLogo,getStoreLogoDataUrl,uploadManagementUpdateAsset,deleteManagementUpdateAssets,deleteManagementUpdateAsset,saveVehicleContributionRequest,approveVehicleContribution,rejectVehicleContribution,removeVehicleContributionAsset,refreshManagementUpdates,findStoreByCode,connectByStoreCode,createNewStore,clearCurrentStoreSettings,suspendStoreWork,restoreStoreWork,rememberSavedStore,removeSavedStore,healthCheck,pauseActiveUploads,resumeStalledUploads};
++  return {nativeTransferReceipts:()=>Object.values(readLightweightRows(VEHICLE_SYNC_STATE_STORAGE)).flatMap(row=>[row.drive?.nativeTransfer,row.drive?.lastNativeSubmission]).filter(Boolean),comparisonContext,loadComparisonReport,saveComparisonReport,recoverAuthorizationAfter401,authorize,renewAuthorization,renewPairingAuthorization,apiClientRequest,disconnect,connected,ready,restoreSessionAuthorization,getGoogleIdentity,bootstrapPersonalAccount,chooseStoreFolder,useFolderUrl,choosePersonalAccountLocation,getPersonalAccountStatus,getPersonalProfileRestoreStatus,getDeveloperFilesStatus,ensureDeveloperFilesFolder,publishPlatformInfo,findPersonalAccountPhotoFile,recoverPersonalAccountFolder,deletePersonalDescriptionTemplateFile,ensureStoreStructure,ensureDirectoryTemplate,syncVehicle,syncVehicleState,deleteVehicle,syncListing,deleteListing,reconcileListingVehicleProfiles,syncStoreConfig,loadStoreConfig,readStoreAccess,refreshStoreDirectory,provisionStoreUser,listStoreJoinRequests,resolveStoreJoinRequest,repairStoreAccessModel,applyStoreRoleAccess,queueOwnedVehicleProfile,queueVehicleState,openExistingMoreMedia,listVideoMetadata,getVideoMetadata,refreshVehicleVideoMetadata,refreshInventoryFromDrive,quickRefreshInventoryFromDrive,refreshUserListingsFromDrive,quickRefreshUserListingsFromDrive,adminReadUserListings,hydrateVehicleAssets,getStatus,config,fetchFileBlob,loadPersonalProfile,syncPersonalProfile,syncPersonalPreferences,savePersonalPreferences,syncStoreProfileThumbnail,uploadPersonalCelebrationSound,selectPersonalCelebrationSound,syncStoreCelebrationSound,saveStoreRevealAudio,clearStoreRevealAudio,refreshStoreLogoCache,saveStoreLogo,removeStoreLogo,getStoreLogoDataUrl,uploadManagementUpdateAsset,deleteManagementUpdateAssets,deleteManagementUpdateAsset,saveVehicleContributionRequest,approveVehicleContribution,rejectVehicleContribution,removeVehicleContributionAsset,refreshManagementUpdates,findStoreByCode,connectByStoreCode,createNewStore,clearCurrentStoreSettings,suspendStoreWork,restoreStoreWork,rememberSavedStore,removeSavedStore,healthCheck,pauseActiveUploads,resumeStalledUploads};
+ })();
+ </script>
+ 
+@@ -3952,9 +4006,9 @@ const App = (()=>{
+ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#description-add-type').value,block=DescriptionTemplates.defaultBlock(type);if(type==='price')block.config.text='{{PRICE}} + GST';if(type==='financing')block.config.text='Flexible financing options\nOAC (On Approved Credit)\nExtended warranty options available';if(type==='signature')block.config.text='Message {{USER_NAME}} to set up a viewing or to book.';t.blocks.push(block);renderBlocks()};$('#description-template-form').onsubmit=async e=>{e.preventDefault();t.name=$('#description-template-name').value.trim()||'My Marketplace Template';await DescriptionTemplates.save(t);await setSetting('lastDescriptionTemplateId',t.id);const driveSaved=await DriveSync.savePersonalPreferences('defaultTemplate');modal.close();toast(driveSaved?'Description template saved to your personal Drive folder ✓':'Description template saved on this device · Drive backup pending');if(route==='profile')render()};if(!modal.open)modal.showModal()}
+ 
+ 
+-  function paintProtocolState(st){const n=$('#local-test-note');if(!n||!st)return;const cls=st.level==='good'?'protocol-good':st.level==='bad'?'protocol-bad protocol-attention':'protocol-attention',label=st.level==='good'?'Authorized':st.level==='warn'?'Attention':'Action needed';n.className=`protocol-warning ${cls}`;n.innerHTML=`<strong>LotKeys Drive Test · V0.9.5.50 · Reliability Preview</strong> — ${label}<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button>`;$('#version-info-btn')?.addEventListener('click',showVersionInfo);window.LotKeysPlatformInfo?.bindHeaderButton?.();bindLockControls()}
++  function paintProtocolState(st){const n=$('#local-test-note');if(!n||!st)return;const cls=st.level==='good'?'protocol-good':st.level==='bad'?'protocol-bad protocol-attention':'protocol-attention',label=st.level==='good'?'Authorized':st.level==='warn'?'Attention':'Action needed';n.className=`protocol-warning ${cls}`;n.innerHTML=`<strong>LotKeys Drive Test · V0.9.5.51 · Background Preview</strong> — ${label}<button class="protocol-info-btn" id="version-info-btn" type="button" aria-label="What is new in this LotKeys version">ℹ️</button><button class="protocol-lotkeys-info-btn" id="lotkeys-info-btn" type="button" aria-label="Open LotKeys Info"><img src="./assets/lotkeys-default-logo.png" alt=""><span>LotKeys Info</span></button><button class="protocol-lock-btn" id="lock-screen-btn" type="button" aria-label="Lock LotKeys">🔒 Lock Screen</button>`;$('#version-info-btn')?.addEventListener('click',showVersionInfo);window.LotKeysPlatformInfo?.bindHeaderButton?.();bindLockControls()}
+   async function updateProtocolNote(){paintProtocolState(await getReadinessState())}
+-  async function showVersionInfoV09450(){const signed=!!(await setting('currentAccountEmail','')),st=await getReadinessState();modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.4.50</div><h2>What’s new</h2></div><button class="close">×</button></div><div class="card" style="box-shadow:none"><div class="readiness-hero ${st.level}" style="margin-bottom:10px"><span class="readiness-big-dot ${st.level}"></span><div><strong>${esc(st.title)}</strong><div class="small" style="margin-top:4px">${esc(st.summary)}</div></div></div>${st.issues?.length?`<ul class="points-info-list">${st.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<ul class="points-info-list"><li><strong>V0.9.4.50 · Awards display repair:</strong> Primary Award changes now repaint Account and Store identity rows immediately. Small Primary Award artwork appears before the user name, and the five displayed Awards can be reordered by dragging the full badge on mouse or touch.</li><li><strong>Lock Screen:</strong> Set a local password or 4-digit PIN in Account, lock manually from the version bar, or choose PC Only, Phone Only or PC &amp; Phone idle locking. A refresh keeps the blurred LotKeys lock surface active.</li><li><strong>Account onboarding and installs:</strong> First-time users receive Google Account, personal Drive folder and Store Code/new Store guidance. Phone users receive an Install LotKeys App action.</li><li><strong>Garage organization:</strong> personal posting locations and FaceBook Listings Analytics now sit beneath Administrator &amp; Users; Store Saved Locations and highlighted reveal controls live in Advanced Google / Store controls. Awards Administration sits before User Reports.</li><li><strong>Post Buddy access:</strong> Garage now shows the accent-colored FaceBook Post Buddy panel immediately below Google &amp; Store Connection. Admin Level 2 can connect the current installer and website links.</li><li><strong>Listing workflow:</strong> Build Description now builds on the first press. Show Vehicle Details expands only when the user wants to edit or disable source facts, with checkboxes placed to the left. Existing Vehicle Profiles use a compact review-photo grid.</li><li><strong>Award inactivity rule:</strong> Iced Iced Baby now requires an established account returning after 30 inactive days and clears after five consecutive active days.</li><li><strong>New LotKeys icon:</strong> the supplied black-and-blue key/tag artwork is now the canonical default throughout the app, Chat, loading view, installed Android/PWA icon, Apple touch icon and favicon. Uploaded Store logos remain Store-specific overrides.</li><li><strong>Chat isolation repair:</strong> Chat now hides the live Home/Inventory route behind an opaque surface sized to the real bottom navigation, so Vehicle cards cannot show through while the Chat tab remains highlighted.</li>
++  async function showVersionInfoV09450(){const signed=!!(await setting('currentAccountEmail','')),st=await getReadinessState();modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.4.50</div><h2>What’s new</h2><p class="help">Background submission preview requires the matching .51 Android app and Store processor .79. Keep LotKeys open until originals are retained. Live Google and physical-phone validation are pending; this source preview is not deployed.</p></div><button class="close">×</button></div><div class="card" style="box-shadow:none"><div class="readiness-hero ${st.level}" style="margin-bottom:10px"><span class="readiness-big-dot ${st.level}"></span><div><strong>${esc(st.title)}</strong><div class="small" style="margin-top:4px">${esc(st.summary)}</div></div></div>${st.issues?.length?`<ul class="points-info-list">${st.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<ul class="points-info-list"><li><strong>V0.9.4.50 · Awards display repair:</strong> Primary Award changes now repaint Account and Store identity rows immediately. Small Primary Award artwork appears before the user name, and the five displayed Awards can be reordered by dragging the full badge on mouse or touch.</li><li><strong>Lock Screen:</strong> Set a local password or 4-digit PIN in Account, lock manually from the version bar, or choose PC Only, Phone Only or PC &amp; Phone idle locking. A refresh keeps the blurred LotKeys lock surface active.</li><li><strong>Account onboarding and installs:</strong> First-time users receive Google Account, personal Drive folder and Store Code/new Store guidance. Phone users receive an Install LotKeys App action.</li><li><strong>Garage organization:</strong> personal posting locations and FaceBook Listings Analytics now sit beneath Administrator &amp; Users; Store Saved Locations and highlighted reveal controls live in Advanced Google / Store controls. Awards Administration sits before User Reports.</li><li><strong>Post Buddy access:</strong> Garage now shows the accent-colored FaceBook Post Buddy panel immediately below Google &amp; Store Connection. Admin Level 2 can connect the current installer and website links.</li><li><strong>Listing workflow:</strong> Build Description now builds on the first press. Show Vehicle Details expands only when the user wants to edit or disable source facts, with checkboxes placed to the left. Existing Vehicle Profiles use a compact review-photo grid.</li><li><strong>Award inactivity rule:</strong> Iced Iced Baby now requires an established account returning after 30 inactive days and clears after five consecutive active days.</li><li><strong>New LotKeys icon:</strong> the supplied black-and-blue key/tag artwork is now the canonical default throughout the app, Chat, loading view, installed Android/PWA icon, Apple touch icon and favicon. Uploaded Store logos remain Store-specific overrides.</li><li><strong>Chat isolation repair:</strong> Chat now hides the live Home/Inventory route behind an opaque surface sized to the real bottom navigation, so Vehicle cards cannot show through while the Chat tab remains highlighted.</li>
+ <li><strong>Registered contact lookup:</strong> Add Contact has a corrected person/plus control and accepts either an exact registered email address or phone number. This test build searches the current Store and saved conversations; global discovery still needs the future LotKeys account directory.</li>
+ <li><strong>Expanded Lot-Lvl and Awards:</strong> Account now includes 25 Award definitions and the newest supplied artwork. First Profile, hidden-time Listing, website-linked deletion, Facebook-sale milestones, Cherry’s review, corrections, Facebook posts, Monthly Wrap-Ups and 30-day inactivity are connected to their confirmed rules. The LotKeys Developer Award remains Creator-only.</li>
+ <li><strong>Account-carried progress:</strong> earned Awards, display choices and Lot-Lvl follow the user's personal LotKeys Account across Stores. The first testing curve reaches Level 100 at 1,000 confirmed Facebook vehicle posts and will be revised from testing feedback.</li>
+@@ -4013,7 +4067,7 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
+ <li>Unchanged photo/document folders are skipped when only a video changed, so video transfer starts sooner.</li>
+ <li>LotKeys requests a temporary screen wake lock during an active video transfer when the browser supports it, helping prevent an accidental screen lock from pausing the upload.</li></ul>${signed?'':'<div class="notice warning"><strong>New here?</strong><div class="small muted" style="margin-top:5px">Open Account and tap <strong>Click to Sign In</strong>, then use the Store Code your management team gives you.</div></div>'}</div>`;modalBody.querySelector('.close').onclick=()=>modal.close();if(!modal.open)modal.showModal()}
+ 
+-  async function showVersionInfo(){modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.5.50 · RELIABILITY PREVIEW</div><h2>What’s new</h2></div><div class="modal-head-actions"><button class="btn ghost version-help-btn" id="version-help" type="button">Help❓</button><button class="close" aria-label="Close">×</button></div></div><div class="card release-notes-card" style="box-shadow:none"><ul class="points-info-list"><li><strong>Compare TEST pilot:</strong> compare manually entered or imported vehicle data, copy price-sorted results, and try the guarded Drive report save. Automatic website search is not connected. LotKeys Drive sign-in/renewal and physical-phone behavior remain unverified; keep a copied result while testing.</li><li><strong>Inventory photos:</strong> full galleries keep loading on slow connections, update the open Profile and Listing picker, and offer Retry when a download fails. Selected Listing photos stay selected.</li><li><strong>Vehicle submissions:</strong> accepted photos are checkpointed individually, interrupted final requests keep the same file ID, and pending submissions say Awaiting Inventory publication until the processor confirms them. Store Processor .78 records completion before cleanup so Google cannot cause repeated saves by denying file deletion.</li><li><strong>Store access requests:</strong> Share a Store invitation. New users send Google’s access request, and Administration approves or denies it under Reports / Requests. Approval provisions the user’s Store workspace without retyping their email. Existing Android .46 stays installed.</li><li><strong>One Android installation:</strong> the updated LotKeys TEST app opens your existing Inventory, Listings and Hub. Open Phone &amp; upload settings from its menu when needed. Keep the same browser and Google account to retain local work.</li><li><strong>Confirmed handoff:</strong> switching-app advice now checks the exact Android job, every retained original and finishing plan, then saves the receipt locally. Background save timing is available inside the Vehicle Profile.</li><li><strong>Earlier Android handoff:</strong> with connector .44, folders and essential Vehicle data are saved first, then Android retains the originals and the remaining PDF/Inventory work. Once Ready to switch apps appears, the browser can close. Existing destructive media edits keep the established reconciliation path.</li><li><strong>Android save status:</strong> interrupted phone replies now trigger a retained-job status check instead of a false account/Store/edit mismatch. Real mismatches still stop the save. Queued work, uploaded files and errors have distinct messages; failure text replaces old switch-app advice.</li><li><strong>Posting Buddy V0.1.25:</strong> Update Photos now handles an empty Facebook uploader and reacquires its picker after the photo grid changes. Photos and a selected video stay separate in progress checks. Download the extension update from Garage, replace its files, then reload the extension and Facebook.</li><li><strong>Reliable background saves:</strong> opening a Vehicle Profile or refreshing Inventory now preserves an unfinished Android save, its local edit and photo list.</li><li><strong>Accurate save status:</strong> an unfinished save or retained error cannot appear as Synced. For the paused-save issue from .40, open the affected Profile and tap Sync Vehicle to retry with the originals Android retained when the saved record can be verified.</li><li><strong>Connector update for earlier handoff:</strong> install V0.9.5.48 TEST over your current connector. Your account, pairing and retained saves stay in place. Older connectors keep the existing upload sequence.</li><li><strong>Add a PC:</strong> phone connection settings now have a clear Add a PC action and Check for code. A trusted PC still reconnects without a new approval code.</li><li><strong>Matching blue connection status:</strong> the phone and PC use blue for an acknowledged live connection. Open connection details follow status changes, and the Android connector refreshes its PC status while visible. Store sync warnings remain available separately.</li><li><strong>Switching apps during uploads:</strong> keep LotKeys open until Android retains every original. Queued work waits for Android scheduling; status is rechecked when you reopen LotKeys. Android may defer a transfer, and errors now replace old switch-app advice.</li><li><strong>PC calls your phone:</strong> an open PC page automatically retries its registered phone. Green means registered and waiting; blue means the phone has acknowledged the connection. Retry is in the status-light connection settings.</li><li><strong>Quieter idle phone:</strong> the updated Android connector checks every two seconds during phone use or an active PC connection, then about hourly while idle with a trusted PC. Opening the phone app checks promptly; a PC arriving alone may wait for that idle check.</li><li><strong>Background Vehicle uploads:</strong> with the updated connector and separate Drive approval, Vehicle Profile originals can continue uploading after Android has received them. Keep LotKeys open through Preparing originals. Uploads use their own queue and do not wait for hourly Hub checks.</li><li><strong>Faster Device chats:</strong> while connected, LotKeys keeps the latest six messages ready for your ten most recent conversations. Recent chats open from this temporary cache while phone updates and older history load.</li><li><strong>Background loading:</strong> recent conversations warm one at a time across LotKeys. Opening a chat gets priority over the next background read; one unavailable conversation does not hold up the others.</li><li><strong>Private cache:</strong> message snapshots stay in temporary memory and clear on disconnect, account changes and page closure. Photos still use the existing preview/save controls.</li><li><strong>Store branding:</strong> cached logos belong to your current Store and Google account. Old dealership images and late responses cannot replace the current Store’s logo.</li><li><strong>Store setup:</strong> new installs use dealership-neutral guidance and no longer create a South Edmonton posting location. Processor upgrades preserve the saved Store folder.</li><li><strong>Website verification:</strong> a missing stock/VIN field is treated as unknown. Matching identifiers can verify the vehicle; explicit removal and conflicting primary vehicles remain checked.</li><li><strong>Saving &amp; refresh:</strong> ordinary app switching no longer deliberately aborts media uploads. Frozen or stalled transfers retain checkpoints and resume; Inventory refresh shows records before downloading thumbnails.</li><li><strong>Personal settings backup:</strong> Description Builder templates, the selected template and PC notification sounds save to your personal Account Storage folder. Drive saves are verified, pending backups retry, and Account shows their status.</li><li><strong>Posting Buddy V0.1.24:</strong> Facebook names use the title saved on your Listing. A matching Year/Make prefix is kept in the separate controls without repeating it in Model.</li><li><strong>Extension update:</strong> download the current Posting Buddy from Garage, replace the files in its Chrome extension folder, reload it and Facebook, then Sync the Listings.</li><li><strong>Inventory recovery:</strong> missing Store workspace references are rebuilt for the approved account. Inventory no longer waits for personal listing migration.</li><li><strong>Saved Listings:</strong> device-saved listing information is kept for resynchronization after workspace loss. Missing original photos must be restored or added again.</li><li><strong>Device chat opening:</strong> notification previews, Bubble Chat and full Device conversations reuse recent phone history and share overlapping requests. Other conversations changing no longer discard the current chat’s cached page. New arrivals still refresh from the phone, and older messages remain available.</li><li><strong>Website descriptions and photos:</strong> imports read the vehicle’s Overview as its description, including equipment details. An incomplete photo gallery is refreshed before photo selection. Distinct original views stay available, and missing galleries show a retry message. Existing Profile wording and price remain authoritative in Description Builder.</li><li><strong>Expanded dealership recognition:</strong> imports prefer the full vehicle heading and read bulleted specifications. Recommended vehicles cannot supply the current vehicle’s price. Known gallery thumbnails resolve to their original photos, and pages that load vehicle details with JavaScript use the rendered-page reader.</li><li><strong>Website template compatibility:</strong> Legacy recognition builds on the existing importer. A separate Weekly or Monthly Payment heading no longer hides the selling price above it; the existing Your Price, structured vehicle data and gallery rules remain available.</li><li><strong>Legacy website imports:</strong> Legacy Price is the selling price; Vehicle Price is the sticker/listed amount. Imports keep payment amounts out of the vehicle name, read kilometres from the specifications, and capture each vehicle’s CARFAX View Report link. If the selling price cannot be confirmed, it stays blank for review.</li><li><strong>Store sync and disconnect:</strong> Garage can leave a Store even when a background refresh is active. Unfinished Vehicle Profiles, Listings, deletions and contribution requests are saved on this device for that Store and return when you reconnect with the same Google account. Read-only refreshes show “Refreshing…” in the header.</li><li><strong>Store switching:</strong> open the Connected to Store button in Garage to disconnect while keeping your Google account, Hub, phone, profile and personal settings. Join another Store with its code, or create a fresh Store as its Owner / Admin Level 2. Your former Store stays saved for a later reconnect.</li><li><strong>Hub reminder bell:</strong> the Hub shortcut remains visible and opens all reminders. Its button turns grey when nothing needs attention; the bell glyph stays slightly smaller.</li><li><strong>Incoming previews:</strong> when Hub is open, chat messages update there without a second in-app pop-up. Elsewhere, the colored preview starts at the Hub tab and fills only the right-side area, clear of the PC scrollbar.</li><li><strong>Quiet Device sends:</strong> sending an SMS no longer raises a duplicate success pop-up; the message’s SMS Sent or MMS Sent label remains, and failures still show an error.</li><li><strong>Chat layout and type:</strong> full LotKeys Chat uses the available conversation width, incoming messages use the Device chat card color, and Device message text matches the LotKeys 14px type and spacing.</li><li><strong>Page headers:</strong> Home, Inventory, Listings, Garage and Account have white headers in light theme and black headers in dark theme.</li><li><strong>Grey Device chat frame:</strong> the expanded Bubble Chat has a neutral grey outline and header divider, while its alerts and message bubbles keep the conversation color. The phone number sits below the contact name.</li><li><strong>One Bubble Chat:</strong> hold Hub to open the last conversation you replied to, whether LotKeys Chat or connected Device SMS. A new reply makes that chat the next quick conversation.</li><li><strong>Quick incoming preview:</strong> a compact bubble shows the contact name and message, using its Device organization color. Tap it to read and reply without leaving your current screen.</li><li><strong>Live Device replies:</strong> when the connected phone reports a new reply, an open Device Bubble Chat refreshes with it. Device messages remain on the phone.</li><li><strong>Bell alignment:</strong> the main-page alert is centered, and the Hub reminder bell is larger.</li><li><strong>Hub actions:</strong> Alert, Calendar, Phone and Add stay in their existing order and spacing near the lower-right edge, clear of the scrollbar and navigation.</li><li><strong>Phone update:</strong> V0.9.5.12 remains compatible with the website. Install the <a href="./downloads/LotKeys-Connector-TEST-V0.9.5.46.apk">V0.9.5.46 TEST connector</a> over it for hourly idle checks and background Vehicle uploads; preserve the installed app and its data.</li></ul></div>`;modalBody.querySelector('.close').onclick=()=>modal.close();$('#version-help').onclick=()=>{modal.close();showHelpMenu()};if(!modal.open)modal.showModal()}
++  async function showVersionInfo(){modalBody.innerHTML=`<div class="modal-head"><div><div class="eyebrow">LOTKEYS V0.9.5.51 · BACKGROUND PREVIEW</div><h2>What’s new</h2></div><div class="modal-head-actions"><button class="btn ghost version-help-btn" id="version-help" type="button">Help❓</button><button class="close" aria-label="Close">×</button></div></div><div class="card release-notes-card" style="box-shadow:none"><ul class="points-info-list"><li><strong>Compare TEST pilot:</strong> compare manually entered or imported vehicle data, copy price-sorted results, and try the guarded Drive report save. Automatic website search is not connected. LotKeys Drive sign-in/renewal and physical-phone behavior remain unverified; keep a copied result while testing.</li><li><strong>Inventory photos:</strong> full galleries keep loading on slow connections, update the open Profile and Listing picker, and offer Retry when a download fails. Selected Listing photos stay selected.</li><li><strong>Vehicle submissions:</strong> accepted photos are checkpointed individually, interrupted final requests keep the same file ID, and pending submissions say Awaiting Inventory publication until the processor confirms them. Store Processor .78 records completion before cleanup so Google cannot cause repeated saves by denying file deletion.</li><li><strong>Store access requests:</strong> Share a Store invitation. New users send Google’s access request, and Administration approves or denies it under Reports / Requests. Approval provisions the user’s Store workspace without retyping their email. Existing Android .46 stays installed.</li><li><strong>One Android installation:</strong> the updated LotKeys TEST app opens your existing Inventory, Listings and Hub. Open Phone &amp; upload settings from its menu when needed. Keep the same browser and Google account to retain local work.</li><li><strong>Confirmed handoff:</strong> switching-app advice now checks the exact Android job, every retained original and finishing plan, then saves the receipt locally. Background save timing is available inside the Vehicle Profile.</li><li><strong>Earlier Android handoff:</strong> with connector .44, folders and essential Vehicle data are saved first, then Android retains the originals and the remaining PDF/Inventory work. Once Ready to switch apps appears, the browser can close. Existing destructive media edits keep the established reconciliation path.</li><li><strong>Android save status:</strong> interrupted phone replies now trigger a retained-job status check instead of a false account/Store/edit mismatch. Real mismatches still stop the save. Queued work, uploaded files and errors have distinct messages; failure text replaces old switch-app advice.</li><li><strong>Posting Buddy V0.1.25:</strong> Update Photos now handles an empty Facebook uploader and reacquires its picker after the photo grid changes. Photos and a selected video stay separate in progress checks. Download the extension update from Garage, replace its files, then reload the extension and Facebook.</li><li><strong>Reliable background saves:</strong> opening a Vehicle Profile or refreshing Inventory now preserves an unfinished Android save, its local edit and photo list.</li><li><strong>Accurate save status:</strong> an unfinished save or retained error cannot appear as Synced. For the paused-save issue from .40, open the affected Profile and tap Sync Vehicle to retry with the originals Android retained when the saved record can be verified.</li><li><strong>Connector update for earlier handoff:</strong> install V0.9.5.48 TEST over your current connector. Your account, pairing and retained saves stay in place. Older connectors keep the existing upload sequence.</li><li><strong>Add a PC:</strong> phone connection settings now have a clear Add a PC action and Check for code. A trusted PC still reconnects without a new approval code.</li><li><strong>Matching blue connection status:</strong> the phone and PC use blue for an acknowledged live connection. Open connection details follow status changes, and the Android connector refreshes its PC status while visible. Store sync warnings remain available separately.</li><li><strong>Switching apps during uploads:</strong> keep LotKeys open until Android retains every original. Queued work waits for Android scheduling; status is rechecked when you reopen LotKeys. Android may defer a transfer, and errors now replace old switch-app advice.</li><li><strong>PC calls your phone:</strong> an open PC page automatically retries its registered phone. Green means registered and waiting; blue means the phone has acknowledged the connection. Retry is in the status-light connection settings.</li><li><strong>Quieter idle phone:</strong> the updated Android connector checks every two seconds during phone use or an active PC connection, then about hourly while idle with a trusted PC. Opening the phone app checks promptly; a PC arriving alone may wait for that idle check.</li><li><strong>Background Vehicle uploads:</strong> with the updated connector and separate Drive approval, Vehicle Profile originals can continue uploading after Android has received them. Keep LotKeys open through Preparing originals. Uploads use their own queue and do not wait for hourly Hub checks.</li><li><strong>Faster Device chats:</strong> while connected, LotKeys keeps the latest six messages ready for your ten most recent conversations. Recent chats open from this temporary cache while phone updates and older history load.</li><li><strong>Background loading:</strong> recent conversations warm one at a time across LotKeys. Opening a chat gets priority over the next background read; one unavailable conversation does not hold up the others.</li><li><strong>Private cache:</strong> message snapshots stay in temporary memory and clear on disconnect, account changes and page closure. Photos still use the existing preview/save controls.</li><li><strong>Store branding:</strong> cached logos belong to your current Store and Google account. Old dealership images and late responses cannot replace the current Store’s logo.</li><li><strong>Store setup:</strong> new installs use dealership-neutral guidance and no longer create a South Edmonton posting location. Processor upgrades preserve the saved Store folder.</li><li><strong>Website verification:</strong> a missing stock/VIN field is treated as unknown. Matching identifiers can verify the vehicle; explicit removal and conflicting primary vehicles remain checked.</li><li><strong>Saving &amp; refresh:</strong> ordinary app switching no longer deliberately aborts media uploads. Frozen or stalled transfers retain checkpoints and resume; Inventory refresh shows records before downloading thumbnails.</li><li><strong>Personal settings backup:</strong> Description Builder templates, the selected template and PC notification sounds save to your personal Account Storage folder. Drive saves are verified, pending backups retry, and Account shows their status.</li><li><strong>Posting Buddy V0.1.24:</strong> Facebook names use the title saved on your Listing. A matching Year/Make prefix is kept in the separate controls without repeating it in Model.</li><li><strong>Extension update:</strong> download the current Posting Buddy from Garage, replace the files in its Chrome extension folder, reload it and Facebook, then Sync the Listings.</li><li><strong>Inventory recovery:</strong> missing Store workspace references are rebuilt for the approved account. Inventory no longer waits for personal listing migration.</li><li><strong>Saved Listings:</strong> device-saved listing information is kept for resynchronization after workspace loss. Missing original photos must be restored or added again.</li><li><strong>Device chat opening:</strong> notification previews, Bubble Chat and full Device conversations reuse recent phone history and share overlapping requests. Other conversations changing no longer discard the current chat’s cached page. New arrivals still refresh from the phone, and older messages remain available.</li><li><strong>Website descriptions and photos:</strong> imports read the vehicle’s Overview as its description, including equipment details. An incomplete photo gallery is refreshed before photo selection. Distinct original views stay available, and missing galleries show a retry message. Existing Profile wording and price remain authoritative in Description Builder.</li><li><strong>Expanded dealership recognition:</strong> imports prefer the full vehicle heading and read bulleted specifications. Recommended vehicles cannot supply the current vehicle’s price. Known gallery thumbnails resolve to their original photos, and pages that load vehicle details with JavaScript use the rendered-page reader.</li><li><strong>Website template compatibility:</strong> Legacy recognition builds on the existing importer. A separate Weekly or Monthly Payment heading no longer hides the selling price above it; the existing Your Price, structured vehicle data and gallery rules remain available.</li><li><strong>Legacy website imports:</strong> Legacy Price is the selling price; Vehicle Price is the sticker/listed amount. Imports keep payment amounts out of the vehicle name, read kilometres from the specifications, and capture each vehicle’s CARFAX View Report link. If the selling price cannot be confirmed, it stays blank for review.</li><li><strong>Store sync and disconnect:</strong> Garage can leave a Store even when a background refresh is active. Unfinished Vehicle Profiles, Listings, deletions and contribution requests are saved on this device for that Store and return when you reconnect with the same Google account. Read-only refreshes show “Refreshing…” in the header.</li><li><strong>Store switching:</strong> open the Connected to Store button in Garage to disconnect while keeping your Google account, Hub, phone, profile and personal settings. Join another Store with its code, or create a fresh Store as its Owner / Admin Level 2. Your former Store stays saved for a later reconnect.</li><li><strong>Hub reminder bell:</strong> the Hub shortcut remains visible and opens all reminders. Its button turns grey when nothing needs attention; the bell glyph stays slightly smaller.</li><li><strong>Incoming previews:</strong> when Hub is open, chat messages update there without a second in-app pop-up. Elsewhere, the colored preview starts at the Hub tab and fills only the right-side area, clear of the PC scrollbar.</li><li><strong>Quiet Device sends:</strong> sending an SMS no longer raises a duplicate success pop-up; the message’s SMS Sent or MMS Sent label remains, and failures still show an error.</li><li><strong>Chat layout and type:</strong> full LotKeys Chat uses the available conversation width, incoming messages use the Device chat card color, and Device message text matches the LotKeys 14px type and spacing.</li><li><strong>Page headers:</strong> Home, Inventory, Listings, Garage and Account have white headers in light theme and black headers in dark theme.</li><li><strong>Grey Device chat frame:</strong> the expanded Bubble Chat has a neutral grey outline and header divider, while its alerts and message bubbles keep the conversation color. The phone number sits below the contact name.</li><li><strong>One Bubble Chat:</strong> hold Hub to open the last conversation you replied to, whether LotKeys Chat or connected Device SMS. A new reply makes that chat the next quick conversation.</li><li><strong>Quick incoming preview:</strong> a compact bubble shows the contact name and message, using its Device organization color. Tap it to read and reply without leaving your current screen.</li><li><strong>Live Device replies:</strong> when the connected phone reports a new reply, an open Device Bubble Chat refreshes with it. Device messages remain on the phone.</li><li><strong>Bell alignment:</strong> the main-page alert is centered, and the Hub reminder bell is larger.</li><li><strong>Hub actions:</strong> Alert, Calendar, Phone and Add stay in their existing order and spacing near the lower-right edge, clear of the scrollbar and navigation.</li><li><strong>Phone update:</strong> V0.9.5.12 remains compatible with the website. Install the <a href="./downloads/LotKeys-Connector-TEST-V0.9.5.46.apk">V0.9.5.46 TEST connector</a> over it for hourly idle checks and background Vehicle uploads; preserve the installed app and its data.</li></ul></div>`;modalBody.querySelector('.close').onclick=()=>modal.close();$('#version-help').onclick=()=>{modal.close();showHelpMenu()};if(!modal.open)modal.showModal()}
+   function readLiveProgressRows(){try{return JSON.parse(localStorage.getItem(LIVE_MEDIA_PROGRESS_STORAGE)||'{}')||{}}catch{return {}}}
+   function writeLiveProgressRows(rows){try{localStorage.setItem(LIVE_MEDIA_PROGRESS_STORAGE,JSON.stringify(rows||{}))}catch{}}
+   function restoreLiveMediaProgress(){const rows=readLiveProgressRows(),now=Date.now();let changed=false;for(const [id,row] of Object.entries(rows)){if(!row||now-(Number(row.updatedAt)||0)>7*86400000||row.status==='complete'){delete rows[id];changed=true;continue}const restored={...row,status:['queued','processing','uploading'].includes(row.status)?'paused':row.status};if(restored.status!==row.status){rows[id]=restored;changed=true}liveMediaProgress.set(id,restored)}if(changed)writeLiveProgressRows(rows)}
+@@ -4064,7 +4118,7 @@ renderBlocks();$('#description-add-block').onclick=()=>{const type=$('#descripti
+     try{
+       const actor=await currentUserRecord(),adminLevel=normalizedAdminLevel(actor);
+       if(adminLevel<1){
+-        const owned=!v.drive?.profileFolderId||isVehicleProfileOwner(v,actor);if(owned)await DriveSync.queueOwnedVehicleProfile(v,{onProgress:p=>setVehicleMediaProgress(v,{...p,folder:p.folder||'Your More Media'})});else await DriveSync.queueVehicleState(v,{onProgress:p=>{if(p.backgroundReady===true)endPreparation();setVehicleMediaProgress(v,p)}});
++        const owned=!v.drive?.profileFolderId||isVehicleProfileOwner(v,actor);if(owned)await DriveSync.queueOwnedVehicleProfile(v,{onProgress:p=>{if(p.backgroundReady===true)endPreparation();setVehicleMediaProgress(v,{...p,folder:p.folder||'Your More Media'})}});else await DriveSync.queueVehicleState(v,{onProgress:p=>{if(p.backgroundReady===true)endPreparation();setVehicleMediaProgress(v,p)}});
+         v.syncStatus='queued';v.syncError='';finishVehicleProgress(v,owned?'Upload submitted · awaiting Inventory publication':'Request submitted');if(!quiet)toast(owned?'Submitted through your More folder ✓':'Request sent through your More folder ✓');if(!modal.open&&(route==='home'||route==='vehicles'))render();return v;
+       }
+       const out=await DriveSync.syncVehicle(v,{force,onProgress:p=>{if(p.backgroundReady===true)endPreparation();setVehicleMediaProgress(v,p)}});finishVehicleProgress(out||v,'Vehicle Profile synchronized');if(!quiet)toast('Vehicle synced to Drive ✓');if(!modal.open&&(route==='home'||route==='vehicles'))render();return out;
+@@ -4834,6 +4888,7 @@ async function resumePendingContributionSubmissions(){if(storeTransitionBusy)ret
+     const vehicleDraftUser=await setting('userName',''),vehicleDraftSubject=contributionMode?`contribution-${existing?.id||'new'}`:existing?`edit-${existing.id}`:'new',vehicleDraftKey=formDraftKey('vehicle',vehicleDraftUser,vehicleDraftSubject),vehicleDraft=chooseFormDraft(vehicleDraftKey,contributionMode?'Vehicle contribution':existing?'Vehicle Profile edit':'Vehicle Profile',{automatic:!!options.autoResumeDraft});
+     const initialVehicleFingerprint=existing?vehicleFormFingerprint(existing):'',initialPendingDeal=!!existing?.pendingDeal;
+     const v=existing?structuredClone(existing):{id:uid('VP'),photos:[],attachments:[],videos:[],odometerUnit:'KM',bodyStyle:'',exteriorColor:'',interiorColor:'',vehicleCondition:'',transmission:'',fuelType:'',engineSize:'',horsepower:''};
++    if(!contributionMode&&existing?.drive?.profileFolderId&&existing.syncStatus==='synced'&&!Number.isSafeInteger(v.ownerSubmissionBaseRevision))v.ownerSubmissionBaseRevision=Number(existing.updatedAt);
+     if(Array.isArray(vehicleDraft?.extra?.photoOrderIds)&&v.photos?.length){const byId=new Map(v.photos.map(x=>[String(x.id),x])),ordered=vehicleDraft.extra.photoOrderIds.map(id=>byId.get(String(id))).filter(Boolean),used=new Set(ordered.map(x=>String(x.id)));v.photos=[...ordered,...v.photos.filter(x=>!used.has(String(x.id)))]}
+     const profileColorOptions=FACEBOOK_COLOR_OPTIONS;
+     const profileConditionOptions=FACEBOOK_CONDITION_OPTIONS;
+@@ -5505,21 +5560,22 @@ async function resumePendingContributionSubmissions(){if(storeTransitionBusy)ret
+ window.addEventListener('DOMContentLoaded',App.boot);
+ 
+   </script>
+-  <script src="./lotkeys-listing-storage.js?v=095050"></script>
+-  <script src="./lotkeys-info.js?v=095050"></script>
+-  <script src="./lotkeys-messaging.js?v=095050"></script>
+-  <script src="./lotkeys-awards.js?v=095050"></script>
+-   <link rel="stylesheet" href="./lotkeys-hub.css?v=095050">
+-   <script src="./lotkeys-hub-core.js?v=095050"></script>
+-   <script src="./lotkeys-hub-store.js?v=095050"></script>
+-   <script src="./lotkeys-doorbell-core.js?v=095050"></script>
+-   <script src="./lotkeys-transfer-core.js?v=095050"></script>
+-   <script src="./lotkeys-deferred-save.js?v=095050"></script>
+-   <script src="./lotkeys-native-transfers.js?v=095050"></script>
+-   <script src="./lotkeys-phone-core.js?v=095050"></script>
+-   <script src="./lotkeys-reliability.js?v=095050"></script>
+-<script src="./lotkeys-phone.js?v=095050"></script>
+-   <script src="./lotkeys-hub.js?v=095050"></script>
++  <script src="./lotkeys-listing-storage.js?v=095051"></script>
++  <script src="./lotkeys-info.js?v=095051"></script>
++  <script src="./lotkeys-messaging.js?v=095051"></script>
++  <script src="./lotkeys-awards.js?v=095051"></script>
++   <link rel="stylesheet" href="./lotkeys-hub.css?v=095051">
++   <script src="./lotkeys-hub-core.js?v=095051"></script>
++   <script src="./lotkeys-hub-store.js?v=095051"></script>
++   <script src="./lotkeys-doorbell-core.js?v=095051"></script>
++   <script src="./lotkeys-transfer-core.js?v=095051"></script>
++   <script src="./lotkeys-deferred-save.js?v=095051"></script>
++   <script src="./lotkeys-native-transfers.js?v=095051"></script>
++   <script src="./lotkeys-owner-transfers.js?v=095051"></script>
++   <script src="./lotkeys-phone-core.js?v=095051"></script>
++   <script src="./lotkeys-reliability.js?v=095051"></script>
++<script src="./lotkeys-phone.js?v=095051"></script>
++   <script src="./lotkeys-hub.js?v=095051"></script>
+   <script>
+   if(!window.LotKeysMessaging){
+     const chatButton=document.getElementById('chat-nav-btn');
+diff --git a/lotkeys-native-transfers.js b/lotkeys-native-transfers.js
+index 17465d3..29c0892 100644
+--- a/lotkeys-native-transfers.js
++++ b/lotkeys-native-transfers.js
+@@ -25,7 +25,7 @@
+     if (!snapshot || typeof snapshot.id !== 'string' || !snapshot.id || !snapshot.context || !Array.isArray(snapshot.assets) || typeof snapshot.state !== 'string') reject('Android returned an incomplete handoff receipt. Reopen LotKeys to check its retained save.');
+     if (!Core.sameContext(snapshot.context, plan.context)) { const error = Error('The background upload belongs to another account, Store or edit. Its originals are retained.'); error.nativeTransfer = true; error.code = 'NATIVE_CONTEXT_MISMATCH'; throw error; }
+     if (id && snapshot.id !== id) reject('Android returned another save receipt. The original job has been kept.');
+-    if (snapshot.assets.length !== plan.assets.length || (plan.version === 2 && snapshot.version !== 2)) reject('Android has not confirmed the complete original-file plan.');
++    if (snapshot.assets.length !== plan.assets.length || (plan.version >= 2 && snapshot.version !== plan.version)) reject('Android has not confirmed the complete original-file plan.');
+     const seen = new Set();
+     for (let i = 0; i < plan.assets.length; i++) {
+       const expected = plan.assets[i], actual = snapshot.assets[i];
+@@ -62,7 +62,7 @@
+     if (Core.terminal(snapshot.state)) { if (snapshot.state === 'complete' || snapshot.state === 'needs_reconcile') handoffProof(snapshot, plan, id, true); return snapshot; }
+     if (snapshot.state !== 'staging') return commit();
+     const total = plan.assets.reduce((sum, row) => sum + row.size, 0); let staged = 0;
+-    const chunkSize = plan.version === 2 ? Math.min(1024 * 1024, Math.max(CHUNK, Number(plan.stagingChunkBytes) || CHUNK)) : CHUNK;
++    const chunkSize = plan.version >= 2 ? Math.min(1024 * 1024, Math.max(CHUNK, Number(plan.stagingChunkBytes) || CHUNK)) : CHUNK;
+     for (let item = 0; item < plan.assets.length; item++) {
+       const source = sources.get(plan.assets[item].key);
+       if (!(source instanceof Blob) || source.size !== plan.assets[item].size) throw Error('Keep the original file available until Android finishes preparing this save.');
+@@ -98,10 +98,10 @@
+     const phase = String(value.phase || ''), reason = String(value.error || '').trim();
+     if (phase === 'staging') return { status: 'uploading', backgroundReady: false, message: 'Preparing originals for Android · keep LotKeys open' };
+     if (phase === 'queued' && value.execution === 'scheduled') return { status: 'queued', backgroundReady: true, message: 'Android retained the originals · open Background upload controls to start the transfer; Android may defer ordinary work' };
+-    if (phase === 'queued') return { status: 'queued', backgroundReady: true, message: value.version === 2 ? 'Ready to switch apps · Android has the files and finishing work' : 'Android has the originals · waiting for Android to start the Drive save' };
++    if (phase === 'queued') return { status: 'queued', backgroundReady: true, message: value.version >= 2 ? 'Ready to switch apps · Android has the files and finishing work' : 'Android has the originals · waiting for Android to start the Drive save' };
+     if (phase === 'uploading') return { status: 'uploading', backgroundReady: true, message: 'Android reports uploading to Drive · originals are retained' };
+-    if (phase === 'finalizing') return { status: 'processing', backgroundReady: true, message: value.stage === 'directory' ? 'Files saved · Android is creating the Vehicle Info Sheet' : 'Files saved · updating Inventory preview' };
+-    if (phase === 'complete') return { status: 'processing', backgroundReady: true, message: 'Files saved · confirming the Vehicle Profile' };
++    if (phase === 'finalizing') return { status: 'processing', backgroundReady: true, message: value.version === 3 ? 'Files saved · submitting your Inventory request' : value.stage === 'directory' ? 'Files saved · Android is creating the Vehicle Info Sheet' : 'Files saved · updating Inventory preview' };
++    if (phase === 'complete') return { status: 'processing', backgroundReady: true, message: value.version === 3 ? 'Files saved · verifying your Inventory request' : 'Files saved · confirming the Vehicle Profile' };
+     if (phase === 'retrying') return { status: 'paused', backgroundReady: true, message: reason || 'Android retained the originals · waiting to retry Drive' };
+     if (phase === 'needs_reconcile') return { status: 'paused', backgroundReady: true, message: reason || 'Files saved · open LotKeys to finish Inventory' };
+     if (phase === 'status_unavailable') return { status: 'paused', backgroundReady: false, message: reason || 'Reconnecting to check the retained Android save' };
+@@ -144,5 +144,5 @@
+     if (!account || !store || !phone?.uploadCall) return;
+     return phone.uploadCall('hold', { account, store }, 5000);
+   }
+-  return { available, handoff, readStatus, presentation, wait, hold, chunkSize: CHUNK };
++  return { available, handoff, verifyHandoff:handoffProof, readStatus, presentation, wait, hold, chunkSize: CHUNK };
+ });
+diff --git a/lotkeys-owner-transfers.js b/lotkeys-owner-transfers.js
+new file mode 100644
+index 0000000..7a1f5ce
+--- /dev/null
++++ b/lotkeys-owner-transfers.js
+@@ -0,0 +1,93 @@
++(function(root,factory){
++  if(typeof module==='object'&&module.exports)module.exports=factory(require('./lotkeys-transfer-core.js'),require('./lotkeys-native-transfers.js'));
++  else root.LotKeysOwnerTransfers=factory(root.LotKeysTransferCore,root.LotKeysNativeTransfers);
++})(typeof globalThis!=='undefined'?globalThis:this,function(Core,Native){
++  'use strict';
++  const ID=/^[A-Za-z0-9_-]{8,200}$/;
++  const kinds=[['photos','photo'],['videos','video'],['attachments','document']];
++  const plural=kind=>kind==='photo'?'photos':kind==='video'?'videos':'documents';
++  function failure(message,code='NATIVE_OWNER_SUBMISSION'){return Object.assign(Error(message),{nativeTransfer:true,code});}
++  function sameOwner(a,b){return a&&b&&a.account===b.account&&a.store===b.store&&a.record===b.record;}
++  function sourceMap(v){const map=new Map();for(const [field,kind]of kinds)for(const item of v[field]||[])if(item.blob instanceof Blob)map.set(kind+':'+item.id,item.blob);return map;}
++  function snapshot(v){
++    const out={...v,drive:{...(v.drive||{})}};
++    for(const field of ['nativeTransfer','lastNativeSubmission','previousNativeSubmission'])delete out.drive[field];
++    for(const field of ['mediaUpload','localRecoverySnapshot','ownerSubmissionDraft'])delete out[field];
++    for(const [field]of kinds)out[field]=(v[field]||[]).map(item=>{const row={...item};delete row.blob;if(String(row.url||'').startsWith('blob:'))delete row.url;return row;});
++    return JSON.parse(JSON.stringify(out));
++  }
++  function plan({vehicle,request,scope,workspace,assets,media,fileId}){
++    scope=Core.context(scope);
++    if(!ID.test(fileId)||!ID.test(workspace.pendingFolderId)||!ID.test(workspace.vehicleFolderId))throw failure('The private submission workspace is incomplete.');
++    if(String(request.userEmail||'').toLowerCase()!==scope.account||String(request.vehicleId)!==scope.record||String(vehicle.updatedAt||0)!==scope.revision)throw failure('The submission identity or Vehicle edit changed.','NATIVE_CONTEXT_MISMATCH');
++    const create=!vehicle.drive?.profileFolderId,base=create?null:vehicle.ownerSubmissionBaseRevision;
++    if(!create&&(!Number.isSafeInteger(base)||base<=0))throw failure('Refresh this Vehicle before editing it so background posting can protect its Inventory revision.');
++    const body=JSON.parse(JSON.stringify({...request,schemaVersion:3,app:'LotKeys',recordType:'vehicleRequest',vehicleId:scope.record,vehicleName:String(vehicle.name||scope.record),type:create?'vehicle-native-create':'vehicle-native-owner-update',status:'pending',updatedAt:new Date().toISOString(),userEmail:scope.account,context:{...(request.context||{}),rootId:scope.store,email:scope.account,revision:scope.revision},nativeSubmissionGuard:{version:1,baseRevision:base},vehicle:snapshot(vehicle),media,folders:{...(request.folders||{}),moreVehicleFolderId:workspace.vehicleFolderId,moreVehicleFolderUrl:workspace.vehicleFolderUrl||'',moreMediaFolderId:workspace.mediaFolderId||'',moreMediaFolderUrl:workspace.mediaFolderUrl||'',pendingFolderId:workspace.pendingFolderId}}));
++    const value=Core.batch(scope,assets,[{type:'vehicle-submission',fileId,parentId:workspace.pendingFolderId,request:body}]);
++    value.version=3;value.key=JSON.stringify(['owner-submission',Core.key(scope),request.id]);value.stagingChunkBytes=1024*1024;
++    const referenced=new Set();
++    for(const [field,kind]of [['photos','photo'],['videos','video'],['documents','document']]){
++      if(!Array.isArray(body.media[field]))throw failure('The selected media plan is incomplete.');
++      const seen=new Set();
++      for(const item of body.media[field]){
++        if(!item.id||seen.has(item.id))throw failure('Selected media identifiers must be unique.');seen.add(item.id);
++        if(!item.assetKey){if(!ID.test(item.driveFileId))throw failure('A selected photo, video or document has no saved original.');continue;}
++        const asset=value.assets.find(row=>row.key===item.assetKey),p=asset?.properties;
++        if(!asset||referenced.has(item.assetKey)||item.driveFileId||p?.lotkeysAssetId!==item.id||p?.lotkeysAssetKind!==kind||p?.lotkeysContributionId!==body.id||p?.lotkeysVehicleId!==scope.record||p?.lotkeysRole!=='vehicleContributionAsset'||item.parentFolderId!==asset.parent)throw failure('An original does not match its frozen submission.');
++        referenced.add(item.assetKey);
++      }
++    }
++    if(referenced.size!==value.assets.length)throw failure('Every retained original must be included in the submission.');
++    if(JSON.stringify(value).length>1024*1024)throw failure('This submission is too large for one background save.');
++    return value;
++  }
++  function completed(receipt,snapshot){
++    Native.verifyHandoff(snapshot,receipt.plan,receipt.id,true);
++    if(snapshot.state!=='complete')throw failure('Android has not completed this submission.');
++    const op=receipt.plan.finalizers[0],proof=snapshot.finalizerResults?.submission;
++    if(!proof||proof.id!==op.fileId||proof.requestId!==op.request.id||!['pending','approved','rejected','dismissed','withdrawn'].includes(proof.status))throw failure('Android has not confirmed the saved Inventory request. Its files are retained for checking.');
++    const request=JSON.parse(JSON.stringify(op.request)),results=Core.completed(snapshot,receipt.context);
++    for(const field of ['photos','videos','documents'])for(const item of request.media[field]||[])if(item.assetKey){
++      const result=results[item.assetKey];if(!ID.test(result?.id))throw failure('A selected original has no confirmed Drive file.');
++      item.driveFileId=result.id;delete item.assetKey;
++    }
++    return {...request,status:proof.status,processorError:['pending','approved'].includes(proof.status)?'':String(proof.message||'Inventory did not accept this submission. Your originals are saved; review the current Profile.'),driveRequestFileId:proof.id,driveRequestFileUrl:'https://drive.google.com/file/d/'+proof.id+'/view'};
++  }
++  async function run({vehicle,request,scope,phone,processorReady,prepare,persist,retire,submitted,check,onProgress=()=>{},visibility=globalThis.document}){
++    scope=Core.context(scope);let receipt=vehicle.drive?.nativeTransfer;
++    await check();
++    if(receipt){
++      if(receipt.kind!=='owner-submission'||!sameOwner(receipt.context,scope))throw failure('A retained save belongs to a different account, Store or workflow. Its originals have been kept.','NATIVE_CONTEXT_MISMATCH');
++      if(!Core.sameContext(receipt.context,scope)){
++        if(receipt.id){
++          const old=await Native.readStatus(receipt.id,phone);Native.verifyHandoff(old,receipt.plan,receipt.id);
++          await check();if(!['complete','cancelled'].includes(old.state))await phone.uploadCall('cancel',{id:receipt.id});
++        }
++        await check();await retire(receipt);receipt=null;
++      }
++    }
++    if(!receipt){
++      if(!processorReady||!phone?.uploadCapabilities||typeof Native.verifyHandoff!=='function')return null;
++      let capabilities;try{capabilities=await phone.uploadCapabilities();}catch{return null;}
++      if(capabilities?.capabilities?.backgroundUploads!==true||capabilities?.capabilities?.submissionFinalization!==true||String(capabilities.uploadAccount||'').toLowerCase()!==scope.account)return null;
++      // A legacy request may already exist at this ID. Its existing foreground
++      // reconciliation is preserved instead of replacing it with a native plan.
++      if(request.driveRequestFileId)return null;
++      await check();const value=await prepare();await check();
++      if(value.version!==3||!Core.sameContext(value.context,scope))throw failure('The prepared submission changed context.','NATIVE_CONTEXT_MISMATCH');
++      receipt={kind:'owner-submission',context:scope,plan:value,id:'',handoffComplete:false};await persist(receipt,'plan');
++    }
++    const progress=value=>{
++      const state=Native.presentation(value);
++      onProgress({...state,kind:value.phase==='staging'?'handoff':'owner-update',percent:value.phase==='staging'?5+Math.floor(value.percent*.45):value.phase==='finalizing'?96:50+Math.floor(value.percent*.45),loadedBytes:value.staged,totalBytes:value.total,fileName:value.fileName,fileIndex:value.fileIndex,fileCount:value.fileCount});
++    };
++    await Native.handoff(receipt.plan,sourceMap(vehicle),{phone,check,onProgress:progress,onPrepared:async value=>{await check();receipt.id=value.id;await persist(receipt,'staging');},onCommitted:async(value,timing)=>{await check();receipt.handoffComplete=true;receipt.handoffTiming=timing;await persist(receipt,'queued');}});
++    let final;
++    await Native.wait(receipt.id,scope,{phone,check,visibility,onProgress:progress,onSnapshot:value=>{final=value;}});
++    const result=completed(receipt,final);await check();await submitted(result,final,receipt);
++    if(result.processorError)throw failure(result.processorError,'OWNER_REQUEST_REJECTED');
++    onProgress({kind:'owner-update',status:'complete',percent:100,message:result.status==='approved'?'Submission confirmed · refreshing Inventory':'Upload submitted · awaiting shared Inventory publication'});
++    return result;
++  }
++  return {plan,run,completed,sourceMap,snapshot,plural};
++});
+diff --git a/lotkeys-reliability.js b/lotkeys-reliability.js
+index 9bc231e..eb62c99 100644
+--- a/lotkeys-reliability.js
++++ b/lotkeys-reliability.js
+@@ -35,7 +35,8 @@
+     if(sameUpload&&native.capabilities?.backgroundUploads===true&&c&&lower(c.account)===lower(context.account)&&c.store===context.store&&!job.held){
+       const bytes=x=>(x?.assets||[]).reduce((n,a)=>n+(Number(a.confirmed)||0),0);
+       const progressing=previous?.id===job.id&&lower(previous.context?.account)===lower(c.account)&&previous.context?.store===c.store&&bytes(job)>bytes(previous);
+-      if(job.state==='complete'&&job.id&&Array.isArray(job.assets)&&job.assets.every(a=>/^[A-Za-z0-9_-]{8,200}$/.test(String(a.result?.id||''))))result.uploads={tone:'green',text:'Last Android transfer completed · receipt checked.'};
++      if(job.version===3&&['rejected','dismissed','withdrawn'].includes(job.finalizerResults?.submission?.status))result.uploads={tone:'amber',text:job.finalizerResults.submission.message||'Inventory did not accept this submission. Open its Profile to review saved originals.'};
++      else if(job.state==='complete'&&job.id&&Array.isArray(job.assets)&&job.assets.every(a=>/^[A-Za-z0-9_-]{8,200}$/.test(String(a.result?.id||''))))result.uploads={tone:'green',text:'Last Android transfer completed · receipt checked.'};
+       else if(job.state==='uploading'&&progressing)result.uploads={tone:'green',text:'Uploading · Android progress confirmed.'};
+       else if(job.error||/^paused_|failed|needs_reconcile/.test(job.state))result.uploads={tone:'amber',text:job.error||'Saved files need attention in Android controls.'};
+       else result.uploads={tone:'amber',text:'Files retained · Android may defer or retry this save.'};
+@@ -49,7 +50,7 @@
+     activeMount?.dispose();
+     const host=api.host,owner={};owners.set(host,owner);let sequence=0,previous=null;
+     const current=()=>owners.get(host)===owner&&host.isConnected;
+-    function paint(status){if(!current())return;host.innerHTML=`<h3>Uploads &amp; phone connector</h3>${[['uploads','Background uploads','Open upload controls'],['connector','Phone connector','Check / reconnect']].map(([id,label,button])=>`<div class="account-capability"><strong>${label}</strong><p role="status"><span class="capability-light ${status[id].tone}" aria-label="${status[id].tone==='green'?'Verified':'Needs checking'}"></span>${esc(status[id].text)}</p>${id==='uploads'?`<a class="btn" href="${uploadIntent}">${button}</a>`:`<button class="btn" type="button" data-check-connector>${button}</button>`}</div>`).join('')}<p class="help">Keep LotKeys open while originals are prepared. Android controls request the necessary permissions and background continuation. Regular-user submissions still need LotKeys open. Phone setup is available in the installed app’s Phone &amp; upload settings.</p>`;host.querySelector('[data-check-connector]').onclick=async()=>{if(!current())return;try{await api.phone?.connectNative?.();await refresh();}catch(error){if(current())host.querySelectorAll('[role=status]')[1].textContent=error.message||String(error);}};}
++    function paint(status){if(!current())return;host.innerHTML=`<h3>Uploads &amp; phone connector</h3>${[['uploads','Background uploads','Open upload controls'],['connector','Phone connector','Check / reconnect']].map(([id,label,button])=>`<div class="account-capability"><strong>${label}</strong><p role="status"><span class="capability-light ${status[id].tone}" aria-label="${status[id].tone==='green'?'Verified':'Needs checking'}"></span>${esc(status[id].text)}</p>${id==='uploads'?`<a class="btn" href="${uploadIntent}">${button}</a>`:`<button class="btn" type="button" data-check-connector>${button}</button>`}</div>`).join('')}<p class="help">Keep LotKeys open while originals are prepared. Android controls request the necessary permissions and background continuation. Regular-user background posting needs the matching .51 app and updated Store processor. Keep LotKeys open until Android confirms retention. Phone setup is available in the installed app’s Phone &amp; upload settings.</p>`;host.querySelector('[data-check-connector]').onclick=async()=>{if(!current())return;try{await api.phone?.connectNative?.();await refresh();}catch(error){if(current())host.querySelectorAll('[role=status]')[1].textContent=error.message||String(error);}};}
+     async function refresh(){
+       const run=++sequence,context=await api.context();if(!current()||run!==sequence)return;
+       let native=null,job=null;
+diff --git a/manifest.webmanifest b/manifest.webmanifest
+index 7ab6b70..dfa9f5c 100644
+--- a/manifest.webmanifest
++++ b/manifest.webmanifest
+@@ -3,7 +3,7 @@
+   "short_name": "LotKeys",
+   "description": "Dealership Vehicle Profiles, LotKeys chat, customer organization and Android phone-source messaging.",
+   "id": "./",
+-  "start_url": "./?build=095050",
++  "start_url": "./?build=095051",
+   "scope": "./",
+   "display": "standalone",
+   "background_color": "#f3f4f6",
+diff --git a/processor/Code.gs b/processor/Code.gs
+index aa4242d..c5ebf60 100644
+--- a/processor/Code.gs
++++ b/processor/Code.gs
+@@ -1,12 +1,12 @@
+ /**
+- * LotKeys Store Processor V0.9.4.78
++ * LotKeys Store Processor V0.9.4.79
+  *
+  * This script is installed once by an Admin Level 2 account. It is the trusted
+  * writer between each user's private More request queue and the official,
+  * Viewer-only Inventory. Never deploy it to execute as the visiting web user.
+  */
+ 
+-const LOTKEYS_PROCESSOR_VERSION = '0.9.4.78';
++const LOTKEYS_PROCESSOR_VERSION = '0.9.4.79';
+ // First installation only: configure this or the lotkeysStoreFolderId Script
+ // property. Generic updates never select a dealership or replace that binding.
+ const LOTKEYS_STORE_FOLDER_ID = '';
+@@ -215,7 +215,7 @@ function processLotKeysRequests() {
+         });
+       });
+     });
+-    if (state.userRegistryDirty) lkPersistUserRegistry_(state);
++    if (state.userRegistryDirty || state.config && (!state.config.processor || state.config.processor.version !== LOTKEYS_PROCESSOR_VERSION)) lkPersistUserRegistry_(state);
+     result.finishedAt = new Date().toISOString();
+     PropertiesService.getScriptProperties().setProperties({
+       lotkeysLastRunAt: result.finishedAt,
+@@ -229,6 +229,7 @@ function processLotKeysRequests() {
+ 
+ function lkProcessRequest_(state, actor, request, file, context) {
+   const type = String(request.type || '');
++  if (type === 'vehicle-native-create' || type === 'vehicle-native-owner-update' || request.nativeSubmissionGuard) return lkProcessNativeSubmission_(state, actor, request, file, context);
+   if (type === 'vehicle-create') return lkProcessVehicleCreate_(state, actor, request, file, context);
+   if (type === 'vehicle-owner-update') return lkProcessOwnerUpdate_(state, actor, request, file, context);
+   if (type === 'vehicle-contribution') return lkProcessContribution_(state, actor, request, file, context);
+@@ -236,6 +237,19 @@ function lkProcessRequest_(state, actor, request, file, context) {
+   return lkRejectRequest_(request, file, context, 'Unsupported request type.');
+ }
+ 
++function lkProcessNativeSubmission_(state, actor, request, file, context) {
++  const guard = request.nativeSubmissionGuard, type = String(request.type || '');
++  const create = type === 'vehicle-native-create' || type === 'vehicle-create';
++  if (!guard || guard.version !== 1 || (!create && type !== 'vehicle-native-owner-update' && type !== 'vehicle-owner-update')) return lkRejectRequest_(request, file, context, 'Invalid background submission guard.');
++  const current = lkFindVehicle_(state, String(request.vehicleId || ''));
++  if (create) {
++    if (guard.baseRevision !== null || current) return lkRejectRequest_(request, file, context, 'Inventory changed while this Vehicle was uploading. Your files are saved; review the current Profile before resubmitting.');
++    return lkProcessVehicleCreate_(state, actor, request, file, context);
++  }
++  if (!current || !Number.isSafeInteger(guard.baseRevision) || guard.baseRevision <= 0 || guard.baseRevision !== Number(current.updatedAt)) return lkRejectRequest_(request, file, context, 'Inventory changed while this Vehicle was uploading. Your files are saved; review the current Profile before resubmitting.');
++  return lkProcessOwnerUpdate_(state, actor, request, file, context, current);
++}
++
+ function lkAwardContribution_(state, actor, points, key, reason, awardedAt) {
+   if (!actor || !key || !points) return false;
+   const current = actor.contributions && typeof actor.contributions === 'object' ? actor.contributions : {};
+@@ -518,6 +532,7 @@ function lkPersistUserRegistry_(state) {
+   state.config.users = state.users;
+   state.config.processor = Object.assign({}, state.config.processor || {}, {
+     version: LOTKEYS_PROCESSOR_VERSION,
++    nativeSubmissionProtocol: 3,
+     installed: true,
+     updatedAt: now
+   });
+@@ -544,7 +559,7 @@ function lkPersistUserRegistry_(state) {
+       };
+     }),
+     publicUsers: publicUsers,
+-    processor: {version: LOTKEYS_PROCESSOR_VERSION, installed: true},
++    processor: {version: LOTKEYS_PROCESSOR_VERSION, installed: true, nativeSubmissionProtocol: 3},
+     updatedAt: now
+   });
+   state.rootAccessFile = lkUpsertJson_(state.rootAccessFile, state.root.id, 'Store Access.json', state.rootAccess, {lotkeysRole: 'storeAccess'});
+diff --git a/sw.js b/sw.js
+index 4e10ce4..6b5c0bd 100644
+--- a/sw.js
++++ b/sw.js
+@@ -1,4 +1,4 @@
+-const CACHE='lotkeys-app-v095050-reliability-preview';
++const CACHE='lotkeys-app-v095051-native-submission-preview';
+ const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
+ const CORE=[
+   './',
+@@ -25,6 +25,7 @@ const CORE=[
+   './lotkeys-doorbell-core.js',
+   './lotkeys-transfer-core.js',
+   './lotkeys-native-transfers.js',
++  './lotkeys-owner-transfers.js',
+   './lotkeys-deferred-save.js',
+   './lotkeys-phone-core.js',
+   './lotkeys-phone.js',
+diff --git a/tests/account-controls-dom.mjs b/tests/account-controls-dom.mjs
+index 3c83871..81f3bbb 100644
+--- a/tests/account-controls-dom.mjs
++++ b/tests/account-controls-dom.mjs
+@@ -5,7 +5,7 @@ const {Window}=await import(process.env.LOTKEYS_COMPARE_DOM||'happy-dom');
+ const script=fs.readFileSync(new URL('../lotkeys-reliability.js',import.meta.url),'utf8');
+ const turn=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
+ function fixture(){const w=new Window({url:'https://local.test'});w.eval(script);w.document.body.innerHTML='<div id="lock"></div><div id="controls"></div>';const host=w.document.querySelector('#controls');let context={account:'qa@example.test',store:'store'},native={uploadAccount:'qa@example.test',capabilities:{backgroundUploads:true},permissions:{readSms:true,sendSms:true},relay:{account:'qa@example.test',authorized:true,connected:true}},checks=0;const api={host,document:w.document,context:async()=>({...context}),receipts:async()=>[],phone:{uploadCapabilities:async()=>native,connectNative:async()=>{checks++;}}};const controller=w.LotKeysAccountControls.mount(api);return{w,host,api,controller,changeAccount(){context.account='other@example.test';},setNative(n){native=n;},checks:()=>checks};}
+-test('Account keeps two simple actions and a verified connector indicator without claiming background readiness',async()=>{const f=fixture();try{await f.controller.refresh();assert.equal(f.host.querySelectorAll('button,a.btn').length,2);assert.equal(f.host.querySelectorAll('.green').length,1);assert.match(f.host.textContent,/Regular-user submissions still need LotKeys open/);assert.match(f.host.querySelector('a').href,/scheme=lotkeys-test;package=ca.lotkeys.connector.test/);f.host.querySelector('button').click();await turn();assert.equal(f.checks(),1);}finally{f.controller.dispose();await f.w.happyDOM.close();}});
++test('Account keeps two simple actions and a verified connector indicator without claiming background readiness',async()=>{const f=fixture();try{await f.controller.refresh();assert.equal(f.host.querySelectorAll('button,a.btn').length,2);assert.equal(f.host.querySelectorAll('.green').length,1);assert.match(f.host.textContent,/Regular-user background posting needs/);assert.match(f.host.querySelector('a').href,/scheme=lotkeys-test;package=ca.lotkeys.connector.test/);f.host.querySelector('button').click();await turn();assert.equal(f.checks(),1);}finally{f.controller.dispose();await f.w.happyDOM.close();}});
+ test('a delayed native reply cannot paint green after the Google account changes',async()=>{const f=fixture();try{await f.controller.refresh();let release;f.api.phone.uploadCapabilities=()=>new Promise(r=>release=r);const pending=f.controller.refresh();await turn();f.changeAccount();release({uploadAccount:'qa@example.test',relay:{account:'qa@example.test',authorized:true,connected:true},permissions:{readSms:true,sendSms:true}});await pending;assert.equal(f.host.querySelectorAll('.green').length,0);}finally{f.controller.dispose();await f.w.happyDOM.close();}});
+ test('a detached control cannot repaint its successor or act on old handlers',async()=>{const f=fixture();try{await f.controller.refresh();const old=f.host.querySelector('button');f.controller.dispose();f.host.innerHTML='NEW ACCOUNT';old.click();await turn();assert.equal(f.checks(),0);assert.equal(f.host.textContent,'NEW ACCOUNT');}finally{await f.w.happyDOM.close();}});
+ test('foreign or malformed native receipts cannot produce a green upload light',async()=>{const f=fixture();try{f.api.receipts=async()=>[{id:'expected',handoffComplete:true,context:{account:'qa@example.test',store:'store',record:'vehicle',revision:'1'}}];f.api.phone.uploadCall=async()=>({id:'different',state:'complete',context:{account:'qa@example.test',store:'store',record:'vehicle',revision:'1'},assets:[]});await f.controller.refresh();assert.equal(f.host.querySelectorAll('.green').length,1);assert.match(f.host.querySelector('[role=status]').textContent,/Configured/);}finally{f.controller.dispose();await f.w.happyDOM.close();}});
+diff --git a/tests/owner-native-adapter.test.js b/tests/owner-native-adapter.test.js
+new file mode 100644
+index 0000000..0e3f2e9
+--- /dev/null
++++ b/tests/owner-native-adapter.test.js
+@@ -0,0 +1,15 @@
++'use strict';
++const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),Owner=require('../lotkeys-owner-transfers.js'),Core=require('../lotkeys-transfer-core.js');
++const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
++function fixture(){
++ const vehicle={id:'vehicle',updatedAt:17,drive:{},photos:[{id:'one',blob:new Blob(['one']),name:'one.jpg'}],videos:[],attachments:[]},request={id:'REQ-1',userName:'Rob',userEmail:'rob@example.test',vehicleId:'vehicle',createdAt:'today',media:{photos:[],videos:[],documents:[]}},context={rootId:'store-folder-123',email:'rob@example.test',revision:'17'};
++ let row=structuredClone(vehicle),options=null,cleared=0;const state=[],workspaceCalls=[];
++ const ctx={Blob,console,Date,Map,Set,Number,String,Error,JSON,window:{LotKeysTransferCore:Core,LotKeysOwnerTransfers:{...Owner,run:async value=>{options=value;return'handled'}},LotKeysPhone:{uploadCall:async()=>{}}},DB:{get:async()=>structuredClone(row),update:async(_,id,fn)=>{const next=fn(structuredClone(row));if(next)row=structuredClone(next);return structuredClone(row)}},setting:async(key,def)=>({'storeProcessorNativeSubmissionProtocol':3,'storeProcessorSubmissionStoreId':'store-folder-123'}[key]??def),saveVehicleSyncState:(_,s)=>state.push(s),clearOwnerRequestDraft:()=>cleared++,ensureVehicleMoreWorkspace:async(v,o)=>{workspaceCalls.push(o);return{pendingFolderId:'pending-folder-123',vehicleFolderId:'vehicle-folder-123',photosFolderId:'photos-folder-123'}},apiFetch:async()=>({ids:['reserved-request-123']}),driveGet:async()=>{throw Object.assign(Error('missing'),{status:404})}};
++ vm.createContext(ctx);vm.runInContext(html.slice(html.indexOf('async function nativeOwnedVehicleSubmission('),html.indexOf('async function queueOwnedVehicleProfile(')),ctx);
++ return{vehicle,request,context,ctx,state,workspaceCalls,options:()=>options,get:()=>structuredClone(row),set:v=>{row=structuredClone(v)},cleared:()=>cleared,run:()=>ctx.nativeOwnedVehicleSubmission(vehicle,request,context,{check:async()=>{},onProgress:()=>{}})};
++}
++test('the real adapter prepares private destinations without changing media sharing',async()=>{const f=fixture();assert.equal(await f.run(),'handled');const plan=await f.options().prepare();assert.equal(plan.version,3);assert.equal(f.workspaceCalls[0].shareMedia,false);assert.equal(plan.assets.length,1);assert.equal(plan.finalizers[0].request.folders.pendingFolderId,'pending-folder-123');});
++test('adapter refuses to replace a newer local edit with an old handoff checkpoint',async()=>{const f=fixture();await f.run();const plan=await f.options().prepare();f.set({...f.get(),updatedAt:18,name:'new edit'});await assert.rejects(f.options().persist({kind:'owner-submission',id:'job',context:plan.context,plan},'staging'),e=>e.code==='NATIVE_CONTEXT_MISMATCH');assert.equal(f.get().name,'new edit');assert.equal(f.get().drive.nativeTransfer,undefined);assert.equal(f.state.length,0);});
++test('another tab cannot replace the first retained plan for the same edit',async()=>{const f=fixture();await f.run();const plan=await f.options().prepare();f.set({...f.get(),drive:{nativeTransfer:{plan:{key:'other-plan'},id:'other-job'}}});await assert.rejects(f.options().persist({id:'new-job',plan},'plan'),e=>e.code==='NATIVE_CONTEXT_MISMATCH');assert.equal(f.get().drive.nativeTransfer.id,'other-job');});
++test('accepted submission keeps its checked thin receipt and awaits Inventory publication',async()=>{const f=fixture();await f.run();const plan=await f.options().prepare(),receipt={id:'job',plan,context:plan.context};await f.options().persist(receipt,'queued');await f.options().submitted({id:'REQ-1',status:'pending',driveRequestFileId:'reserved-request-123'},{},receipt);const saved=f.get();assert.equal(saved.syncStatus,'queued');assert.equal(saved.drive.nativeTransfer,undefined);assert.equal(saved.drive.lastNativeSubmission.handoffComplete,true);assert.equal(saved.lastWorkspaceRequestFileId,'reserved-request-123');assert.equal(f.cleared(),1);});
++test('adapter preserves the existing browser path on pages without the native module',async()=>{const f=fixture();delete f.ctx.window.LotKeysOwnerTransfers;assert.equal(await f.run(),null);});
+diff --git a/tests/owner-native-transfers.test.js b/tests/owner-native-transfers.test.js
+new file mode 100644
+index 0000000..b3056e9
+--- /dev/null
++++ b/tests/owner-native-transfers.test.js
+@@ -0,0 +1,33 @@
++'use strict';
++const test=require('node:test'),assert=require('node:assert/strict'),Owner=require('../lotkeys-owner-transfers.js');
++const clone=structuredClone;
++function fixture(){
++ const scope={account:'rob@example.test',store:'store-folder-123',record:'vehicle',revision:'17'},vehicle={id:'vehicle',updatedAt:17,name:'Vehicle',drive:{},photos:[{id:'photo-one',blob:new Blob(['original'])}],videos:[],attachments:[]};
++ const request={id:'CREATE-vehicle-17',vehicleId:'vehicle',userName:'Rob',userEmail:scope.account,createdAt:new Date().toISOString()};
++ const workspace={pendingFolderId:'pending-folder-123',vehicleFolderId:'vehicle-folder-123'},asset={key:'photo:photo-one',parent:'photos-folder-123',name:'one.jpg',size:8,properties:{lotkeysRole:'vehicleContributionAsset',lotkeysVehicleId:'vehicle',lotkeysContributionId:request.id,lotkeysAssetId:'photo-one',lotkeysAssetKind:'photo'}};
++ const media={photos:[{id:'photo-one',assetKey:asset.key,parentFolderId:asset.parent}],videos:[],documents:[]};
++ const make=()=>Owner.plan({vehicle,request,scope,workspace,assets:[asset],media,fileId:'reserved-request-123'});
++ let job=null;const calls=[],saved=[],events=[];let prepared=0,submitted=null,retired=0;
++ const phone={uploadCapabilities:async()=>({uploadAccount:scope.account,capabilities:{backgroundUploads:true,submissionFinalization:true}}),uploadCall:async(op,input)=>{
++   calls.push(op);
++   if(op==='prepare'){if(!job)job={...clone(input),id:'native-job-123',state:'staging',assets:input.assets.map(a=>({...clone(a),staged:0}))};return clone(job);}
++   if(op==='chunk'){assert.ok(vehicle.drive.nativeTransfer?.id);const a=job.assets[input.item],end=input.offset+Buffer.from(input.base64,'base64').length;if(input.offset===a.staged)a.staged=end;return{staged:a.staged};}
++   if(op==='commit'){assert.ok(job.assets.every(a=>a.staged===a.size));job.state='queued';return clone(job);}
++   if(op==='status'){assert.ok(vehicle.drive.nativeTransfer.handoffComplete);job.state='complete';for(const a of job.assets){a.confirmed=a.size;a.result={id:'confirmed-photo-123'};}job.finalizerResults={submission:{id:'reserved-request-123',requestId:request.id,status:'pending'}};return clone(job);}
++   if(op==='cancel'){job.state='cancelled';return clone(job);}throw Error(op);
++ }};
++ const options={vehicle,request,scope,phone,processorReady:true,prepare:async()=>{prepared++;return make()},persist:async(receipt,stage)=>{vehicle.drive.nativeTransfer=clone(receipt);saved.push(stage)},retire:async()=>{retired++;delete vehicle.drive.nativeTransfer},submitted:async result=>{submitted=clone(result)},check:async()=>{},onProgress:p=>events.push(p)};
++ return{scope,vehicle,request,workspace,asset,media,make,phone,options,calls,saved,events,job:()=>job,setJob:v=>{job=v},submitted:()=>submitted,prepared:()=>prepared,retired:()=>retired};
++}
++test('frozen plan binds every original, sanitized snapshot and protected create',()=>{const f=fixture(),plan=f.make(),op=plan.finalizers[0];assert.equal(plan.version,3);assert.equal(plan.stagingChunkBytes,1048576);assert.deepEqual(op.request.nativeSubmissionGuard,{version:1,baseRevision:null});assert.equal(op.request.type,'vehicle-native-create');assert.equal(op.request.vehicle.photos[0].blob,undefined);assert.equal(op.request.media.photos[0].assetKey,f.asset.key);});
++test('official owner updates require a real original Inventory revision',()=>{const f=fixture();f.vehicle.drive.profileFolderId='official-folder';assert.throws(f.make,/Refresh this Vehicle/);f.vehicle.ownerSubmissionBaseRevision=12;assert.deepEqual(f.make().finalizers[0].request.nativeSubmissionGuard,{version:1,baseRevision:12});});
++for(const change of ['account','revision','asset','missing','duplicate','unreferenced'])test('invalid frozen plan '+change+' is rejected',()=>{const f=fixture();if(change==='account')f.request.userEmail='another@example.test';if(change==='revision')f.vehicle.updatedAt=99;if(change==='asset')f.media.photos[0].parentFolderId='another-folder';if(change==='missing')delete f.media.videos;if(change==='duplicate')f.media.photos.push({...f.media.photos[0]});if(change==='unreferenced')f.media.photos=[];assert.throws(f.make);});
++test('the plan and job ID persist before bytes, retention before switch readiness, request before 100 percent',async()=>{const f=fixture();await Owner.run(f.options);assert.deepEqual(f.saved,['plan','staging','queued']);assert.ok(f.calls.indexOf('commit')>f.calls.indexOf('chunk'));assert.equal(f.submitted().media.photos[0].driveFileId,'confirmed-photo-123');assert.equal(f.events.at(-1).percent,100);assert.match(f.events.at(-1).message,/awaiting/);assert.equal(f.events.find(p=>p.kind==='handoff').backgroundReady,false);assert.equal(f.events.find(p=>p.backgroundReady).percent,50);});
++for(const reason of ['processor','old-apk','other-account','legacy-request'])test('unsupported '+reason+' keeps the existing foreground path without preparing native work',async()=>{const f=fixture();if(reason==='processor')f.options.processorReady=false;if(reason==='old-apk')f.phone.uploadCapabilities=async()=>({uploadAccount:f.scope.account,capabilities:{backgroundUploads:true}});if(reason==='other-account')f.phone.uploadCapabilities=async()=>({uploadAccount:'another@example.test',capabilities:{backgroundUploads:true,submissionFinalization:true}});if(reason==='legacy-request')f.request.driveRequestFileId='existing-request';assert.equal(await Owner.run(f.options),null);assert.equal(f.prepared(),0);assert.deepEqual(f.calls,[]);});
++test('lost prepare reply reuses the persisted plan without reserving another request',async()=>{const f=fixture(),call=f.phone.uploadCall;let lost=true;f.phone.uploadCall=async(op,v)=>{const r=await call(op,v);if(op==='prepare'&&lost){lost=false;throw Error('lost prepare reply')}return r};await assert.rejects(Owner.run(f.options),/lost prepare/);assert.equal(f.vehicle.drive.nativeTransfer.id,'');await Owner.run(f.options);assert.equal(f.prepared(),1);assert.equal(f.submitted().driveRequestFileId,'reserved-request-123');});
++test('lost chunk replies retry the same original offset and lost commit replies resume with no local Blob',async()=>{const f=fixture(),call=f.phone.uploadCall;let chunk=true,commit=true;f.phone.uploadCall=async(op,v)=>{const r=await call(op,v);if(op==='chunk'&&chunk){chunk=false;throw Error('chunk reply lost')}if(op==='commit'&&commit){commit=false;throw Error('commit reply lost')}return r};await assert.rejects(Owner.run(f.options),/commit reply lost/);assert.equal(f.vehicle.drive.nativeTransfer.handoffComplete,false);delete f.vehicle.photos[0].blob;await Owner.run(f.options);assert.equal(f.prepared(),1);assert.equal(f.calls.filter(op=>op==='chunk').length,2);assert.equal(f.events.at(-1).percent,100);});
++test('a late submission receipt cannot report success without a matching finalizer proof',async()=>{const f=fixture(),call=f.phone.uploadCall;f.phone.uploadCall=async(op,v)=>{const r=await call(op,v);if(op==='status')delete r.finalizerResults;return r};await assert.rejects(Owner.run(f.options),/confirmed the saved Inventory request/);assert.equal(f.submitted(),null);assert.ok(!f.events.some(e=>e.percent===100));assert.ok(f.vehicle.drive.nativeTransfer);});
++test('processor rejection is persisted as an error with saved originals and no success progress',async()=>{const f=fixture(),call=f.phone.uploadCall;f.phone.uploadCall=async(op,v)=>{const r=await call(op,v);if(op==='status')Object.assign(r.finalizerResults.submission,{status:'rejected',message:'Inventory changed'});return r};await assert.rejects(Owner.run(f.options),e=>e.code==='OWNER_REQUEST_REJECTED');assert.equal(f.submitted().processorError,'Inventory changed');assert.ok(!f.events.some(e=>e.percent===100));});
++test('a retained foreign account never cancels, overwrites or starts another submission',async()=>{const f=fixture();f.vehicle.drive.nativeTransfer={kind:'owner-submission',context:{...f.scope,account:'another@example.test'},id:'foreign-job',plan:f.make()};await assert.rejects(Owner.run(f.options),e=>e.code==='NATIVE_CONTEXT_MISMATCH');assert.deepEqual(f.calls,[]);assert.equal(f.retired(),0);});
++test('a newer edit retires only a verified older job before making a fresh request',async()=>{const f=fixture(),old=f.make();old.context.revision='16';const receipt={kind:'owner-submission',context:clone(old.context),id:'older-job',plan:old};f.vehicle.drive.nativeTransfer=receipt;const call=f.phone.uploadCall;f.phone.uploadCall=async(op,v)=>v?.id==='older-job'?{...clone(old),id:'older-job',state:op==='cancel'?'cancelled':'queued',assets:old.assets.map(a=>({...a,staged:a.size}))}:call(op,v);await Owner.run(f.options);assert.equal(f.retired(),1);assert.equal(f.prepared(),1);});
++test('a context change during staging prevents native commit and retains the receipt',async()=>{const f=fixture();let invalid=false;const call=f.phone.uploadCall;f.phone.uploadCall=async(op,v)=>{const r=await call(op,v);if(op==='chunk')invalid=true;return r};f.options.check=async()=>{if(invalid)throw Error('edit changed')};await assert.rejects(Owner.run(f.options),/edit changed/);assert.ok(!f.calls.includes('commit'));assert.ok(f.vehicle.drive.nativeTransfer);});
+diff --git a/tests/processor-native-submission.test.js b/tests/processor-native-submission.test.js
+new file mode 100644
+index 0000000..0d45f18
+--- /dev/null
++++ b/tests/processor-native-submission.test.js
+@@ -0,0 +1,16 @@
++'use strict';
++const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
++const code=fs.readFileSync(require.resolve('../processor/Code.gs'),'utf8');
++function fixture(current={id:'vehicle',updatedAt:200,price:60000}){
++ const saved=[],rejected=[],ctx={console,Date,JSON,String,Number,Math};vm.createContext(ctx);vm.runInContext(code,ctx);
++ Object.assign(ctx,{lkFindVehicle_:()=>current,lkIsCreator_:()=>true,lkCleanVehicleSnapshot_:v=>({...v}),lkAssertUniqueVehicle_:()=>{},lkEnsureOfficialStructure_:()=>{},lkReconcileOwnerMedia_:()=>{},lkWriteVehicle_:(_,v)=>saved.push(structuredClone(v)),lkApproveRequest_:()=> 'approved',lkRejectRequest_:(r,f,c,reason)=>{rejected.push(reason);return'rejected';}});
++ return{ctx,saved,rejected,current,request:{id:'request',vehicleId:'vehicle',type:'vehicle-native-owner-update',nativeSubmissionGuard:{version:1,baseRevision:200},vehicle:{id:'vehicle',updatedAt:300,price:50000}}};
++}
++test('a delayed native owner snapshot cannot replace newer Inventory',()=>{const f=fixture();f.request.nativeSubmissionGuard.baseRevision=100;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.current.price,60000);assert.equal(f.saved.length,0);assert.match(f.rejected[0],/Inventory changed/);});
++test('the native guard also protects an explicitly guarded legacy-shaped request',()=>{const f=fixture();f.request.type='vehicle-owner-update';f.request.nativeSubmissionGuard.baseRevision=100;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.saved.length,0);});
++test('a matching native base revision uses the existing creator authorization and save path',()=>{const f=fixture();assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'approved');assert.equal(f.saved[0].price,50000);});
++test('a valid revision cannot bypass creator permissions',()=>{const f=fixture();f.ctx.lkIsCreator_=()=>false;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.saved.length,0);});
++test('a delayed create cannot become a replacement of an already created Vehicle',()=>{const f=fixture();f.request.type='vehicle-native-create';f.request.nativeSubmissionGuard.baseRevision=null;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.saved.length,0);});
++test('a new native create reaches the existing creation workflow only while its ID is absent',()=>{const f=fixture(null);f.request.type='vehicle-native-create';f.request.nativeSubmissionGuard.baseRevision=null;let calls=0;f.ctx.lkProcessVehicleCreate_=()=>{calls++;return'approved'};assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'approved');assert.equal(calls,1);});
++for(const base of [undefined,'200',0,-1,199])test('invalid native base '+String(base)+' is rejected without writes',()=>{const f=fixture();f.request.nativeSubmissionGuard.baseRevision=base;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.saved.length,0);});
++test('legacy unguarded foreground requests retain their existing workflow',()=>{const f=fixture();f.request.type='vehicle-owner-update';delete f.request.nativeSubmissionGuard;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'approved');});
+diff --git a/tests/release-contract.test.js b/tests/release-contract.test.js
+index 752a5d6..02036e3 100644
+--- a/tests/release-contract.test.js
++++ b/tests/release-contract.test.js
+@@ -8,20 +8,20 @@ const path = require('node:path');
+ const root = path.resolve(__dirname, '..');
+ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+ 
+-test('release metadata is consistently V0.9.5.50 partial TEST reliability preview with Android V0.9.5.46', () => {
++test('release metadata is consistently V0.9.5.51 partial TEST reliability preview with Android V0.9.5.46', () => {
+   const version = JSON.parse(read('version.json'));
+-  assert.equal(version.version, '0.9.5.50');
+-  assert.equal(version.build, '095050');
++  assert.equal(version.version, '0.9.5.51');
++  assert.equal(version.build, '095051');
+   assert.equal(version.channel, 'test');
+-  assert.equal(version.release, 'reliability-preview');
+-  assert.equal(version.releaseScope, 'partial-reliability-test-preview');
++  assert.equal(version.release, 'background-submission-preview');
++  assert.equal(version.releaseScope, 'guarded-native-submission-source-preview');
+   assert.equal(version.deploymentStatus, 'source-checkpoint-not-deployed');
+   assert.equal(version.regularUserNativeHandoff, false);
+   assert.equal(version.androidConnectorVersion, '0.9.5.46');
+-  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095050-reliability-preview');
+-  assert.match(read('index.html'), /V0\.9\.5\.50/);
+-  assert.match(read('manifest.webmanifest'), /build=095050/);
+-  assert.match(read('sw.js'), /lotkeys-app-v095050-reliability-preview/);
++  assert.equal(version.serviceWorkerCache, 'lotkeys-app-v095051-native-submission-preview');
++  assert.match(read('index.html'), /V0\.9\.5\.51/);
++  assert.match(read('manifest.webmanifest'), /build=095051/);
++  assert.match(read('sw.js'), /lotkeys-app-v095051-native-submission-preview/);
+   assert.match(read('.github/workflows/build-lotkeys-android.yml'), /LotKeys-Android-V0\.9\.5\.51-SOURCE-PREVIEW-DO-NOT-INSTALL/);
+   assert.match(read('android/app/build.gradle'), /versionCode 95051/);
+   assert.match(read('android/app/src/main/java/ca/lotkeys/connector/MainActivity.java'), /Phone Connection · V0\.9\.5\.51 TEST PREVIEW/);
+@@ -177,7 +177,7 @@ test('phone checkpoint uses the new Android layer and encrypted same-account tra
+   assert.match(phone, /String\(1000 .* % 9000\)/);
+   assert.match(phone, /processed and expired|cleanupStale|deleteFile/);
+   assert.doesNotMatch(phone, /device\.json|hub\.json|cloudflared|Python relay/i);
+-  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095050/);
++  assert.match(read('index.html'), /lotkeys-phone\.js\?v=095051/);
+   assert.match(phone, /targetAddressSpace: 'loopback'/);
+   assert.match(phone, /connectNative/);
+   assert.match(read('lotkeys-hub.css'), /hub-signal-bars/);
+@@ -271,8 +271,8 @@ test('internal LotKeys chat remains wired into Hub', () => {
+   assert.match(messaging, /async function sendParty/);
+   assert.match(messaging, /function hubMount/);
+   assert.match(messaging, /async function hubRows/);
+-  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095050/);
+-  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095050/);
++  assert.match(read('index.html'), /lotkeys-messaging\.js\?v=095051/);
++  assert.match(read('index.html'), /lotkeys-hub\.js\?v=095051/);
+ });
+ 
+ test('cached LotKeys renders before Chat and Phone background startup', () => {
+diff --git a/tools/package-review.py b/tools/package-review.py
+index 3c34eb8..83eef5b 100644
+--- a/tools/package-review.py
++++ b/tools/package-review.py
+@@ -15,7 +15,7 @@ for name in filter(None, paths):
+         omitted.append(name)
+         continue
+     files.append(name)
+-manifest = {'kind': 'UNRELEASED SOURCE REVIEW ONLY', 'version': '0.9.5.50',
++manifest = {'kind': 'UNRELEASED SOURCE REVIEW ONLY', 'version': '0.9.5.51',
+             'sourceCommit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
+             'baseCommit': 'a3cbd0aac8d956ec9d8110a1c5dd7f08f7fb7cbe',
+             'nativeApkVersion': '0.9.5.46', 'newNativeApk': False, 'deployed': False,
+@@ -25,8 +25,8 @@ with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
+     for name in sorted(files):
+         data = (root / name).read_bytes()
+         manifest['sha256'][name] = hashlib.sha256(data).hexdigest()
+-        archive.writestr('LotKeys-0.9.5.50-REVIEW-ONLY/' + name, data)
+-    archive.writestr('LotKeys-0.9.5.50-REVIEW-ONLY/REVIEW-MANIFEST.json', json.dumps(manifest, indent=2))
++        archive.writestr('LotKeys-0.9.5.51-REVIEW-ONLY/' + name, data)
++    archive.writestr('LotKeys-0.9.5.51-REVIEW-ONLY/REVIEW-MANIFEST.json', json.dumps(manifest, indent=2))
+ with zipfile.ZipFile(output) as archive:
+     assert archive.testzip() is None
+ print(json.dumps({'file': output.name, 'bytes': output.stat().st_size, 'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), 'files': len(files), 'newNativeApk': False, 'deployed': False}))
+diff --git a/version.json b/version.json
+index 6556fc1..3f62875 100644
+--- a/version.json
++++ b/version.json
+@@ -1,17 +1,17 @@
+ {
+   "app": "LotKeys",
+-  "version": "0.9.5.50",
+-  "build": "095050",
+-  "release": "reliability-preview",
++  "version": "0.9.5.51",
++  "build": "095051",
++  "release": "background-submission-preview",
+   "channel": "test",
+   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
+-  "serviceWorkerCache": "lotkeys-app-v095050-reliability-preview",
+-  "basedOn": "TEST .49 a3cbd0a; signed Android .46 preserved",
++  "serviceWorkerCache": "lotkeys-app-v095051-native-submission-preview",
++  "basedOn": "TEST .50 39e89f0; installed original-key Android .46 preserved",
+   "androidConnectorVersion": "0.9.5.46",
+   "preparedAt": "2026-11-18",
+   "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.46.apk",
+   "originVerificationUrl": "https://mrmilo34.github.io/.well-known/assetlinks.json",
+-  "releaseScope": "partial-reliability-test-preview",
++  "releaseScope": "guarded-native-submission-source-preview",
+   "automaticWebsiteSearch": false,
+   "lotkeysDriveAuthorizationVerified": false,
+   "lotkeysDriveRenewalVerified": false,
+@@ -19,9 +19,14 @@
+   "deploymentStatus": "source-checkpoint-not-deployed",
+   "regularUserNativeHandoff": false,
+   "knownLimitations": [
+-    "Regular-user submissions remain browser-dependent; preparation screen wake is best effort.",
+-    "Paired-PC higher-authority report needs its exact error for diagnosis; only definite relay 401 renewal is addressed.",
+-    "Automatic Compare remains blocked by approved source access, report rights and private backend."
++    "Native regular-user handoff is gated on matching .51 app, authorized native Google account and Store processor protocol 3; live processor update is not yet available.",
++    "Browser preparation still requires LotKeys open until Android verifies all originals; Android may defer ordinary jobs.",
++    "Paired-PC send diagnosis awaits exact error and Device SMS versus LotKeys chat identification; no speculative send repair.",
++    "Physical phone, live Google handoff and Store processor integration remain unverified.",
++    "Automatic Compare remains pending authorized sources and private backend."
+   ],
+-  "androidSourceCandidateVersion": "0.9.5.51"
++  "androidSourceCandidateVersion": "0.9.5.51",
++  "regularUserNativeHandoffImplemented": true,
++  "requiredStoreProcessorVersion": "0.9.4.79",
++  "requiredStoreProcessorNativeSubmissionProtocol": 3
+ }
+-- 
+2.52.0
+
