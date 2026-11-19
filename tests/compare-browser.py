@@ -143,7 +143,9 @@ try:
         page.wait_for_selector('#account-upload-connector .capability-light.green')
         assert page.locator('#account-upload-connector').evaluate("e=>e.previousElementSibling.id")=='account-lock-settings'
         assert page.locator('#account-upload-connector button,#account-upload-connector a.btn').count()==2
-        assert 'Regular-user submissions still need LotKeys open' in page.locator('#account-upload-connector').inner_text()
+        assert 'Regular-user background posting is disabled until a verified disposable TEST destination' in page.locator('#account-upload-connector').inner_text()
+        assert page.locator('#account-upload-connector .account-capability').first.locator('.capability-light.amber').count()==1
+        assert page.evaluate('LotKeysSubmissionIsolation.policy.enabled') is False
         for width in [1280,390,320]:
             page.set_viewport_size({'width':width,'height':844})
             assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
