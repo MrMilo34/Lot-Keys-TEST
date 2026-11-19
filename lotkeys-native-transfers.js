@@ -25,7 +25,7 @@
     if (!snapshot || typeof snapshot.id !== 'string' || !snapshot.id || !snapshot.context || !Array.isArray(snapshot.assets) || typeof snapshot.state !== 'string') reject('Android returned an incomplete handoff receipt. Reopen LotKeys to check its retained save.');
     if (!Core.sameContext(snapshot.context, plan.context)) { const error = Error('The background upload belongs to another account, Store or edit. Its originals are retained.'); error.nativeTransfer = true; error.code = 'NATIVE_CONTEXT_MISMATCH'; throw error; }
     if (id && snapshot.id !== id) reject('Android returned another save receipt. The original job has been kept.');
-    if (snapshot.assets.length !== plan.assets.length || (plan.version === 2 && snapshot.version !== 2)) reject('Android has not confirmed the complete original-file plan.');
+    if (snapshot.assets.length !== plan.assets.length || (plan.version >= 2 && snapshot.version !== plan.version)) reject('Android has not confirmed the complete original-file plan.');
     const seen = new Set();
     for (let i = 0; i < plan.assets.length; i++) {
       const expected = plan.assets[i], actual = snapshot.assets[i];
@@ -62,7 +62,7 @@
     if (Core.terminal(snapshot.state)) { if (snapshot.state === 'complete' || snapshot.state === 'needs_reconcile') handoffProof(snapshot, plan, id, true); return snapshot; }
     if (snapshot.state !== 'staging') return commit();
     const total = plan.assets.reduce((sum, row) => sum + row.size, 0); let staged = 0;
-    const chunkSize = plan.version === 2 ? Math.min(1024 * 1024, Math.max(CHUNK, Number(plan.stagingChunkBytes) || CHUNK)) : CHUNK;
+    const chunkSize = plan.version >= 2 ? Math.min(1024 * 1024, Math.max(CHUNK, Number(plan.stagingChunkBytes) || CHUNK)) : CHUNK;
     for (let item = 0; item < plan.assets.length; item++) {
       const source = sources.get(plan.assets[item].key);
       if (!(source instanceof Blob) || source.size !== plan.assets[item].size) throw Error('Keep the original file available until Android finishes preparing this save.');
@@ -98,10 +98,10 @@
     const phase = String(value.phase || ''), reason = String(value.error || '').trim();
     if (phase === 'staging') return { status: 'uploading', backgroundReady: false, message: 'Preparing originals for Android · keep LotKeys open' };
     if (phase === 'queued' && value.execution === 'scheduled') return { status: 'queued', backgroundReady: true, message: 'Android retained the originals · open Background upload controls to start the transfer; Android may defer ordinary work' };
-    if (phase === 'queued') return { status: 'queued', backgroundReady: true, message: value.version === 2 ? 'Ready to switch apps · Android has the files and finishing work' : 'Android has the originals · waiting for Android to start the Drive save' };
+    if (phase === 'queued') return { status: 'queued', backgroundReady: true, message: value.version >= 2 ? 'Ready to switch apps · Android has the files and finishing work' : 'Android has the originals · waiting for Android to start the Drive save' };
     if (phase === 'uploading') return { status: 'uploading', backgroundReady: true, message: 'Android reports uploading to Drive · originals are retained' };
-    if (phase === 'finalizing') return { status: 'processing', backgroundReady: true, message: value.stage === 'directory' ? 'Files saved · Android is creating the Vehicle Info Sheet' : 'Files saved · updating Inventory preview' };
-    if (phase === 'complete') return { status: 'processing', backgroundReady: true, message: 'Files saved · confirming the Vehicle Profile' };
+    if (phase === 'finalizing') return { status: 'processing', backgroundReady: true, message: value.version === 3 ? 'Files saved · submitting your Inventory request' : value.stage === 'directory' ? 'Files saved · Android is creating the Vehicle Info Sheet' : 'Files saved · updating Inventory preview' };
+    if (phase === 'complete') return { status: 'processing', backgroundReady: true, message: value.version === 3 ? 'Files saved · verifying your Inventory request' : 'Files saved · confirming the Vehicle Profile' };
     if (phase === 'retrying') return { status: 'paused', backgroundReady: true, message: reason || 'Android retained the originals · waiting to retry Drive' };
     if (phase === 'needs_reconcile') return { status: 'paused', backgroundReady: true, message: reason || 'Files saved · open LotKeys to finish Inventory' };
     if (phase === 'status_unavailable') return { status: 'paused', backgroundReady: false, message: reason || 'Reconnecting to check the retained Android save' };
@@ -144,5 +144,5 @@
     if (!account || !store || !phone?.uploadCall) return;
     return phone.uploadCall('hold', { account, store }, 5000);
   }
-  return { available, handoff, readStatus, presentation, wait, hold, chunkSize: CHUNK };
+  return { available, handoff, verifyHandoff:handoffProof, readStatus, presentation, wait, hold, chunkSize: CHUNK };
 });

@@ -31,6 +31,8 @@ jobs:
           node --check lotkeys-website-identity.js
           node --check lotkeys-transfer-core.js
           node --check lotkeys-native-transfers.js
+          node --check lotkeys-owner-transfers.js
+          node --check lotkeys-submission-isolation.js
           node --check lotkeys-deferred-save.js
           node --check lotkeys-doorbell-core.js
           node --check wake-sender/Code.js
@@ -55,11 +57,11 @@ jobs:
           PY
 
       - name: Package unreleased source review
-        run: python3 tools/package-review.py "$RUNNER_TEMP/LotKeys-0.9.5.50-REVIEW-ONLY-source.zip"
+        run: python3 tools/package-review.py "$RUNNER_TEMP/LotKeys-0.9.5.51-REVIEW-ONLY-source.zip"
       - uses: actions/upload-artifact@v4
         with:
-          name: LotKeys-0.9.5.50-REVIEW-ONLY-source
-          path: ${{ runner.temp }}/LotKeys-0.9.5.50-REVIEW-ONLY-source.zip
+          name: LotKeys-0.9.5.51-REVIEW-ONLY-source
+          path: ${{ runner.temp }}/LotKeys-0.9.5.51-REVIEW-ONLY-source.zip
           if-no-files-found: error
 
   compare-browser:

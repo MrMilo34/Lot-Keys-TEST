@@ -66,12 +66,14 @@ public final class TransferJobService extends JobService {
                     if (cancelled.get()) break;
                     String id = batch.getString("id"), account = batch.getJSONObject("context").getString("account");
                     try {
+                        store.requireSubmissionAllowed(batch);
                         if (!TransferAuth.ready(this) || !account.equalsIgnoreCase(TransferAuth.account(this))) {
                             store.state(id, "paused_auth", "Open Android setup to approve the original upload account."); continue;
                         }
                         DriveUploadClient.Check check = () -> {
                             if (cancelled.get()) throw new CancellationException();
                             JSONObject live = store.get(id);
+                            store.requireSubmissionAllowed(live);
                             if (live.optBoolean("held") || "cancelled".equals(live.optString("state"))) throw new CancellationException();
                             if (!account.equalsIgnoreCase(DriveRelay.account(this))) throw new TransferAuth.AuthRequired("The phone account changed. Restore the original account to resume this save.");
                         };
@@ -82,6 +84,8 @@ public final class TransferJobService extends JobService {
                         if (batch.optInt("version") == 2) notifyProgress(params, "Files saved · finishing the Vehicle Info Sheet and Inventory");
                         new TransferFinalizer(new DriveUploadClient(this, account, params.getNetwork(), check), check).finish(store, batch);
                         check.run(); store.state(id, "complete", ""); store.releaseOriginals(id);
+                    } catch (SubmissionIsolation.Blocked blockedDestination) {
+                        store.state(id, "paused_isolation", blockedDestination.getMessage());
                     } catch (CancellationException cancelledWork) {
                         if (!cancelled.get()) store.state(id, "paused_context", "This save is paused because its account, Store or edit changed.");
                         else retry = true;

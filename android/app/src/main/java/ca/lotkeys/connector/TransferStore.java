@@ -20,14 +20,26 @@ final class TransferStore {
     static final int MAX_CHUNK = 1024 * 1024;
     private static final long MAX_BATCH = 4L * 1024 * 1024 * 1024;
     private final File root;
+    private final SubmissionIsolation.Policy isolation;
 
-    TransferStore(Context context) {
+    TransferStore(Context context) { this(context, SubmissionIsolation.active()); }
+
+    TransferStore(Context context, SubmissionIsolation.Policy isolation) {
+        this.isolation = isolation;
         root = new File(context.getFilesDir(), "transfers");
         if (!root.isDirectory() && !root.mkdirs()) throw new IllegalStateException("Upload storage is unavailable.");
     }
 
+    void requireSubmissionAllowed(JSONObject batch) throws Exception {
+        boolean submission = batch.optInt("version") == 3;
+        JSONArray operations = batch.optJSONArray("finalizers");
+        for (int i = 0; operations != null && i < operations.length(); i++) submission |= "vehicle-submission".equals(operations.getJSONObject(i).optString("type"));
+        if (submission) isolation.requireAllowed(batch);
+    }
+
     JSONObject prepare(JSONObject input) throws Exception {
         synchronized (LOCK) {
+            requireSubmissionAllowed(input);
             JSONObject scope = input.getJSONObject("context");
             require(input.optInt("version", 1) == 1 || input.optInt("version") == 2 || input.optInt("version") == 3, "Update the connector before preparing this save.");
             if (input.optInt("version") == 3) SubmissionFinalizer.validate(input);
@@ -89,6 +101,7 @@ final class TransferStore {
         require(bytes.length <= MAX_CHUNK, "Upload staging chunk is too large.");
         synchronized (LOCK) {
             JSONObject batch = get(id);
+            requireSubmissionAllowed(batch);
             require("staging".equals(batch.optString("state")), "This upload no longer accepts source bytes.");
             JSONObject asset = asset(batch, item);
             File source = source(id, item);
@@ -112,6 +125,7 @@ final class TransferStore {
     JSONObject commit(String id) throws Exception {
         synchronized (LOCK) {
             JSONObject batch = get(id);
+            requireSubmissionAllowed(batch);
             if (!"staging".equals(batch.optString("state"))) return snapshot(batch);
             JSONArray assets = batch.getJSONArray("assets");
             for (int i = 0; i < assets.length(); i++) {
@@ -145,12 +159,13 @@ final class TransferStore {
     JSONObject cancel(String id) throws Exception { synchronized (LOCK) { JSONObject batch = get(id).put("state", "cancelled"); save(batch); return snapshot(batch); } }
     JSONObject acknowledge(String id) throws Exception { synchronized (LOCK) {
         JSONObject batch = get(id);
+        requireSubmissionAllowed(batch);
         require("needs_reconcile".equals(batch.optString("state")) || "complete".equals(batch.optString("state")), "This save is not ready for foreground reconciliation.");
         for (int i = 0; i < batch.getJSONArray("assets").length(); i++) fileId(itemState(id, i).getJSONObject("result").getString("id"));
         batch.put("state", "complete").put("error", ""); save(batch); releaseOriginals(id); return snapshot(batch);
     } }
     void releaseOriginals(String id) throws Exception { synchronized (LOCK) {
-        JSONObject batch = get(id); require("complete".equals(batch.optString("state")), "Keep originals until the entire save is confirmed.");
+        JSONObject batch = get(id); requireSubmissionAllowed(batch); require("complete".equals(batch.optString("state")), "Keep originals until the entire save is confirmed.");
         for (int i = 0; i < batch.getJSONArray("assets").length(); i++) source(id, i).delete();
         operationFile(id, "directory.pdf").delete();
     } }
@@ -188,7 +203,7 @@ final class TransferStore {
     List<JSONObject> pending() throws Exception {
         List<JSONObject> rows = new ArrayList<>();
         synchronized (LOCK) {
-            for (JSONObject batch : all()) if (!terminal(batch.optString("state")) && !"staging".equals(batch.optString("state")) && !batch.optBoolean("held")) rows.add(batch);
+            for (JSONObject batch : all()) if (!terminal(batch.optString("state")) && !"staging".equals(batch.optString("state")) && !"paused_isolation".equals(batch.optString("state")) && !batch.optBoolean("held")) rows.add(batch);
         }
         rows.sort((a,b) -> Long.compare(a.optLong("createdAt"), b.optLong("createdAt")));
         return rows;

@@ -1,3 +1,10 @@
+# Continuation supersedes the prerequisite limits below
+
+The .51 source now includes the browser plan/receipt adapter and a guarded .79
+processor patch. See CURRENT-STATE.md and RELEASE-0.9.5.51-SOURCE-CHECKPOINT.md.
+The historical native-only description below records the previous checkpoint.
+Live activation, matching installer delivery and phone validation remain pending.
+
 # Bounded native request finalizer checkpoint
 
 Based on the reviewed .50 source a29d923 and its TEST-only publication39e89f0.

@@ -23,6 +23,7 @@ final class TransferFinalizer {
         throw new IllegalArgumentException("The cover photo is missing from this save.");
     }
     void finish(TransferStore store, JSONObject batch) throws Exception {
+        store.requireSubmissionAllowed(batch);
         JSONArray operations = batch.optJSONArray("finalizers");
         if (operations == null) return;
         for (int i = 0; i < operations.length(); i++) {

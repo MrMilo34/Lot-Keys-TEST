@@ -1,0 +1,16 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const code=fs.readFileSync(require.resolve('../processor/Code.gs'),'utf8');
+function fixture(current={id:'vehicle',updatedAt:200,price:60000}){
+ const saved=[],rejected=[],ctx={console,Date,JSON,String,Number,Math};vm.createContext(ctx);vm.runInContext(code,ctx);
+ Object.assign(ctx,{lkFindVehicle_:()=>current,lkIsCreator_:()=>true,lkCleanVehicleSnapshot_:v=>({...v}),lkAssertUniqueVehicle_:()=>{},lkEnsureOfficialStructure_:()=>{},lkReconcileOwnerMedia_:()=>{},lkWriteVehicle_:(_,v)=>saved.push(structuredClone(v)),lkApproveRequest_:()=> 'approved',lkRejectRequest_:(r,f,c,reason)=>{rejected.push(reason);return'rejected';}});
+ return{ctx,saved,rejected,current,request:{id:'request',vehicleId:'vehicle',type:'vehicle-native-owner-update',nativeSubmissionGuard:{version:1,baseRevision:200},vehicle:{id:'vehicle',updatedAt:300,price:50000}}};
+}
+test('a delayed native owner snapshot cannot replace newer Inventory',()=>{const f=fixture();f.request.nativeSubmissionGuard.baseRevision=100;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.current.price,60000);assert.equal(f.saved.length,0);assert.match(f.rejected[0],/Inventory changed/);});
+test('the native guard also protects an explicitly guarded legacy-shaped request',()=>{const f=fixture();f.request.type='vehicle-owner-update';f.request.nativeSubmissionGuard.baseRevision=100;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.saved.length,0);});
+test('a matching native base revision uses the existing creator authorization and save path',()=>{const f=fixture();assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'approved');assert.equal(f.saved[0].price,50000);});
+test('a valid revision cannot bypass creator permissions',()=>{const f=fixture();f.ctx.lkIsCreator_=()=>false;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.saved.length,0);});
+test('a delayed create cannot become a replacement of an already created Vehicle',()=>{const f=fixture();f.request.type='vehicle-native-create';f.request.nativeSubmissionGuard.baseRevision=null;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.saved.length,0);});
+test('a new native create reaches the existing creation workflow only while its ID is absent',()=>{const f=fixture(null);f.request.type='vehicle-native-create';f.request.nativeSubmissionGuard.baseRevision=null;let calls=0;f.ctx.lkProcessVehicleCreate_=()=>{calls++;return'approved'};assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'approved');assert.equal(calls,1);});
+for(const base of [undefined,'200',0,-1,199])test('invalid native base '+String(base)+' is rejected without writes',()=>{const f=fixture();f.request.nativeSubmissionGuard.baseRevision=base;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'rejected');assert.equal(f.saved.length,0);});
+test('legacy unguarded foreground requests retain their existing workflow',()=>{const f=fixture();f.request.type='vehicle-owner-update';delete f.request.nativeSubmissionGuard;assert.equal(f.ctx.lkProcessRequest_({}, {}, f.request, {}, {}),'approved');});

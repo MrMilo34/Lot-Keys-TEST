@@ -104,6 +104,7 @@ class DriveUploadClient {
         return row;
     }
     JSONObject upload(TransferStore store, JSONObject batch, int item) throws Exception {
+        store.requireSubmissionAllowed(batch);
         String id = batch.getString("id"); JSONObject asset = batch.getJSONArray("assets").getJSONObject(item);
         File source = store.source(id, item); long total = asset.getLong("size");
         JSONObject checkpoint = store.itemState(id, item);

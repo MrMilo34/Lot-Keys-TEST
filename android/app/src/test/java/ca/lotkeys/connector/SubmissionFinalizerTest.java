@@ -19,12 +19,17 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class) @Config(sdk = {35, 36})
 public class SubmissionFinalizerTest {
     private TransferStore store;
-    @Before public void before() {
+    @Before public void before() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         org.robolectric.shadows.ShadowStatFs.registerStats(new File(context.getFilesDir(), "transfers").getAbsolutePath(), 1024 * 1024, 512 * 1024, 512 * 1024);
-        store = new TransferStore(context);
+        store = new TransferStore(context, isolation());
     }
-    private JSONObject plan() throws Exception {
+    static SubmissionIsolation.Policy isolation() throws Exception {
+        return new SubmissionIsolation.Policy(new JSONObject().put("kind", "lotkeys-disposable-store-v1").put("enabled", true).put("account", "user@example.test").put("store", "store-folder-123")
+            .put("folderIds", new JSONArray().put("store-folder-123").put("pending-folder-123").put("workspace-folder-123").put("photos-folder-123"))
+            .put("requestFileIds", new JSONArray().put("request-file-123")).put("existingFileIds", new JSONArray()));
+    }
+    static JSONObject plan() throws Exception {
         JSONObject request = new JSONObject().put("schemaVersion", 3).put("app", "LotKeys").put("recordType", "vehicleRequest")
             .put("id", "VCREATE-vehicle-123-one").put("type", "vehicle-native-create").put("nativeSubmissionGuard", new JSONObject().put("version", 1).put("baseRevision", JSONObject.NULL)).put("status", "pending").put("vehicleId", "vehicle-123")
             .put("userName", "Regular user").put("userEmail", "user@example.test").put("createdAt", "2026-11-18T12:00:00Z")
@@ -87,7 +92,7 @@ public class SubmissionFinalizerTest {
         assertEquals("photo-file-123", remote.receipt.getJSONObject("media").getJSONArray("photos").getJSONObject(0).getString("driveFileId"));
         assertFalse(remote.receipt.getJSONObject("media").getJSONArray("photos").getJSONObject(0).has("assetKey"));
         assertTrue(request(batch).getJSONObject("media").getJSONArray("photos").getJSONObject(0).has("assetKey"));
-        TransferStore recovered = new TransferStore(RuntimeEnvironment.getApplication());
+        TransferStore recovered = new TransferStore(RuntimeEnvironment.getApplication(), isolation());
         assertEquals("request-file-123", recovered.get(batch.getString("id")).getJSONObject("finalizerResults").getJSONObject("submission").getString("id"));
         assertEquals(2, recovered.source(batch.getString("id"), 0).length());
         assertThrows(IllegalArgumentException.class, () -> recovered.releaseOriginals(batch.getString("id")));
@@ -96,7 +101,7 @@ public class SubmissionFinalizerTest {
         JSONObject batch = staged(true); Remote remote = new Remote(); remote.loseReply = true;
         assertThrows(java.io.IOException.class, () -> new SubmissionFinalizer(remote, () -> {}).finish(store, batch));
         remote.receipt.put("status", "approved").put("processorNote", "already published"); remote.file.put("trashed", true);
-        new SubmissionFinalizer(remote, () -> {}).finish(new TransferStore(RuntimeEnvironment.getApplication()), batch);
+        new SubmissionFinalizer(remote, () -> {}).finish(new TransferStore(RuntimeEnvironment.getApplication(), isolation()), batch);
         assertEquals(1, remote.posts); assertEquals("already published", remote.receipt.getString("processorNote"));
         assertEquals("approved", store.get(batch.getString("id")).getJSONObject("finalizerResults").getJSONObject("submission").getString("status"));
     }

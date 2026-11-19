@@ -1,26 +1,66 @@
-# Native submission checkpoint — not deployed
+# .51 isolated handoff integration — unpublished
 
-The live TEST website is the partial .50 preview at39e89f0, verified after Pages
-44380311201. Production .81 and the installed original-key .46 APK are preserved.
-This isolated continuation adds only the missing native request finalizer, source
-candidate .51. It is not a complete regular-user background-posting release.
+Verified TEST main/rollback remains .50 39e89f0. Regular .50 is separately live
+at b0aa6ee; do not alter it during this milestone. Exact recovered c8da958/tree
+12501915 is preserved by the existing PR25 capsule and private source archive.
 
-- Protocol3 validates one frozen vehicle-create/owner-update request against its
-  account, Store, Vehicle edit, workspace and every planned original.
-- Native uploads finish first. The finisher resolves confirmed media IDs and
-  atomically creates one request using its pre-reserved Drive ID. It never writes
-  official Inventory, changes sharing or overwrites a processor receipt.
-- Lost replies reuse the same file; pending/approved/rejected receipts reconcile
-  without replaying pending work. Originals remain retained on uncertain/error
-  paths. Existing protocol1/2 and Android job scheduling remain intact.
-- Browser plan preparation, UI receipt reconciliation and early local original
-  handoff remain unimplemented. No current .50 client uses protocol3. Real phone
-  app-switch/lock, native Google access and processor integration are unverified.
-- Candidate native .51 outputs are explicitly SOURCE PREVIEW / DO NOT INSTALL;
-  no matching-key installer is delivered by this checkpoint. Public download
-  remains .46. Do not deploy this source or claim background posting is fixed.
-- Paired-PC sending is a separate reported regression being investigated in this
-  same workstream. No speculative permission or send retry changes are included.
+Browser and native guards now default off and require independently source-pinned
+disposable account, Store, folders, reserved request IDs and existing media IDs.
+Browser blocks new preparation and retained-plan resumption; Android checks new
+plans, retained work before authentication/network, every worker request, upload,
+finalization, acknowledgement and source release. Plan flags/settings cannot turn
+the default on. Protocol1/2 and .46 browser fallback remain unchanged.
+
+578 Node, 33 DOM and 23 standalone/eight inline syntax checks passed. Native CI
+and full browser checks follow on the same draft branch; record their exact run
+and source rather than reusing the previous c8 counts. Original stylesheet was
+extracted unchanged to lotkeys-app.css for reliable source transport.
+
+No verified disposable Store/processor binding was found; no supported Apps Script
+project editing/authorization tool is available. Guarded processor .79 remains
+separate unchanged source. No live scripts, triggers, Drive data, permissions,
+regular site, signing identity or installed APK were changed. Existing signing
+certificate was reverified against original .46. Do not publish this disabled
+checkpoint as a working background-upload release. No phone/emulator/real Drive
+upload validation or signed .51 installer delivery has occurred.
+
+Next dependency: a separate authorized disposable Store and .79 processor, with
+its exact test account/folder/request binding verified, without existing Store
+access changes. Then pin the binding in both sources, test end-to-end, publish
+normal TEST and deliver the matching-key APK. Do not request broad manual fixture
+consent, repurpose either live Store or resume Compare/PC-send work here.
+
+# .51 guarded background submission source — activation blocked
+
+Live TEST remains .50 at 39e89f0306e9fd10da4f06771dc62ac78566af85.
+Production .81, original signed .46 download, .49/.48 rollback and data remain
+unchanged. Existing draft PR25 owns this bounded continuation. Do not deploy
+this source or call regular-user background posting phone-verified.
+
+- Browser now freezes the exact account/Store/edit, selected media and pending
+  request ID before staging. The durable receipt precedes bytes; confirmed local
+  retention precedes readiness. Lost replies resume the same plan. A browser
+  return verifies the native finalizer receipt before reporting submission.
+- Native protocol3 finishes media then atomically submits the private More
+  request. It never writes official Inventory or overwrites terminal receipts.
+  Old native protocol1/2 and old-APK browser fallback remain supported.
+- Processor .79 source rejects delayed creates colliding with existing records
+  and owner snapshots whose base Inventory revision changed. Distinct request
+  types fail closed on .78; the browser requires Store-advertised protocol3.
+- Existing Store processor must receive and verify this patch before activation.
+  No callable authorized Apps Script editor/update tool is currently available;
+  no live script, trigger, binding, permission or Store report was changed.
+- The Account section retains two controls with checked amber/green states;
+  rejected native submissions remain amber. Native UI can request user-initiated
+  execution of retained files. Ordinary Android scheduling may be deferred.
+- Preparation remains visible until every original is retained. Full behavior
+  across app switching/lock needs matching signed .51, live processor and phone
+  validation. Original signing recovery was independently unlocked and its
+  certificate matched .46; no replacement credentials were created.
+- PC-send awaits the reported screenshot/error and Device SMS vs LotKeys chat
+  identification. No speculative repair; Compare stays outside this milestone.
+
+See RELEASE-0.9.5.51-SOURCE-CHECKPOINT.md for checks, exact limits and continuation.
 
 # LotKeys .50 — partial reliability TEST preview
 

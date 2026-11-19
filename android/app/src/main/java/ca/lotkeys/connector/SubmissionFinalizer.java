@@ -70,6 +70,7 @@ final class SubmissionFinalizer {
     }
 
     JSONObject payload(TransferStore store, JSONObject batch) throws Exception {
+        store.requireSubmissionAllowed(batch);
         validate(batch);
         Map<String, JSONObject> confirmed = new HashMap<>(); JSONArray assets = batch.getJSONArray("assets");
         for (int i = 0; i < assets.length(); i++) {

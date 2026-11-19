@@ -1,8 +1,9 @@
-const CACHE='lotkeys-app-v095050-reliability-preview';
+const CACHE='lotkeys-app-v095051-native-submission-preview';
 const LOTKEYS_CACHE_PREFIXES=['lotkeys-drive-test-','lotkeys-app-'];
 const CORE=[
   './',
   './index.html',
+  './lotkeys-app.css',
   './lotkeys-compare.js',
   './lotkeys-reliability.js',
   './lotkeys-compare-ui.js',
@@ -25,6 +26,8 @@ const CORE=[
   './lotkeys-doorbell-core.js',
   './lotkeys-transfer-core.js',
   './lotkeys-native-transfers.js',
+  './lotkeys-submission-isolation.js',
+  './lotkeys-owner-transfers.js',
   './lotkeys-deferred-save.js',
   './lotkeys-phone-core.js',
   './lotkeys-phone.js',
