@@ -19,7 +19,7 @@ import androidx.browser.customtabs.CustomTabsIntent;
 
 /** Uses the existing HTTPS origin and browser storage; never creates a WebView data silo. */
 final class BrowserExperience {
-    static final String WEB_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095046";
+    static final String WEB_URL = "https://mrmilo34.github.io/Lot-Keys-TEST/?build=095051";
     static final String SHOW_SETUP = "showPhoneSetup";
     private static final String PROVIDER = "experienceBrowserPackage";
 

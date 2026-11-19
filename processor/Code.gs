@@ -1,12 +1,12 @@
 /**
- * LotKeys Store Processor V0.9.4.78
+ * LotKeys Store Processor V0.9.4.79
  *
  * This script is installed once by an Admin Level 2 account. It is the trusted
  * writer between each user's private More request queue and the official,
  * Viewer-only Inventory. Never deploy it to execute as the visiting web user.
  */
 
-const LOTKEYS_PROCESSOR_VERSION = '0.9.4.78';
+const LOTKEYS_PROCESSOR_VERSION = '0.9.4.79';
 // First installation only: configure this or the lotkeysStoreFolderId Script
 // property. Generic updates never select a dealership or replace that binding.
 const LOTKEYS_STORE_FOLDER_ID = '';
@@ -215,7 +215,7 @@ function processLotKeysRequests() {
         });
       });
     });
-    if (state.userRegistryDirty) lkPersistUserRegistry_(state);
+    if (state.userRegistryDirty || state.config && (!state.config.processor || state.config.processor.version !== LOTKEYS_PROCESSOR_VERSION)) lkPersistUserRegistry_(state);
     result.finishedAt = new Date().toISOString();
     PropertiesService.getScriptProperties().setProperties({
       lotkeysLastRunAt: result.finishedAt,
@@ -229,11 +229,25 @@ function processLotKeysRequests() {
 
 function lkProcessRequest_(state, actor, request, file, context) {
   const type = String(request.type || '');
+  if (type === 'vehicle-native-create' || type === 'vehicle-native-owner-update' || request.nativeSubmissionGuard) return lkProcessNativeSubmission_(state, actor, request, file, context);
   if (type === 'vehicle-create') return lkProcessVehicleCreate_(state, actor, request, file, context);
   if (type === 'vehicle-owner-update') return lkProcessOwnerUpdate_(state, actor, request, file, context);
   if (type === 'vehicle-contribution') return lkProcessContribution_(state, actor, request, file, context);
   if (type === 'vehicle-state') return lkProcessVehicleState_(state, actor, request, file, context);
   return lkRejectRequest_(request, file, context, 'Unsupported request type.');
+}
+
+function lkProcessNativeSubmission_(state, actor, request, file, context) {
+  const guard = request.nativeSubmissionGuard, type = String(request.type || '');
+  const create = type === 'vehicle-native-create' || type === 'vehicle-create';
+  if (!guard || guard.version !== 1 || (!create && type !== 'vehicle-native-owner-update' && type !== 'vehicle-owner-update')) return lkRejectRequest_(request, file, context, 'Invalid background submission guard.');
+  const current = lkFindVehicle_(state, String(request.vehicleId || ''));
+  if (create) {
+    if (guard.baseRevision !== null || current) return lkRejectRequest_(request, file, context, 'Inventory changed while this Vehicle was uploading. Your files are saved; review the current Profile before resubmitting.');
+    return lkProcessVehicleCreate_(state, actor, request, file, context);
+  }
+  if (!current || !Number.isSafeInteger(guard.baseRevision) || guard.baseRevision <= 0 || guard.baseRevision !== Number(current.updatedAt)) return lkRejectRequest_(request, file, context, 'Inventory changed while this Vehicle was uploading. Your files are saved; review the current Profile before resubmitting.');
+  return lkProcessOwnerUpdate_(state, actor, request, file, context, current);
 }
 
 function lkAwardContribution_(state, actor, points, key, reason, awardedAt) {
@@ -518,6 +532,7 @@ function lkPersistUserRegistry_(state) {
   state.config.users = state.users;
   state.config.processor = Object.assign({}, state.config.processor || {}, {
     version: LOTKEYS_PROCESSOR_VERSION,
+    nativeSubmissionProtocol: 3,
     installed: true,
     updatedAt: now
   });
@@ -544,7 +559,7 @@ function lkPersistUserRegistry_(state) {
       };
     }),
     publicUsers: publicUsers,
-    processor: {version: LOTKEYS_PROCESSOR_VERSION, installed: true},
+    processor: {version: LOTKEYS_PROCESSOR_VERSION, installed: true, nativeSubmissionProtocol: 3},
     updatedAt: now
   });
   state.rootAccessFile = lkUpsertJson_(state.rootAccessFile, state.root.id, 'Store Access.json', state.rootAccess, {lotkeysRole: 'storeAccess'});

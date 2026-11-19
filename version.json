@@ -1,26 +1,40 @@
 {
   "app": "LotKeys",
-  "version": "0.9.5.50",
-  "build": "095050",
-  "release": "reliability-preview",
+  "version": "0.9.5.51",
+  "build": "095051",
+  "release": "background-submission-preview",
   "channel": "test",
   "canonicalUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/",
-  "serviceWorkerCache": "lotkeys-app-v095050-reliability-preview",
-  "basedOn": "TEST .49 a3cbd0a; signed Android .46 preserved",
+  "serviceWorkerCache": "lotkeys-app-v095051-native-submission-preview",
+  "basedOn": "TEST .50 39e89f0; installed original-key Android .46 preserved",
   "androidConnectorVersion": "0.9.5.46",
   "preparedAt": "2026-11-18",
   "androidConnectorDownloadUrl": "https://mrmilo34.github.io/Lot-Keys-TEST/downloads/LotKeys-Connector-TEST-V0.9.5.46.apk",
   "originVerificationUrl": "https://mrmilo34.github.io/.well-known/assetlinks.json",
-  "releaseScope": "partial-reliability-test-preview",
+  "releaseScope": "guarded-native-submission-source-preview",
   "automaticWebsiteSearch": false,
   "lotkeysDriveAuthorizationVerified": false,
   "lotkeysDriveRenewalVerified": false,
   "physicalPhoneVerified": false,
-  "deploymentStatus": "test-preview",
+  "deploymentStatus": "source-checkpoint-not-deployed",
   "regularUserNativeHandoff": false,
   "knownLimitations": [
-    "Regular-user submissions remain browser-dependent; preparation screen wake is best effort.",
-    "Paired-PC higher-authority report needs its exact error for diagnosis; only definite relay 401 renewal is addressed.",
-    "Automatic Compare remains blocked by approved source access, report rights and private backend."
-  ]
+    "Native regular-user handoff is explicitly disabled in browser and native builds until the same verified disposable Store, account, folder and request binding exists; no dummy .79 processor is available.",
+    "Browser preparation still requires LotKeys open until Android verifies all originals; Android may defer ordinary jobs.",
+    "Paired-PC send diagnosis awaits exact error and Device SMS versus LotKeys chat identification; no speculative send repair.",
+    "Physical phone, live Google handoff and Store processor integration remain unverified.",
+    "Automatic Compare remains pending authorized sources and private backend."
+  ],
+  "androidSourceCandidateVersion": "0.9.5.51",
+  "regularUserNativeHandoffImplemented": true,
+  "requiredStoreProcessorVersion": "0.9.4.79",
+  "requiredStoreProcessorNativeSubmissionProtocol": 3,
+  "nativeSubmissionIsolation": {
+    "enabled": false,
+    "kind": "source-pinned-disposable-store-v1",
+    "bindingVerified": false,
+    "browserGuard": true,
+    "nativeGuard": true,
+    "retainedJobsGuard": true
+  }
 }

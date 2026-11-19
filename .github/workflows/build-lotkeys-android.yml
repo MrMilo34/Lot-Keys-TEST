@@ -7,6 +7,7 @@ on:
       - '.github/workflows/build-lotkeys-android.yml'
       - 'android/**'
   push:
+    branches: [main]
     paths:
       - '.github/workflows/build-lotkeys-android.yml'
       - 'android/**'
@@ -58,7 +59,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success() && env.LOTKEYS_TEST_SIGNED == 'true'
         with:
-          name: LotKeys-Android-V0.9.5.46
+          name: LotKeys-Android-V0.9.5.51-SOURCE-PREVIEW-DO-NOT-INSTALL
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
             android/app/build/outputs/apk/debug/apksigner.jar
@@ -67,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: success() && env.LOTKEYS_TEST_SIGNED != 'true'
         with:
-          name: LotKeys-Android-UNSIGNED-DO-NOT-INSTALL-V0.9.5.46
+          name: LotKeys-Android-UNSIGNED-DO-NOT-INSTALL-V0.9.5.51-SOURCE-PREVIEW-DO-NOT-INSTALL
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
             android/app/build/outputs/apk/debug/apksigner.jar
@@ -76,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: LotKeys-Android-RELEASE-CANDIDATE-V0.9.5.46
+          name: LotKeys-Android-RELEASE-CANDIDATE-V0.9.5.51-SOURCE-PREVIEW-DO-NOT-INSTALL
           path: |
             android/app/build/outputs/apk/release/*.apk
             android/app/build/outputs/bundle/release/*.aab
